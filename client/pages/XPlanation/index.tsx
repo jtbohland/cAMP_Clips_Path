@@ -150,6 +150,7 @@ export default function XPlanationPage() {
                 xp={b.xp}
                 condition={b.condition}
                 earned={earnedBadgeIds.has(b.badge.toLowerCase().replace(/ /g, "_"))}
+                isMystery={b.badge === "The Ranger's Secret"}
               />
             ))}
           </div>
@@ -278,20 +279,30 @@ function XpRow({ emoji, label, xp, description }: { emoji: string; label: string
   );
 }
 
-function BadgeRow({ emoji, badge, xp, condition, earned }: { emoji: string; badge: string; xp: number; condition: string; earned: boolean }) {
+function BadgeRow({ emoji, badge, xp, condition, earned, isMystery }: { emoji: string; badge: string; xp: number; condition: string; earned: boolean; isMystery?: boolean }) {
   return (
-    <div className={`flex items-center justify-between rounded-lg border px-3 py-2 ${earned ? "bg-green-50/50 dark:bg-green-950/10 border-green-500/30" : "bg-card"}`}>
+    <div className={`flex items-center justify-between rounded-lg border px-3 py-2 ${
+      earned
+        ? "bg-amber-50 dark:bg-amber-950/20 border-amber-300/50"
+        : "bg-card"
+    }`}>
       <div className="flex items-center gap-2">
-        <span className="text-lg">{emoji}</span>
+        <span className={`text-lg ${!earned ? "opacity-50" : ""}`}>{emoji}</span>
         <div>
-          <p className="text-sm font-medium text-foreground">
-            {badge}
-            {earned && <span className="ml-2 text-xs text-green-600 font-medium">✓ earned</span>}
+          <p className={`text-sm ${earned ? "font-bold text-foreground" : "font-medium text-muted-foreground"}`}>
+            {isMystery ? "🌲 ???" : badge}
+            {earned && (
+              <span className="ml-2 inline-flex items-center rounded-full bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 text-xs font-medium text-amber-800 dark:text-amber-200">
+                ✅ Earned
+              </span>
+            )}
           </p>
-          <p className="text-xs text-muted-foreground">{condition}</p>
+          <p className={`text-xs ${earned ? "text-muted-foreground" : "text-muted-foreground/60"}`}>
+            {isMystery ? "???" : condition}
+          </p>
         </div>
       </div>
-      <span className="text-sm font-bold text-green-600">+{xp} XP</span>
+      <span className={`text-sm font-bold ${earned ? "text-amber-600" : "text-muted-foreground"}`}>+{xp} XP</span>
     </div>
   );
 }
