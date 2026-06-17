@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { useNavigate } from "react-router";
 import { useApi } from "@/hooks/useApi";
 import { useViewer } from "@/components/ViewerContext";
 import { Card } from "@/components/ui/card";
@@ -7,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { FIRST_CLIP_ID } from "@/lib/constants";
 
 const ROLES = [
   "SDR",
@@ -24,6 +26,7 @@ function getTodayString(): string {
 }
 
 export default function RegistrationForm() {
+  const navigate = useNavigate();
   const { setViewer } = useViewer();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -47,6 +50,8 @@ export default function RegistrationForm() {
       if (result?.viewer) {
         setViewer(result.viewer);
         toast.success(result.isNew ? "Welcome! You're all set." : "Welcome back!");
+        // Always start new learners on Clip 1
+        navigate(`/watch/${FIRST_CLIP_ID}`, { replace: true });
       }
     } catch (error) {
       const message = error && typeof error === "object" && "message" in error
