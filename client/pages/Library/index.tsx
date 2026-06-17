@@ -104,6 +104,7 @@ export default function LibraryPage() {
                       isCompleted={clip.completed}
                       score={clip.bestScore}
                       attempts={clip.attempts ?? 0}
+                      xpEarned={clip.xpEarned ?? 0}
                       previousClipTitle={prevClip ? prevClip.title : undefined}
                       onWatch={() => navigate(`/watch/${clip.id}`)}
                     />

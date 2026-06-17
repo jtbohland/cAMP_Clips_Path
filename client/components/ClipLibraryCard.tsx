@@ -13,9 +13,10 @@ type ClipLibraryCardProps = {
   isCompleted: boolean;
   score: number | null;
   attempts: number;
+  xpEarned: number;
   previousClipTitle?: string;
   onWatch: () => void;
-  onCopyLink?: () => void;
+  onReview?: () => void;
 };
 
 function getWeekLabel(sortOrder: number): string {
@@ -30,8 +31,11 @@ function getDayLabel(sortOrder: number): string {
 
 function formatDuration(seconds: number | null): string {
   if (!seconds) return "";
-  const mins = Math.floor(seconds / 60);
-  return `${mins} min`;
+  const hours = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
+  if (hours > 0 && mins > 0) return `${hours}h ${mins}m`;
+  if (hours > 0) return `${hours}h`;
+  return `${mins}m`;
 }
 
 /** Extract the session title without the "Day X:" prefix */
@@ -55,8 +59,10 @@ export default function ClipLibraryCard({
   isCompleted,
   score,
   attempts,
+  xpEarned,
   previousClipTitle,
   onWatch,
+  onReview,
 }: ClipLibraryCardProps) {
   const state = getClipState(isLocked, isCompleted, attempts);
   const emoji = getClipEmoji(clip.sortOrder);
@@ -67,6 +73,7 @@ export default function ClipLibraryCard({
         return (
           <span className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700">
             ✅ Completed{score !== null && ` (${score}%)`}
+            {xpEarned > 0 && <span className="ml-1 text-indigo-600">• +{xpEarned} XP</span>}
           </span>
         );
       case "in_progress":
@@ -102,12 +109,20 @@ export default function ClipLibraryCard({
         );
       case "completed":
         return (
-          <button
-            onClick={(e) => { e.stopPropagation(); onWatch(); }}
-            className="w-full py-2.5 rounded-lg text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition-colors"
-          >
-            📋 Review Ranger Report
-          </button>
+          <div className="flex flex-col items-center gap-1.5">
+            <button
+              onClick={(e) => { e.stopPropagation(); onReview ? onReview() : onWatch(); }}
+              className="w-full py-2.5 rounded-lg text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition-colors"
+            >
+              📋 Review Ranger Report
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); onWatch(); }}
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              ↩ Rewatch Video
+            </button>
+          </div>
         );
       case "locked":
         return (
