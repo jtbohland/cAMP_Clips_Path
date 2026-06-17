@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 type WeatherStormProps = {
   overview: string;
@@ -18,6 +20,7 @@ export default function WeatherStorm({
   clipTitle,
   onTimerExpire,
 }: WeatherStormProps) {
+  const navigate = useNavigate();
   const [secondsLeft, setSecondsLeft] = useState(timerMinutes * 60);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -49,6 +52,30 @@ export default function WeatherStorm({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
       <Card className="w-full max-w-2xl p-6 bg-card shadow-xl border-2 border-destructive/20">
+        {/* Back to library — disabled until timer expires */}
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => secondsLeft === 0 && navigate("/library")}
+                disabled={secondsLeft > 0}
+                className={`flex items-center gap-1 text-xs mb-4 transition-colors cursor-pointer ${
+                  secondsLeft > 0
+                    ? "text-muted-foreground/40 cursor-not-allowed"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Icon icon="arrow-left" /> Back to cAMP Clips
+              </button>
+            </TooltipTrigger>
+            {secondsLeft > 0 && (
+              <TooltipContent>
+                <p>Finish reading to continue</p>
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </TooltipProvider>
+
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">

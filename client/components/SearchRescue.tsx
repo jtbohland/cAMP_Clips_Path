@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { useNavigate } from "react-router";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
@@ -19,6 +20,7 @@ type SearchRescueProps = {
 };
 
 export default function SearchRescue({ questions, onComplete }: SearchRescueProps) {
+  const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
@@ -64,6 +66,14 @@ export default function SearchRescue({ questions, onComplete }: SearchRescueProp
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
       <Card className="w-full max-w-2xl p-6 bg-card shadow-xl border-2 border-accent/30">
+        {/* Back to library */}
+        <button
+          onClick={() => navigate("/library")}
+          className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors mb-4 cursor-pointer"
+        >
+          <Icon icon="arrow-left" /> Back to cAMP Clips
+        </button>
+
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">

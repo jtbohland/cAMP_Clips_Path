@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
@@ -37,6 +38,7 @@ export default function RangerReport({
   incorrectQuestions = [],
   onTimestampClick,
 }: RangerReportProps) {
+  const navigate = useNavigate();
   const missedCount = totalQuestions - correctAnswers;
   const isPerfect = missedCount === 0;
 
@@ -117,7 +119,15 @@ export default function RangerReport({
         )}
 
         {/* Action */}
-        <div className="flex justify-end gap-3">
+        <div className="flex items-center justify-between">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/library")}
+            className="text-xs text-muted-foreground"
+          >
+            <Icon icon="arrow-left" /> Back to cAMP Clips
+          </Button>
           {needsRecovery ? (
             <Button onClick={onSearchRescue} variant="default">
               Continue to Search & Rescue 🚁
