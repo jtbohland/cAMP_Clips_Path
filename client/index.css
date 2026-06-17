@@ -92,6 +92,18 @@
   --color-input: oklch(0.88 0.02 145);
   --color-ring: oklch(0.40 0.10 155);
   --color-sidebar: oklch(0.25 0.06 155);
+  --color-sidebar-foreground: oklch(0.92 0.01 145);
+  --color-sidebar-accent: oklch(0.35 0.08 155);
+  --color-sidebar-accent-foreground: oklch(0.95 0.005 145);
+  --color-sidebar-border: oklch(0.32 0.05 155);
+  --color-sidebar-ring: oklch(0.50 0.10 155);
+  --color-sidebar-primary: oklch(0.75 0.15 65);
+  --color-sidebar-primary-foreground: oklch(0.15 0.03 65);
+  --color-chart-1: oklch(0.40 0.10 155);
+  --color-chart-2: oklch(0.75 0.15 65);
+  --color-chart-3: oklch(0.55 0.12 200);
+  --color-chart-4: oklch(0.60 0.15 140);
+  --color-chart-5: oklch(0.65 0.10 30);
 }
 
 /* cAMP Ascent custom utility classes */
