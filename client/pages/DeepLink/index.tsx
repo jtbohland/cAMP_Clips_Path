@@ -8,32 +8,76 @@ import { getClipEmoji } from "@/lib/clip-emojis";
 
 /**
  * Deep link route: /clip/:clipId
- * Routes learners based on their state:
- * - Not registered → Registration (Library page) → then starts at Clip 1
- * - Registered, clip not unlocked → Message + link back to library
- * - Registered, clip unlocked → Straight into the video
+ * Routes learners based on their exact state for this clip:
+ *
+ * - Not registered → "/" (registration form, then starts at Clip 1)
+ * - Registered + clip locked → Locked message + "← Back to cAMP Clips"
+ * - Registered + clip unlocked, not completed → /watch/{clipId} (video or Resume prompt)
+ * - Registered + clip completed → /report/{clipId} (Ranger Report review page)
  */
 export default function DeepLinkPage() {
   const { clipId } = useParams<{ clipId: string }>();
   const navigate = useNavigate();
-  const { viewer } = useViewer();
+  const { viewer, isLoading: viewerLoading } = useViewer();
 
-  // If not registered, redirect to library (which shows registration form)
-  useEffect(() => {
-    if (!viewer) {
-      navigate("/", { replace: true });
-    }
-  }, [viewer, navigate]);
-
-  // Fetch the clip library to check unlock status
-  const { data, loading } = useApiData(
+  // Fetch the clip library to check unlock + completion status
+  const { data, loading: dataLoading } = useApiData(
     "GetClipLibrary",
     { viewerId: viewer?.id ?? "" },
     { enabled: !!viewer?.id }
   );
 
-  // Loading state
-  if (!viewer || loading || !data) {
+  // Route based on state — only when all data is resolved
+  useEffect(() => {
+    // Wait for viewer context to finish loading
+    if (viewerLoading) return;
+
+    // Not registered → send to registration
+    if (!viewer) {
+      navigate("/", { replace: true });
+      return;
+    }
+
+    // Wait for clip data to load
+    if (dataLoading || !data) return;
+
+    const clips = data.clips ?? [];
+    const targetClip = clips.find((c: any) => c.id === clipId);
+
+    // Clip not found — don't navigate, show error UI below
+    if (!targetClip) return;
+
+    const isAdmin = viewer?.isAdmin === true;
+    const isUnlocked = targetClip.unlocked === true;
+    const isCompleted = targetClip.completed === true;
+
+    // Admin bypasses lock
+    if (isAdmin) {
+      if (isCompleted) {
+        navigate(`/report/${clipId}`, { replace: true });
+      } else {
+        navigate(`/watch/${clipId}`, { replace: true });
+      }
+      return;
+    }
+
+    // Locked → show locked message (don't navigate, render below)
+    if (!isUnlocked) return;
+
+    // Completed → Ranger Report
+    if (isCompleted) {
+      navigate(`/report/${clipId}`, { replace: true });
+      return;
+    }
+
+    // Unlocked + not completed → Watch (handles both fresh and paused)
+    navigate(`/watch/${clipId}`, { replace: true });
+  }, [viewerLoading, viewer, dataLoading, data, clipId, navigate]);
+
+  // === RENDER STATES (while routing hasn't happened yet) ===
+
+  // Still loading viewer or data
+  if (viewerLoading || !viewer || dataLoading || !data) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="flex flex-col items-center gap-3">
@@ -47,6 +91,7 @@ export default function DeepLinkPage() {
   const clips = data.clips ?? [];
   const targetClip = clips.find((c: any) => c.id === clipId);
 
+  // Clip not found
   if (!targetClip) {
     return (
       <div className="flex items-center justify-center h-full p-6">
@@ -57,25 +102,15 @@ export default function DeepLinkPage() {
             This clip doesn't exist in the program.
           </p>
           <Link to="/library">
-            <Button variant="default">Back to Library</Button>
+            <Button variant="default">← Back to cAMP Clips</Button>
           </Link>
         </Card>
       </div>
     );
   }
 
-  const isUnlocked = targetClip.unlocked === true;
-  const isAdmin = viewer?.isAdmin === true;
-
-  // If unlocked or admin, go straight to video
-  useEffect(() => {
-    if (isUnlocked || isAdmin) {
-      navigate(`/watch/${targetClip.id}`, { replace: true });
-    }
-  }, [isUnlocked, isAdmin, targetClip, navigate]);
-
-  // If we're still here, clip is locked
-  if (!isUnlocked && !isAdmin) {
+  // Clip is locked — show locked message
+  if (!targetClip.unlocked && !viewer?.isAdmin) {
     const prevClip = clips.find(
       (c: any) => c.sortOrder === targetClip.sortOrder - 1
     );
@@ -89,17 +124,18 @@ export default function DeepLinkPage() {
           <span className="text-4xl mb-3 block">🔒</span>
           <h2 className="text-lg font-bold mb-2">Clip Locked</h2>
           <p className="text-sm text-muted-foreground mb-4">
-            Complete <strong>{prevTitle}</strong> first to unlock this clip.
+            You haven't unlocked this session yet. Complete{" "}
+            <strong>{prevTitle}</strong> first to continue your climb. 🏔️
           </p>
           <Link to="/library">
-            <Button variant="default">🎬 Back to cAMP Clips</Button>
+            <Button variant="default">← Back to cAMP Clips</Button>
           </Link>
         </Card>
       </div>
     );
   }
 
-  // Fallback loading while redirect happens
+  // Fallback spinner while navigation effect fires
   return (
     <div className="flex items-center justify-center h-full">
       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
