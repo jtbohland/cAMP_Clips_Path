@@ -34,18 +34,18 @@ export default function TopNav() {
       </div>
 
       {/* Navigation tabs */}
-      <nav className="flex items-center gap-1">
+      <nav className="flex items-center gap-1 bg-muted/50 rounded-xl p-1">
         {tabs.map((tab) => (
           <button
             key={tab.path}
             onClick={() => navigate(tab.path)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-150 ${
               isActive(tab.path)
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                ? "bg-indigo-600 text-white shadow-md"
+                : "text-muted-foreground hover:text-indigo-600 hover:bg-indigo-50"
             }`}
           >
-            <span>{tab.emoji}</span>
+            <span className="text-base">{tab.emoji}</span>
             {tab.label}
           </button>
         ))}
