@@ -43,7 +43,7 @@ function AnalyticsContent() {
   const { clipStats = [], viewerStats = [], roleStats = [] } = data ?? {};
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6">
+    <div className="p-6 max-w-5xl mx-auto space-y-6 h-full overflow-auto">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Analytics</h1>
         <div className="flex gap-1">

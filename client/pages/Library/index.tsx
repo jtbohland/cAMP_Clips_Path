@@ -49,7 +49,7 @@ export default function LibraryPage() {
   }
 
   return (
-    <div className="flex flex-col gap-4 p-6 max-w-4xl mx-auto w-full overflow-auto">
+    <div className="flex flex-col gap-4 p-6 max-w-4xl mx-auto w-full h-full overflow-auto">
       {/* XP Progress Bar */}
       <XpProgressBar />
 

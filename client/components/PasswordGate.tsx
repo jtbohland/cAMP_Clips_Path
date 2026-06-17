@@ -34,7 +34,7 @@ export default function PasswordGate({ children }: PasswordGateProps) {
   }
 
   return (
-    <div className="flex min-h-full items-center justify-center p-6">
+    <div className="flex h-full items-center justify-center p-6">
       <Card className="w-full max-w-sm p-8 shadow-lg">
         <div className="mb-6 text-center">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">

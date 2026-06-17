@@ -16,7 +16,7 @@ export const CLIP_EMOJIS: Record<number, string> = {
   11: "☂️",  // Day 11: Forecasting (including Services)
   12: "📖", // Day 12: Customer Stories
   13: "📑", // Day 13: Contract Lifecycle Management
-  14: "🤝", // Day 14: Deal Desk & CPQ
+  14: "🫱🏻‍🫲🏽", // Day 14: Deal Desk & CPQ
   15: "🪢", // Day 15: Leveraging Solution Engineers & Professional Services
   16: "🪢", // Day 15 (cont): SE Partnership & Platform Overview
   17: "🪢", // Day 15 (cont): Why Sell Services & Services Forecasting
