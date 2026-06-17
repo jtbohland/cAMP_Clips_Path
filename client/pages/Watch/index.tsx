@@ -339,7 +339,8 @@ export default function WatchPage() {
   const clip = clipData.clip;
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    // Height = 100dvh minus TopNav height (57px = py-3×2 + content + border). If TopNav height changes, update this value.
+    <div className="flex flex-col h-[calc(100dvh-57px)] overflow-hidden">
       {/* Video header */}
       <div className="flex items-center justify-between px-6 py-3 border-b border-border bg-card">
         <div className="flex items-center gap-3">
@@ -368,12 +369,12 @@ export default function WatchPage() {
       </div>
 
       {/* Video embed area */}
-      <div className="flex-1 flex items-center justify-center bg-black relative">
+      <div className="flex-1 min-h-0 flex items-center justify-center bg-black relative">
           {clip.videoUrl ? (
           <iframe
             ref={videoRef}
             src={convertToEmbedUrl(clip.videoUrl)}
-            className="w-full h-full"
+            className="absolute inset-0 w-full h-full"
             allow="autoplay; fullscreen"
             allowFullScreen
             title={clip.title}

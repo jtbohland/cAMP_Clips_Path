@@ -8,19 +8,19 @@ import { ViewerProvider } from "./components/ViewerContext";
 
 export default function AppComponent() {
   return (
-    <>
+    <div className="light h-full w-full">
       {/* Do not remove the AppProvider */}
       <AppProvider className="h-full w-full">
         <ViewerProvider>
           <div className="flex h-full w-full flex-col">
             <TopNav />
-            <div className="flex-1 overflow-auto">
+            <div className="flex-1 min-h-0 overflow-hidden">
               <Outlet />
             </div>
           </div>
         </ViewerProvider>
       </AppProvider>
       <Toaster />
-    </>
+    </div>
   );
 }

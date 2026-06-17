@@ -95,7 +95,7 @@ function ClipManagement({ data, loading, fetching, refetch, showAddForm, setShow
   const clips = data?.clips ?? [];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 h-full overflow-auto">
       <div className="flex justify-between items-center">
         <p className="text-sm text-muted-foreground">{clips.length} clips</p>
         <Button onClick={() => { setShowAddForm(true); setEditingClipId(null); }}>
