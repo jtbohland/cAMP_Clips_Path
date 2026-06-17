@@ -3,10 +3,10 @@ import { useApiData } from "@/hooks/useApiData.js";
 import TopNav from "@/components/TopNav";
 
 const TIERS = [
-  { tier: 1, name: "Base Camper", emoji: "🏕️", xpMin: 0, description: "Just getting started" },
-  { tier: 2, name: "Trailblazer", emoji: "🥾", xpMin: 150, description: "Finding your rhythm" },
-  { tier: 3, name: "Summit Seeker", emoji: "🏔️", xpMin: 325, description: "Serious momentum" },
-  { tier: 4, name: "Pinnacle Achiever", emoji: "🏔️✨", xpMin: 500, description: "Legendary status" },
+  { tier: 1, name: "Base Camper", emoji: "🏕️", xpMin: 0, xpMax: 149, description: "Just getting started on the trail" },
+  { tier: 2, name: "Trailblazer", emoji: "🥾", xpMin: 150, xpMax: 324, description: "Building momentum and finding your footing" },
+  { tier: 3, name: "Summit Seeker", emoji: "🧗🏼", xpMin: 325, xpMax: 499, description: "Pushing toward mastery" },
+  { tier: 4, name: "Pinnacle Achiever", emoji: "🏔️✨", xpMin: 500, xpMax: null, description: "You've conquered the Ascent" },
 ];
 
 const BASE_XP = [
@@ -157,43 +157,46 @@ export default function XPlanationPage() {
         </Section>
 
         {/* Tier Progression */}
-        <Section title="🧗 Tier Progression" description="Climb the ranks as you earn XP:">
-          <div className="space-y-2">
-            {TIERS.map((t) => {
-              const isActive = currentTier.emoji === t.emoji;
-              const isReached = totalXp >= t.xpMin;
-              return (
-                <div
-                  key={t.tier}
-                  className={`flex items-center justify-between rounded-lg border p-3 ${
-                    isActive
-                      ? "border-primary bg-primary/5 ring-1 ring-primary"
-                      : isReached
-                      ? "border-green-500/30 bg-green-50/50 dark:bg-green-950/10"
-                      : "border-border bg-muted/30"
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">{t.emoji}</span>
-                    <div>
-                      <p className={`font-medium ${isActive ? "text-primary" : "text-foreground"}`}>
+        <Section title="🪜 Tiers" description="Climb the ranks as you earn XP:">
+          <div className="rounded-lg border overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b bg-muted/50">
+                  <th className="text-left font-semibold px-4 py-3">Tier</th>
+                  <th className="text-left font-semibold px-4 py-3">XP Range</th>
+                  <th className="text-left font-semibold px-4 py-3">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                {TIERS.map((t) => {
+                  const isActive = currentTier.emoji === t.emoji;
+                  return (
+                    <tr
+                      key={t.tier}
+                      className={`border-b last:border-b-0 ${
+                        isActive ? "bg-primary/5" : ""
+                      }`}
+                    >
+                      <td className="px-4 py-3 font-medium whitespace-nowrap">
+                        <span className="mr-1.5">{t.emoji}</span>
                         {t.name}
-                      </p>
-                      <p className="text-xs text-muted-foreground">{t.description}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-sm font-semibold">{t.xpMin}+ XP</span>
-                    {isActive && (
-                      <p className="text-xs text-primary font-medium">← You are here</p>
-                    )}
-                    {isReached && !isActive && (
-                      <p className="text-xs text-green-600">✓ Reached</p>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+                        {isActive && (
+                        <span className="ml-2 inline-flex items-center rounded-full bg-primary px-2 py-0.5 text-xs font-semibold text-primary-foreground">
+                          You
+                        </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        {t.xpMax ? `${t.xpMin}–${t.xpMax} XP` : `${t.xpMin}+ XP`}
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {t.description}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </Section>
 
@@ -290,7 +293,7 @@ function BadgeRow({ emoji, badge, xp, condition, earned, isMystery }: { emoji: s
         <span className={`text-lg ${!earned ? "opacity-50" : ""}`}>{emoji}</span>
         <div>
           <p className={`text-sm ${earned ? "font-bold text-foreground" : "font-medium text-muted-foreground"}`}>
-            {isMystery ? "🌲 ???" : badge}
+            {isMystery ? "🌲 The Ranger's Secret" : badge}
             {earned && (
               <span className="ml-2 inline-flex items-center rounded-full bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 text-xs font-medium text-amber-800 dark:text-amber-200">
                 ✅ Earned
@@ -298,7 +301,7 @@ function BadgeRow({ emoji, badge, xp, condition, earned, isMystery }: { emoji: s
             )}
           </p>
           <p className={`text-xs ${earned ? "text-muted-foreground" : "text-muted-foreground/60"}`}>
-            {isMystery ? "???" : condition}
+            {isMystery ? "A hidden achievement. You'll know it when you earn it." : condition}
           </p>
         </div>
       </div>
