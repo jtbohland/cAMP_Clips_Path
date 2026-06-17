@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useParams, useNavigate } from "react-router";
 import { useApiData } from "@/hooks/useApiData.js";
 import { useApi } from "@/hooks/useApi.js";
+import { executeApi } from "@/lib/executeApi.js";
 import { useViewer } from "@/components/ViewerContext";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
@@ -9,10 +10,13 @@ import QuizOverlayV2 from "@/components/QuizOverlayV2";
 import RangerReport from "@/components/RangerReport";
 import SearchRescue from "@/components/SearchRescue";
 import WeatherStorm from "@/components/WeatherStorm";
+import ResumePrompt from "@/components/ResumePrompt";
 import { toast } from "sonner";
 import { getClipEmoji } from "@/lib/clip-emojis";
 
 type WatchPhase =
+  | "loading_resume"
+  | "resume_prompt"
   | "watching"
   | "trail_marker"
   | "ranger_report"
@@ -37,9 +41,11 @@ export default function WatchPage() {
   const { run: endSession } = useApi("EndSession");
   const { run: awardXP } = useApi("AwardXP");
   const { run: completeClipPath } = useApi("CompleteClipPath");
+  const { run: pauseSession } = useApi("PauseSession");
 
   // State
-  const [phase, setPhase] = useState<WatchPhase>("watching");
+  const [phase, setPhase] = useState<WatchPhase>("loading_resume");
+  const [pausedSessionData, setPausedSessionData] = useState<any>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
   const [answeredQuestions, setAnsweredQuestions] = useState<Set<string>>(new Set());
@@ -73,15 +79,130 @@ export default function WatchPage() {
     [clipData]
   );
 
-  // Start session on mount
+  // Check for paused session on mount, then start or show prompt
   useEffect(() => {
     if (!clipId || !viewer?.id) return;
-    startSession({ clipId, viewerId: viewer.id })
+    executeApi("GetPausedSession", { clipId, viewerId: viewer.id })
       .then((result: any) => {
-        setSessionId(result?.sessionId ?? null);
+        if (result?.hasPausedSession && result.session) {
+          setPausedSessionData(result.session);
+          setPhase("resume_prompt");
+        } else {
+          // No paused session — start fresh
+          startSession({ clipId, viewerId: viewer.id })
+            .then((res: any) => {
+              setSessionId(res?.sessionId ?? null);
+              setPhase("watching");
+            })
+            .catch(console.error);
+        }
+      })
+      .catch(() => {
+        // Fallback: start fresh if check fails
+        startSession({ clipId, viewerId: viewer.id })
+          .then((res: any) => {
+            setSessionId(res?.sessionId ?? null);
+            setPhase("watching");
+          })
+          .catch(console.error);
+      });
+  }, [clipId, viewer?.id, startSession]);
+
+  // Resume handler
+  const handleResume = useCallback(() => {
+    if (!pausedSessionData) return;
+    setSessionId(pausedSessionData.id);
+    setElapsedSeconds(pausedSessionData.elapsedSeconds);
+    setFocusSeconds(pausedSessionData.focusSeconds);
+    setBlurSeconds(pausedSessionData.blurSeconds);
+    setAnsweredQuestions(new Set(pausedSessionData.answeredQuestionIds));
+    setCorrectCount(pausedSessionData.correctCount);
+    setPhase("watching");
+  }, [pausedSessionData]);
+
+  // Start fresh handler (abandon paused session)
+  const handleStartFresh = useCallback(() => {
+    if (!clipId || !viewer?.id) return;
+    startSession({ clipId, viewerId: viewer.id })
+      .then((res: any) => {
+        setSessionId(res?.sessionId ?? null);
+        setPhase("watching");
       })
       .catch(console.error);
   }, [clipId, viewer?.id, startSession]);
+
+  // Pause and navigate back
+  const handlePauseAndBack = useCallback(async () => {
+    if (sessionId && phase === "watching") {
+      try {
+        await pauseSession({
+          sessionId,
+          elapsedSeconds,
+          focusSeconds,
+          blurSeconds,
+          answeredQuestionIds: Array.from(answeredQuestions),
+          correctCount,
+          phase: "watching",
+        });
+      } catch (e) {
+        // Best effort — still navigate even if save fails
+        console.error("Pause save failed:", e);
+      }
+    }
+    navigate("/library");
+  }, [sessionId, phase, pauseSession, elapsedSeconds, focusSeconds, blurSeconds, answeredQuestions, correctCount, navigate]);
+
+  // 30-second autosave (only during "watching" phase)
+  useEffect(() => {
+    if (phase !== "watching" || !sessionId) return;
+    const autosaveInterval = setInterval(() => {
+      executeApi("PauseSession", {
+        sessionId,
+        elapsedSeconds,
+        focusSeconds,
+        blurSeconds,
+        answeredQuestionIds: Array.from(answeredQuestions),
+        correctCount,
+        phase: "watching",
+      }).catch(() => {}); // Silent — best effort
+    }, 30_000);
+    return () => clearInterval(autosaveInterval);
+  }, [phase, sessionId, elapsedSeconds, focusSeconds, blurSeconds, answeredQuestions, correctCount]);
+
+  // visibilitychange + beforeunload best-effort save
+  useEffect(() => {
+    if (phase !== "watching" || !sessionId) return;
+    const saveOnHide = () => {
+      if (document.visibilityState === "hidden") {
+        executeApi("PauseSession", {
+          sessionId,
+          elapsedSeconds,
+          focusSeconds,
+          blurSeconds,
+          answeredQuestionIds: Array.from(answeredQuestions),
+          correctCount,
+          phase: "watching",
+        }).catch(() => {});
+      }
+    };
+    const saveOnUnload = () => {
+      executeApi("PauseSession", {
+        sessionId,
+        elapsedSeconds,
+        focusSeconds,
+        blurSeconds,
+        answeredQuestionIds: Array.from(answeredQuestions),
+        correctCount,
+        phase: "watching",
+      }).catch(() => {});
+    };
+    document.addEventListener("visibilitychange", saveOnHide);
+    window.addEventListener("beforeunload", saveOnUnload);
+    return () => {
+      document.removeEventListener("visibilitychange", saveOnHide);
+      window.removeEventListener("beforeunload", saveOnUnload);
+    };
+  }, [phase, sessionId, elapsedSeconds, focusSeconds, blurSeconds, answeredQuestions, correctCount]);
 
   // Timer for elapsed tracking + focus/blur split
   useEffect(() => {
@@ -338,13 +459,38 @@ export default function WatchPage() {
 
   const clip = clipData.clip;
 
+  // Resume prompt
+  if (phase === "loading_resume") {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="flex flex-col items-center gap-3">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+          <p className="text-sm text-muted-foreground">Checking for saved progress…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (phase === "resume_prompt" && pausedSessionData) {
+    return (
+      <ResumePrompt
+        clipTitle={`${getClipEmoji(clip.sortOrder)} Clip ${clip.sortOrder}: ${clip.title}`}
+        elapsedSeconds={pausedSessionData.elapsedSeconds}
+        answeredCount={pausedSessionData.answeredQuestionIds.length}
+        totalQuestions={trailMarkers.length}
+        onResume={handleResume}
+        onStartFresh={handleStartFresh}
+      />
+    );
+  }
+
   return (
     // Height = 100dvh minus TopNav height (57px = py-3×2 + content + border). If TopNav height changes, update this value.
     <div className="flex flex-col h-[calc(100dvh-57px)] overflow-hidden">
       {/* Video header */}
       <div className="flex items-center justify-between px-6 py-3 border-b border-border bg-card">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={() => navigate("/library")}>
+          <Button variant="ghost" size="sm" onClick={handlePauseAndBack}>
             <Icon icon="arrow-left" /> Back to cAMP Clips
           </Button>
           <div>
