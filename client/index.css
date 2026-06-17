@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:is(.dark *));
+/* Disable dark mode entirely — app is light-only regardless of system preference */
+@custom-variant dark (&:is(.force-dark-never *));
 
 /*
  * cAMP Ascent 🏕️ — Forest/Outdoor Training Theme
@@ -104,6 +105,13 @@
   --color-chart-3: oklch(0.55 0.12 200);
   --color-chart-4: oklch(0.60 0.15 140);
   --color-chart-5: oklch(0.65 0.10 30);
+}
+
+/* Force light color-scheme even when user prefers dark */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: light only;
+  }
 }
 
 /* cAMP Ascent custom utility classes */
