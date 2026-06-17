@@ -29,7 +29,7 @@ export default function LibraryPage() {
         <div className="flex items-center gap-3 mb-2">
           <span className="text-3xl">🎬</span>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">cAMP Clips</h1>
+            <h1 className="text-2xl font-bold text-primary">cAMP Clips</h1>
             <p className="text-sm text-muted-foreground">
               Your training journey awaits. Watch each clip, answer Trail Markers, and earn your Ranger Report.
             </p>

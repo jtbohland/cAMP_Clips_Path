@@ -28,7 +28,7 @@ export default function XpProgressBar() {
 
   if (loading || !data) {
     return (
-      <div className="w-full rounded-xl border bg-card p-4 animate-pulse">
+      <div className="w-full rounded-xl bg-card p-4 animate-pulse shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
         <div className="h-6 bg-muted rounded w-1/3 mb-3" />
         <div className="h-4 bg-muted rounded-full w-full mb-2" />
         <div className="h-4 bg-muted rounded w-1/4" />
@@ -39,13 +39,13 @@ export default function XpProgressBar() {
   const { totalXp, tier, nextTier, progressPercent, badges, clipsCompleted } = data;
 
   return (
-    <div className="w-full rounded-xl border bg-card p-4 shadow-sm">
+    <div className="w-full rounded-xl bg-card p-4 shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
       {/* Tier & XP Header */}
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <span className="text-2xl">{tier.emoji}</span>
           <div>
-            <h3 className="text-sm font-semibold text-foreground">{tier.name}</h3>
+            <h3 className="text-sm font-semibold text-primary">{tier.name}</h3>
             <p className="text-xs text-muted-foreground">
               {clipsCompleted}/17 clips completed
             </p>
@@ -84,7 +84,7 @@ export default function XpProgressBar() {
 
       {/* Badges */}
       {badges.length > 0 && (
-        <div className="border-t pt-3">
+        <div className="border-t border-border/50 pt-3">
           <p className="text-xs font-medium text-muted-foreground mb-2">Badges Earned</p>
           <div className="flex flex-wrap gap-1.5">
             {badges.map((b) => {

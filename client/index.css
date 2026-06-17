@@ -4,64 +4,64 @@
 @custom-variant dark (&:is(.force-dark-never *));
 
 /*
- * cAMP Ascent 🏕️ — Forest/Outdoor Training Theme
- * Nature-inspired palette: deep evergreen, campfire amber, sky blue accents
+ * cAMP Ascent 🏕️ — Clean Modern Training Theme
+ * Off-white background, indigo accent, soft shadows, vibrant emoji pops
  */
 
 :root {
   color-scheme: light only;
 
   /* Base background and foreground */
-  --color-background: oklch(0.98 0.005 145);
-  --color-foreground: oklch(0.18 0.03 155);
+  --color-background: oklch(0.975 0 0);  /* #F8F8F8 — off-white */
+  --color-foreground: oklch(0.20 0.02 260);  /* Near-black with slight blue */
 
   /* Card and popover surfaces */
-  --color-card: oklch(0.99 0.003 145);
-  --color-card-foreground: oklch(0.18 0.03 155);
-  --color-popover: oklch(0.99 0.003 145);
-  --color-popover-foreground: oklch(0.18 0.03 155);
+  --color-card: oklch(1.0 0 0);  /* Pure white */
+  --color-card-foreground: oklch(0.20 0.02 260);
+  --color-popover: oklch(1.0 0 0);
+  --color-popover-foreground: oklch(0.20 0.02 260);
 
-  /* Primary: Deep Evergreen */
-  --color-primary: oklch(0.40 0.10 155);
-  --color-primary-foreground: oklch(0.98 0.005 145);
+  /* Primary: Indigo (#4F46E5) */
+  --color-primary: oklch(0.44 0.24 264);
+  --color-primary-foreground: oklch(0.99 0 0);
 
-  /* Secondary: Warm Stone */
-  --color-secondary: oklch(0.92 0.02 80);
-  --color-secondary-foreground: oklch(0.30 0.05 80);
+  /* Secondary: Soft lavender */
+  --color-secondary: oklch(0.95 0.02 264);
+  --color-secondary-foreground: oklch(0.35 0.15 264);
 
-  /* Accent: Campfire Amber */
-  --color-accent: oklch(0.75 0.15 65);
-  --color-accent-foreground: oklch(0.20 0.05 65);
+  /* Accent: Vibrant indigo (lighter shade for highlights) */
+  --color-accent: oklch(0.55 0.22 264);
+  --color-accent-foreground: oklch(0.99 0 0);
 
   /* Muted backgrounds */
-  --color-muted: oklch(0.94 0.01 145);
-  --color-muted-foreground: oklch(0.50 0.02 155);
+  --color-muted: oklch(0.96 0.005 260);
+  --color-muted-foreground: oklch(0.55 0.02 260);
 
-  /* Destructive: Forest Fire Red */
-  --color-destructive: oklch(0.55 0.20 25);
-  --color-destructive-foreground: oklch(0.98 0.005 25);
+  /* Destructive: Clean red */
+  --color-destructive: oklch(0.55 0.22 25);
+  --color-destructive-foreground: oklch(0.99 0 0);
 
   /* Border and input */
-  --color-border: oklch(0.88 0.02 145);
-  --color-input: oklch(0.88 0.02 145);
-  --color-ring: oklch(0.40 0.10 155);
+  --color-border: oklch(0.92 0.005 260);
+  --color-input: oklch(0.92 0.005 260);
+  --color-ring: oklch(0.44 0.24 264);
 
-  /* Sidebar: darker forest */
-  --color-sidebar: oklch(0.25 0.06 155);
-  --color-sidebar-foreground: oklch(0.92 0.01 145);
-  --color-sidebar-accent: oklch(0.35 0.08 155);
-  --color-sidebar-accent-foreground: oklch(0.95 0.005 145);
-  --color-sidebar-border: oklch(0.32 0.05 155);
-  --color-sidebar-ring: oklch(0.50 0.10 155);
-  --color-sidebar-primary: oklch(0.75 0.15 65);
-  --color-sidebar-primary-foreground: oklch(0.15 0.03 65);
+  /* Sidebar */
+  --color-sidebar: oklch(0.22 0.04 264);
+  --color-sidebar-foreground: oklch(0.95 0 0);
+  --color-sidebar-accent: oklch(0.32 0.08 264);
+  --color-sidebar-accent-foreground: oklch(0.95 0 0);
+  --color-sidebar-border: oklch(0.30 0.04 264);
+  --color-sidebar-ring: oklch(0.50 0.15 264);
+  --color-sidebar-primary: oklch(0.60 0.22 264);
+  --color-sidebar-primary-foreground: oklch(0.99 0 0);
 
   /* Chart colors */
-  --color-chart-1: oklch(0.40 0.10 155);
-  --color-chart-2: oklch(0.75 0.15 65);
-  --color-chart-3: oklch(0.55 0.12 200);
-  --color-chart-4: oklch(0.60 0.15 140);
-  --color-chart-5: oklch(0.65 0.10 30);
+  --color-chart-1: oklch(0.44 0.24 264);  /* Primary indigo */
+  --color-chart-2: oklch(0.60 0.20 150);  /* Emerald */
+  --color-chart-3: oklch(0.65 0.18 50);   /* Amber */
+  --color-chart-4: oklch(0.55 0.20 320);  /* Purple */
+  --color-chart-5: oklch(0.60 0.15 200);  /* Teal */
 
   /* Radius */
   --radius: 0.625rem;
@@ -70,41 +70,41 @@
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
 }
 
-/* Dark mode — forcibly neutralized; app is light-only (belt & suspenders) */
+/* Dark mode — forcibly neutralized; mirrors :root exactly */
 .dark {
   color-scheme: light;
-  --color-background: oklch(0.98 0.005 145);
-  --color-foreground: oklch(0.18 0.03 155);
-  --color-card: oklch(0.99 0.003 145);
-  --color-card-foreground: oklch(0.18 0.03 155);
-  --color-popover: oklch(0.99 0.003 145);
-  --color-popover-foreground: oklch(0.18 0.03 155);
-  --color-primary: oklch(0.40 0.10 155);
-  --color-primary-foreground: oklch(0.98 0.005 145);
-  --color-secondary: oklch(0.92 0.02 80);
-  --color-secondary-foreground: oklch(0.30 0.05 80);
-  --color-accent: oklch(0.75 0.15 65);
-  --color-accent-foreground: oklch(0.20 0.05 65);
-  --color-muted: oklch(0.94 0.01 145);
-  --color-muted-foreground: oklch(0.50 0.02 155);
-  --color-destructive: oklch(0.55 0.20 25);
-  --color-destructive-foreground: oklch(0.98 0.005 25);
-  --color-border: oklch(0.88 0.02 145);
-  --color-input: oklch(0.88 0.02 145);
-  --color-ring: oklch(0.40 0.10 155);
-  --color-sidebar: oklch(0.25 0.06 155);
-  --color-sidebar-foreground: oklch(0.92 0.01 145);
-  --color-sidebar-accent: oklch(0.35 0.08 155);
-  --color-sidebar-accent-foreground: oklch(0.95 0.005 145);
-  --color-sidebar-border: oklch(0.32 0.05 155);
-  --color-sidebar-ring: oklch(0.50 0.10 155);
-  --color-sidebar-primary: oklch(0.75 0.15 65);
-  --color-sidebar-primary-foreground: oklch(0.15 0.03 65);
-  --color-chart-1: oklch(0.40 0.10 155);
-  --color-chart-2: oklch(0.75 0.15 65);
-  --color-chart-3: oklch(0.55 0.12 200);
-  --color-chart-4: oklch(0.60 0.15 140);
-  --color-chart-5: oklch(0.65 0.10 30);
+  --color-background: oklch(0.975 0 0);
+  --color-foreground: oklch(0.20 0.02 260);
+  --color-card: oklch(1.0 0 0);
+  --color-card-foreground: oklch(0.20 0.02 260);
+  --color-popover: oklch(1.0 0 0);
+  --color-popover-foreground: oklch(0.20 0.02 260);
+  --color-primary: oklch(0.44 0.24 264);
+  --color-primary-foreground: oklch(0.99 0 0);
+  --color-secondary: oklch(0.95 0.02 264);
+  --color-secondary-foreground: oklch(0.35 0.15 264);
+  --color-accent: oklch(0.55 0.22 264);
+  --color-accent-foreground: oklch(0.99 0 0);
+  --color-muted: oklch(0.96 0.005 260);
+  --color-muted-foreground: oklch(0.55 0.02 260);
+  --color-destructive: oklch(0.55 0.22 25);
+  --color-destructive-foreground: oklch(0.99 0 0);
+  --color-border: oklch(0.92 0.005 260);
+  --color-input: oklch(0.92 0.005 260);
+  --color-ring: oklch(0.44 0.24 264);
+  --color-sidebar: oklch(0.22 0.04 264);
+  --color-sidebar-foreground: oklch(0.95 0 0);
+  --color-sidebar-accent: oklch(0.32 0.08 264);
+  --color-sidebar-accent-foreground: oklch(0.95 0 0);
+  --color-sidebar-border: oklch(0.30 0.04 264);
+  --color-sidebar-ring: oklch(0.50 0.15 264);
+  --color-sidebar-primary: oklch(0.60 0.22 264);
+  --color-sidebar-primary-foreground: oklch(0.99 0 0);
+  --color-chart-1: oklch(0.44 0.24 264);
+  --color-chart-2: oklch(0.60 0.20 150);
+  --color-chart-3: oklch(0.65 0.18 50);
+  --color-chart-4: oklch(0.55 0.20 320);
+  --color-chart-5: oklch(0.60 0.15 200);
 }
 
 /* Force light color-scheme even when user prefers dark */
@@ -117,15 +117,14 @@
 /* cAMP Ascent custom utility classes */
 @layer utilities {
   .camp-gradient {
-    background: linear-gradient(135deg, oklch(0.25 0.06 155), oklch(0.35 0.08 155));
+    background: linear-gradient(135deg, oklch(0.38 0.20 264), oklch(0.50 0.22 264));
   }
   .camp-glow {
-    box-shadow: 0 0 20px oklch(0.75 0.15 65 / 0.3);
+    box-shadow: 0 0 20px oklch(0.55 0.22 264 / 0.25);
   }
-  .forest-preserver {
-    color: oklch(0.45 0.15 145);
-  }
-  .fire-starter {
-    color: oklch(0.60 0.20 30);
+  .camp-card {
+    background: white;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    border: none;
   }
 }
