@@ -39,6 +39,13 @@ export const router = createBrowserRouter([
           })),
       },
       {
+        path: "/report/:clipId",
+        lazy: () =>
+          import("./pages/Report/index.js").then((mod) => ({
+            Component: mod.default,
+          })),
+      },
+      {
         path: "/xp",
         lazy: () =>
           import("./pages/XPlanation/index.js").then((mod) => ({

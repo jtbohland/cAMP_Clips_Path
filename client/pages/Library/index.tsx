@@ -107,6 +107,7 @@ export default function LibraryPage() {
                       xpEarned={clip.xpEarned ?? 0}
                       previousClipTitle={prevClip ? prevClip.title : undefined}
                       onWatch={() => navigate(`/watch/${clip.id}`)}
+                      onReview={() => navigate(`/report/${clip.id}`)}
                     />
                   );
                 })}
