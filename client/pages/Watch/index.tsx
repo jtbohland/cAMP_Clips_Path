@@ -345,7 +345,7 @@ export default function WatchPage() {
       <div className="flex items-center justify-between px-6 py-3 border-b border-border bg-card">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" onClick={() => navigate("/library")}>
-            <Icon icon="arrow-left" /> Back
+            <Icon icon="arrow-left" /> Back to cAMP Clips
           </Button>
           <div>
             <h2 className="text-sm font-bold text-foreground">

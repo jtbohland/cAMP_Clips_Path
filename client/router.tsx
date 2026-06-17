@@ -32,9 +32,16 @@ export const router = createBrowserRouter([
           })),
       },
       {
-        path: "/clip/:sortOrder",
+        path: "/clip/:clipId",
         lazy: () =>
           import("./pages/DeepLink/index.js").then((mod) => ({
+            Component: mod.default,
+          })),
+      },
+      {
+        path: "/report/:clipId",
+        lazy: () =>
+          import("./pages/Report/index.js").then((mod) => ({
             Component: mod.default,
           })),
       },

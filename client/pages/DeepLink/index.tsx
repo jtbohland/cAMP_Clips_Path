@@ -7,21 +7,18 @@ import { Button } from "@/components/ui/button";
 import { getClipEmoji } from "@/lib/clip-emojis";
 
 /**
- * Deep link route: /clip/:sortOrder
+ * Deep link route: /clip/:clipId
  * Routes learners based on their state:
- * - Not registered → Registration form (handled by App/Library) → then starts at Clip 1
+ * - Not registered → Registration (Library page) → then starts at Clip 1
  * - Registered, clip not unlocked → Message + link back to library
  * - Registered, clip unlocked → Straight into the video
  */
 export default function DeepLinkPage() {
-  const { sortOrder } = useParams<{ sortOrder: string }>();
+  const { clipId } = useParams<{ clipId: string }>();
   const navigate = useNavigate();
   const { viewer } = useViewer();
 
-  const sortNum = parseInt(sortOrder ?? "1", 10);
-
   // If not registered, redirect to library (which shows registration form)
-  // After registration, they’ll start at Clip 1 per spec
   useEffect(() => {
     if (!viewer) {
       navigate("/", { replace: true });
@@ -48,7 +45,7 @@ export default function DeepLinkPage() {
   }
 
   const clips = data.clips ?? [];
-  const targetClip = clips.find((c: any) => c.sortOrder === sortNum);
+  const targetClip = clips.find((c: any) => c.id === clipId);
 
   if (!targetClip) {
     return (
@@ -57,7 +54,7 @@ export default function DeepLinkPage() {
           <span className="text-4xl mb-3 block">❌</span>
           <h2 className="text-lg font-bold mb-2">Clip Not Found</h2>
           <p className="text-sm text-muted-foreground mb-4">
-            There is no clip #{sortNum} in the program.
+            This clip doesn't exist in the program.
           </p>
           <Link to="/library">
             <Button variant="default">Back to Library</Button>
@@ -67,8 +64,7 @@ export default function DeepLinkPage() {
     );
   }
 
-  // Check if this clip is unlocked
-  const isUnlocked = (targetClip as any)?.unlocked === true;
+  const isUnlocked = targetClip.unlocked === true;
   const isAdmin = viewer?.isAdmin === true;
 
   // If unlocked or admin, go straight to video
@@ -80,9 +76,12 @@ export default function DeepLinkPage() {
 
   // If we're still here, clip is locked
   if (!isUnlocked && !isAdmin) {
-    // Find the previous clip the learner needs to complete
-    const prevClip = clips.find((c: any) => c.sortOrder === sortNum - 1);
-    const prevTitle = prevClip ? `${getClipEmoji(prevClip.sortOrder)} Day ${prevClip.sortOrder}: ${prevClip.title}` : "the previous clip";
+    const prevClip = clips.find(
+      (c: any) => c.sortOrder === targetClip.sortOrder - 1
+    );
+    const prevTitle = prevClip
+      ? `${getClipEmoji(prevClip.sortOrder)} Day ${prevClip.sortOrder}: ${prevClip.title}`
+      : "the previous clip";
 
     return (
       <div className="flex items-center justify-center h-full p-6">

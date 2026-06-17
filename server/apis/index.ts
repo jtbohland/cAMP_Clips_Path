@@ -10,6 +10,7 @@ import GetAnalyticsV2 from './v2/get-analytics.js';
 import GetClipForWatching from './v2/get-clip-for-watching.js';
 import GetClipLibrary from './v2/get-clip-library.js';
 import GetClipQuestions from './v2/get-clip-questions.js';
+import GetClipReport from './v2/get-clip-report.js';
 import GetLearnerProgress from './v2/get-learner-progress.js';
 import GetViewers from './v2/get-viewers.js';
 import GetWeatherStorm from './v2/get-weather-storm.js';
@@ -37,6 +38,7 @@ const apis = {
   GetClipForWatching,
   GetClipLibrary,
   GetClipQuestions,
+  GetClipReport,
   GetLearnerProgress,
   GetViewers,
   GetWeatherStorm,

@@ -1,5 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { getClipEmoji } from "@/lib/clip-emojis";
+import { toast } from "sonner";
+import { useCallback } from "react";
 
 type ClipLibraryCardProps = {
   clip: {
@@ -66,6 +68,16 @@ export default function ClipLibraryCard({
 }: ClipLibraryCardProps) {
   const state = getClipState(isLocked, isCompleted, attempts);
   const emoji = getClipEmoji(clip.sortOrder);
+
+  const handleShare = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    const deepLink = `${window.location.origin}/clip/${clip.id}`;
+    navigator.clipboard.writeText(deepLink).then(() => {
+      toast.success("Link copied!");
+    }).catch(() => {
+      toast.error("Failed to copy link");
+    });
+  }, [clip.id]);
 
   const statusBadge = () => {
     switch (state) {
@@ -152,7 +164,16 @@ export default function ClipLibraryCard({
               {getWeekLabel(clip.sortOrder)} · {getDayLabel(clip.sortOrder)}
             </span>
           </div>
-          {statusBadge()}
+          <div className="flex items-center gap-2">
+            {statusBadge()}
+            <button
+              onClick={handleShare}
+              className="p-1 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+              title="Copy share link"
+            >
+              🔗
+            </button>
+          </div>
         </div>
 
         {/* Title */}
