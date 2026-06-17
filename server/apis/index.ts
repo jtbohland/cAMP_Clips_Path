@@ -11,10 +11,12 @@ import GetClipForWatching from './v2/get-clip-for-watching.js';
 import GetClipLibrary from './v2/get-clip-library.js';
 import GetClipQuestions from './v2/get-clip-questions.js';
 import GetClipReport from './v2/get-clip-report.js';
+import GetPausedSession from './v2/get-paused-session.js';
 import GetLearnerProgress from './v2/get-learner-progress.js';
 import GetViewers from './v2/get-viewers.js';
 import GetWeatherStorm from './v2/get-weather-storm.js';
 import LookupViewer from './v2/lookup-viewer.js';
+import PauseSession from './v2/pause-session.js';
 import RegisterViewer from './v2/register-viewer.js';
 import SaveClip from './v2/save-clip.js';
 import SaveQuestions from './v2/save-questions.js';
@@ -39,10 +41,12 @@ const apis = {
   GetClipLibrary,
   GetClipQuestions,
   GetClipReport,
+  GetPausedSession,
   GetLearnerProgress,
   GetViewers,
   GetWeatherStorm,
   LookupViewer,
+  PauseSession,
   RegisterViewer,
   SaveClip,
   SaveQuestions,
