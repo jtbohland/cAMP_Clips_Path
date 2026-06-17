@@ -92,16 +92,23 @@ export default function LibraryPage() {
 
               {/* Clips in this week */}
               <div className="flex flex-col gap-3">
-                {week.clips.map((clip: any) => (
-                  <ClipLibraryCard
-                    key={clip.id}
-                    clip={clip}
-                    isLocked={!clip.unlocked}
-                    isCompleted={clip.completed}
-                    score={clip.bestScore}
-                    onWatch={() => navigate(`/watch/${clip.id}`)}
-                  />
-                ))}
+                {week.clips.map((clip: any, idx: number) => {
+                  // Find previous clip in overall list for lock message
+                  const overallIdx = clips.findIndex((c: any) => c.id === clip.id);
+                  const prevClip = overallIdx > 0 ? clips[overallIdx - 1] : undefined;
+                  return (
+                    <ClipLibraryCard
+                      key={clip.id}
+                      clip={clip}
+                      isLocked={!clip.unlocked}
+                      isCompleted={clip.completed}
+                      score={clip.bestScore}
+                      attempts={clip.attempts ?? 0}
+                      previousClipTitle={prevClip ? prevClip.title : undefined}
+                      onWatch={() => navigate(`/watch/${clip.id}`)}
+                    />
+                  );
+                })}
               </div>
             </section>
           ) : null
