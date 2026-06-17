@@ -8,6 +8,8 @@
  */
 
 :root {
+  color-scheme: light only;
+
   /* Base background and foreground */
   --color-background: oklch(0.98 0.005 145);
   --color-foreground: oklch(0.18 0.03 155);
@@ -67,8 +69,9 @@
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
 }
 
-/* Dark mode */
+/* Dark mode — forcibly neutralized; app is light-only */
 .dark {
+  color-scheme: light;
   --color-background: oklch(0.15 0.03 155);
   --color-foreground: oklch(0.92 0.01 145);
   --color-card: oklch(0.20 0.03 155);
