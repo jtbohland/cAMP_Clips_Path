@@ -51,8 +51,8 @@ export default function ClipLibraryCard({
     <Card
       className={`p-4 transition-all duration-200 ${
         isLocked
-          ? "opacity-60 border-border"
-          : "hover:shadow-md hover:border-primary/30 cursor-pointer border-border"
+          ? "opacity-60"
+          : "hover:shadow-md cursor-pointer"
       }`}
       onClick={!isLocked ? onWatch : undefined}
     >

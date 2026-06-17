@@ -7,12 +7,18 @@ export default function TopNav() {
   const navigate = useNavigate();
   const location = useLocation();
   const { viewer, logout } = useViewer();
-  const isAdmin = viewer?.isAdmin === true;
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path + "/");
+
+  const tabs = [
+    { path: "/library", label: "Clips", emoji: "🎬" },
+    { path: "/xp", label: "XP-lanation", emoji: "✨" },
+    { path: "/analytics", label: "Analytics", emoji: "📊" },
+    { path: "/admin", label: "Admin", emoji: "⚙️" },
+  ];
 
   return (
-    <header className="flex items-center justify-between px-6 py-3 border-b border-border bg-card shadow-sm">
+    <header className="flex items-center justify-between px-6 py-3 bg-card shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
       {/* Logo / Brand */}
       <div
         className="flex items-center gap-2 cursor-pointer select-none"
@@ -27,46 +33,22 @@ export default function TopNav() {
         </span>
       </div>
 
-      {/* Navigation links */}
+      {/* Navigation tabs */}
       <nav className="flex items-center gap-1">
-        <Button
-          variant={isActive("/library") || isActive("/") ? "default" : "ghost"}
-          size="sm"
-          onClick={() => navigate("/library")}
-        >
-          <span className="mr-1">🎞️</span>
-          Clips
-        </Button>
-
-        <Button
-          variant={isActive("/xp") ? "default" : "ghost"}
-          size="sm"
-          onClick={() => navigate("/xp")}
-        >
-          <span className="mr-1">🔭</span>
-          XP-lanation
-        </Button>
-
-        {isAdmin && (
-          <>
-            <Button
-              variant={isActive("/analytics") ? "default" : "ghost"}
-              size="sm"
-              onClick={() => navigate("/analytics")}
-            >
-              <span className="mr-1">📊</span>
-              Analytics
-            </Button>
-            <Button
-              variant={isActive("/admin") ? "default" : "ghost"}
-              size="sm"
-              onClick={() => navigate("/admin")}
-            >
-              <span className="mr-1">⚙️</span>
-              Admin
-            </Button>
-          </>
-        )}
+        {tabs.map((tab) => (
+          <button
+            key={tab.path}
+            onClick={() => navigate(tab.path)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+              isActive(tab.path)
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted"
+            }`}
+          >
+            <span>{tab.emoji}</span>
+            {tab.label}
+          </button>
+        ))}
       </nav>
 
       {/* User info */}
