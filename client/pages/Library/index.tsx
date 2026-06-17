@@ -18,6 +18,20 @@ export default function LibraryPage() {
 
   const clips = useMemo(() => data?.clips ?? [], [data]);
 
+  const weekGroups = useMemo(() => {
+    const weeks = [
+      { label: "Week 2", emoji: "🥾", min: 1, max: 4 },
+      { label: "Week 3", emoji: "🏞️", min: 5, max: 9 },
+      { label: "Week 4", emoji: "🧗🏻‍♂️", min: 10, max: 17 },
+    ];
+    return weeks.map((week) => ({
+      ...week,
+      clips: clips.filter(
+        (c: any) => c.sortOrder >= week.min && c.sortOrder <= week.max
+      ),
+    }));
+  }, [clips]);
+
   // Show registration if no viewer
   if (!viewerLoading && !viewer) {
     return <RegistrationForm />;
@@ -64,18 +78,34 @@ export default function LibraryPage() {
         </div>
       </div>
 
-      {/* Clip list */}
-      <div className="flex flex-col gap-3">
-        {clips.map((clip: any) => (
-          <ClipLibraryCard
-            key={clip.id}
-            clip={clip}
-            isLocked={!clip.unlocked}
-            isCompleted={clip.completed}
-            score={clip.bestScore}
-            onWatch={() => navigate(`/watch/${clip.id}`)}
-          />
-        ))}
+      {/* Clip list grouped by week */}
+      <div className="flex flex-col gap-6">
+        {weekGroups.map((week) =>
+          week.clips.length > 0 ? (
+            <section key={week.label}>
+              {/* Week header */}
+              <div className="flex items-center gap-3 mb-3">
+                <span className="text-2xl">{week.emoji}</span>
+                <h2 className="text-lg font-bold text-foreground">{week.label}</h2>
+              </div>
+              <div className="border-b border-border/50 mb-4" />
+
+              {/* Clips in this week */}
+              <div className="flex flex-col gap-3">
+                {week.clips.map((clip: any) => (
+                  <ClipLibraryCard
+                    key={clip.id}
+                    clip={clip}
+                    isLocked={!clip.unlocked}
+                    isCompleted={clip.completed}
+                    score={clip.bestScore}
+                    onWatch={() => navigate(`/watch/${clip.id}`)}
+                  />
+                ))}
+              </div>
+            </section>
+          ) : null
+        )}
       </div>
 
       {clips.length === 0 && (

@@ -66,7 +66,7 @@ export default function ClipLibraryCard({
           </div>
 
           <div className="flex flex-col gap-1 min-w-0">
-            <h3 className="text-sm font-semibold text-foreground leading-tight truncate">
+            <h3 className="text-sm font-semibold text-foreground leading-tight">
               {clip.title}
             </h3>
             {clip.durationSeconds && (
