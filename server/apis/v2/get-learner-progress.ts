@@ -29,6 +29,11 @@ export default api({
 
   output: z.object({
     totalXp: z.number(),
+    xpBreakdown: z.object({
+      base: z.number(),
+      milestones: z.number(),
+      bonuses: z.number(),
+    }),
     tier: z.object({
       tier: z.number(),
       name: z.string(),
@@ -50,17 +55,30 @@ export default api({
   }),
 
   async run(ctx, { viewerId }) {
-    // Get total XP
-    const XpSumSchema = z.object({ total_xp: z.coerce.number() });
-    const xpResult = await ctx.integrations.db.query(
-      `SELECT COALESCE(SUM(xp_amount), 0)::int as total_xp 
-       FROM cliptracker_v2_xp_events 
-       WHERE viewer_id = $1`,
-      XpSumSchema,
+    // Get total XP + breakdown by category
+    const XpBreakdownSchema = z.object({
+      event_type: z.string(),
+      type_xp: z.coerce.number(),
+    });
+    const xpRows = await ctx.integrations.db.query(
+      `SELECT event_type, COALESCE(SUM(xp_amount), 0)::int as type_xp
+       FROM cliptracker_v2_xp_events
+       WHERE viewer_id = $1
+       GROUP BY event_type`,
+      XpBreakdownSchema,
       [viewerId],
-      { label: "Get total XP" }
+      { label: "Get XP breakdown by category" }
     );
-    const totalXp = xpResult[0]?.total_xp ?? 0;
+    const xpByType: Record<string, number> = {};
+    for (const row of xpRows) {
+      xpByType[row.event_type] = row.type_xp;
+    }
+    const totalXp = (xpByType.base ?? 0) + (xpByType.milestone ?? 0) + (xpByType.performance ?? 0);
+    const xpBreakdown = {
+      base: xpByType.base ?? 0,
+      milestones: xpByType.milestone ?? 0,
+      bonuses: xpByType.performance ?? 0,
+    };
 
     // Get badges
     const BadgeRowSchema = z.object({
@@ -118,6 +136,7 @@ export default api({
 
     return {
       totalXp,
+      xpBreakdown,
       tier: currentTier,
       nextTier,
       progressPercent,
