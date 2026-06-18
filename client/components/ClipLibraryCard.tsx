@@ -2,7 +2,6 @@ import { getClipEmoji } from "@/lib/clip-emojis";
 import { toast } from "sonner";
 import { useCallback } from "react";
 
-
 type ClipLibraryCardProps = {
   clip: {
     id: string;
@@ -43,13 +42,6 @@ function formatDuration(seconds: number | null): string {
 
 /** Extract the session title without the "Day X:" prefix */
 function getSessionTitle(title: string): string {
-  const match = title.match(/^Day \d+\w?:\s*(.+)$/);
-  return match ? match[1] : title;
-}
-
-/** Extract previous clip short name for lock message */
-function getPreviousClipShortName(title: string | undefined): string {
-  if (!title) return "";
   const match = title.match(/^Day \d+\w?:\s*(.+)$/);
   return match ? match[1] : title;
 }

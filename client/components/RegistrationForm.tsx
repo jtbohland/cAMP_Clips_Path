@@ -6,13 +6,15 @@ import { toast } from "sonner";
 import { FIRST_CLIP_ID } from "@/lib/constants";
 
 const ROLES = [
-  "SDR",
+  "Account Executive",
   "Velocity AE",
-  "Emerging AE",
+  "Partner Sales Manager",
   "Majors AE",
+  "Emerging AE",
   "Strategic AE",
-  "PSM",
   "Renewals",
+  "PSM",
+  "Admin",
 ] as const;
 
 function getTodayString(): string {
