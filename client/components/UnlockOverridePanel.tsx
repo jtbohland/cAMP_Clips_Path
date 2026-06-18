@@ -49,7 +49,7 @@ export default function UnlockOverridePanel({ clips }: { clips: ClipInfo[] }) {
           <Icon icon="unlock" className="h-4 w-4" />
           Manual Unlock Override
         </h3>
-        <p className="text-xs text-muted-foreground mb-4">
+        <p className="text-xs text-gray-500 mb-4">
           Unlock a specific clip for a viewer regardless of their current progress.
         </p>
 
@@ -101,9 +101,9 @@ export default function UnlockOverridePanel({ clips }: { clips: ClipInfo[] }) {
           <h3 className="font-semibold text-sm mb-3">Registered Viewers ({viewers.length})</h3>
           <div className="space-y-1 max-h-64 overflow-auto">
             {viewers.map((v: any) => (
-              <div key={v.id} className="flex items-center justify-between py-1 px-2 rounded hover:bg-muted text-xs">
+              <div key={v.id} className="flex items-center justify-between py-1 px-2 rounded hover:bg-gray-50 text-xs">
                 <span>{v.name}</span>
-                <span className="text-muted-foreground">{v.email} • {v.role}</span>
+                <span className="text-gray-500">{v.email} • {v.role}</span>
               </div>
             ))}
           </div>

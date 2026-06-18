@@ -149,9 +149,9 @@ export default function QuestionEditor({ clips }: { clips: ClipInfo[] }) {
 
       {/* Bulk upload */}
       {showBulkUpload && (
-        <Card className="p-4 border-primary/30">
+        <Card className="p-4 border-[#4F46E5]/30">
           <Label className="text-xs">Paste questions in bulk format:</Label>
-          <p className="text-xs text-muted-foreground mb-2">
+          <p className="text-xs text-gray-500 mb-2">
             Format (separate questions with blank line):<br/>
             Q: Question text<br/>
             A: Option 1, Option 2, Option 3, Option 4<br/>
@@ -175,7 +175,7 @@ export default function QuestionEditor({ clips }: { clips: ClipInfo[] }) {
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 space-y-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-muted-foreground">#{idx + 1}</span>
+                    <span className="text-xs font-bold text-gray-500">#{idx + 1}</span>
                     {q.isRecovery && <Badge variant="secondary" className="text-[10px]">Recovery</Badge>}
                   </div>
                   <Input
@@ -244,5 +244,5 @@ export default function QuestionEditor({ clips }: { clips: ClipInfo[] }) {
 }
 
 function Badge({ variant, className, children }: { variant?: string; className?: string; children: React.ReactNode }) {
-  return <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium bg-muted text-muted-foreground ${className}`}>{children}</span>;
+  return <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium bg-gray-50 text-gray-500 ${className}`}>{children}</span>;
 }

@@ -58,8 +58,8 @@ export default function ReportPage() {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="flex flex-col items-center gap-3">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-          <p className="text-sm text-muted-foreground">Loading Ranger Report…</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4F46E5]" />
+          <p className="text-sm text-gray-500">Loading Ranger Report…</p>
         </div>
       </div>
     );
@@ -88,7 +88,7 @@ export default function ReportPage() {
         <Button
           variant="ghost"
           onClick={() => navigate("/library")}
-          className="text-sm font-medium text-muted-foreground hover:text-foreground"
+          className="text-sm font-medium text-gray-500 hover:text-foreground"
         >
           ← Back to cAMP Clips
         </Button>
@@ -98,8 +98,8 @@ export default function ReportPage() {
         {/* Header */}
         <div className="text-center">
           <span className="text-4xl block mb-2">📋</span>
-          <h1 className="text-2xl font-bold text-primary">Ranger Report</h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <h1 className="text-2xl font-bold text-[#4F46E5]">Ranger Report</h1>
+          <p className="text-sm text-gray-500 mt-1">
             {emoji} Clip {clipSortOrder}: {clipTitle}
           </p>
         </div>
@@ -108,22 +108,22 @@ export default function ReportPage() {
         <Card className="p-5">
           <div className="flex items-center justify-around">
             <div className="text-center">
-              <div className={`text-4xl font-bold ${engagementScore === null ? "text-muted-foreground" : passed ? "text-green-600" : "text-red-500"}`}>
+              <div className={`text-4xl font-bold ${engagementScore === null ? "text-gray-500" : passed ? "text-green-600" : "text-red-500"}`}>
                 {engagementScore !== null ? `${engagementScore}%` : "—"}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-xs text-gray-500 mt-1">
                 Engagement Score
               </p>
-              <p className="text-[10px] text-muted-foreground">
+              <p className="text-[10px] text-gray-500">
                 {engagementThreshold}% threshold
               </p>
             </div>
             <div className="h-14 w-px bg-border" />
             <div className="text-center">
-              <div className="text-3xl font-bold text-foreground">
+              <div className="text-3xl font-bold text-gray-900">
                 {correctAnswers}/{totalQuestions}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">Trail Markers</p>
+              <p className="text-xs text-gray-500 mt-1">Trail Markers</p>
             </div>
           </div>
         </Card>
@@ -133,20 +133,20 @@ export default function ReportPage() {
           <Card className="p-5">
             <div className="flex items-center gap-2 mb-3">
               <span className="text-xl">⛈️</span>
-              <h2 className="text-base font-bold text-foreground">Weather the Storm</h2>
+              <h2 className="text-base font-bold text-gray-900">Weather the Storm</h2>
             </div>
-            <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
+            <p className="text-sm text-gray-500 mb-4 leading-relaxed">
               {weatherCard.overview}
             </p>
             {weatherCard.takeaways.length > 0 && (
               <div>
-                <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">
                   Key Takeaways
                 </h3>
                 <ul className="space-y-1.5">
                   {weatherCard.takeaways.map((takeaway: string, i: number) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-foreground">
-                      <span className="text-primary font-bold mt-0.5">•</span>
+                    <li key={i} className="flex items-start gap-2 text-sm text-gray-900">
+                      <span className="text-[#4F46E5] font-bold mt-0.5">•</span>
                       <span>{takeaway}</span>
                     </li>
                   ))}
@@ -160,20 +160,20 @@ export default function ReportPage() {
         <Card className="p-5">
           <div className="flex items-center gap-2 mb-3">
             <span className="text-xl">✨</span>
-            <h2 className="text-base font-bold text-foreground">XP Earned</h2>
-            <span className="ml-auto text-lg font-bold text-primary">+{totalXpEarned} XP</span>
+            <h2 className="text-base font-bold text-gray-900">XP Earned</h2>
+            <span className="ml-auto text-lg font-bold text-[#4F46E5]">+{totalXpEarned} XP</span>
           </div>
           {xpEvents.length > 0 ? (
             <div className="space-y-1.5">
               {xpEvents.map((event, i) => (
                 <div key={i} className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">{formatEventType(event.eventType)}</span>
-                  <span className="font-medium text-foreground">+{event.xpAmount} XP</span>
+                  <span className="text-gray-500">{formatEventType(event.eventType)}</span>
+                  <span className="font-medium text-gray-900">+{event.xpAmount} XP</span>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">No XP events recorded yet.</p>
+            <p className="text-sm text-gray-500">No XP events recorded yet.</p>
           )}
         </Card>
 
@@ -182,7 +182,7 @@ export default function ReportPage() {
           <Card className="p-5">
             <div className="flex items-center gap-2 mb-3">
               <span className="text-xl">🏅</span>
-              <h2 className="text-base font-bold text-foreground">Badges Earned</h2>
+              <h2 className="text-base font-bold text-gray-900">Badges Earned</h2>
             </div>
             <div className="flex flex-wrap gap-2">
               {badges.map((badge) => {
@@ -190,7 +190,7 @@ export default function ReportPage() {
                 return (
                   <span
                     key={badge.badgeId}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-sm font-medium text-primary"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#4F46E5]/10 text-sm font-medium text-[#4F46E5]"
                   >
                     <span>{info.emoji}</span>
                     <span>{info.name}</span>

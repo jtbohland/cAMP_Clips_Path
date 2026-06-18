@@ -97,13 +97,13 @@ function ClipManagement({ data, loading, fetching, refetch, showAddForm, setShow
   return (
     <div className="space-y-4 h-full overflow-auto">
       <div className="flex justify-between items-center">
-        <p className="text-sm text-muted-foreground">{clips.length} clips</p>
+        <p className="text-sm text-gray-500">{clips.length} clips</p>
         <Button onClick={() => { setShowAddForm(true); setEditingClipId(null); }}>
           <Icon icon="plus" className="h-4 w-4 mr-1" /> Add Clip
         </Button>
       </div>
 
-      {fetching && !loading && <div className="text-xs text-muted-foreground">Updating…</div>}
+      {fetching && !loading && <div className="text-xs text-gray-500">Updating…</div>}
 
       {(showAddForm || editingClipId) && (
         <ClipForm
@@ -118,12 +118,12 @@ function ClipManagement({ data, loading, fetching, refetch, showAddForm, setShow
         {clips.map((clip: any) => (
           <Card key={clip.id} className="p-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-7 w-7 items-center justify-center rounded bg-muted text-xs font-bold">
+              <div className="flex h-7 w-7 items-center justify-center rounded bg-gray-50 text-xs font-bold">
                 {clip.sortOrder}
               </div>
               <div>
                 <p className="font-medium text-sm">{clip.title}</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-gray-500">
                   {clip.questionCount} questions • {clip.durationSeconds ? `${Math.floor(clip.durationSeconds / 60)}m` : "No duration"}
                 </p>
               </div>
@@ -178,7 +178,7 @@ function ClipForm({ clipId, clips, onSaved, onCancel }: { clipId: string | null;
   }, [clipId, title, videoUrl, duration, sortOrder, status, transcript, saveClip, onSaved]);
 
   return (
-    <Card className="p-4 border-primary/30">
+    <Card className="p-4 border-[#4F46E5]/30">
       <form onSubmit={handleSubmit} className="space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="font-semibold text-sm">{clipId ? "Edit Clip" : "New Clip"}</h3>
