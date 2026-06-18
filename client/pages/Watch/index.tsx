@@ -71,6 +71,9 @@ export default function WatchPage() {
   // B3-4: Transcript panel
   const [showTranscript, setShowTranscript] = useState(false);
 
+  // B6-6: Store elapsed time when trail marker fires for resume
+  const [trailMarkerPauseTime, setTrailMarkerPauseTime] = useState<number | null>(null);
+
   // B3-2: Track if we already auto-triggered end
   const autoEndedRef = useRef(false);
 
@@ -278,6 +281,7 @@ export default function WatchPage() {
     if (nextUnanswered) {
       const idx = trailMarkers.indexOf(nextUnanswered);
       setCurrentQuestionIdx(idx);
+      setTrailMarkerPauseTime(elapsedSeconds);
       setPhase("trail_marker");
     }
   }, [elapsedSeconds, phase, trailMarkers, answeredQuestions]);
@@ -327,6 +331,8 @@ export default function WatchPage() {
   );
 
   const handleTrailMarkerContinue = useCallback(() => {
+    // B6-6: trailMarkerPauseTime is preserved so the iframe URL
+    // gets the #t= fragment appended on next render
     setPhase("watching");
   }, []);
 
@@ -520,6 +526,7 @@ export default function WatchPage() {
       <ResumePrompt
         clipTitle={`${getClipEmoji(clip.sortOrder)} Clip ${clip.sortOrder}: ${clip.title}`}
         elapsedSeconds={pausedSessionData.elapsedSeconds}
+        durationSeconds={clip.durationSeconds}
         answeredCount={pausedSessionData.answeredQuestionIds.length}
         totalQuestions={trailMarkers.length}
         onResume={handleResume}
@@ -585,7 +592,7 @@ export default function WatchPage() {
           {clip.videoUrl ? (
             <iframe
               ref={videoRef}
-              src={phase === "trail_marker" ? "" : convertToEmbedUrl(clip.videoUrl)}
+              src={phase === "trail_marker" ? "" : convertToEmbedUrl(clip.videoUrl, trailMarkerPauseTime)}
               className="absolute inset-0 w-full h-full"
               allow="autoplay; fullscreen"
               allowFullScreen
@@ -672,7 +679,7 @@ export default function WatchPage() {
           overview={clipData.weatherStorm.overview}
           takeaways={clipData.weatherStorm.takeaways}
           timerMinutes={clipData.weatherStorm.timerMinutes}
-          clipTitle={clip.title}
+          clipTitle={`${getClipEmoji(clip.sortOrder)} ${clip.title}`}
           onTimerExpire={handleWeatherExpire}
         />
       )}
@@ -680,11 +687,18 @@ export default function WatchPage() {
   );
 }
 
-/** Convert a Google Drive share link to embeddable preview URL */
-function convertToEmbedUrl(url: string): string {
+/** Convert a Google Drive share link to embeddable preview URL.
+ *  When resumeAtSeconds is provided, appends #t=<s> so the player
+ *  starts near the correct position after a Trail Marker dismissal.
+ */
+function convertToEmbedUrl(url: string, resumeAtSeconds?: number | null): string {
   const match = url.match(/\/file\/d\/([^/]+)/);
+  let embedUrl = url;
   if (match) {
-    return `https://drive.google.com/file/d/${match[1]}/preview`;
+    embedUrl = `https://drive.google.com/file/d/${match[1]}/preview`;
   }
-  return url;
+  if (resumeAtSeconds && resumeAtSeconds > 0) {
+    embedUrl += `#t=${resumeAtSeconds}`;
+  }
+  return embedUrl;
 }

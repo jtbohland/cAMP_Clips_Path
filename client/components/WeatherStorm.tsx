@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
-import { Icon } from "@/components/ui/icon";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 type WeatherStormProps = {
@@ -64,7 +63,7 @@ export default function WeatherStorm({
                     : "text-gray-500 hover:text-gray-900"
                 }`}
               >
-                <Icon icon="arrow-left" /> Back to cAMP Clips
+                ← Back to cAMP Clips
               </button>
             </TooltipTrigger>
             {secondsLeft > 0 && (
@@ -82,7 +81,7 @@ export default function WeatherStorm({
             <h2 className="text-lg font-bold text-gray-900">Weather the Storm</h2>
           </div>
           <div className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-full">
-            <Icon icon="clock" />
+            <span>⏱️</span>
             <span className="text-sm font-mono font-bold text-gray-900">
               {minutes}:{seconds.toString().padStart(2, "0")}
             </span>
@@ -106,7 +105,7 @@ export default function WeatherStorm({
 
         {/* Key Takeaways */}
         <h3 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
-          <Icon icon="list" /> Key Takeaways
+          🔑 Key Takeaways
         </h3>
         <ul className="space-y-2 mb-5">
           {takeaways.map((item, idx) => (
@@ -129,8 +128,8 @@ export default function WeatherStorm({
 
         {secondsLeft === 0 && (
           <div className="flex justify-center mt-4">
-            <Button onClick={onTimerExpire}>
-              <Icon icon="arrow-right" /> Continue
+            <Button className="bg-[#4F46E5] hover:bg-[#4338CA] text-white" onClick={onTimerExpire}>
+              Continue →
             </Button>
           </div>
         )}

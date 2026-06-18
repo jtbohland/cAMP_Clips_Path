@@ -1,44 +1,72 @@
 type ResumePromptProps = {
   clipTitle: string;
   elapsedSeconds: number;
+  durationSeconds: number | null;
   answeredCount: number;
   totalQuestions: number;
   onResume: () => void;
   onStartFresh: () => void;
 };
 
+function formatTime(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+function formatDuration(seconds: number): string {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m`;
+}
+
 export default function ResumePrompt({
   clipTitle,
   elapsedSeconds,
+  durationSeconds,
   answeredCount,
   totalQuestions,
   onResume,
   onStartFresh,
 }: ResumePromptProps) {
-  const minutes = Math.floor(elapsedSeconds / 60);
-  const seconds = elapsedSeconds % 60;
-  const timeStr = `${minutes}:${seconds.toString().padStart(2, "0")}`;
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
       <div className="w-full max-w-md mx-4 rounded-2xl bg-white p-6 shadow-2xl">
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-4">
-          <span className="text-3xl">⏸️</span>
-          <h2 className="text-xl font-bold text-gray-900">Resume Your Session?</h2>
-        </div>
+        {/* "You paused" — small muted centered */}
+        <p className="text-sm text-gray-500 text-center mb-1">You paused</p>
 
-        {/* Stats card */}
+        {/* Clip title — bold, centered, own line */}
+        <h2 className="text-lg font-bold text-gray-900 text-center mb-5">{clipTitle}</h2>
+
+        {/* Stats card with divider between two rows */}
         <div className="rounded-xl bg-gray-50 border border-gray-200 p-4 mb-6">
-          <p className="text-sm text-gray-700 leading-relaxed">
-            You paused <span className="font-semibold text-gray-900">{clipTitle}</span>{" "}
-            <span className="font-mono text-indigo-600 font-semibold">{timeStr}</span> in,
-            with{" "}
-            <span className="font-semibold text-gray-900">
-              {answeredCount}/{totalQuestions}
-            </span>{" "}
-            Trail Markers answered.
-          </p>
+          {/* Row 1: Time elapsed */}
+          <div className="flex items-center gap-2 text-sm text-gray-700">
+            <span>⏱️</span>
+            <span>
+              <span className="font-mono font-semibold text-indigo-600">{formatTime(elapsedSeconds)}</span>
+              {durationSeconds ? (
+                <span className="text-gray-500"> of {formatDuration(durationSeconds)} complete</span>
+              ) : (
+                <span className="text-gray-500"> elapsed</span>
+              )}
+            </span>
+          </div>
+
+          {/* Divider */}
+          <div className="border-t border-gray-200 my-3" />
+
+          {/* Row 2: Trail Markers */}
+          <div className="flex items-center gap-2 text-sm text-gray-700">
+            <span>🪧</span>
+            <span>
+              <span className="font-semibold text-gray-900">{answeredCount}</span>
+              <span className="text-gray-500"> of </span>
+              <span className="font-semibold text-gray-900">{totalQuestions}</span>
+              <span className="text-gray-500"> Trail Markers answered</span>
+            </span>
+          </div>
         </div>
 
         {/* Actions */}

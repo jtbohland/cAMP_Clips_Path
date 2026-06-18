@@ -16,7 +16,7 @@ const BASE_XP = [
   { action: "Trail Markers: 3/5", xp: 1, emoji: "🪧", description: "Passing on questions" },
   { action: "First-pass unlock", xp: 4, emoji: "✅", description: "Pass engagement without S&R" },
   { action: "Pass Search & Rescue", xp: 2, emoji: "🚁", description: "Score ≥80% on recovery questions" },
-  { action: "Complete Weather the Storm", xp: 1, emoji: "⛈️", description: "Wait out the 5-min review" },
+  { action: "Complete Weather the Storm", xp: 1, emoji: "⛈️", description: "Wait out the 3-min review" },
 ];
 
 const PERFORMANCE_BONUSES = [
@@ -54,8 +54,8 @@ export default function XPlanationPage() {
   const earnedBadgeIds = new Set(badges.map((b: any) => b.badgeId));
 
   return (
-    <div className="flex flex-col h-full overflow-auto">
-      <div className="max-w-3xl mx-auto w-full p-6 space-y-8">
+    <div className="flex flex-col h-full overflow-auto" style={{ backgroundColor: "#F0F0EF" }}>
+      <div className="max-w-3xl mx-auto w-full p-6 space-y-5">
         {/* Current Tier Badge */}
         {viewer && (
           <div className="flex justify-center">
@@ -87,7 +87,7 @@ export default function XPlanationPage() {
             <PhaseStep number={2} emoji="🪧" title="Trail Markers" description="Answer 5 questions that pop up during the video" />
             <PhaseStep number={3} emoji="📋" title="Ranger Report" description="See your scorecard (questions + focus + time)" />
             <PhaseStep number={4} emoji="🚁" title="Search & Rescue" description="If score <80: additional questions to demonstrate understanding" isConditional />
-            <PhaseStep number={5} emoji="⛈️" title="Weather the Storm" description="If S&R fails: 5-min study review before retrying" isConditional />
+            <PhaseStep number={5} emoji="⛈️" title="Weather the Storm" description="If S&R fails: 3-min study review before retrying" isConditional />
           </div>
         </Section>
 
@@ -154,13 +154,13 @@ export default function XPlanationPage() {
 
         {/* Tier Progression */}
         <Section title="🪜 Tiers" description="Climb the ranks as you earn XP:">
-          <div className="rounded-lg border overflow-hidden">
+          <div className="rounded-lg border border-gray-200 overflow-hidden">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b bg-gray-50/50">
-                  <th className="text-left font-semibold px-4 py-3">Tier</th>
-                  <th className="text-left font-semibold px-4 py-3">XP Range</th>
-                  <th className="text-left font-semibold px-4 py-3">Description</th>
+                <tr className="border-b bg-gray-50">
+                  <th className="text-left font-semibold px-4 py-3 text-gray-900">Tier</th>
+                  <th className="text-left font-semibold px-4 py-3 text-gray-900">XP Range</th>
+                  <th className="text-left font-semibold px-4 py-3 text-gray-900">Description</th>
                 </tr>
               </thead>
               <tbody>
@@ -173,7 +173,7 @@ export default function XPlanationPage() {
                         isActive ? "bg-[#4F46E5]/5" : ""
                       }`}
                     >
-                      <td className="px-4 py-3 font-medium whitespace-nowrap">
+                      <td className="px-4 py-3 font-medium whitespace-nowrap text-gray-900">
                         <span className="mr-1.5">{t.emoji}</span>
                         {t.name}
                         {isActive && (
@@ -182,7 +182,7 @@ export default function XPlanationPage() {
                         </span>
                         )}
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap">
+                      <td className="px-4 py-3 whitespace-nowrap text-gray-900">
                         {t.xpMax ? `${t.xpMin}–${t.xpMax} XP` : `${t.xpMin}+ XP`}
                       </td>
                       <td className="px-4 py-3 text-gray-500">
@@ -197,12 +197,12 @@ export default function XPlanationPage() {
         </Section>
 
         {/* Max Possible XP */}
-        <div className="rounded-xl border bg-gradient-to-r from-amber-50 to-green-50 dark:from-amber-950/20 dark:to-green-950/20 p-5 text-center space-y-2">
+        <div className="rounded-xl bg-white border border-gray-200 shadow-[0_1px_3px_rgba(0,0,0,0.08)] p-5 text-center space-y-2">
           <p className="text-lg font-bold text-gray-900">
             🏆 Theoretical Maximum: ~725 XP
           </p>
           <p className="text-sm text-gray-500">
-            A strong, engaged learner typically lands around <span className="font-semibold">400–450 XP</span> (Summit Seeker).
+            A strong, engaged learner typically lands around <span className="font-semibold text-gray-900">400–450 XP</span> (Summit Seeker).
             Pinnacle Achiever (500+) requires consistent first-pass scores, staying on pace, and earning real bonuses — without demanding perfection.
           </p>
         </div>
@@ -222,7 +222,7 @@ export default function XPlanationPage() {
 
 function Section({ title, description, children }: { title: string; description: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.08)] space-y-3">
+    <div className="rounded-xl bg-white border border-gray-200 shadow-[0_1px_3px_rgba(0,0,0,0.08)] p-5 space-y-3">
       <div>
         <h2 className="text-xl font-bold text-gray-900">{title}</h2>
         <p className="text-sm text-gray-500">{description}</p>
@@ -234,7 +234,7 @@ function Section({ title, description, children }: { title: string; description:
 
 function ScoreCard({ weight, label, emoji, description }: { weight: string; label: string; emoji: string; description: string }) {
   return (
-    <div className="rounded-lg border bg-white p-3 text-center space-y-1">
+    <div className="rounded-lg border border-gray-200 bg-white p-3 text-center space-y-1">
       <div className="text-2xl">{emoji}</div>
       <p className="text-lg font-bold text-[#4F46E5]">{weight}</p>
       <p className="text-sm font-medium text-gray-900">{label}</p>
@@ -245,7 +245,7 @@ function ScoreCard({ weight, label, emoji, description }: { weight: string; labe
 
 function PhaseStep({ number, emoji, title, description, isConditional }: { number: number; emoji: string; title: string; description: string; isConditional?: boolean }) {
   return (
-    <div className={`flex items-center gap-3 rounded-lg border p-3 ${isConditional ? "border-dashed border-amber-400/50 bg-amber-50/30 dark:bg-amber-950/10" : "bg-white"}`}>
+    <div className={`flex items-center gap-3 rounded-lg border p-3 ${isConditional ? "border-dashed border-amber-400/50 bg-amber-50/30" : "border-gray-200 bg-white"}`}>
       <div className="flex-shrink-0 w-7 h-7 rounded-full bg-[#4F46E5]/10 flex items-center justify-center text-xs font-bold text-[#4F46E5]">
         {number}
       </div>
@@ -255,7 +255,7 @@ function PhaseStep({ number, emoji, title, description, isConditional }: { numbe
         <p className="text-xs text-gray-500">{description}</p>
       </div>
       {isConditional && (
-        <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 font-medium">
+        <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium">
           conditional
         </span>
       )}
@@ -265,7 +265,7 @@ function PhaseStep({ number, emoji, title, description, isConditional }: { numbe
 
 function XpRow({ emoji, label, xp, description }: { emoji: string; label: string; xp: number; description: string }) {
   return (
-    <div className="flex items-center justify-between rounded-lg border bg-white px-3 py-2">
+    <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-3 py-2">
       <div className="flex items-center gap-2">
         <span className="text-lg">{emoji}</span>
         <div>
@@ -282,8 +282,8 @@ function BadgeRow({ emoji, badge, xp, condition, earned, isMystery }: { emoji: s
   return (
     <div className={`flex items-center justify-between rounded-lg border px-3 py-2 ${
       earned
-        ? "bg-amber-50 dark:bg-amber-950/20 border-amber-300/50"
-        : "bg-white"
+        ? "bg-amber-50 border-amber-300/50"
+        : "bg-white border-gray-200"
     }`}>
       <div className="flex items-center gap-2">
         <span className={`text-lg ${!earned ? "opacity-50" : ""}`}>{emoji}</span>

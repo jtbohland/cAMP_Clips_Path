@@ -67,10 +67,11 @@ export default api({
       nextClipUnlocked = true;
     }
 
-    // Also mark the current session as completed (so it shows as completed in library)
+    // Mark the current session as completed AND set engagement_score = 80
+    // so it passes the same >= 80 threshold used by GetClipLibrary for all paths
     await ctx.integrations.db.execute(
       `UPDATE cliptracker_v2_sessions 
-       SET completed = true
+       SET completed = true, engagement_score = 80
        WHERE clip_id = $1 AND viewer_id = $2 AND completed = false
        AND id = (
          SELECT id FROM cliptracker_v2_sessions
@@ -78,7 +79,7 @@ export default api({
          ORDER BY started_at DESC LIMIT 1
        )`,
       [clipId, viewerId],
-      { label: "Mark session completed via alternative path" }
+      { label: "Mark session completed with passing score via alternative path" }
     );
 
     ctx.log.info(`Clip completed via ${path}`, { viewerId, clipId, nextClipUnlocked });
