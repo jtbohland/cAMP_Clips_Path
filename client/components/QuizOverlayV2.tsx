@@ -1,5 +1,4 @@
 import { useState, useCallback } from "react";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 type Question = {
@@ -45,18 +44,18 @@ export default function QuizOverlayV2({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-      <Card className="w-full max-w-2xl p-6 bg-card shadow-xl border-2 border-primary/20">
+      <div className="w-full max-w-2xl p-6 bg-white text-gray-900 shadow-xl border-2 border-indigo-200 rounded-xl">
         {/* Header */}
         <div className="flex items-center gap-2 mb-4">
           <span className="text-2xl">🪧</span>
-          <h2 className="text-lg font-bold text-primary">Trail Marker</h2>
-          <span className="text-xs text-muted-foreground ml-auto">
+          <h2 className="text-lg font-bold text-indigo-700">Trail Marker</h2>
+          <span className="text-xs text-gray-500 ml-auto">
             Question {question.sortOrder}
           </span>
         </div>
 
         {/* Question text */}
-        <p className="text-foreground font-medium mb-5 leading-relaxed">
+        <p className="text-gray-900 font-medium mb-5 leading-relaxed">
           {question.questionText}
         </p>
 
@@ -64,7 +63,7 @@ export default function QuizOverlayV2({
         <div className="flex flex-col gap-2 mb-4">
           {question.options.map((option, idx) => {
             let optionStyle =
-              "border border-border bg-background hover:border-primary/50 hover:bg-primary/5";
+              "border border-gray-200 bg-white hover:border-indigo-400 hover:bg-indigo-50";
 
             if (showFeedback) {
               if (idx === question.correctOption) {
@@ -74,10 +73,10 @@ export default function QuizOverlayV2({
                 optionStyle =
                   "border-2 border-red-500 bg-red-50 text-red-900";
               } else {
-                optionStyle = "border border-border bg-muted/50 opacity-50";
+                optionStyle = "border border-gray-200 bg-gray-100 opacity-50";
               }
             } else if (idx === selectedOption) {
-              optionStyle = "border-2 border-primary bg-primary/10";
+              optionStyle = "border-2 border-indigo-600 bg-indigo-50";
             }
 
             return (
@@ -133,11 +132,11 @@ export default function QuizOverlayV2({
         {showFeedback && (
           <div className="flex justify-end">
             <Button onClick={onContinue}>
-              Continue Watching
+              🎞️ Continue Clip
             </Button>
           </div>
         )}
-      </Card>
+      </div>
     </div>
   );
 }

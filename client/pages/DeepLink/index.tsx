@@ -2,7 +2,6 @@ import { useParams, useNavigate, Link } from "react-router";
 import { useViewer } from "@/components/ViewerContext";
 import { useApiData } from "@/hooks/useApiData.js";
 import { useEffect } from "react";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { getClipEmoji } from "@/lib/clip-emojis";
 
@@ -81,8 +80,8 @@ export default function DeepLinkPage() {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="flex flex-col items-center gap-3">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-          <p className="text-sm text-muted-foreground">Loading…</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
+          <p className="text-sm text-gray-500">Loading…</p>
         </div>
       </div>
     );
@@ -95,16 +94,16 @@ export default function DeepLinkPage() {
   if (!targetClip) {
     return (
       <div className="flex items-center justify-center h-full p-6">
-        <Card className="max-w-md p-6 text-center">
+        <div className="max-w-md p-6 text-center bg-white rounded-xl shadow-lg">
           <span className="text-4xl mb-3 block">❌</span>
-          <h2 className="text-lg font-bold mb-2">Clip Not Found</h2>
-          <p className="text-sm text-muted-foreground mb-4">
+          <h2 className="text-lg font-bold text-gray-900 mb-2">Clip Not Found</h2>
+          <p className="text-sm text-gray-500 mb-4">
             This clip doesn't exist in the program.
           </p>
           <Link to="/library">
             <Button variant="default">← Back to cAMP Clips</Button>
           </Link>
-        </Card>
+        </div>
       </div>
     );
   }
@@ -120,17 +119,17 @@ export default function DeepLinkPage() {
 
     return (
       <div className="flex items-center justify-center h-full p-6">
-        <Card className="max-w-md p-6 text-center">
+        <div className="max-w-md p-6 text-center bg-white rounded-xl shadow-lg">
           <span className="text-4xl mb-3 block">🔒</span>
-          <h2 className="text-lg font-bold mb-2">Clip Locked</h2>
-          <p className="text-sm text-muted-foreground mb-4">
+          <h2 className="text-lg font-bold text-gray-900 mb-2">Clip Locked</h2>
+          <p className="text-sm text-gray-500 mb-4">
             You haven't unlocked this session yet. Complete{" "}
             <strong>{prevTitle}</strong> first to continue your climb. 🏔️
           </p>
           <Link to="/library">
             <Button variant="default">← Back to cAMP Clips</Button>
           </Link>
-        </Card>
+        </div>
       </div>
     );
   }
@@ -138,7 +137,7 @@ export default function DeepLinkPage() {
   // Fallback spinner while navigation effect fires
   return (
     <div className="flex items-center justify-center h-full">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
     </div>
   );
 }

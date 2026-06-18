@@ -32,7 +32,11 @@ export function ViewerProvider({ children }: { children: ReactNode }) {
     async function autoRecognize() {
       try {
         // First, try server-side auto-lookup using the Superblocks JWT email
-        const result = await executeApi("AutoLookupViewer", {}) as any;
+        // Timeout after 5s to prevent infinite loading on deep links
+        const result = await Promise.race([
+          executeApi("AutoLookupViewer", {}),
+          new Promise<null>((resolve) => setTimeout(() => resolve(null), 5000)),
+        ]) as any;
         if (!cancelled && result?.viewer) {
           const v: Viewer = {
             id: result.viewer.id,
