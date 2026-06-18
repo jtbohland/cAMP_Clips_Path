@@ -13,6 +13,18 @@ import TranscriptPanel from "@/components/TranscriptPanel";
 import { toast } from "sonner";
 import { getClipEmoji } from "@/lib/clip-emojis";
 
+// Declare wistia-player Web Component for JSX
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      "wistia-player": React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & {
+        "media-id"?: string;
+        aspect?: string;
+      };
+    }
+  }
+}
+
 type WatchPhase =
   | "loading_resume"
   | "resume_prompt"
@@ -34,27 +46,28 @@ function getWistiaVideoId(url: string): string | null {
   }
 }
 
-/** Load Wistia E-v1 + per-media jsonp scripts */
+/** Load Wistia Web Component scripts: player.js (once) + per-media module */
 function useWistiaScript(wistiaVideoId: string | null) {
   useEffect(() => {
     if (!wistiaVideoId) return;
 
-    // Remove old media script if exists
-    const oldScript = document.querySelector('script[data-wistia-media]');
-    if (oldScript) oldScript.remove();
-
-    // Inject E-v1.js once
-    if (!document.querySelector('script[src*="E-v1.js"]')) {
+    // Inject player.js once
+    if (!document.querySelector('script[src*="fast.wistia.com/player.js"]')) {
       const s1 = document.createElement('script');
-      s1.src = 'https://fast.wistia.com/assets/external/E-v1.js';
+      s1.src = 'https://fast.wistia.com/player.js';
       s1.async = true;
       document.head.appendChild(s1);
     }
 
-    // Inject per-media jsonp script
+    // Remove old per-media script if exists
+    const oldScript = document.querySelector('script[data-wistia-media]');
+    if (oldScript) oldScript.remove();
+
+    // Inject per-media module script
     const s2 = document.createElement('script');
-    s2.src = `https://fast.wistia.com/embed/medias/${wistiaVideoId}.jsonp`;
+    s2.src = `https://fast.wistia.com/embed/${wistiaVideoId}.js`;
     s2.async = true;
+    s2.type = 'module';
     s2.setAttribute('data-wistia-media', wistiaVideoId);
     document.head.appendChild(s2);
   }, [wistiaVideoId]);
@@ -104,8 +117,8 @@ export default function WatchPage() {
     Array<{ id: string; triggerAtSeconds: number; questionText: string }>
   >([]);
 
-  // Wistia player ref — holds the Wistia video object
-  const wistiaPlayerRef = useRef<any>(null);
+  // Wistia player ref — holds the <wistia-player> DOM element
+  const wistiaPlayerRef = useRef<HTMLElement | null>(null);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
 
   // Elapsed tracking now tied to actual video time
@@ -167,63 +180,51 @@ export default function WatchPage() {
     };
   }, [phase, isVideoPlaying]);
 
-  // Bind Wistia player events via _wq
+  // Bind Wistia Web Component events on the <wistia-player> element
   useEffect(() => {
     if (!wistiaVideoId || phase === "loading_resume" || phase === "resume_prompt") return;
 
-    // Ensure _wq exists
-    const w = window as any;
-    w._wq = w._wq || [];
+    const el = wistiaPlayerRef.current;
+    if (!el) return;
 
-    const bindingId = `wistia-bind-${wistiaVideoId}`;
+    const onPlay = () => setIsVideoPlaying(true);
+    const onPause = () => setIsVideoPlaying(false);
+    const onTimeUpdate = (e: any) => {
+      const currentTime = e.detail?.currentTime ?? (el as any).currentTime ?? 0;
+      const roundedT = Math.floor(currentTime);
+      setElapsedSeconds(roundedT);
+      lastTimeRef.current = currentTime;
+    };
+    const onEnd = () => {
+      setIsVideoPlaying(false);
+    };
 
-    w._wq.push({
-      id: wistiaVideoId,
-      onReady: (video: any) => {
-        wistiaPlayerRef.current = video;
+    el.addEventListener("play", onPlay);
+    el.addEventListener("pause", onPause);
+    el.addEventListener("timeupdate", onTimeUpdate);
+    el.addEventListener("end", onEnd);
 
-        // If we have a resume position, seek to it
-        if (resumeFromSecondsRef.current !== null && resumeFromSecondsRef.current > 0) {
-          video.time(resumeFromSecondsRef.current);
-          resumeFromSecondsRef.current = null;
-        }
-
-        // timechange — sync elapsed to actual video position
-        video.bind("timechange", (t: number) => {
-          const roundedT = Math.floor(t);
-          setElapsedSeconds(roundedT);
-          lastTimeRef.current = t;
-        });
-
-        // play/pause state
-        video.bind("play", () => {
-          setIsVideoPlaying(true);
-        });
-        video.bind("pause", () => {
-          setIsVideoPlaying(false);
-        });
-
-        // Video end — auto-trigger Ranger Report
-        video.bind("end", () => {
-          setIsVideoPlaying(false);
-          // Will be handled by the auto-trigger effect
-        });
-      },
-    });
+    // If we have a resume position, seek once ready
+    if (resumeFromSecondsRef.current !== null && resumeFromSecondsRef.current > 0) {
+      const seekOnReady = () => {
+        (el as any).currentTime = resumeFromSecondsRef.current;
+        resumeFromSecondsRef.current = null;
+        el.removeEventListener("play", seekOnReady);
+      };
+      // Try immediately if player is already loaded
+      try {
+        (el as any).currentTime = resumeFromSecondsRef.current;
+        resumeFromSecondsRef.current = null;
+      } catch {
+        el.addEventListener("play", seekOnReady);
+      }
+    }
 
     return () => {
-      // Cleanup — unbind events when unmounting
-      const player = wistiaPlayerRef.current;
-      if (player) {
-        try {
-          player.unbind("timechange");
-          player.unbind("play");
-          player.unbind("pause");
-          player.unbind("end");
-        } catch {
-          // Player may already be destroyed
-        }
-      }
+      el.removeEventListener("play", onPlay);
+      el.removeEventListener("pause", onPause);
+      el.removeEventListener("timeupdate", onTimeUpdate);
+      el.removeEventListener("end", onEnd);
     };
   }, [wistiaVideoId, phase]);
 
@@ -285,7 +286,7 @@ export default function WatchPage() {
       // Pause the Wistia video
       const player = wistiaPlayerRef.current;
       if (player) {
-        try { player.pause(); } catch { /* ignore */ }
+        try { (player as any).pause(); } catch { /* ignore */ }
       }
       try {
         await pauseSession({
@@ -365,7 +366,7 @@ export default function WatchPage() {
           // Pause the Wistia video when tab goes hidden
           const player = wistiaPlayerRef.current;
           if (player) {
-            try { player.pause(); } catch { /* ignore */ }
+            try { (player as any).pause(); } catch { /* ignore */ }
           }
           setTabAway(true);
         }
@@ -397,7 +398,7 @@ export default function WatchPage() {
     // Resume the Wistia video
     const player = wistiaPlayerRef.current;
     if (player) {
-      try { player.play(); } catch { /* ignore */ }
+      try { (player as any).play(); } catch { /* ignore */ }
     }
   }, []);
 
@@ -413,7 +414,7 @@ export default function WatchPage() {
       // Pause the Wistia video for the trail marker
       const player = wistiaPlayerRef.current;
       if (player) {
-        try { player.pause(); } catch { /* ignore */ }
+        try { (player as any).pause(); } catch { /* ignore */ }
       }
       setPhase("trail_marker");
     }
@@ -468,7 +469,7 @@ export default function WatchPage() {
     // Resume the Wistia video — it resumes from exact pause point
     const player = wistiaPlayerRef.current;
     if (player) {
-      try { player.play(); } catch { /* ignore */ }
+      try { (player as any).play(); } catch { /* ignore */ }
     }
   }, []);
 
@@ -477,7 +478,7 @@ export default function WatchPage() {
     // Pause the video
     const player = wistiaPlayerRef.current;
     if (player) {
-      try { player.pause(); } catch { /* ignore */ }
+      try { (player as any).pause(); } catch { /* ignore */ }
     }
 
     const allTrailMarkerCount = trailMarkers.length;
@@ -634,8 +635,8 @@ export default function WatchPage() {
     const player = wistiaPlayerRef.current;
     if (player) {
       try {
-        player.time(seconds);
-        player.play();
+        (player as any).currentTime = seconds;
+        (player as any).play();
       } catch { /* ignore */ }
     }
   }, []);
@@ -738,12 +739,12 @@ export default function WatchPage() {
         {/* Wistia video embed */}
         <div className="flex-1 min-w-0 flex items-center justify-center bg-black relative">
           {wistiaVideoId ? (
-            <div style={{ width: "100%", height: "100%", position: "relative" }}>
-              <div
-                className={`wistia_embed wistia_async_${wistiaVideoId} videoFoam=true`}
-                style={{ width: "100%", height: "100%" }}
-              />
-            </div>
+            <wistia-player
+              ref={wistiaPlayerRef as any}
+              media-id={wistiaVideoId}
+              aspect="1.7777777777777777"
+              style={{ width: "100%", height: "100%" }}
+            />
           ) : (
             <div className="flex flex-col items-center gap-3 text-white/70">
               <span className="text-3xl">📹</span>
@@ -810,8 +811,8 @@ export default function WatchPage() {
             const player = wistiaPlayerRef.current;
             if (player) {
               try {
-                player.time(seconds);
-                player.play();
+                (player as any).currentTime = seconds;
+                (player as any).play();
               } catch { /* ignore */ }
             }
           }}
