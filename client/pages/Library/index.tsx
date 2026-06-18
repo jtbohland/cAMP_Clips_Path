@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { useApiData } from "@/hooks/useApiData.js";
 import { useViewer } from "@/components/ViewerContext";
@@ -9,6 +9,7 @@ import XpProgressBar from "@/components/XpProgressBar";
 export default function LibraryPage() {
   const navigate = useNavigate();
   const { viewer, isLoading: viewerLoading } = useViewer();
+  const [showBeforeYouBegin, setShowBeforeYouBegin] = useState(true);
 
   const { data, loading } = useApiData(
     "GetClipLibrary",
@@ -40,16 +41,8 @@ export default function LibraryPage() {
   if (loading) {
     return (
       <div className="flex flex-col gap-4 p-6 max-w-4xl mx-auto w-full">
-        <div className="flex items-center gap-3 mb-2">
-          <span className="text-3xl">🎬</span>
-          <div>
-            <h1 className="text-2xl font-bold text-[#4F46E5]">cAMP Clips</h1>
-            <p className="text-sm text-gray-500">
-              Your training journey awaits. Watch each clip, answer Trail Markers, and earn your Ranger Report.
-            </p>
-          </div>
-        </div>
         {/* Skeleton */}
+        <div className="h-10 w-48 bg-gray-100 rounded-lg animate-pulse" />
         <div className="flex flex-col gap-3">
           {Array.from({ length: 5 }).map((_, i) => (
             <div
@@ -67,16 +60,69 @@ export default function LibraryPage() {
       {/* XP Progress Bar */}
       <XpProgressBar />
 
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-2">
-        <span className="text-3xl">🎬</span>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">cAMP Clips</h1>
-          <p className="text-sm text-gray-500">
-            Watch each clip, answer Trail Markers 🪧, and earn your Ranger Report ✨
-          </p>
+      {/* Before You Begin — collapsible */}
+      {showBeforeYouBegin && (
+        <div className="bg-[#EEF2FF] rounded-xl border border-indigo-200/60 shadow-sm overflow-hidden mb-2">
+          {/* Card header */}
+            <div className="flex items-center justify-between px-5 py-3 border-b border-indigo-200/40">
+            <div>
+              <h2 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                🎬 Before You Begin
+              </h2>
+              <p className="text-xs text-gray-500 mt-0.5">
+                How cAMP Ascent works — read before watching your first clip
+              </p>
+            </div>
+            <button
+              onClick={() => setShowBeforeYouBegin(false)}
+              className="text-gray-400 hover:text-gray-600 text-lg leading-none px-1"
+              aria-label="Dismiss"
+            >
+              ×
+            </button>
+          </div>
+
+          {/* Bullet rows */}
+          <div className="divide-y divide-indigo-100/50 bg-white/70 rounded-b-xl">
+            <div className="flex items-start gap-3 px-5 py-3">
+              <span className="text-lg mt-0.5">👁️</span>
+              <div>
+                <p className="text-sm font-semibold text-gray-900">Stay on the tab while watching</p>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Focus time counts toward your engagement score. Switching tabs pauses the video and stops your timer.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3 px-5 py-3">
+              <span className="text-lg mt-0.5">🪧</span>
+              <div>
+                <p className="text-sm font-semibold text-gray-900">Answer Trail Markers as they appear</p>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Questions pop up during the video and pause playback. You need 80%+ engagement to unlock the next clip.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3 px-5 py-3">
+              <span className="text-lg mt-0.5">🚁</span>
+              <div>
+                <p className="text-sm font-semibold text-gray-900">Didn't pass? Search & Rescue kicks in</p>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Score below 80%? You'll get a second shot with a fresh set of questions. Pass S&R and you're through.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3 px-5 py-3 bg-[#FFF7ED]">
+              <span className="text-lg mt-0.5">⛈️</span>
+              <div>
+                <p className="text-sm font-semibold text-[#92400E]">Fail S&R? Weather the Storm adds 3 minutes</p>
+                <p className="text-xs text-[#92400E]/80 mt-0.5">
+                  You'll get a 3-minute study break with the session highlights before the next clip unlocks. Stay engaged and you'll rarely see this.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Clip list grouped by week */}
       <div className="flex flex-col gap-6">
@@ -92,7 +138,7 @@ export default function LibraryPage() {
 
               {/* Clips in this week */}
               <div className="flex flex-col gap-3">
-                {week.clips.map((clip: any, idx: number) => {
+                {week.clips.map((clip: any) => {
                   // Find previous clip in overall list for lock message
                   const overallIdx = clips.findIndex((c: any) => c.id === clip.id);
                   const prevClip = overallIdx > 0 ? clips[overallIdx - 1] : undefined;
