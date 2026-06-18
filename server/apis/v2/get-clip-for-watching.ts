@@ -20,6 +20,7 @@ const ClipRow = z.object({
   video_url: z.string().nullable(),
   duration_seconds: z.coerce.number().nullable(),
   sort_order: z.coerce.number(),
+  transcript: z.string().nullable(),
 });
 
 const WeatherRow = z.object({
@@ -49,6 +50,7 @@ export default api({
       videoUrl: z.string().nullable(),
       durationSeconds: z.number().nullable(),
       sortOrder: z.number(),
+      transcript: z.string().nullable(),
     }),
     questions: z.array(
       z.object({
@@ -74,7 +76,7 @@ export default api({
 
   async run(ctx, { clipId }) {
     const clips = await ctx.integrations.db.query(
-      "SELECT id, title, video_url, duration_seconds, sort_order FROM cliptracker_v2_clips WHERE id = $1",
+      "SELECT id, title, video_url, duration_seconds, sort_order, transcript FROM cliptracker_v2_clips WHERE id = $1",
       ClipRow,
       [clipId],
       { label: "Get clip details" }
@@ -109,6 +111,7 @@ export default api({
         videoUrl: clip.video_url,
         durationSeconds: clip.duration_seconds,
         sortOrder: clip.sort_order,
+        transcript: clip.transcript,
       },
       questions: questions.map((q) => ({
         id: q.id,

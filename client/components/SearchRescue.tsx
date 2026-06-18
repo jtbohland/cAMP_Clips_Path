@@ -1,8 +1,4 @@
-import { useState, useCallback } from "react";
-import { useNavigate } from "react-router";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Icon } from "@/components/ui/icon";
+import { useState, useCallback, useEffect } from "react";
 
 type RecoveryQuestion = {
   id: string;
@@ -20,15 +16,39 @@ type SearchRescueProps = {
 };
 
 export default function SearchRescue({ questions, onComplete }: SearchRescueProps) {
-  const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
 
+  // B3-6: Blocking modal state
+  const [showBlockModal, setShowBlockModal] = useState(false);
+
   const question = questions[currentIndex];
   const total = questions.length;
+
+  // B3-6: Block browser back / tab close during S&R
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+    const handlePopState = (e: PopStateEvent) => {
+      // Push state back to prevent leaving
+      e.preventDefault();
+      window.history.pushState(null, "", window.location.href);
+      setShowBlockModal(true);
+    };
+
+    // Push a state entry so popstate fires on back
+    window.history.pushState(null, "", window.location.href);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    window.addEventListener("popstate", handlePopState);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, []);
 
   const handleSelect = useCallback(
     (optIndex: number) => {
@@ -44,9 +64,6 @@ export default function SearchRescue({ questions, onComplete }: SearchRescueProp
 
   const handleNext = useCallback(() => {
     if (currentIndex + 1 >= total) {
-      // Finished all recovery questions
-      const finalCorrect = correctCount + (isCorrect && !showFeedback ? 0 : 0);
-      // correctCount already updated via setCorrectCount above
       const pct = Math.round((correctCount / total) * 100);
       onComplete(pct >= 80, pct);
     } else {
@@ -55,46 +72,36 @@ export default function SearchRescue({ questions, onComplete }: SearchRescueProp
       setShowFeedback(false);
       setIsCorrect(false);
     }
-  }, [currentIndex, total, correctCount, isCorrect, showFeedback, onComplete]);
+  }, [currentIndex, total, correctCount, onComplete]);
 
-  const feedback = isCorrect
-    ? question?.correctFeedback
-    : question?.incorrectFeedback;
+  const feedback = isCorrect ? question?.correctFeedback : question?.incorrectFeedback;
 
   if (!question) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-      <Card className="w-full max-w-2xl p-6 bg-card shadow-xl border-2 border-accent/30">
-        {/* Back to library */}
-        <button
-          onClick={() => navigate("/library")}
-          className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors mb-4 cursor-pointer"
-        >
-          <Icon icon="arrow-left" /> Back to cAMP Clips
-        </button>
-
-        {/* Header */}
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.6)" }}>
+      <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl p-6">
+        {/* Header — no back button (B3-6) */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <span className="text-2xl">🚁</span>
-            <h2 className="text-lg font-bold text-accent-foreground">Search & Rescue</h2>
+            <h2 className="text-lg font-bold text-gray-900">Search & Rescue</h2>
           </div>
-          <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-1 rounded-full">
+          <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full">
             {currentIndex + 1} / {total}
           </span>
         </div>
 
         {/* Progress bar */}
-        <div className="w-full h-1.5 bg-muted rounded-full mb-5">
+        <div className="w-full h-1.5 bg-gray-100 rounded-full mb-5">
           <div
-            className="h-full bg-accent rounded-full transition-all duration-300"
+            className="h-full bg-indigo-600 rounded-full transition-all duration-300"
             style={{ width: `${((currentIndex + 1) / total) * 100}%` }}
           />
         </div>
 
-        {/* Question text */}
-        <p className="text-foreground font-medium mb-5 leading-relaxed">
+        {/* Question */}
+        <p className="text-gray-900 font-medium mb-5 leading-relaxed">
           {question.questionText}
         </p>
 
@@ -102,7 +109,7 @@ export default function SearchRescue({ questions, onComplete }: SearchRescueProp
         <div className="flex flex-col gap-2 mb-4">
           {question.options.map((option, idx) => {
             let optionStyle =
-              "border border-border bg-background hover:border-accent/50 hover:bg-accent/5";
+              "border border-gray-200 bg-white hover:border-indigo-300 hover:bg-indigo-50/50";
 
             if (showFeedback) {
               if (idx === question.correctOption) {
@@ -110,16 +117,16 @@ export default function SearchRescue({ questions, onComplete }: SearchRescueProp
               } else if (idx === selectedOption && !isCorrect) {
                 optionStyle = "border-2 border-red-500 bg-red-50 text-red-900";
               } else {
-                optionStyle = "border border-border bg-muted/50 opacity-50";
+                optionStyle = "border border-gray-200 bg-gray-50 opacity-50";
               }
             } else if (idx === selectedOption) {
-              optionStyle = "border-2 border-accent bg-accent/10";
+              optionStyle = "border-2 border-indigo-600 bg-indigo-50";
             }
 
             return (
               <button
                 key={idx}
-                className={`w-full text-left px-4 py-3 rounded-lg transition-all text-sm font-medium cursor-pointer ${optionStyle}`}
+                className={`w-full text-left px-4 py-3 rounded-xl transition-all text-sm font-medium cursor-pointer ${optionStyle}`}
                 onClick={() => handleSelect(idx)}
                 disabled={showFeedback}
               >
@@ -137,7 +144,7 @@ export default function SearchRescue({ questions, onComplete }: SearchRescueProp
         {/* Feedback */}
         {showFeedback && feedback && (
           <div
-            className={`rounded-lg p-4 mb-4 border ${
+            className={`rounded-xl p-4 mb-4 border ${
               isCorrect ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"
             }`}
           >
@@ -158,16 +165,36 @@ export default function SearchRescue({ questions, onComplete }: SearchRescueProp
         {/* Next button */}
         {showFeedback && (
           <div className="flex justify-end">
-            <Button onClick={handleNext}>
-              {currentIndex + 1 >= total ? (
-                <><Icon icon="flag" /> Finish</>
-              ) : (
-                <><Icon icon="arrow-right" /> Next Question</>
-              )}
-            </Button>
+            <button
+              onClick={handleNext}
+              className="px-6 py-2.5 rounded-xl text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition-colors"
+            >
+              {currentIndex + 1 >= total ? "🏁 Finish" : "Next Question →"}
+            </button>
           </div>
         )}
-      </Card>
+      </div>
+
+      {/* B3-6: Blocking modal */}
+      {showBlockModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.7)" }}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center">
+            <span className="text-4xl block mb-3">🚁</span>
+            <p className="text-gray-900 font-bold text-base mb-2">
+              Complete Search & Rescue to unlock your next clip
+            </p>
+            <p className="text-gray-500 text-sm mb-5">
+              You can do it! 🚁
+            </p>
+            <button
+              onClick={() => setShowBlockModal(false)}
+              className="w-full py-2.5 rounded-xl text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition-colors"
+            >
+              OK, let's go
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
