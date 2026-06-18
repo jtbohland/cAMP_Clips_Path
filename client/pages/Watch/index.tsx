@@ -23,10 +23,35 @@ type WatchPhase =
   | "weather_storm"
   | "complete";
 
+/** Extract Wistia video ID from URL like https://amplitude.wistia.com/medias/abc123 */
+function getWistiaVideoId(url: string): string | null {
+  try {
+    const u = new URL(url);
+    const segments = u.pathname.split("/").filter(Boolean);
+    return segments[segments.length - 1] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** Load Wistia E-v1 async script once */
+function useWistiaScript() {
+  useEffect(() => {
+    if (document.querySelector('script[src*="fast.wistia.com/assets/external/E-v1.js"]')) return;
+    const script = document.createElement("script");
+    script.src = "https://fast.wistia.com/assets/external/E-v1.js";
+    script.async = true;
+    document.head.appendChild(script);
+  }, []);
+}
+
 export default function WatchPage() {
   const { clipId } = useParams<{ clipId: string }>();
   const navigate = useNavigate();
   const { viewer } = useViewer();
+
+  // Load Wistia player script
+  useWistiaScript();
 
   // API data
   const { data: clipData, loading: clipLoading } = useApiData(
@@ -57,25 +82,32 @@ export default function WatchPage() {
   const [incorrectQuestions, setIncorrectQuestions] = useState<
     Array<{ id: string; triggerAtSeconds: number; questionText: string }>
   >([]);
-  const videoRef = useRef<HTMLIFrameElement>(null);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Wistia player ref — holds the Wistia video object
+  const wistiaPlayerRef = useRef<any>(null);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+
+  // Elapsed tracking now tied to actual video time
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [focusSeconds, setFocusSeconds] = useState(0);
   const [blurSeconds, setBlurSeconds] = useState(0);
   const isFocusedRef = useRef(true);
+  const lastTimeRef = useRef(0);
+
+  // Focus time tracking interval — only counts when video is playing AND tab visible
+  const focusTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // B3-1: Tab-away pause state
   const [tabAway, setTabAway] = useState(false);
-  const [timerPaused, setTimerPaused] = useState(false);
 
   // B3-4: Transcript panel
   const [showTranscript, setShowTranscript] = useState(false);
 
-  // B6-6: Store elapsed time when trail marker fires for resume
-  const [trailMarkerPauseTime, setTrailMarkerPauseTime] = useState<number | null>(null);
-
   // B3-2: Track if we already auto-triggered end
   const autoEndedRef = useRef(false);
+
+  // Track resume-from position for paused sessions
+  const resumeFromSecondsRef = useRef<number | null>(null);
 
   // Separate trail marker questions from recovery questions
   const trailMarkers = useMemo(
@@ -93,6 +125,92 @@ export default function WatchPage() {
         .sort((a: any, b: any) => a.sortOrder - b.sortOrder),
     [clipData]
   );
+
+  // Wistia video ID from clip URL
+  const wistiaVideoId = useMemo(
+    () => (clipData?.clip?.videoUrl ? getWistiaVideoId(clipData.clip.videoUrl) : null),
+    [clipData]
+  );
+
+  // Focus/blur time tracking — only increments when video is playing
+  useEffect(() => {
+    if (phase !== "watching") {
+      if (focusTimerRef.current) clearInterval(focusTimerRef.current);
+      return;
+    }
+    focusTimerRef.current = setInterval(() => {
+      if (isVideoPlaying) {
+        if (isFocusedRef.current) {
+          setFocusSeconds((s) => s + 1);
+        } else {
+          setBlurSeconds((s) => s + 1);
+        }
+      }
+    }, 1000);
+    return () => {
+      if (focusTimerRef.current) clearInterval(focusTimerRef.current);
+    };
+  }, [phase, isVideoPlaying]);
+
+  // Bind Wistia player events via _wq
+  useEffect(() => {
+    if (!wistiaVideoId || phase === "loading_resume" || phase === "resume_prompt") return;
+
+    // Ensure _wq exists
+    const w = window as any;
+    w._wq = w._wq || [];
+
+    const bindingId = `wistia-bind-${wistiaVideoId}`;
+
+    w._wq.push({
+      id: wistiaVideoId,
+      onReady: (video: any) => {
+        wistiaPlayerRef.current = video;
+
+        // If we have a resume position, seek to it
+        if (resumeFromSecondsRef.current !== null && resumeFromSecondsRef.current > 0) {
+          video.time(resumeFromSecondsRef.current);
+          resumeFromSecondsRef.current = null;
+        }
+
+        // timechange — sync elapsed to actual video position
+        video.bind("timechange", (t: number) => {
+          const roundedT = Math.floor(t);
+          setElapsedSeconds(roundedT);
+          lastTimeRef.current = t;
+        });
+
+        // play/pause state
+        video.bind("play", () => {
+          setIsVideoPlaying(true);
+        });
+        video.bind("pause", () => {
+          setIsVideoPlaying(false);
+        });
+
+        // Video end — auto-trigger Ranger Report
+        video.bind("end", () => {
+          setIsVideoPlaying(false);
+          // Will be handled by the auto-trigger effect
+        });
+      },
+    });
+
+    return () => {
+      // Cleanup — unbind events when unmounting
+      const player = wistiaPlayerRef.current;
+      if (player) {
+        try {
+          player.unbind("timechange");
+          player.unbind("play");
+          player.unbind("pause");
+          player.unbind("end");
+        } catch {
+          // Player may already be destroyed
+        }
+      }
+    };
+  }, [wistiaVideoId, phase]);
 
   // Check for paused session on mount
   useEffect(() => {
@@ -121,7 +239,7 @@ export default function WatchPage() {
       });
   }, [clipId, viewer?.id, startSession]);
 
-  // Resume handler
+  // Resume handler — restore session state + seek video to saved position
   const handleResume = useCallback(() => {
     if (!pausedSessionData) return;
     setSessionId(pausedSessionData.id);
@@ -130,6 +248,8 @@ export default function WatchPage() {
     setBlurSeconds(pausedSessionData.blurSeconds);
     setAnsweredQuestions(new Set(pausedSessionData.answeredQuestionIds));
     setCorrectCount(pausedSessionData.correctCount);
+    // Store resume position so the Wistia player seeks on bind
+    resumeFromSecondsRef.current = pausedSessionData.elapsedSeconds;
     setPhase("watching");
   }, [pausedSessionData]);
 
@@ -147,6 +267,11 @@ export default function WatchPage() {
   // Pause and navigate back
   const handlePauseAndBack = useCallback(async () => {
     if (sessionId && phase === "watching") {
+      // Pause the Wistia video
+      const player = wistiaPlayerRef.current;
+      if (player) {
+        try { player.pause(); } catch { /* ignore */ }
+      }
       try {
         await pauseSession({
           sessionId,
@@ -216,14 +341,18 @@ export default function WatchPage() {
     };
   }, [phase, sessionId, elapsedSeconds, focusSeconds, blurSeconds, answeredQuestions, correctCount]);
 
-  // B3-1: Tab visibility — pause timer + show overlay when tab hidden
+  // B3-1: Tab visibility — pause Wistia video + show overlay when tab hidden
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === "hidden") {
         isFocusedRef.current = false;
         if (phase === "watching") {
+          // Pause the Wistia video when tab goes hidden
+          const player = wistiaPlayerRef.current;
+          if (player) {
+            try { player.pause(); } catch { /* ignore */ }
+          }
           setTabAway(true);
-          setTimerPaused(true);
         }
       } else {
         isFocusedRef.current = true;
@@ -247,32 +376,17 @@ export default function WatchPage() {
     };
   }, [phase]);
 
-  // Timer — only runs when not paused
-  useEffect(() => {
-    if (phase === "watching" && !timerPaused) {
-      timerRef.current = setInterval(() => {
-        setElapsedSeconds((s) => s + 1);
-        if (isFocusedRef.current) {
-          setFocusSeconds((s) => s + 1);
-        } else {
-          setBlurSeconds((s) => s + 1);
-        }
-      }, 1000);
-    } else {
-      if (timerRef.current) clearInterval(timerRef.current);
-    }
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [phase, timerPaused]);
-
-  // B3-1: Dismiss tab-away overlay and resume timer
+  // B3-1: Dismiss tab-away overlay and resume video
   const handleDismissTabOverlay = useCallback(() => {
     setTabAway(false);
-    setTimerPaused(false);
+    // Resume the Wistia video
+    const player = wistiaPlayerRef.current;
+    if (player) {
+      try { player.play(); } catch { /* ignore */ }
+    }
   }, []);
 
-  // Check if we need to show a trail marker
+  // Check if we need to show a trail marker (using actual video time)
   useEffect(() => {
     if (phase !== "watching" || trailMarkers.length === 0) return;
     const nextUnanswered = trailMarkers.find(
@@ -281,18 +395,21 @@ export default function WatchPage() {
     if (nextUnanswered) {
       const idx = trailMarkers.indexOf(nextUnanswered);
       setCurrentQuestionIdx(idx);
-      setTrailMarkerPauseTime(elapsedSeconds);
+      // Pause the Wistia video for the trail marker
+      const player = wistiaPlayerRef.current;
+      if (player) {
+        try { player.pause(); } catch { /* ignore */ }
+      }
       setPhase("trail_marker");
     }
   }, [elapsedSeconds, phase, trailMarkers, answeredQuestions]);
 
-  // B3-2: Auto-trigger Ranger Report when elapsed >= duration
+  // B3-2: Auto-trigger Ranger Report when video reaches duration
   useEffect(() => {
     if (phase !== "watching" || autoEndedRef.current) return;
     const clipDuration = clipData?.clip?.durationSeconds;
     if (!clipDuration || clipDuration <= 0) return;
     if (elapsedSeconds >= clipDuration) {
-      // Check all trail markers are answered first
       const allAnswered = trailMarkers.every((q: any) => answeredQuestions.has(q.id));
       if (allAnswered || trailMarkers.length === 0) {
         autoEndedRef.current = true;
@@ -330,14 +447,24 @@ export default function WatchPage() {
     [trailMarkers, currentQuestionIdx, sessionId, submitAnswer]
   );
 
+  // Trail marker dismissed — resume video from where it was paused
   const handleTrailMarkerContinue = useCallback(() => {
-    // B6-6: trailMarkerPauseTime is preserved so the iframe URL
-    // gets the #t= fragment appended on next render
     setPhase("watching");
+    // Resume the Wistia video — it resumes from exact pause point
+    const player = wistiaPlayerRef.current;
+    if (player) {
+      try { player.play(); } catch { /* ignore */ }
+    }
   }, []);
 
-  // End video — called by auto-trigger or manual (if re-added)
+  // End video — called by auto-trigger or manual
   const handleFinishWatching = useCallback(() => {
+    // Pause the video
+    const player = wistiaPlayerRef.current;
+    if (player) {
+      try { player.pause(); } catch { /* ignore */ }
+    }
+
     const allTrailMarkerCount = trailMarkers.length;
     setTotalTrailMarkers(allTrailMarkerCount || totalTrailMarkers);
     const finalTotal = allTrailMarkerCount || 1;
@@ -487,9 +614,15 @@ export default function WatchPage() {
     navigate("/library");
   }, [navigate, viewer, clipId, sessionId, clipData, elapsedSeconds, correctCount, trailMarkers, searchRescueScore, recoveryQuestions, awardXP, completeClipPath]);
 
-  // Transcript seek handler
+  // Transcript seek handler — seek the Wistia player to the given position
   const handleTranscriptSeek = useCallback((seconds: number) => {
-    setElapsedSeconds(seconds);
+    const player = wistiaPlayerRef.current;
+    if (player) {
+      try {
+        player.time(seconds);
+        player.play();
+      } catch { /* ignore */ }
+    }
   }, []);
 
   // Loading state
@@ -560,13 +693,13 @@ export default function WatchPage() {
             </button>
             <span
               className={`text-xs font-mono px-3 py-1 rounded-full ${
-                timerPaused
+                !isVideoPlaying && phase === "watching"
                   ? "bg-amber-100 text-amber-700"
                   : "bg-gray-100 text-gray-600"
               }`}
             >
               ⏱ {Math.floor(elapsedSeconds / 60)}:{(elapsedSeconds % 60).toString().padStart(2, "0")}
-              {timerPaused && " ⏸"}
+              {!isVideoPlaying && phase === "watching" && " ⏸"}
             </span>
           </div>
         </div>
@@ -587,17 +720,35 @@ export default function WatchPage() {
 
       {/* Video + optional transcript panel */}
       <div className="flex-1 min-h-0 flex">
-        {/* Video embed */}
+        {/* Wistia video embed */}
         <div className="flex-1 min-w-0 flex items-center justify-center bg-black relative">
-          {clip.videoUrl ? (
-            <iframe
-              ref={videoRef}
-              src={phase === "trail_marker" ? "" : convertToEmbedUrl(clip.videoUrl, trailMarkerPauseTime)}
-              className="absolute inset-0 w-full h-full"
-              allow="autoplay; fullscreen"
-              allowFullScreen
-              title={clip.title}
-            />
+          {wistiaVideoId ? (
+            <div
+              className={`wistia_responsive_padding`}
+              style={{ padding: "56.25% 0 0 0", position: "relative", width: "100%", height: "100%" }}
+            >
+              <div
+                className={`wistia_responsive_wrapper`}
+                style={{ height: "100%", left: 0, position: "absolute", top: 0, width: "100%" }}
+              >
+                <div
+                  className={`wistia_embed wistia_async_${wistiaVideoId} seo=true videoFoam=true`}
+                  style={{ height: "100%", position: "relative", width: "100%" }}
+                >
+                  <div
+                    className="wistia_swatch"
+                    style={{ height: "100%", left: 0, opacity: 0, overflow: "hidden", position: "absolute", top: 0, transition: "opacity 200ms", width: "100%" }}
+                  >
+                    <img
+                      src={`https://fast.wistia.com/embed/medias/${wistiaVideoId}/swatch`}
+                      style={{ filter: "blur(5px)", height: "100%", objectFit: "contain", width: "100%" }}
+                      alt=""
+                      aria-hidden="true"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
           ) : (
             <div className="flex flex-col items-center gap-3 text-white/70">
               <span className="text-3xl">📹</span>
@@ -660,7 +811,14 @@ export default function WatchPage() {
           incorrectQuestions={incorrectQuestions}
           onTimestampClick={(seconds) => {
             setPhase("watching");
-            setElapsedSeconds(seconds);
+            // Seek the Wistia player to the clicked timestamp
+            const player = wistiaPlayerRef.current;
+            if (player) {
+              try {
+                player.time(seconds);
+                player.play();
+              } catch { /* ignore */ }
+            }
           }}
         />
       )}
@@ -685,20 +843,4 @@ export default function WatchPage() {
       )}
     </div>
   );
-}
-
-/** Convert a Google Drive share link to embeddable preview URL.
- *  When resumeAtSeconds is provided, appends #t=<s> so the player
- *  starts near the correct position after a Trail Marker dismissal.
- */
-function convertToEmbedUrl(url: string, resumeAtSeconds?: number | null): string {
-  const match = url.match(/\/file\/d\/([^/]+)/);
-  let embedUrl = url;
-  if (match) {
-    embedUrl = `https://drive.google.com/file/d/${match[1]}/preview`;
-  }
-  if (resumeAtSeconds && resumeAtSeconds > 0) {
-    embedUrl += `#t=${resumeAtSeconds}`;
-  }
-  return embedUrl;
 }
