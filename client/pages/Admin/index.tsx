@@ -193,8 +193,8 @@ function ClipForm({ clipId, clips, onSaved, onCancel }: { clipId: string | null;
             <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Day 1: Introduction" required />
           </div>
           <div className="space-y-1">
-            <Label className="text-xs">Video URL (Google Drive MP4)</Label>
-            <Input value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} placeholder="https://drive.google.com/..." />
+            <Label className="text-xs">Video URL (Wistia)</Label>
+            <Input value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} placeholder="https://amplitude.wistia.com/medias/..." />
           </div>
           <div className="space-y-1">
             <Label className="text-xs">Duration (seconds)</Label>
