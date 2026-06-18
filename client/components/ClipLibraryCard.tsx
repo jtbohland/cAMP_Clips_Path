@@ -1,7 +1,7 @@
-import { Card } from "@/components/ui/card";
 import { getClipEmoji } from "@/lib/clip-emojis";
 import { toast } from "sonner";
 import { useCallback } from "react";
+
 
 type ClipLibraryCardProps = {
   clip: {
@@ -10,6 +10,7 @@ type ClipLibraryCardProps = {
     sortOrder: number;
     videoUrl: string | null;
     durationSeconds: number | null;
+    questionCount: number;
   };
   isLocked: boolean;
   isCompleted: boolean;
@@ -46,6 +47,13 @@ function getSessionTitle(title: string): string {
   return match ? match[1] : title;
 }
 
+/** Extract previous clip short name for lock message */
+function getPreviousClipShortName(title: string | undefined): string {
+  if (!title) return "";
+  const match = title.match(/^Day \d+\w?:\s*(.+)$/);
+  return match ? match[1] : title;
+}
+
 type ClipState = "not_started" | "in_progress" | "completed" | "locked";
 
 function getClipState(isLocked: boolean, isCompleted: boolean, attempts: number): ClipState {
@@ -69,134 +77,171 @@ export default function ClipLibraryCard({
   const state = getClipState(isLocked, isCompleted, attempts);
   const emoji = getClipEmoji(clip.sortOrder);
 
-  const handleShare = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    const deepLink = `${window.location.origin}/clip/${clip.id}`;
-    navigator.clipboard.writeText(deepLink).then(() => {
-      toast.success("Link copied!");
-    }).catch(() => {
-      toast.error("Failed to copy link");
-    });
-  }, [clip.id]);
-
-  const statusBadge = () => {
-    switch (state) {
-      case "completed":
-        return (
-          <span className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700">
-            ✅ Completed{score !== null && ` (${score}%)`}
-            {xpEarned > 0 && <span className="ml-1 text-indigo-600">• +{xpEarned} XP</span>}
-          </span>
-        );
-      case "in_progress":
-        return (
-          <span className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
-            ▶ In Progress
-          </span>
-        );
-      default:
-        return null;
-    }
-  };
-
-  const actionButton = () => {
-    switch (state) {
-      case "not_started":
-        return (
-          <button
-            onClick={(e) => { e.stopPropagation(); onWatch(); }}
-            className="w-full py-2.5 rounded-lg text-sm font-semibold bg-green-600 hover:bg-green-700 text-white transition-colors"
-          >
-            ▶ Start Session
-          </button>
-        );
-      case "in_progress":
-        return (
-          <button
-            onClick={(e) => { e.stopPropagation(); onWatch(); }}
-            className="w-full py-2.5 rounded-lg text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors"
-          >
-            ▶ Resume Session
-          </button>
-        );
-      case "completed":
-        return (
-          <div className="flex flex-col items-center gap-1.5">
-            <button
-              onClick={(e) => { e.stopPropagation(); onReview ? onReview() : onWatch(); }}
-              className="w-full py-2.5 rounded-lg text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition-colors"
-            >
-              📋 Review Ranger Report
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); onWatch(); }}
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-            >
-              ↩ Rewatch Video
-            </button>
-          </div>
-        );
-      case "locked":
-        return (
-          <button
-            disabled
-            className="w-full py-2.5 rounded-lg text-sm font-medium bg-gray-100 text-gray-400 cursor-not-allowed"
-          >
-            🔒 Locked{previousClipTitle ? ` — Complete ${previousClipTitle} first` : ""}
-          </button>
-        );
-    }
-  };
+  const handleShare = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      const deepLink = `${window.location.origin}/clip/${clip.id}`;
+      navigator.clipboard
+        .writeText(deepLink)
+        .then(() => toast.success("Link copied!"))
+        .catch(() => toast.error("Failed to copy link"));
+    },
+    [clip.id]
+  );
 
   return (
-    <Card
-      className={`p-4 transition-all duration-200 ${
-        isLocked ? "opacity-60" : "hover:shadow-md cursor-pointer"
+    <div
+      className={`rounded-xl bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.08)] transition-all duration-200 ${
+        state === "locked"
+          ? "opacity-55 cursor-default"
+          : "hover:shadow-md cursor-pointer"
       }`}
-      onClick={!isLocked ? onWatch : undefined}
+      onClick={state !== "locked" ? onWatch : undefined}
     >
       <div className="flex flex-col gap-3">
-        {/* Top row: week/day labels + emoji + status badge */}
+        {/* Row 1: Week/Day label + status badge + share */}
         <div className="flex items-center justify-between">
+          <span className="text-[11px] font-bold tracking-[0.12em] text-indigo-600 uppercase">
+            {getWeekLabel(clip.sortOrder)} · {getDayLabel(clip.sortOrder)}
+          </span>
           <div className="flex items-center gap-2">
-            <span className="text-lg">{emoji}</span>
-            <span className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">
-              {getWeekLabel(clip.sortOrder)} · {getDayLabel(clip.sortOrder)}
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            {statusBadge()}
-            <button
-              onClick={handleShare}
-              className="p-1 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-              title="Copy share link"
-            >
-              🔗
-            </button>
+            {state === "completed" && (
+              <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-green-100 text-green-700">
+                ✅ Completed
+                {score !== null && <span className="ml-0.5">({score}%)</span>}
+                {xpEarned > 0 && (
+                  <span className="ml-1 text-indigo-600">+{xpEarned} XP</span>
+                )}
+              </span>
+            )}
+            {state === "in_progress" && (
+              <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                ▶ In Progress
+              </span>
+            )}
+            {state !== "locked" && (
+              <button
+                onClick={handleShare}
+                className="p-1 rounded hover:bg-gray-100 transition-colors text-gray-400 hover:text-gray-600"
+                title="Copy share link"
+              >
+                🔗
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Title */}
-        <h3 className="text-base font-bold text-foreground leading-snug">
-          {getSessionTitle(clip.title)}
-        </h3>
+        {/* Row 2: Emoji + Title */}
+        <div className="flex items-center gap-2.5">
+          <span className="text-2xl">{emoji}</span>
+          <h3 className="text-base font-bold text-gray-900 leading-snug">
+            {getSessionTitle(clip.title)}
+          </h3>
+        </div>
 
-        {/* Metadata line */}
-        <p className="text-xs text-muted-foreground flex items-center gap-1.5 flex-wrap">
+        {/* Row 3: Metadata line */}
+        <p className="text-xs text-gray-500 flex items-center gap-1.5 flex-wrap">
           {clip.durationSeconds ? (
             <>
-              <span>⏱ {formatDuration(clip.durationSeconds)}</span>
-              <span>•</span>
+              <span>⏱️ {formatDuration(clip.durationSeconds)}</span>
+              <span className="text-gray-300">·</span>
             </>
           ) : null}
+          <span>🪧 {clip.questionCount} Trail Markers</span>
+          <span className="text-gray-300">·</span>
           <span>80% engagement required</span>
-          <span>•</span>
+          <span className="text-gray-300">·</span>
           <span>Ranger Report ✨</span>
         </p>
 
-        {/* Action button */}
-        {actionButton()}
+        {/* Row 4: Action button */}
+        <ActionButton
+          state={state}
+          previousClipTitle={previousClipTitle}
+          onWatch={onWatch}
+          onReview={onReview}
+        />
       </div>
-    </Card>
+    </div>
   );
+}
+
+function ActionButton({
+  state,
+  previousClipTitle,
+  onWatch,
+  onReview,
+}: {
+  state: ClipState;
+  previousClipTitle?: string;
+  onWatch: () => void;
+  onReview?: () => void;
+}) {
+  switch (state) {
+    case "not_started":
+      return (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onWatch();
+          }}
+          className="w-full py-2.5 rounded-lg text-sm font-semibold bg-green-600 hover:bg-green-700 text-white transition-colors"
+        >
+          🚣🏼‍♂️ Watch Clip
+        </button>
+      );
+    case "in_progress":
+      return (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onWatch();
+          }}
+          className="w-full py-2.5 rounded-lg text-sm font-semibold bg-red-600 hover:bg-red-700 text-white transition-colors"
+        >
+          🧗🏼 Resume Clip
+        </button>
+      );
+    case "completed":
+      return (
+        <div className="flex flex-col items-center gap-1.5">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onReview ? onReview() : onWatch();
+            }}
+            className="w-full py-2.5 rounded-lg text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition-colors"
+          >
+            🗺️ Review Ranger Report
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onWatch();
+            }}
+            className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            ↩ Rewatch Video
+          </button>
+        </div>
+      );
+    case "locked":
+      return (
+        <button
+          disabled
+          className="w-full py-2.5 rounded-lg text-sm font-medium bg-gray-100 text-gray-400 cursor-not-allowed"
+        >
+          🔒 Watch & pass{" "}
+          {previousClipTitle
+            ? getPreviousClipShortName(previousClipTitle)
+            : "the previous clip"}{" "}
+          to unlock
+        </button>
+      );
+  }
+}
+
+function getPreviousClipShortName(title: string): string {
+  const match = title.match(/^Day \d+\w?:\s*(.+)$/);
+  return match ? match[1] : title;
 }

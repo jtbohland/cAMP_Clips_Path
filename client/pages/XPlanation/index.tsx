@@ -1,6 +1,6 @@
 import { useViewer } from "@/components/ViewerContext";
 import { useApiData } from "@/hooks/useApiData.js";
-import TopNav from "@/components/TopNav";
+
 
 const TIERS = [
   { tier: 1, name: "Base Camper", emoji: "🏕️", xpMin: 0, xpMax: 149, description: "Just getting started on the trail" },
@@ -56,18 +56,14 @@ export default function XPlanationPage() {
   return (
     <div className="flex flex-col h-full overflow-auto">
       <div className="max-w-3xl mx-auto w-full p-6 space-y-8">
-        {/* Page Header */}
-        <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold text-foreground">🏔️ XP-lanation</h1>
-          <p className="text-muted-foreground">
-            How to earn XP, unlock badges, and ascend the ranks
-          </p>
-          {viewer && (
-            <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary">
+        {/* Current Tier Badge */}
+        {viewer && (
+          <div className="flex justify-center">
+            <div className="inline-flex items-center gap-2 rounded-full bg-amber-100 border border-amber-300 px-4 py-2 text-sm font-medium text-amber-800">
               {currentTier.emoji} {currentTier.name} • {totalXp} XP
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* How Engagement Scoring Works */}
         <Section title="📊 How Engagement Scoring Works" description="Your clip score is a composite of three factors:">
@@ -76,8 +72,8 @@ export default function XPlanationPage() {
             <ScoreCard weight="30%" label="Focus Score" emoji="👁️" description="Time actively focused on the clip (not tabbed away)" />
             <ScoreCard weight="20%" label="Time Score" emoji="⏱" description="How much of the video you actually watched" />
           </div>
-          <div className="mt-4 rounded-lg border bg-amber-50 dark:bg-amber-950/20 p-3">
-            <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+          <div className="mt-4 rounded-lg border border-indigo-200 bg-indigo-50 p-3">
+            <p className="text-sm font-medium text-indigo-800">
               ⚡ You need an engagement score of <span className="font-bold">80+</span> to pass and unlock the next clip.
               Below 80? Search & Rescue kicks in. Fail that? Weather the Storm gives you a study break.
             </p>
@@ -226,7 +222,7 @@ export default function XPlanationPage() {
 
 function Section({ title, description, children }: { title: string; description: string; children: React.ReactNode }) {
   return (
-    <div className="space-y-3">
+    <div className="rounded-xl bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.08)] space-y-3">
       <div>
         <h2 className="text-xl font-bold text-foreground">{title}</h2>
         <p className="text-sm text-muted-foreground">{description}</p>
@@ -277,7 +273,7 @@ function XpRow({ emoji, label, xp, description }: { emoji: string; label: string
           <p className="text-xs text-muted-foreground">{description}</p>
         </div>
       </div>
-      <span className="text-sm font-bold text-green-600">+{xp} XP</span>
+      <span className="text-sm font-bold text-indigo-600">+{xp} XP</span>
     </div>
   );
 }
@@ -295,13 +291,13 @@ function BadgeRow({ emoji, badge, xp, condition, earned, isMystery }: { emoji: s
           <p className={`text-sm ${earned ? "font-bold text-foreground" : "font-medium text-muted-foreground"}`}>
             {isMystery ? "🌲 The Ranger's Secret" : badge}
             {earned && (
-              <span className="ml-2 inline-flex items-center rounded-full bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 text-xs font-medium text-amber-800 dark:text-amber-200">
+              <span className="ml-2 inline-flex items-center rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-semibold text-indigo-700">
                 ✅ Earned
               </span>
             )}
           </p>
           <p className={`text-xs ${earned ? "text-muted-foreground" : "text-muted-foreground/60"}`}>
-            {isMystery ? "A hidden achievement. You'll know it when you earn it." : condition}
+            {isMystery ? "🌲 The Ranger's Secret — A hidden achievement. You'll know it when you earn it." : condition}
           </p>
         </div>
       </div>
