@@ -34,15 +34,30 @@ function getWistiaVideoId(url: string): string | null {
   }
 }
 
-/** Load Wistia E-v1 async script once */
-function useWistiaScript() {
+/** Load Wistia E-v1 + per-media jsonp scripts */
+function useWistiaScript(wistiaVideoId: string | null) {
   useEffect(() => {
-    if (document.querySelector('script[src*="fast.wistia.com/assets/external/E-v1.js"]')) return;
-    const script = document.createElement("script");
-    script.src = "https://fast.wistia.com/assets/external/E-v1.js";
-    script.async = true;
-    document.head.appendChild(script);
-  }, []);
+    if (!wistiaVideoId) return;
+
+    // Remove old media script if exists
+    const oldScript = document.querySelector('script[data-wistia-media]');
+    if (oldScript) oldScript.remove();
+
+    // Inject E-v1.js once
+    if (!document.querySelector('script[src*="E-v1.js"]')) {
+      const s1 = document.createElement('script');
+      s1.src = 'https://fast.wistia.com/assets/external/E-v1.js';
+      s1.async = true;
+      document.head.appendChild(s1);
+    }
+
+    // Inject per-media jsonp script
+    const s2 = document.createElement('script');
+    s2.src = `https://fast.wistia.com/embed/medias/${wistiaVideoId}.jsonp`;
+    s2.async = true;
+    s2.setAttribute('data-wistia-media', wistiaVideoId);
+    document.head.appendChild(s2);
+  }, [wistiaVideoId]);
 }
 
 export default function WatchPage() {
@@ -50,15 +65,21 @@ export default function WatchPage() {
   const navigate = useNavigate();
   const { viewer } = useViewer();
 
-  // Load Wistia player script
-  useWistiaScript();
-
   // API data
   const { data: clipData, loading: clipLoading } = useApiData(
     "GetClipForWatching",
     { clipId: clipId ?? "", viewerId: viewer?.id ?? "" },
     { enabled: !!clipId && !!viewer?.id }
   );
+
+  // Wistia video ID from clip URL
+  const wistiaVideoId = useMemo(
+    () => (clipData?.clip?.videoUrl ? getWistiaVideoId(clipData.clip.videoUrl) : null),
+    [clipData]
+  );
+
+  // Load Wistia player script (E-v1 + per-media jsonp)
+  useWistiaScript(wistiaVideoId);
 
   const { run: startSession } = useApi("StartSession");
   const { run: submitAnswer } = useApi("SubmitAnswer");
@@ -123,12 +144,6 @@ export default function WatchPage() {
       (clipData?.questions ?? [])
         .filter((q: any) => q.isRecovery)
         .sort((a: any, b: any) => a.sortOrder - b.sortOrder),
-    [clipData]
-  );
-
-  // Wistia video ID from clip URL
-  const wistiaVideoId = useMemo(
-    () => (clipData?.clip?.videoUrl ? getWistiaVideoId(clipData.clip.videoUrl) : null),
     [clipData]
   );
 
@@ -723,31 +738,11 @@ export default function WatchPage() {
         {/* Wistia video embed */}
         <div className="flex-1 min-w-0 flex items-center justify-center bg-black relative">
           {wistiaVideoId ? (
-            <div
-              className={`wistia_responsive_padding`}
-              style={{ padding: "56.25% 0 0 0", position: "relative", width: "100%", height: "100%" }}
-            >
+            <div style={{ width: "100%", height: "100%", position: "relative" }}>
               <div
-                className={`wistia_responsive_wrapper`}
-                style={{ height: "100%", left: 0, position: "absolute", top: 0, width: "100%" }}
-              >
-                <div
-                  className={`wistia_embed wistia_async_${wistiaVideoId} seo=true videoFoam=true`}
-                  style={{ height: "100%", position: "relative", width: "100%" }}
-                >
-                  <div
-                    className="wistia_swatch"
-                    style={{ height: "100%", left: 0, opacity: 0, overflow: "hidden", position: "absolute", top: 0, transition: "opacity 200ms", width: "100%" }}
-                  >
-                    <img
-                      src={`https://fast.wistia.com/embed/medias/${wistiaVideoId}/swatch`}
-                      style={{ filter: "blur(5px)", height: "100%", objectFit: "contain", width: "100%" }}
-                      alt=""
-                      aria-hidden="true"
-                    />
-                  </div>
-                </div>
-              </div>
+                className={`wistia_embed wistia_async_${wistiaVideoId} videoFoam=true`}
+                style={{ width: "100%", height: "100%" }}
+              />
             </div>
           ) : (
             <div className="flex flex-col items-center gap-3 text-white/70">
