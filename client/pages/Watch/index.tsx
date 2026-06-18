@@ -143,6 +143,11 @@ export default function WatchPage() {
   // Track resume-from position for paused sessions
   const resumeFromSecondsRef = useRef<number | null>(null);
 
+  // Refs for stale-closure-safe access inside event handlers
+  const phaseRef = useRef<WatchPhase>("loading_resume");
+  const trailMarkersRef = useRef<any[]>([]);
+  const answeredQuestionsRef = useRef<Set<string>>(new Set());
+
   // Separate trail marker questions from recovery questions
   const trailMarkers = useMemo(
     () =>
@@ -151,6 +156,11 @@ export default function WatchPage() {
         .sort((a: any, b: any) => a.triggerAtSeconds - b.triggerAtSeconds),
     [clipData]
   );
+
+  // Keep refs in sync with state
+  useEffect(() => { phaseRef.current = phase; }, [phase]);
+  useEffect(() => { trailMarkersRef.current = trailMarkers; }, [trailMarkers]);
+  useEffect(() => { answeredQuestionsRef.current = answeredQuestions; }, [answeredQuestions]);
 
   const recoveryQuestions = useMemo(
     () =>
@@ -194,6 +204,20 @@ export default function WatchPage() {
       const roundedT = Math.floor(currentTime);
       setElapsedSeconds(roundedT);
       lastTimeRef.current = currentTime;
+
+      // Seek-safe trail marker check: fires on every timeupdate,
+      // finds the first unanswered marker at or before currentTime
+      if (phaseRef.current === "watching" && trailMarkersRef.current.length > 0) {
+        const nextUnanswered = trailMarkersRef.current.find(
+          (q: any) => !answeredQuestionsRef.current.has(q.id) && currentTime >= q.triggerAtSeconds
+        );
+        if (nextUnanswered) {
+          const idx = trailMarkersRef.current.indexOf(nextUnanswered);
+          setCurrentQuestionIdx(idx);
+          try { (el as any).pause(); } catch { /* ignore */ }
+          setPhase("trail_marker");
+        }
+      }
     };
     const onEnd = () => {
       setIsVideoPlaying(false);
@@ -402,23 +426,7 @@ export default function WatchPage() {
     }
   }, []);
 
-  // Check if we need to show a trail marker (using actual video time)
-  useEffect(() => {
-    if (phase !== "watching" || trailMarkers.length === 0) return;
-    const nextUnanswered = trailMarkers.find(
-      (q: any) => !answeredQuestions.has(q.id) && elapsedSeconds >= q.triggerAtSeconds
-    );
-    if (nextUnanswered) {
-      const idx = trailMarkers.indexOf(nextUnanswered);
-      setCurrentQuestionIdx(idx);
-      // Pause the Wistia video for the trail marker
-      const player = wistiaPlayerRef.current;
-      if (player) {
-        try { (player as any).pause(); } catch { /* ignore */ }
-      }
-      setPhase("trail_marker");
-    }
-  }, [elapsedSeconds, phase, trailMarkers, answeredQuestions]);
+  // Trail marker checking is now handled directly in onTimeUpdate (seek-safe).
 
   // B3-2: Auto-trigger Ranger Report when video reaches duration
   useEffect(() => {
