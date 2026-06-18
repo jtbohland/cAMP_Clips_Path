@@ -190,22 +190,25 @@ export default function WatchPage() {
     };
   }, [phase, isVideoPlaying]);
 
-  // Bind Wistia Web Component events on the <wistia-player> element
+  // Bind Wistia Web Component events AFTER the player API is ready.
+  // Uses phaseRef (not phase) so phase transitions don't tear down listeners.
   useEffect(() => {
-    if (!wistiaVideoId || phase === "loading_resume" || phase === "resume_prompt") return;
+    if (!wistiaVideoId) return;
 
     const el = wistiaPlayerRef.current;
     if (!el) return;
 
+    let cleaned = false;
+
     const onPlay = () => setIsVideoPlaying(true);
     const onPause = () => setIsVideoPlaying(false);
-    const onTimeUpdate = (e: any) => {
-      const currentTime = e.detail?.currentTime ?? (el as any).currentTime ?? 0;
+    const onTimeUpdate = () => {
+      const currentTime: number = (el as any).currentTime ?? 0;
       const roundedT = Math.floor(currentTime);
       setElapsedSeconds(roundedT);
       lastTimeRef.current = currentTime;
 
-      // Seek-safe trail marker check: fires on every timeupdate,
+      // Seek-safe trail marker check: fires on every time-update,
       // finds the first unanswered marker at or before currentTime
       if (phaseRef.current === "watching" && trailMarkersRef.current.length > 0) {
         const nextUnanswered = trailMarkersRef.current.find(
@@ -219,38 +222,43 @@ export default function WatchPage() {
         }
       }
     };
-    const onEnd = () => {
+    const onEnded = () => {
       setIsVideoPlaying(false);
     };
 
-    el.addEventListener("play", onPlay);
-    el.addEventListener("pause", onPause);
-    el.addEventListener("timeupdate", onTimeUpdate);
-    el.addEventListener("end", onEnd);
+    const attachListeners = () => {
+      if (cleaned) return;
+      el.addEventListener("play", onPlay);
+      el.addEventListener("pause", onPause);
+      el.addEventListener("time-update", onTimeUpdate);
+      el.addEventListener("ended", onEnded);
 
-    // If we have a resume position, seek once ready
-    if (resumeFromSecondsRef.current !== null && resumeFromSecondsRef.current > 0) {
-      const seekOnReady = () => {
-        (el as any).currentTime = resumeFromSecondsRef.current;
+      // If we have a resume position, seek now that player is ready
+      if (resumeFromSecondsRef.current !== null && resumeFromSecondsRef.current > 0) {
+        try {
+          (el as any).currentTime = resumeFromSecondsRef.current;
+        } catch { /* ignore */ }
         resumeFromSecondsRef.current = null;
-        el.removeEventListener("play", seekOnReady);
-      };
-      // Try immediately if player is already loaded
-      try {
-        (el as any).currentTime = resumeFromSecondsRef.current;
-        resumeFromSecondsRef.current = null;
-      } catch {
-        el.addEventListener("play", seekOnReady);
       }
+    };
+
+    // Wait for Wistia Web Component to be fully initialized
+    // If the player API is already ready, currentTime is a number (not undefined)
+    if (typeof (el as any).currentTime === "number") {
+      attachListeners();
+    } else {
+      el.addEventListener("api-ready", attachListeners, { once: true });
     }
 
     return () => {
+      cleaned = true;
+      el.removeEventListener("api-ready", attachListeners);
       el.removeEventListener("play", onPlay);
       el.removeEventListener("pause", onPause);
-      el.removeEventListener("timeupdate", onTimeUpdate);
-      el.removeEventListener("end", onEnd);
+      el.removeEventListener("time-update", onTimeUpdate);
+      el.removeEventListener("ended", onEnded);
     };
-  }, [wistiaVideoId, phase]);
+  }, [wistiaVideoId]);
 
   // Check for paused session on mount
   useEffect(() => {
