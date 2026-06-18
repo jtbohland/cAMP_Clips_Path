@@ -38,10 +38,10 @@ export default function TopNav() {
         >
           <span className="text-2xl">🏕️</span>
           <div>
-            <h1 className="text-lg font-bold text-foreground tracking-tight leading-tight">
+            <h1 className="text-lg font-bold text-gray-900 tracking-tight leading-tight">
               cAMP Ascent: Sales
             </h1>
-            <p className="text-[11px] text-muted-foreground leading-tight">
+            <p className="text-[11px] text-gray-500 leading-tight">
               🎞️ Watch. Engage. Ascend.
             </p>
           </div>
@@ -51,10 +51,10 @@ export default function TopNav() {
         {viewer && (
           <div className="flex items-center gap-2">
             <div className="flex flex-col items-end">
-              <span className="text-sm font-medium text-foreground">
+              <span className="text-sm font-medium text-gray-900">
                 {viewer.name}
               </span>
-              <span className="text-xs text-muted-foreground">{viewer.role}</span>
+              <span className="text-xs text-gray-500">{viewer.role}</span>
             </div>
           </div>
         )}
@@ -63,7 +63,7 @@ export default function TopNav() {
       {/* Row 2: Nav tabs OR Back button + page header */}
       {showTabs ? (
         <div className="flex justify-center pb-2">
-          <nav className="flex items-center gap-1 bg-muted/50 rounded-xl p-1">
+          <nav className="flex items-center gap-1 bg-gray-50/50 rounded-xl p-1">
             {NAV_TABS.map((tab) => (
               <button
                 key={tab.path}
@@ -71,7 +71,7 @@ export default function TopNav() {
                 className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-150 ${
                   isActive(tab.path)
                     ? "bg-indigo-600 text-white shadow-md"
-                    : "text-muted-foreground hover:text-indigo-600 hover:bg-indigo-50"
+                    : "text-gray-500 hover:text-indigo-600 hover:bg-indigo-50"
                 }`}
               >
                 <span className="text-base">{tab.emoji}</span>
@@ -91,10 +91,10 @@ export default function TopNav() {
           <div className="flex items-center gap-2">
             <span className="text-xl">{currentPageMeta.emoji}</span>
             <div>
-              <h2 className="text-lg font-bold text-foreground leading-tight">
+              <h2 className="text-lg font-bold text-gray-900 leading-tight">
                 {currentPageMeta.title}
               </h2>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-gray-500">
                 {currentPageMeta.description}
               </p>
             </div>

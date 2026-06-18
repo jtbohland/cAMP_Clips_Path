@@ -43,8 +43,8 @@ export default function LibraryPage() {
         <div className="flex items-center gap-3 mb-2">
           <span className="text-3xl">🎬</span>
           <div>
-            <h1 className="text-2xl font-bold text-primary">cAMP Clips</h1>
-            <p className="text-sm text-muted-foreground">
+            <h1 className="text-2xl font-bold text-[#4F46E5]">cAMP Clips</h1>
+            <p className="text-sm text-gray-500">
               Your training journey awaits. Watch each clip, answer Trail Markers, and earn your Ranger Report.
             </p>
           </div>
@@ -54,7 +54,7 @@ export default function LibraryPage() {
           {Array.from({ length: 5 }).map((_, i) => (
             <div
               key={i}
-              className="h-20 bg-muted rounded-lg animate-pulse"
+              className="h-20 bg-gray-50 rounded-lg animate-pulse"
             />
           ))}
         </div>
@@ -71,8 +71,8 @@ export default function LibraryPage() {
       <div className="flex items-center gap-3 mb-2">
         <span className="text-3xl">🎬</span>
         <div>
-          <h1 className="text-2xl font-bold text-foreground">cAMP Clips</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="text-2xl font-bold text-gray-900">cAMP Clips</h1>
+          <p className="text-sm text-gray-500">
             Watch each clip, answer Trail Markers 🪧, and earn your Ranger Report ✨
           </p>
         </div>
@@ -86,9 +86,9 @@ export default function LibraryPage() {
               {/* Week header */}
               <div className="flex items-center gap-3 mb-3">
                 <span className="text-2xl">{week.emoji}</span>
-                <h2 className="text-lg font-bold text-foreground">{week.label}</h2>
+                <h2 className="text-lg font-bold text-gray-900">{week.label}</h2>
               </div>
-              <div className="border-b border-border/50 mb-4" />
+              <div className="border-b border-gray-200/50 mb-4" />
 
               {/* Clips in this week */}
               <div className="flex flex-col gap-3">
@@ -118,7 +118,7 @@ export default function LibraryPage() {
       </div>
 
       {clips.length === 0 && (
-        <div className="text-center py-12 text-muted-foreground">
+        <div className="text-center py-12 text-gray-500">
           <span className="text-4xl block mb-3">🌲</span>
           <p className="text-sm">No clips available yet. Check back soon!</p>
         </div>

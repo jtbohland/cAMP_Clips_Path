@@ -37,11 +37,11 @@ export default function PasswordGate({ children }: PasswordGateProps) {
     <div className="flex h-full items-center justify-center p-6">
       <Card className="w-full max-w-sm p-8 shadow-lg">
         <div className="mb-6 text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
-            <Icon icon="lock" className="h-7 w-7 text-primary" />
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#4F46E5]/10">
+            <Icon icon="lock" className="h-7 w-7 text-[#4F46E5]" />
           </div>
           <h2 className="text-xl font-bold">Admin Access</h2>
-          <p className="mt-2 text-sm text-muted-foreground">
+          <p className="mt-2 text-sm text-gray-500">
             Enter the admin password to continue.
           </p>
         </div>

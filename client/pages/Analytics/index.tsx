@@ -56,7 +56,7 @@ function AnalyticsContent() {
         </div>
       </div>
 
-      {fetching && !loading && <div className="text-xs text-muted-foreground">Updating…</div>}
+      {fetching && !loading && <div className="text-xs text-gray-500">Updating…</div>}
 
       <div className={fetching && !loading ? "opacity-70" : ""}>
         {activeTab === "overview" && <OverviewTab clipStats={clipStats} />}
@@ -79,20 +79,20 @@ function OverviewTab({ clipStats }: { clipStats: any[] }) {
       {/* Summary cards */}
       <div className="grid grid-cols-3 gap-4">
         <Card className="p-4 text-center">
-          <div className="text-3xl font-bold text-primary">{clipStats.length}</div>
-          <p className="text-xs text-muted-foreground">Live Clips</p>
+          <div className="text-3xl font-bold text-[#4F46E5]">{clipStats.length}</div>
+          <p className="text-xs text-gray-500">Live Clips</p>
         </Card>
         <Card className="p-4 text-center">
-          <div className="text-3xl font-bold text-primary">{totalViewers}</div>
-          <p className="text-xs text-muted-foreground">Total Viewers</p>
+          <div className="text-3xl font-bold text-[#4F46E5]">{totalViewers}</div>
+          <p className="text-xs text-gray-500">Total Viewers</p>
         </Card>
         <Card className="p-4 text-center">
-          <div className="text-3xl font-bold text-primary">
+          <div className="text-3xl font-bold text-[#4F46E5]">
             {clipStats.length > 0
               ? Math.round(clipStats.reduce((sum, c) => sum + (c.avgScore ?? 0), 0) / clipStats.filter(c => c.avgScore != null).length || 0)
               : 0}%
           </div>
-          <p className="text-xs text-muted-foreground">Avg Score</p>
+          <p className="text-xs text-gray-500">Avg Score</p>
         </Card>
       </div>
 
@@ -101,12 +101,12 @@ function OverviewTab({ clipStats }: { clipStats: any[] }) {
         <h3 className="font-semibold text-sm">Per-Clip Performance</h3>
         {clipStats.map((clip) => (
           <Card key={clip.clipId} className="p-3 flex items-center gap-4">
-            <div className="flex h-7 w-7 items-center justify-center rounded bg-muted text-xs font-bold">
+            <div className="flex h-7 w-7 items-center justify-center rounded bg-gray-50 text-xs font-bold">
               {clip.sortOrder}
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-medium text-sm truncate">{clip.title}</p>
-              <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+              <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
                 <span>{clip.totalViewers} viewers</span>
                 <span>{clip.completedViewers} completed</span>
                 <span>Avg: {clip.avgScore != null ? `${clip.avgScore}%` : "N/A"}</span>
@@ -114,14 +114,14 @@ function OverviewTab({ clipStats }: { clipStats: any[] }) {
             </div>
             <div className="w-24">
               <Progress value={clip.totalViewers > 0 ? (clip.completedViewers / clip.totalViewers) * 100 : 0} className="h-2" />
-              <p className="text-[10px] text-muted-foreground text-center mt-0.5">
+              <p className="text-[10px] text-gray-500 text-center mt-0.5">
                 {clip.totalViewers > 0 ? Math.round((clip.completedViewers / clip.totalViewers) * 100) : 0}% completion
               </p>
             </div>
           </Card>
         ))}
         {clipStats.length === 0 && (
-          <p className="text-sm text-muted-foreground text-center py-8">No data yet</p>
+          <p className="text-sm text-gray-500 text-center py-8">No data yet</p>
         )}
       </div>
     </div>
@@ -150,12 +150,12 @@ function ViewersTab({ viewerStats }: { viewerStats: any[] }) {
     <div className="space-y-3">
       <div className="flex items-center gap-3">
         <input
-          className="flex h-9 w-64 rounded-md border border-input bg-background px-3 py-1 text-sm"
+          className="flex h-9 w-64 rounded-md border border-input bg-white px-3 py-1 text-sm"
           placeholder="Search viewers..."
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(0); }}
         />
-        <span className="text-xs text-muted-foreground">{filtered.length} viewers</span>
+        <span className="text-xs text-gray-500">{filtered.length} viewers</span>
       </div>
 
       <div className="space-y-1">
@@ -164,7 +164,7 @@ function ViewersTab({ viewerStats }: { viewerStats: any[] }) {
             <div className="flex items-center gap-3">
               <div>
                 <p className="text-sm font-medium">{v.name}</p>
-                <p className="text-xs text-muted-foreground">{v.email}</p>
+                <p className="text-xs text-gray-500">{v.email}</p>
               </div>
               <Badge variant="outline">{v.role}</Badge>
             </div>
@@ -172,7 +172,7 @@ function ViewersTab({ viewerStats }: { viewerStats: any[] }) {
               <span>{v.clipsCompleted} clips</span>
               <span className="font-bold">{v.avgScore != null ? `${v.avgScore}%` : "N/A"}</span>
               {v.lastActivity && (
-                <span className="text-muted-foreground">
+                <span className="text-gray-500">
                   Last: {new Date(v.lastActivity).toLocaleDateString()}
                 </span>
               )}
@@ -202,20 +202,20 @@ function RolesTab({ roleStats }: { roleStats: any[] }) {
             <div className="flex items-center justify-between">
               <div>
                 <h4 className="font-semibold text-sm">{r.role}</h4>
-                <p className="text-xs text-muted-foreground">{r.viewerCount} viewer{r.viewerCount !== 1 ? "s" : ""}</p>
+                <p className="text-xs text-gray-500">{r.viewerCount} viewer{r.viewerCount !== 1 ? "s" : ""}</p>
               </div>
               <div className="flex items-center gap-6">
                 <div className="text-center">
                   <div className="text-lg font-bold">{r.avgScore != null ? `${r.avgScore}%` : "N/A"}</div>
-                  <p className="text-[10px] text-muted-foreground">Avg Score</p>
+                  <p className="text-[10px] text-gray-500">Avg Score</p>
                 </div>
                 <div className="text-center">
                   <div className="text-lg font-bold">{r.avgCompletion != null ? r.avgCompletion : "N/A"}</div>
-                  <p className="text-[10px] text-muted-foreground">Clips/Viewer</p>
+                  <p className="text-[10px] text-gray-500">Clips/Viewer</p>
                 </div>
                 <div className="text-center">
                   <div className="text-lg font-bold">{r.avgFocus != null ? `${r.avgFocus}%` : "N/A"}</div>
-                  <p className="text-[10px] text-muted-foreground">Avg Focus</p>
+                  <p className="text-[10px] text-gray-500">Avg Focus</p>
                 </div>
               </div>
             </div>
@@ -225,7 +225,7 @@ function RolesTab({ roleStats }: { roleStats: any[] }) {
           </Card>
         ))}
         {roleStats.length === 0 && (
-          <p className="text-sm text-muted-foreground text-center py-8">No data yet</p>
+          <p className="text-sm text-gray-500 text-center py-8">No data yet</p>
         )}
       </div>
     </div>
