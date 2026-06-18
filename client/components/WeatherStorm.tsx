@@ -74,18 +74,24 @@ export default function WeatherStorm({
           </Tooltip>
         </TooltipProvider>
 
-        {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">⛈️</span>
-            <h2 className="text-lg font-bold text-gray-900">Weather the Storm</h2>
+        {/* Header with amber background */}
+        <div className="bg-[#FFFBEB] rounded-lg px-4 py-3 mb-4 border border-amber-200/50">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">⛈️</span>
+              <h2 className="text-lg font-bold text-gray-900">Weather the Storm</h2>
+            </div>
+            <div className="flex items-center gap-2 bg-white/70 px-3 py-1.5 rounded-full">
+              <span>⏱️</span>
+              <span className="text-sm font-mono font-bold text-gray-900">
+                {minutes}:{seconds.toString().padStart(2, "0")}
+              </span>
+            </div>
           </div>
-          <div className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-full">
-            <span>⏱️</span>
-            <span className="text-sm font-mono font-bold text-gray-900">
-              {minutes}:{seconds.toString().padStart(2, "0")}
-            </span>
-          </div>
+          <p className="text-sm text-amber-800 text-center">
+            You didn't quite make it through Trail Markers or Search & Rescue — but that's okay.
+            Take 3 minutes with these key takeaways before your next clip unlocks. 🌲
+          </p>
         </div>
 
         {/* Timer progress bar */}
@@ -118,13 +124,10 @@ export default function WeatherStorm({
           ))}
         </ul>
 
-        {/* Auto-unlock notice */}
-        <div className="rounded-lg bg-accent/10 border border-accent/30 p-3 text-center">
-          <p className="text-xs text-gray-500">
-            🔓 Next clip will unlock automatically when the timer completes.
-            Use this time to review the material above.
-          </p>
-        </div>
+        {/* Footer */}
+        <p className="text-xs text-gray-400 text-center mt-2">
+          Next clip unlocks automatically when the timer ends. Hang tight! 🏕️
+        </p>
 
         {secondsLeft === 0 && (
           <div className="flex justify-center mt-4">

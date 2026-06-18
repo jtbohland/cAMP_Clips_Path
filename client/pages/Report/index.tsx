@@ -88,7 +88,7 @@ export default function ReportPage() {
         <Button
           variant="ghost"
           onClick={() => navigate("/library")}
-          className="text-sm font-medium text-gray-500 hover:text-foreground"
+          className="text-sm font-medium text-gray-500 hover:text-gray-900"
         >
           ← Back to cAMP Clips
         </Button>
