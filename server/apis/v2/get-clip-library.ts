@@ -13,6 +13,7 @@ const ClipWithProgressSchema = z.object({
   attempts: z.string().nullable(),
   completed: z.coerce.number(),
   xp_earned: z.coerce.number(),
+  question_count: z.coerce.number(),
 });
 
 export default api({
@@ -40,6 +41,7 @@ export default api({
         completed: z.boolean(),
         unlocked: z.boolean(),
         xpEarned: z.number(),
+        questionCount: z.number(),
       })
     ),
   }),
@@ -77,7 +79,12 @@ export default api({
           SELECT COALESCE(SUM(xp_amount), 0)::int
           FROM cliptracker_v2_xp_events x
           WHERE x.clip_id = c.id AND x.viewer_id = $1
-        ) as xp_earned
+        ) as xp_earned,
+        (
+          SELECT COUNT(*)::int
+          FROM cliptracker_v2_questions q
+          WHERE q.clip_id = c.id AND q.is_recovery = false
+        ) as question_count
       FROM cliptracker_v2_clips c
       WHERE c.status = 'live'
       ORDER BY c.sort_order ASC`,
@@ -124,6 +131,7 @@ export default api({
         completed: isCompleted,
         unlocked: !isLocked,
         xpEarned: clip.xp_earned,
+        questionCount: clip.question_count,
       };
     });
 

@@ -1,0 +1,1999 @@
+{
+  "file": "01_trail_markers.json",
+  "section": "Trail Markers \ud83e\udea7",
+  "clip_id_note": "clip_id matches across all 4 JSON files. Clip 1 = Day 1 video, Clip 17 = Day 15b video.",
+  "description": "In-video pop quizzes. Fire during video at triggerAtSeconds. Video pauses, learner answers. Show correct_feedback or incorrect_feedback immediately after answer. isRecovery is always false.",
+  "total_clips": 17,
+  "total_questions": 82,
+  "note_clip_12": "Clip 12 (Day 11b) has only 2 Trail Markers \u2014 short 5-minute video.",
+  "clips": [
+    {
+      "clip_id": 1,
+      "title": "Day 1: Ideal Customer Profiles (Personas & Industries)",
+      "trail_markers": [
+        {
+          "question_number": 1,
+          "text": "Michelle described five key industries that Amplitude focuses its efforts on. Which of the following is one of those five?",
+          "options": [
+            "Travel and hospitality",
+            "Media and entertainment",
+            "Government and public sector",
+            "Telecommunications"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 640,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Michelle listed the five key industries as retail and e-commerce, B2B SaaS (technology), financial services, media and entertainment, and healthcare. Travel, government, and telecom were mentioned by attendees as industries they had previously sold into \u2014 but are not among Amplitude's five focus industries."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Michelle listed the five key industries as retail and e-commerce, B2B SaaS (technology), financial services, media and entertainment, and healthcare. Travel, government, and telecom were mentioned by attendees as industries they had previously sold into \u2014 but are not among Amplitude's five focus industries."
+          }
+        },
+        {
+          "question_number": 2,
+          "text": "According to Michelle, value maps are required for which type of deals at Amplitude?",
+          "options": [
+            "Any deal involving a new logo customer",
+            "All deals regardless of size",
+            "Deals of $250,000 or higher",
+            "Deals that involve more than one product blade"
+          ],
+          "correct": 2,
+          "triggerAtSeconds": 1278,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Michelle stated that value maps are created for deals at $250,000 or higher and described them as 'basically a requirement' at that threshold. She also noted they are useful beyond closing \u2014 they serve as a great handoff resource for the customer success manager."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Michelle stated that value maps are created for deals at $250,000 or higher and described them as 'basically a requirement' at that threshold. She also noted they are useful beyond closing \u2014 they serve as a great handoff resource for the customer success manager."
+          }
+        },
+        {
+          "question_number": 3,
+          "text": "Julia described three core challenges product managers commonly face. Which of the following was one of them?",
+          "options": [
+            "Difficulty integrating data tools with Salesforce",
+            "Slow feedback loops when validating ideas",
+            "Lack of budget authority for analytics tools",
+            "Too much dependence on marketing teams for roadmap input"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 2130,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Julia listed three common PM challenges: blind spots into user behavior, metric overload from tracking too many metrics, and slow feedback loops that make validating ideas difficult. Budget authority and Salesforce integration were not mentioned as PM challenges in this session."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Julia listed three common PM challenges: blind spots into user behavior, metric overload from tracking too many metrics, and slow feedback loops that make validating ideas difficult. Budget authority and Salesforce integration were not mentioned as PM challenges in this session."
+          }
+        },
+        {
+          "question_number": 4,
+          "text": "In the roleplay, Michelle's character represented the data analyst persona. What was her core frustration that made the case for a self-serve analytics platform?",
+          "options": [
+            "Her team didn't have access to Amplitude's dashboards",
+            "She was constantly fielding repetitive ad hoc requests that prevented her from doing deeper analysis",
+            "Leadership wouldn't approve budget for a new analytics tool",
+            "Product and marketing teams weren't sharing their data with her"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 2982,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "In the roleplay, Michelle's character explained she was 60% through her backlog of ad hoc requests from last quarter and felt like she was 'reinventing the wheel.' She said: 'I would rather spend my time digging into deeper analyses that you all can't get from a simple dashboard. But without self-serve analytics, I feel like I'm the bottleneck.'"
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "In the roleplay, Michelle's character explained she was 60% through her backlog of ad hoc requests from last quarter and felt like she was 'reinventing the wheel.' She said: 'I would rather spend my time digging into deeper analyses that you all can't get from a simple dashboard. But without self-serve analytics, I feel like I'm the bottleneck.'"
+          }
+        },
+        {
+          "question_number": 5,
+          "text": "Michelle described two archetypes within the data and analytics persona. She called one the 'honest reporter.' What did she call the second archetype?",
+          "options": [
+            "The data scientist",
+            "The insights architect",
+            "The back ender \u2014 the data engineer focused on integrations and pipelines",
+            "The analytics lead \u2014 responsible for data governance and trust"
+          ],
+          "correct": 2,
+          "triggerAtSeconds": 3748,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Michelle described the 'honest reporter' as the analyst focused on pulling reports and presenting KPIs, and what she called internally 'the back ender' \u2014 the data engineer focused on what's under the hood: integrations, pipelines, and questions like whether Amplitude can connect with Snowflake."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Michelle described the 'honest reporter' as the analyst focused on pulling reports and presenting KPIs, and what she called internally 'the back ender' \u2014 the data engineer focused on what's under the hood: integrations, pipelines, and questions like whether Amplitude can connect with Snowflake."
+          }
+        }
+      ]
+    },
+    {
+      "clip_id": 2,
+      "title": "Day 2: Top of Funnel (TOFU) \u2013 MQLs & Inbounds",
+      "trail_markers": [
+        {
+          "question_number": 1,
+          "text": "According to the session, what was the primary goal of the TOFU project \u2014 and what specific improvement did it deliver in lead delivery speed?",
+          "options": [
+            "To reduce duplicate MQLs \u2014 leads now arrive deduplicated within 24 hours instead of 48",
+            "To get leads to reps faster so they can work them faster \u2014 leads now arrive in under 5 minutes instead of the previous 30 minutes",
+            "To improve lead quality scoring \u2014 person scores now update in real time instead of overnight",
+            "To simplify Salesforce \u2014 all lead management was moved out of the GTM dashboard into a single contact list"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 633,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "The presenter explained that the goal of the TOFU project was to get leads to reps faster so they could work them faster. The marketing team deprecated several platforms and untangled the enrichment process so leads now arrive in under 5 minutes \u2014 down from the previous 30-minute window."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "The presenter explained that the goal of the TOFU project was to get leads to reps faster so they could work them faster. The marketing team deprecated several platforms and untangled the enrichment process so leads now arrive in under 5 minutes \u2014 down from the previous 30-minute window."
+          }
+        },
+        {
+          "question_number": 2,
+          "text": "The session introduced a new sales stage called the SAL. What does SAL stand for, and where does it sit in the sales process?",
+          "options": [
+            "Sales Aligned Lead \u2014 it sits between S1 and S2, triggered when a meeting has occurred",
+            "Sales Accepted Lead \u2014 it sits between MQL and S0, triggered when positive activity has been taken toward booking a meeting",
+            "Sales Actioned Lead \u2014 it sits before the MQL stage, triggered when a rep first views a lead",
+            "Sales Assigned Lead \u2014 it sits between S0 and S1, triggered when a meeting is booked and confirmed"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 1478,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "SAL stands for Sales Accepted Lead. The presenter explained it sits right between MQL and S0. An SAL means the rep has taken positive activity \u2014 a phone call or email \u2014 and is working toward booking a meeting. S0 is when the meeting is booked, and S1 is when the meeting has happened."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "SAL stands for Sales Accepted Lead. The presenter explained it sits right between MQL and S0. An SAL means the rep has taken positive activity \u2014 a phone call or email \u2014 and is working toward booking a meeting. S0 is when the meeting is booked, and S1 is when the meeting has happened."
+          }
+        },
+        {
+          "question_number": 3,
+          "text": "The session explained that MQL SLA hours are based on working hours. A hand raiser MQL arrives at 7pm on a Friday. When does the SLA clock start?",
+          "options": [
+            "Immediately \u2014 the SLA starts the moment the MQL is assigned regardless of day or time",
+            "Saturday at 9am \u2014 the next calendar day when work could reasonably begin",
+            "Monday at 9am \u2014 when working hours resume in the rep's time zone",
+            "Friday at 9pm \u2014 two hours after the MQL was received, since hand raiser SLAs are one hour"
+          ],
+          "correct": 2,
+          "triggerAtSeconds": 2376,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "The presenter was explicit: SLA hours are working hours based on the rep's time zone and region. Using this exact example, he said if a hand raiser MQL arrives at 7pm on a Friday, the rep is not on the hook to resolve it in one hour at 7pm \u2014 the clock starts Monday at 9am when working hours resume."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "The presenter was explicit: SLA hours are working hours based on the rep's time zone and region. Using this exact example, he said if a hand raiser MQL arrives at 7pm on a Friday, the rep is not on the hook to resolve it in one hour at 7pm \u2014 the clock starts Monday at 9am when working hours resume."
+          }
+        },
+        {
+          "question_number": 4,
+          "text": "If an MQL goes into breach, what is the escalation sequence that follows?",
+          "options": [
+            "The MQL is automatically disqualified after 24 hours and reassigned to another rep on the team",
+            "The breach is logged silently \u2014 the rep and manager are notified by email at the end of the week",
+            "The rep is tagged in the breach channel along with their FLM, who has 24 hours to follow up. If the FLM doesn't resolve it, the VP is tagged and has 48 hours to work with the manager to resolve it",
+            "The VP is notified immediately and has 24 hours to reassign the MQL before it is escalated to the CRO"
+          ],
+          "correct": 2,
+          "triggerAtSeconds": 3432,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "The presenter walked through the breach escalation sequence: the rep and their frontline manager (FLM) are tagged in the breach channel. The FLM has 24 hours to follow up with the rep directly \u2014 they cannot reply in the channel. If the FLM doesn't resolve it, the VP is tagged and has 48 hours to work through the manager to get it resolved."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "The presenter walked through the breach escalation sequence: the rep and their frontline manager (FLM) are tagged in the breach channel. The FLM has 24 hours to follow up with the rep directly \u2014 they cannot reply in the channel. If the FLM doesn't resolve it, the VP is tagged and has 48 hours to work through the manager to get it resolved."
+          }
+        },
+        {
+          "question_number": 5,
+          "text": "Justin described the Sales Performance Dashboard built in Tableau. What is the SLA adherence target the team is aiming for right off the bat?",
+          "options": [
+            "100% \u2014 the expectation is full adherence with exceptions handled case by case",
+            "90% \u2014 a high bar that accounts for occasional back-to-back meeting conflicts",
+            "80% \u2014 a realistic target that accounts for the varying demands across different roles",
+            "70% \u2014 a baseline for the first quarter that will increase as reps build the habit"
+          ],
+          "correct": 2,
+          "triggerAtSeconds": 4488,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Justin stated explicitly that 80% SLA adherence is the target right off the bat. He noted the presenter had mentioned the same \u2014 they are not expecting 100% and recognize that different teams will perform at different levels, with SDRs likely higher and AEs potentially lower due to more customer-facing meeting demands."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Justin stated explicitly that 80% SLA adherence is the target right off the bat. He noted the presenter had mentioned the same \u2014 they are not expecting 100% and recognize that different teams will perform at different levels, with SDRs likely higher and AEs potentially lower due to more customer-facing meeting demands."
+          }
+        }
+      ]
+    },
+    {
+      "clip_id": 3,
+      "title": "Day 3: GTM Launch Pad (SFDC Sales Dashboard)",
+      "trail_markers": [
+        {
+          "question_number": 1,
+          "text": "Matt described the GTM Launch Pad as being designed for everyone in go-to-market. How far up and down the org is it used?",
+          "options": [
+            "It is designed exclusively for AEs and their FLMs \u2014 leadership uses a separate executive dashboard",
+            "It is designed for everyone from the CRO all the way down to AEs and SDRs \u2014 everyone in go-to-market uses the same platform",
+            "It is designed for AEs, SDRs, and velocity reps \u2014 VPs and above have their own dedicated analytics environment",
+            "It is designed for individual contributors only \u2014 managers have a separate version with additional controls and permissions"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 432,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Matt explicitly stated the dashboard is designed so everyone in go-to-market can use it \u2014 all the way up from Nate, the CRO, all the way down to AEs and their SDR counterparts. It is designed to bring transparency and visibility across all go-to-market teams so everyone is looking at the same data."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Matt explicitly stated the dashboard is designed so everyone in go-to-market can use it \u2014 all the way up from Nate, the CRO, all the way down to AEs and their SDR counterparts. It is designed to bring transparency and visibility across all go-to-market teams so everyone is looking at the same data."
+          }
+        },
+        {
+          "question_number": 2,
+          "text": "Matt explained that when reviewing renewals, AEs should keep a rolling view of upcoming renewals. What time window did he recommend?",
+          "options": [
+            "A rolling 3-month view \u2014 close enough to act on without being overwhelming",
+            "A rolling 6-month view \u2014 enough runway to drive health, flag churn risks, and manage renewals proactively",
+            "A rolling 12-month view \u2014 the full annual cycle gives the most complete picture of your renewal base",
+            "Current quarter only \u2014 focusing beyond the current quarter creates noise and distracts from what needs to close now"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 1008,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Matt was clear: when thinking through renewals and planning, the team wants AEs to keep a rolling 6-month view. This gives enough runway to drive customer health, flag churn risks where they exist, and manage renewals before they become late-stage problems."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Matt was clear: when thinking through renewals and planning, the team wants AEs to keep a rolling 6-month view. This gives enough runway to drive customer health, flag churn risks where they exist, and manage renewals before they become late-stage problems."
+          }
+        },
+        {
+          "question_number": 3,
+          "text": "Matt described the aspirational pipeline coverage ratio for next quarter. What is it \u2014 and is there a difference between enterprise and emerging enterprise reps?",
+          "options": [
+            "5x for enterprise and 4x for emerging enterprise \u2014 higher multiples reflect longer sales cycles",
+            "3x for both enterprise and emerging enterprise \u2014 a single standard applies across all AE segments",
+            "3x for enterprise and anything over 2x for emerging enterprise \u2014 EE reps close more deals in-quarter so they can succeed with lower coverage",
+            "4x for enterprise and 3x for emerging enterprise \u2014 the higher multiple reflects enterprise deal complexity"
+          ],
+          "correct": 2,
+          "triggerAtSeconds": 1728,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Matt explained that 3x next quarter pipeline coverage is the general benchmark \u2014 very good for enterprise. For emerging enterprise, he noted those reps typically have more deals that are qualified and closed in-quarter, so 2x coverage is realistically where they can be very successful. Anything below 2x would start to generate concern from managers."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Matt explained that 3x next quarter pipeline coverage is the general benchmark \u2014 very good for enterprise. For emerging enterprise, he noted those reps typically have more deals that are qualified and closed in-quarter, so 2x coverage is realistically where they can be very successful. Anything below 2x would start to generate concern from managers."
+          }
+        },
+        {
+          "question_number": 4,
+          "text": "Matt introduced the Prospect Score in the Target Accounts section. What threshold did he say Amplitude considers to be a high or very high prospect score?",
+          "options": [
+            "Any score above 10 is considered high \u2014 the majority of closed-won business comes from accounts at this level",
+            "Any score above 15 is considered high or very high \u2014 and about 90 to 95 percent of closed-won business comes from accounts above a medium prospect score",
+            "Any score above 20 is considered high \u2014 scores between 10 and 20 are medium and still worth pursuing",
+            "Any score above 25 is considered very high \u2014 scores between 15 and 25 are high and represent your primary focus"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 2448,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Matt stated that generally anything over a score of 15 is considered to be a high or very high prospect score. He also shared that about 90 to 95 percent of Amplitude's closed-won business comes from accounts that have above a medium prospect score \u2014 making this score a strong and confident indicator of where reps should focus their efforts."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Matt stated that generally anything over a score of 15 is considered to be a high or very high prospect score. He also shared that about 90 to 95 percent of Amplitude's closed-won business comes from accounts that have above a medium prospect score \u2014 making this score a strong and confident indicator of where reps should focus their efforts."
+          }
+        },
+        {
+          "question_number": 5,
+          "text": "Matt described what a CSQL is and why it matters. What is a CSQL and how is it created?",
+          "options": [
+            "A Customer Success Qualified Lead \u2014 created by the marketing team when a customer engages with an upsell campaign",
+            "A Customer Sales Qualified Lead \u2014 created automatically by the system when a customer's usage exceeds a set threshold",
+            "A Customer Success Qualified Lead \u2014 created by the CSM when a customer expresses interest in a product during a customer conversation, signaling a warm expansion opportunity for the AE",
+            "A Customer Signals Qualified Lead \u2014 generated by 6sense when an existing customer shows high intent behavior on the Amplitude website"
+          ],
+          "correct": 2,
+          "triggerAtSeconds": 3168,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Matt explained that a CSQL is essentially the CSM creating a qualified lead for the AE. When the CSM meets with a customer and the customer expresses interest in a product \u2014 like Experimentation \u2014 the CSM creates a CSQL. Matt called these 'the hottest of hot leads' because the CSM is directly telling you the customer mentioned it. He said if you are following up on them properly, the open CSQLs section should show no results."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Matt explained that a CSQL is essentially the CSM creating a qualified lead for the AE. When the CSM meets with a customer and the customer expresses interest in a product \u2014 like Experimentation \u2014 the CSM creates a CSQL. Matt called these 'the hottest of hot leads' because the CSM is directly telling you the customer mentioned it. He said if you are following up on them properly, the open CSQLs section should show no results."
+          }
+        }
+      ]
+    },
+    {
+      "clip_id": 4,
+      "title": "Day 4: Prospecting Process (ZoomInfo)",
+      "trail_markers": [
+        {
+          "question_number": 1,
+          "text": "ZoomInfo has a monthly credit limit of 1,000 per user. What exactly counts as one credit \u2014 and what happens if you use all 1,000 before the month ends?",
+          "options": [
+            "One credit = one search query. If you run out, you can request more from your manager at any time.",
+            "One credit = one contact add. If you use all 1,000, they do not replenish until the first of the following month \u2014 no exceptions, no way to get more early.",
+            "One credit = one contact export to Salesforce. Unused credits from teammates can be transferred to you if needed.",
+            "One credit = one contact enrichment. Credits roll over if you have any remaining from the previous month."
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 477,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "JT was explicit: one credit equals one contact add. Credits replenish on the first of the following month \u2014 not before. He said he cannot give more credits, cannot regenerate them, and cannot magically gift them. Credits also do not roll over \u2014 it is 1,000 use it or lose it, reset on the first of every month."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "JT was explicit: one credit equals one contact add. Credits replenish on the first of the following month \u2014 not before. He said he cannot give more credits, cannot regenerate them, and cannot magically gift them. Credits also do not roll over \u2014 it is 1,000 use it or lose it, reset on the first of every month."
+          }
+        },
+        {
+          "question_number": 2,
+          "text": "In ZoomInfo, what does a Salesforce icon next to a contact's name indicate \u2014 and what is the credit implication?",
+          "options": [
+            "It means the contact is a high-priority lead flagged by marketing \u2014 adding them costs 2 credits instead of 1",
+            "It means the contact already exists in Salesforce. The first export or enrichment costs 1 credit, but after that they can be re-enriched unlimited times within the calendar year for no credit",
+            "It means the contact has already been sequenced in Outreach \u2014 adding them will create a duplicate and should be avoided",
+            "It means the contact has opted out of ZoomInfo sharing and cannot be added to Salesforce through ZoomInfo"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 1017,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "JT explained that a Salesforce icon means the contact already exists in Salesforce \u2014 they are being enriched, not net-new added. The first time anyone enriches that contact costs 1 credit. After that first enrichment, the contact can be re-enriched as many times as needed within the calendar year at no additional credit. If there is no Salesforce icon, the contact is net new and the rep who adds them owns that contact."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "JT explained that a Salesforce icon means the contact already exists in Salesforce \u2014 they are being enriched, not net-new added. The first time anyone enriches that contact costs 1 credit. After that first enrichment, the contact can be re-enriched as many times as needed within the calendar year at no additional credit. If there is no Salesforce icon, the contact is net new and the rep who adds them owns that contact."
+          }
+        },
+        {
+          "question_number": 3,
+          "text": "JT explained the importance of tagging contacts in ZoomInfo. What problem does the tagging system solve \u2014 and where do tags follow the contact?",
+          "options": [
+            "Tags categorize contacts by ICP fit score so reps can prioritize outreach \u2014 they exist only within ZoomInfo and reset when exported",
+            "Tags identify which buying group a contact belongs to and sync automatically to Salesforce fields without additional setup",
+            "Tags are your name or a custom label. Because reps don't own all contacts in Salesforce, tagging tracks which contacts you added \u2014 and tags follow from ZoomInfo to Salesforce to Outreach throughout your workflow",
+            "Tags mark contacts who are already in an active Outreach sequence so you don't accidentally re-add someone"
+          ],
+          "correct": 2,
+          "triggerAtSeconds": 1590,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "JT explained that because contact ownership in Salesforce only applies to net-new contacts, tags are how you track all contacts you've added \u2014 including enrichments you don't technically own. You create a tag with your name, apply it when exporting, and it follows the contact from ZoomInfo to Salesforce to Outreach. He called it one of the two most important takeaways from the session alongside the 1,000 credit limit."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "JT explained that because contact ownership in Salesforce only applies to net-new contacts, tags are how you track all contacts you've added \u2014 including enrichments you don't technically own. You create a tag with your name, apply it when exporting, and it follows the contact from ZoomInfo to Salesforce to Outreach. He called it one of the two most important takeaways from the session alongside the 1,000 credit limit."
+          }
+        },
+        {
+          "question_number": 4,
+          "text": "JT demonstrated how to narrow a ZoomInfo contact list using filters. Which filter reduced the list from 1.3 million contacts down to 290,000?",
+          "options": [
+            "Filtering by industry \u2014 removing companies outside Amplitude's five target industries",
+            "Filtering by buying group and title level \u2014 limiting to product decision makers at VP level",
+            "Filtering by contact info requiring both a business email AND a mobile number \u2014 making both mandatory",
+            "Filtering by confidence score at 95 or above \u2014 keeping only contacts with the highest accuracy rating"
+          ],
+          "correct": 2,
+          "triggerAtSeconds": 2164,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "JT demonstrated step by step: starting from 1.3 million contacts, he required both business email AND mobile number using the AND toggle \u2014 making both mandatory. That single filter reduced the list from 1.3 million to 290,000. He then showed that a 90th percentile confidence score filter reduced it further to 232,000, and adding the product buying group with VP title level brought it down to a targeted 544 contacts."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "JT demonstrated step by step: starting from 1.3 million contacts, he required both business email AND mobile number using the AND toggle \u2014 making both mandatory. That single filter reduced the list from 1.3 million to 290,000. He then showed that a 90th percentile confidence score filter reduced it further to 232,000, and adding the product buying group with VP title level brought it down to a targeted 544 contacts."
+          }
+        },
+        {
+          "question_number": 5,
+          "text": "JT explained what happens when a contact has opted out of having their information shared on ZoomInfo. What does this actually mean for how you can still reach them?",
+          "options": [
+            "A ZoomInfo opt-out means they have requested no commercial contact from any platform \u2014 they should be removed from all outreach",
+            "A ZoomInfo opt-out only means they don't want their information shared publicly on ZoomInfo \u2014 you can still reach them via LinkedIn InMail, Sales Navigator, or by manually adding them to Salesforce",
+            "A ZoomInfo opt-out flags them as do-not-contact in Salesforce as well, preventing them from being added to any Outreach sequences",
+            "A ZoomInfo opt-out means their contact data won't populate in the Chrome extension but they can still be added manually through the ZoomInfo dashboard"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 2705,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "JT was clear: opting out of ZoomInfo only means the contact doesn't want their information shared publicly on ZoomInfo's platform. It does not prevent outreach through other channels. LinkedIn InMail, Sales Navigator, or manually guessing their email based on company conventions are all still valid approaches. JT even noted a savvy AE raised this exact point during the session."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "JT was clear: opting out of ZoomInfo only means the contact doesn't want their information shared publicly on ZoomInfo's platform. It does not prevent outreach through other channels. LinkedIn InMail, Sales Navigator, or manually guessing their email based on company conventions are all still valid approaches. JT even noted a savvy AE raised this exact point during the session."
+          }
+        }
+      ]
+    },
+    {
+      "clip_id": 5,
+      "title": "Day 6: The Competitive Landscape",
+      "trail_markers": [
+        {
+          "question_number": 1,
+          "text": "Francis described his three primary responsibilities on the competitive strategy team. Which of the following was one of them?",
+          "options": [
+            "Building product roadmap features specifically designed to counter competitor capabilities",
+            "Conducting win/loss interviews with customers after deals to understand why Amplitude was chosen or not chosen",
+            "Managing pricing negotiations directly with enterprise prospects who are evaluating competitors",
+            "Running quarterly competitive benchmarking reports for the board of directors"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 567,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Francis described three pillars of his work: keeping Amplitude's execs and leaders informed on what is happening in the market \u2014 including win rates against competitors like Mixpanel or Adobe; conducting win/loss interviews by paying customers to discuss their decision-making process; and sharing that intelligence with the field so reps know what to say in head-to-head situations or rip-and-replace scenarios."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Francis described three pillars of his work: keeping Amplitude's execs and leaders informed on what is happening in the market \u2014 including win rates against competitors like Mixpanel or Adobe; conducting win/loss interviews by paying customers to discuss their decision-making process; and sharing that intelligence with the field so reps know what to say in head-to-head situations or rip-and-replace scenarios."
+          }
+        },
+        {
+          "question_number": 2,
+          "text": "Francis explained when a full rip-and-replace of Adobe is most likely to succeed versus when Amplitude and Adobe coexist. What did he say is the primary condition for a full rip-and-replace?",
+          "options": [
+            "When the customer is primarily a B2B SaaS company with no marketing team using Adobe's campaign tools",
+            "When the customer wants to focus a significant amount of effort on a mobile app or product \u2014 because Adobe cannot compete as well there",
+            "When the customer has already been using Amplitude for analytics and wants to consolidate all blades under one vendor",
+            "When the customer is in the healthcare or financial services industry where Adobe faces regulatory limitations"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 1134,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Francis explained that Amplitude coexists alongside Adobe in many large enterprise accounts \u2014 Nike, Home Depot, Target \u2014 because those companies still depend on Adobe's marketing capabilities that Amplitude does not replicate. The opportunity for a full rip-and-replace is specifically when a company wants to invest heavily in a mobile app or product, because that is where Adobe cannot compete as well. The strategy he described is to get a foot in the door where Adobe is weakest, then grow from there."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Francis explained that Amplitude coexists alongside Adobe in many large enterprise accounts \u2014 Nike, Home Depot, Target \u2014 because those companies still depend on Adobe's marketing capabilities that Amplitude does not replicate. The opportunity for a full rip-and-replace is specifically when a company wants to invest heavily in a mobile app or product, because that is where Adobe cannot compete as well. The strategy he described is to get a foot in the door where Adobe is weakest, then grow from there."
+          }
+        },
+        {
+          "question_number": 3,
+          "text": "Francis described Mixpanel's primary competitive play and the pricing situation reps should be prepared for. What is it?",
+          "options": [
+            "Mixpanel leads with enterprise data governance features and positions Amplitude as too focused on SMB use cases",
+            "Mixpanel claims to be the best-in-breed analytics solution at the lowest price \u2014 and will aggressively price cut, especially in Asia where they will give the product away for free or next to free to win the logo",
+            "Mixpanel leads with session replay and experimentation features to compete across all of Amplitude's blades simultaneously",
+            "Mixpanel focuses on mid-market accounts where Amplitude's platform pricing creates a barrier, offering lower entry-level plans"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 1814,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Francis described Mixpanel's play clearly: they claim to be the best-in-breed analytics solution that gives the most features at the lowest price, and they try to turn Amplitude's multi-blade advantage against Amplitude by saying it has lost focus. They aggressively price cut \u2014 and in the Asia market specifically, they will give the product away for free or next to free to win a logo. He also noted Mixpanel doesn't scale for enterprise and lacks the data governance capabilities Amplitude provides."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Francis described Mixpanel's play clearly: they claim to be the best-in-breed analytics solution that gives the most features at the lowest price, and they try to turn Amplitude's multi-blade advantage against Amplitude by saying it has lost focus. They aggressively price cut \u2014 and in the Asia market specifically, they will give the product away for free or next to free to win a logo. He also noted Mixpanel doesn't scale for enterprise and lacks the data governance capabilities Amplitude provides."
+          }
+        },
+        {
+          "question_number": 4,
+          "text": "Francis explained the main argument against the in-house build competitor. What is the core challenge reps should surface when a prospect says they built their own analytics solution?",
+          "options": [
+            "In-house builds lack event tracking capabilities and cannot match Amplitude's data model for behavioral analytics",
+            "In-house builds create vendor lock-in because they are built on proprietary infrastructure that cannot integrate with modern data stacks",
+            "In-house builds appear cheaper but ignore the real cost of expensive engineers building and constantly maintaining the solution \u2014 and the opportunity cost of those engineers not doing other mission-critical work",
+            "In-house builds are typically built on legacy SQL infrastructure that cannot support real-time data and will need to be replaced within two years"
+          ],
+          "correct": 2,
+          "triggerAtSeconds": 2457,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Francis said the biggest competitor any company faces is doing nothing \u2014 staying with whatever hacky solution they put together. When a prospect says they built their own analytics solution, the argument is not that it doesn't work. It is: how much did it cost your expensive engineers to build it, how much is it costing them to maintain it, and what other mission-critical work could those engineers be doing instead of constantly repairing the homegrown tool?"
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Francis said the biggest competitor any company faces is doing nothing \u2014 staying with whatever hacky solution they put together. When a prospect says they built their own analytics solution, the argument is not that it doesn't work. It is: how much did it cost your expensive engineers to build it, how much is it costing them to maintain it, and what other mission-critical work could those engineers be doing instead of constantly repairing the homegrown tool?"
+          }
+        },
+        {
+          "question_number": 5,
+          "text": "During the Jeopardy exercise, Francis explained why data governance matters so much to customers. What was his way of making it real for prospects?",
+          "options": [
+            "Bad data governance leads to GDPR violations and regulatory fines \u2014 especially in healthcare and finance where data privacy laws are strict",
+            "Bad data governance means different teams use different definitions for the same metrics, and when you present to your CEO and they question a number, you cannot explain where it came from \u2014 which destroys trust and your credibility",
+            "Bad data governance prevents marketing teams from running A/B tests because the event tracking is too inconsistent to produce statistically significant results",
+            "Bad data governance causes data warehouse costs to spiral out of control because unstructured events multiply across all of the company's downstream tools"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 3215,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Francis made it concrete: bad governance means different teams use different definitions for acquisition, retention, and other metrics. When you are in a meeting presenting to your CEO and they point to a number and ask where it came from \u2014 if your answer is that you are not sure because the data was auto-captured incorrectly, the naming convention was inconsistent, or the data was unreliable between tools \u2014 you look bad in front of the entire company. His framing: bad data governance means lack of trust, which means you cannot tell the story you need to tell."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Francis made it concrete: bad governance means different teams use different definitions for acquisition, retention, and other metrics. When you are in a meeting presenting to your CEO and they point to a number and ask where it came from \u2014 if your answer is that you are not sure because the data was auto-captured incorrectly, the naming convention was inconsistent, or the data was unreliable between tools \u2014 you look bad in front of the entire company. His framing: bad data governance means lack of trust, which means you cannot tell the story you need to tell."
+          }
+        }
+      ]
+    },
+    {
+      "clip_id": 6,
+      "title": "Day 7a: Account Planning Best Practices (Account Planning in SFDC)",
+      "trail_markers": [
+        {
+          "question_number": 1,
+          "text": "When generating an account plan for the first time in Salesforce, what is the first step \u2014 and what sources does it pull from?",
+          "options": [
+            "Click 'Create Account Plan' and manually enter the company overview, priorities, and business impact fields from scratch",
+            "Click 'Refresh AI Content' \u2014 it pulls from the internet, Glean, Salesforce, and Outreach to generate the initial account plan",
+            "Click 'Refresh Summary' \u2014 it pulls from Salesforce opportunity notes and Outreach email history to create a baseline",
+            "Click 'Generate Account Plan' from the account strategy tab \u2014 it pulls only from Salesforce contact and opportunity records"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 335,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "JT explained that if there is no account plan on an account, you click 'Refresh AI Content' at the top. This pulls from all sources \u2014 the internet, Glean, Salesforce, and Outreach \u2014 to generate the initial account plan. He described the result as a Company Overview AI Summary that serves as your starting point, which you then need to vet, comb through, and make sure aligns with what you know and the conversations you've had."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "JT explained that if there is no account plan on an account, you click 'Refresh AI Content' at the top. This pulls from all sources \u2014 the internet, Glean, Salesforce, and Outreach \u2014 to generate the initial account plan. He described the result as a Company Overview AI Summary that serves as your starting point, which you then need to vet, comb through, and make sure aligns with what you know and the conversations you've had."
+          }
+        },
+        {
+          "question_number": 2,
+          "text": "JT explained what the Refresh Summary button does \u2014 and called out an important limitation. What does it NOT include?",
+          "options": [
+            "It does not include Outreach email activity \u2014 only Salesforce opportunity and contact data feeds into the summary",
+            "It does not include account health metrics like Amplitude usage and consumption \u2014 those live in the account health tab but do not pull into the summary",
+            "It does not include competitive intelligence \u2014 the competitive heat map must be added manually as a separate linked document",
+            "It does not include information from the Glean integration \u2014 only web sources and Salesforce fields are included"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 774,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "JT explicitly called this out: the Refresh Summary only takes into account the account strategy and account intelligence fields \u2014 whether AI-generated or custom. Account health metrics like Amplitude usage and consumption live in the account health tab and are a great resource to enhance your own point of view, but they are not being pulled into the refresh summary. He encouraged using that data to inform your custom POV notes, which do then feed into the summary."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "JT explicitly called this out: the Refresh Summary only takes into account the account strategy and account intelligence fields \u2014 whether AI-generated or custom. Account health metrics like Amplitude usage and consumption live in the account health tab and are a great resource to enhance your own point of view, but they are not being pulled into the refresh summary. He encouraged using that data to inform your custom POV notes, which do then feed into the summary."
+          }
+        },
+        {
+          "question_number": 3,
+          "text": "JT showed the HubSpot account plan as a best-in-class example but flagged one specific thing to avoid. What was it?",
+          "options": [
+            "The HubSpot pod was updating the account plan too frequently \u2014 JT said once per quarter is the right cadence to avoid overwriting good POV notes",
+            "The HubSpot pod was uploading slides and screenshots into the account plan \u2014 which look thorough but are not readable by the AI summary, so none of that content gets pulled into the refresh summary",
+            "The HubSpot pod was not filling out the competitive heat map field \u2014 which is one of the three fields that pulls into the Salesforce report",
+            "The HubSpot pod was using AI-generated content without adding any custom POV notes \u2014 meaning the summary had no team perspective baked in"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 1238,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "JT showed the HubSpot team had uploaded slides and screenshots into their account plan \u2014 which looked thorough and visually compelling. But he flagged it: when you hit Refresh Summary, the AI cannot read screenshots. None of that content gets pulled into the summary. His recommendation was to use Glean to extract the text from any screenshot, or simply copy and paste the text directly, so that all the work the pod already put in is actually included when the summary refreshes."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "JT showed the HubSpot team had uploaded slides and screenshots into their account plan \u2014 which looked thorough and visually compelling. But he flagged it: when you hit Refresh Summary, the AI cannot read screenshots. None of that content gets pulled into the summary. His recommendation was to use Glean to extract the text from any screenshot, or simply copy and paste the text directly, so that all the work the pod already put in is actually included when the summary refreshes."
+          }
+        },
+        {
+          "question_number": 4,
+          "text": "Shane described how she approached the competitive landscape section for the Barstool account plan. What was her main approach?",
+          "options": [
+            "She pulled the competitive heat map directly from the GTM Launch Pad and copied the relevant competitor signals into the account plan fields",
+            "She zoomed out to think about Barstool holistically \u2014 using AI tools like Gemini alongside what she knew about the company to research the broader media and sports content landscape, then connected that to how Amplitude could fit their story",
+            "She relied entirely on Francis from the competitive strategy team to provide the relevant competitive landscape notes for the Barstool opportunity",
+            "She used the battle cards in Highspot to identify which competitors were most likely to be in play at Barstool and summarized those into the competitive section"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 1677,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Shane explained that for Barstool's competitive landscape section, she zoomed out and thought about the account holistically \u2014 what she knew about Barstool as a brand across sports content and pop culture, where the industry was heading (connected TV, the Netflix gold rush for podcasts), and how Amplitude could fit into that story. She used AI tools including Gemini alongside what she was seeing on LinkedIn and Twitter, and combined that with notes from the discovery call and the pod. Her point was that broadening the research beyond just the obvious gets you a richer, more specific competitive landscape."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Shane explained that for Barstool's competitive landscape section, she zoomed out and thought about the account holistically \u2014 what she knew about Barstool as a brand across sports content and pop culture, where the industry was heading (connected TV, the Netflix gold rush for podcasts), and how Amplitude could fit into that story. She used AI tools including Gemini alongside what she was seeing on LinkedIn and Twitter, and combined that with notes from the discovery call and the pod. Her point was that broadening the research beyond just the obvious gets you a richer, more specific competitive landscape."
+          }
+        },
+        {
+          "question_number": 5,
+          "text": "JT described a practical tip for using Slack AI to support account planning. What was it?",
+          "options": [
+            "Use the Slack AI to auto-sync your pod channel messages directly into the account plan's pod notes fields without copying and pasting",
+            "Use the Slack AI summary feature to ask targeted questions about an account \u2014 like surfacing all competitive or strategy discussions from the past several months \u2014 then copy and paste the results into the account plan",
+            "Set up a Slack workflow that automatically pushes Granola call summaries into a dedicated account channel so the pod always has a single source of truth",
+            "Use Slack AI to generate the executive summary one-pager for leadership \u2014 it produces a cleaner output than the Salesforce account plan's built-in summary feature"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 2193,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "JT shared that he uses the Slack AI summary feature by going to a channel or conversation and asking a targeted question \u2014 for example, 'I'm doing an account plan for Barstool Sports, can you surface everything related to competitive discussion that my pod has talked about in the last 5 or 6 months?' He said it is good at surfacing those reference points. The key is: it does not auto-sync into the account plan. You copy and paste the results into the relevant fields. He said he used this same approach for his annual review and called it life-changing."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "JT shared that he uses the Slack AI summary feature by going to a channel or conversation and asking a targeted question \u2014 for example, 'I'm doing an account plan for Barstool Sports, can you surface everything related to competitive discussion that my pod has talked about in the last 5 or 6 months?' He said it is good at surfacing those reference points. The key is: it does not auto-sync into the account plan. You copy and paste the results into the relevant fields. He said he used this same approach for his annual review and called it life-changing."
+          }
+        }
+      ]
+    },
+    {
+      "clip_id": 7,
+      "title": "Day 7b: Account Planning Best Practices (Momentum for Slack)",
+      "trail_markers": [
+        {
+          "question_number": 1,
+          "text": "Simon explained how Momentum works technically \u2014 and specifically called out what it does NOT use. What is the key distinction?",
+          "options": [
+            "Momentum does not use the Zoom recording \u2014 it only processes the live transcript and cannot reference video content",
+            "Momentum does not use a bot \u2014 it pulls directly from the Zoom transcript rather than joining calls with a visible note-taking bot like Mixmax",
+            "Momentum does not connect to Salesforce directly \u2014 all updates are proposed in Slack and require manual copy-paste into Salesforce",
+            "Momentum does not work on externally hosted calls \u2014 it only processes internal team meetings where no customers are present"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 162,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Simon explicitly called this out: Momentum does not use a bot. It leverages what Zoom is already doing \u2014 the Zoom recording and Zoom transcript \u2014 so no visible bot joins the call. He noted this is different from tools like Mixmax which do use a bot. It is also worth noting that Kaya already has a bot, so having two bots on calls was something they specifically wanted to avoid."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Simon explicitly called this out: Momentum does not use a bot. It leverages what Zoom is already doing \u2014 the Zoom recording and Zoom transcript \u2014 so no visible bot joins the call. He noted this is different from tools like Mixmax which do use a bot. It is also worth noting that Kaya already has a bot, so having two bots on calls was something they specifically wanted to avoid."
+          }
+        },
+        {
+          "question_number": 2,
+          "text": "Simon clarified which calls Momentum is designed to support. What is the correct definition of an 'internally hosted' call in this context?",
+          "options": [
+            "An internal team call \u2014 like a pod meeting, a one-on-one with your manager, or an all-hands session with no customers present",
+            "A customer-facing call that Amplitude has scheduled and is hosting on Amplitude's Zoom \u2014 not a call on the customer's Zoom, Teams, or other platform",
+            "Any call where all participants are Amplitude employees, regardless of whether it was scheduled internally or externally",
+            "A call recorded within Amplitude's internal Zoom account where the recording is stored on Amplitude's servers rather than the customer's"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 356,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Rob clarified this directly during the session because the language was confusing: 'internally hosted' means a customer-facing call that Amplitude has scheduled and is running on Amplitude's Zoom. It is not an internal team call with no customers. And it is not a call on the customer's Zoom, Microsoft Teams, or any other external platform. Momentum needs to be on the host's Zoom to pull the transcript, so the call has to be Amplitude's Zoom."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Rob clarified this directly during the session because the language was confusing: 'internally hosted' means a customer-facing call that Amplitude has scheduled and is running on Amplitude's Zoom. It is not an internal team call with no customers. And it is not a call on the customer's Zoom, Microsoft Teams, or any other external platform. Momentum needs to be on the host's Zoom to pull the transcript, so the call has to be Amplitude's Zoom."
+          }
+        },
+        {
+          "question_number": 3,
+          "text": "Simon explained how Momentum handles Salesforce field updates \u2014 and described two different behaviors depending on the field. What are they?",
+          "options": [
+            "Some fields are updated automatically with no approval needed, while other fields require the rep to manually log in to Salesforce and make the change themselves",
+            "Some fields like Next Steps are configured to add to existing content without overwriting it, while other fields will overwrite and propose a new summary that combines existing and new context",
+            "Some fields are updated immediately in real time during the call, while other fields are only proposed after the call ends and require rep approval before saving",
+            "Some fields are visible to the rep only in Slack, while other fields are pushed directly to the manager's Salesforce view without the rep seeing them first"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 561,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Simon walked through this when the question was raised about whether Momentum overwrites existing field content. He explained that fields like Next Steps are intentionally configured to add to what is already there \u2014 never overwrite. Other fields, however, are configured to overwrite: Momentum takes the existing context plus the new context from the call and proposes a new summary. He said if you want to keep something from the old field, you can copy it, edit before saving, and paste it back in."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Simon walked through this when the question was raised about whether Momentum overwrites existing field content. He explained that fields like Next Steps are intentionally configured to add to what is already there \u2014 never overwrite. Other fields, however, are configured to overwrite: Momentum takes the existing context plus the new context from the call and proposes a new summary. He said if you want to keep something from the old field, you can copy it, edit before saving, and paste it back in."
+          }
+        },
+        {
+          "question_number": 4,
+          "text": "Simon described how Momentum integrates with Slack account team channels. What does it enable for a pod working on the same account?",
+          "options": [
+            "It creates a private Momentum-only channel for each account where only the AE and SDR can see call summaries \u2014 managers are excluded to protect deal confidentiality",
+            "It sends the call summary directly into the pod's account channel so all pod members are immediately aware of what happened, and the pod can also tag Momentum in the channel to ask it questions about calls",
+            "It sends a daily digest of all account activity to the account channel each morning so the pod can review before their stand-up",
+            "It automatically assigns action items from the call to specific pod members based on their role and posts those assignments in the account channel"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 756,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Simon demonstrated this with the Daily Pay account channel. When Momentum is connected to a pod's account team channel, the call summary is sent directly into that channel so every pod member immediately sees what happened on the call. On top of that, the pod can tag Momentum with questions in the channel \u2014 asking it about multiple calls that have happened \u2014 giving everyone richer context about the account's history. He described it as a great collaboration surface for the pod."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Simon demonstrated this with the Daily Pay account channel. When Momentum is connected to a pod's account team channel, the call summary is sent directly into that channel so every pod member immediately sees what happened on the call. On top of that, the pod can tag Momentum with questions in the channel \u2014 asking it about multiple calls that have happened \u2014 giving everyone richer context about the account's history. He described it as a great collaboration surface for the pod."
+          }
+        },
+        {
+          "question_number": 5,
+          "text": "A question was raised about what happens when a customer asks not to be recorded. What is the correct answer according to Simon?",
+          "options": [
+            "You can upload a Granola transcript manually to Momentum as a workaround \u2014 Momentum accepts third-party transcript uploads to preserve the deal context",
+            "If a customer asks not to be transcribed, neither Momentum nor Granola can be used \u2014 no AI summaries will be available for that call",
+            "Momentum can still run in transcription-only mode with no video recording \u2014 as long as the customer allows transcription, Momentum works normally",
+            "You can use Granola instead of Momentum when the customer declines recording \u2014 Granola operates as a local note-taker that does not require Zoom permission"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 950,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Simon was clear: if a customer asks not to be recorded or transcribed, that applies to all tools \u2014 including Granola. In those situations, none of the AI summary tools will be active, and no AI summaries will be available for that call. However, he also clarified the distinction: if a customer is okay with transcription but not video recording, Momentum is fine \u2014 it is not recording the screen or producing video, it is a note-taker that consumes the Zoom transcript, just like Granola."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Simon was clear: if a customer asks not to be recorded or transcribed, that applies to all tools \u2014 including Granola. In those situations, none of the AI summary tools will be active, and no AI summaries will be available for that call. However, he also clarified the distinction: if a customer is okay with transcription but not video recording, Momentum is fine \u2014 it is not recording the screen or producing video, it is a note-taker that consumes the Zoom transcript, just like Granola."
+          }
+        }
+      ]
+    },
+    {
+      "clip_id": 8,
+      "title": "Day 8a: Discovery That Accelerates (Challenger Sales Roleplay)",
+      "trail_markers": [
+        {
+          "question_number": 1,
+          "text": "During the first freeze, Adam outlined three things that are standard in every sales pitch regardless of company or vertical. What were they?",
+          "options": [
+            "Lead with ROI, anchor on competitive differentiation, and close with a clear call to action",
+            "Come to the meeting prepared with a point of view on industry, company, and role \u2014 ask thoughtful questions \u2014 and actively listen to build rapport and credibility",
+            "Open with a customer case study, align on the prospect's OKRs, and propose a tailored demo within the first thirty minutes",
+            "Confirm the agenda upfront, identify the economic buyer in the room, and make sure to cover pricing before the meeting ends"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 297,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Adam stated during the first freeze that three things are standard in every sales pitch: you must come to the meeting prepared with a point of view on industry, company, and role \u2014 you can never be generic. You have to ask thoughtful questions. And you must actively listen to build rapport and credibility. He added that every question you ask, if you are building rapport, earns you the right to ask the next question and move the sales cycle forward."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Adam stated during the first freeze that three things are standard in every sales pitch: you must come to the meeting prepared with a point of view on industry, company, and role \u2014 you can never be generic. You have to ask thoughtful questions. And you must actively listen to build rapport and credibility. He added that every question you ask, if you are building rapport, earns you the right to ask the next question and move the sales cycle forward."
+          }
+        },
+        {
+          "question_number": 2,
+          "text": "When Chris said 'I want to see a demo,' Brian froze the roleplay to address it. What was his guidance on handling early demo requests?",
+          "options": [
+            "Always give the demo immediately when an executive asks \u2014 refusing creates friction and risks losing the meeting momentum",
+            "It is too early for a demo when you do not know enough about the prospect yet \u2014 but if you must show something, come prepared with a prescriptive and tailored point of view, never something generic. Amplitude's YouTube platform is also a great alternative.",
+            "Redirect the request by going deeper into discovery questions \u2014 never show product until you have completed at least two full discovery calls",
+            "Offer a live demo only if the SE has been briefed and the AE has confirmed the economic buyer is in the room"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 633,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Brian explained during the freeze: it is a little too early to show a demo because you do not really know enough about them yet. However, he acknowledged that from time to time an executive is in the room or there is a circumstance where you need to show product to create a give-to-get situation. In those cases, the SE should have prepared something prescriptive and tailored toward what you think the prospect's problems are \u2014 never generic. He also noted that Amplitude has a robust YouTube platform with short-form videos by product, persona, and vertical as a creative alternative."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Brian explained during the freeze: it is a little too early to show a demo because you do not really know enough about them yet. However, he acknowledged that from time to time an executive is in the room or there is a circumstance where you need to show product to create a give-to-get situation. In those cases, the SE should have prepared something prescriptive and tailored toward what you think the prospect's problems are \u2014 never generic. He also noted that Amplitude has a robust YouTube platform with short-form videos by product, persona, and vertical as a creative alternative."
+          }
+        },
+        {
+          "question_number": 3,
+          "text": "After the prospect acknowledged their data bottleneck \u2014 submitting Jira tickets for Tableau dashboards \u2014 Adam described what had just been created in the room. What did he call it?",
+          "options": [
+            "A MEDDIC moment \u2014 the prospect had confirmed both pain and economic impact, which qualified the deal for a formal proposal",
+            "Constructive tension \u2014 a huge disconnect had been uncovered between team members, moving the prospect toward rational drowning and ultimately the valley of despair",
+            "A Mobilizer signal \u2014 Chris's acknowledgment of the bottleneck meant he was now an internal champion ready to drive the deal forward",
+            "A commercial insight moment \u2014 the AE had successfully reframed the prospect's problem in a way they had not previously considered"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 1029,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Adam narrated the freeze explicitly: 'This is the definition of constructive tension.' He explained that they had uncovered a huge disconnect between team members \u2014 the business was screaming for faster data access while the data leader acknowledged the bottlenecks he created. He said this is an important part of the conversation and that salespeople and SEs have to be very comfortable in uncomfortable situations. He described it as moving the prospect toward rational drowning and ultimately the valley of despair."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Adam narrated the freeze explicitly: 'This is the definition of constructive tension.' He explained that they had uncovered a huge disconnect between team members \u2014 the business was screaming for faster data access while the data leader acknowledged the bottlenecks he created. He said this is an important part of the conversation and that salespeople and SEs have to be very comfortable in uncomfortable situations. He described it as moving the prospect toward rational drowning and ultimately the valley of despair."
+          }
+        },
+        {
+          "question_number": 4,
+          "text": "Brian described what makes Amplitude's AI different from the AI pitches prospects hear from every vendor. What was his core argument?",
+          "options": [
+            "Amplitude's AI is built on a proprietary large language model trained specifically on product analytics data, giving it more accurate outputs than general-purpose AI tools",
+            "Amplitude's AI is built on top of a clean pipeline of real-time behavioral data that covers the full sense-decide-act loop \u2014 quantitative and qualitative, all self-contained \u2014 making it the perfect use case for AI",
+            "Amplitude's AI automatically creates Salesforce opportunities and updates MEDDICC fields after every customer interaction, eliminating manual data entry for the sales team",
+            "Amplitude's AI integrates directly with warehouse tools like Snowflake and Databricks, meaning customers do not need to change their existing data infrastructure to benefit"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 1386,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Brian explained that Amplitude's AI differentiation starts with the data foundation: Amplitude is built on a clean pipeline of real-time behavioral data. On top of that it brings together quantitative and qualitative insights \u2014 the complete picture of the customer. Then it enables action. He said AI can take advantage of the entire platform from the real-time sense side all the way through to proactively surfacing opportunities and taking action \u2014 all self-contained. His point: most vendors slap AI on top of fragmented data, whereas Amplitude's AI works across a unified, clean, real-time behavioral data platform."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Brian explained that Amplitude's AI differentiation starts with the data foundation: Amplitude is built on a clean pipeline of real-time behavioral data. On top of that it brings together quantitative and qualitative insights \u2014 the complete picture of the customer. Then it enables action. He said AI can take advantage of the entire platform from the real-time sense side all the way through to proactively surfacing opportunities and taking action \u2014 all self-contained. His point: most vendors slap AI on top of fragmented data, whereas Amplitude's AI works across a unified, clean, real-time behavioral data platform."
+          }
+        },
+        {
+          "question_number": 5,
+          "text": "During the next steps freeze, Adam described the philosophy behind how to structure next steps in a sales meeting. What was the core principle?",
+          "options": [
+            "Always let the prospect drive the next steps to ensure they feel ownership \u2014 the salesperson's role is to support whatever timeline they propose",
+            "Have a plan for next steps before the meeting even starts, make every step a give-to-get, time-bound all commitments, and understand you are always earning the right to move forward",
+            "Focus next steps exclusively on scheduling the demo \u2014 nothing else moves the deal forward until the prospect has seen the full platform",
+            "Send a detailed follow-up email within 48 hours recapping the conversation and proposing next steps \u2014 verbal commitments in the meeting are not sufficient"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 1742,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Adam narrated the next steps freeze with a clear framework: have a plan for your next steps before you even start the meeting. Know what success looks like. Understand that you are always earning the right to move forward. You control information, ideas, and incentives. Make every step a give-to-get \u2014 what you are offering should require something in return. And make sure you time-bound the commitments. He then demonstrated this by proposing three time-bound next steps: a 24-hour recap email requiring Rachel to review and respond, a use case workshop the following week, and a personalized demo in two weeks."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Adam narrated the next steps freeze with a clear framework: have a plan for your next steps before you even start the meeting. Know what success looks like. Understand that you are always earning the right to move forward. You control information, ideas, and incentives. Make every step a give-to-get \u2014 what you are offering should require something in return. And make sure you time-bound the commitments. He then demonstrated this by proposing three time-bound next steps: a 24-hour recap email requiring Rachel to review and respond, a use case workshop the following week, and a personalized demo in two weeks."
+          }
+        }
+      ]
+    },
+    {
+      "clip_id": 9,
+      "title": "Day 8b: Discovery That Accelerates (Spekit Deal Rooms)",
+      "trail_markers": [
+        {
+          "question_number": 1,
+          "text": "Marie described three core things Spekit will enable that the team was struggling with before. What were they?",
+          "options": [
+            "Faster Salesforce updates, better meeting preparation, and easier competitive research",
+            "Finding content more easily with AI, tracking whether buyers actually look at the content you send them, and tracking which content is attached to winning deals over time",
+            "Replacing HiSpot entirely, building personalized decks faster, and eliminating the need to use Google Drive",
+            "Centralizing all content in one place, removing outdated materials automatically, and providing richer onboarding resources"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 360,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Marie explained the three core capabilities Spekit brings: an AI-powered way to find and surface content faster, buyer engagement tracking so you can see whether contacts looked at your content, how long they looked, and who else looked at it, and the ability to track which content is attached to winning deals over time so AEs know which materials are most powerful to use."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Marie explained the three core capabilities Spekit brings: an AI-powered way to find and surface content faster, buyer engagement tracking so you can see whether contacts looked at your content, how long they looked, and who else looked at it, and the ability to track which content is attached to winning deals over time so AEs know which materials are most powerful to use."
+          }
+        },
+        {
+          "question_number": 2,
+          "text": "Marie explained a key difference between using Spekit's AI versus using Glean to answer a question. What is it?",
+          "options": [
+            "Spekit's AI can only answer questions about Amplitude products, while Glean searches across all company content including Slack and email",
+            "Spekit's AI searches highly curated, up-to-date content so you know the answer is coming from accurate approved materials \u2014 whereas Glean searches all content it has access to, which might include outdated information",
+            "Spekit's AI generates longer more detailed answers while Glean provides quick summaries \u2014 making Spekit better for deep research and Glean better for quick lookups",
+            "Spekit's AI requires you to be in the Spekit web app to use it, while Glean works anywhere in your flow of work including email and Salesforce"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 780,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Marie explained this distinction explicitly: Glean goes out and looks at all the content it has access to, which might include things that are out of date. Spekit is highly curated, so you know the answer you are getting is only coming from up-to-date, curated information. She made this point while demonstrating the AI Sidekick drafting a Pendo comparison \u2014 noting that Spekit's answer is more trustworthy because it is constrained to approved content."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Marie explained this distinction explicitly: Glean goes out and looks at all the content it has access to, which might include things that are out of date. Spekit is highly curated, so you know the answer you are getting is only coming from up-to-date, curated information. She made this point while demonstrating the AI Sidekick drafting a Pendo comparison \u2014 noting that Spekit's answer is more trustworthy because it is constrained to approved content."
+          }
+        },
+        {
+          "question_number": 3,
+          "text": "Marie told a personal story to explain why she recommends turning on email notifications for deal rooms. What happened?",
+          "options": [
+            "She sent a deal room to a prospect who never opened it \u2014 and without notifications she did not follow up, and the deal went cold",
+            "She gave her IT head the deal room link, and literally 3 seconds after he clicked it, the SpecIt AE pinged her asking who Mike Jones was and what he was doing in the deal room \u2014 allowing the AE to immediately ask for a meeting with him",
+            "She accidentally shared the wrong deal room with a prospect, and the notification alerted her immediately so she could send the correct one before they read it",
+            "A prospect forwarded her deal room to their entire leadership team, and she only found out weeks later when checking analytics \u2014 by which point the deal had already moved forward without her"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 1350,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Marie shared this story during the deal room walkthrough to illustrate real-time buyer tracking. When she was evaluating Spekit as a vendor, she shared the deal room link with her head of IT Mike Jones. Literally 3 seconds after he clicked the link, the Spekit AE pinged her asking who Mike Jones was and why he was in the deal room. Because of that real-time alert, the AE was able to immediately ask for a meeting with him and confirm the deal was progressing. Marie used this as her primary example for why turning on notifications is valuable \u2014 it shows you deal activity in real time and helps you multi-thread into contacts you did not originally know were evaluating."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Marie shared this story during the deal room walkthrough to illustrate real-time buyer tracking. When she was evaluating Spekit as a vendor, she shared the deal room link with her head of IT Mike Jones. Literally 3 seconds after he clicked the link, the Spekit AE pinged her asking who Mike Jones was and why he was in the deal room. Because of that real-time alert, the AE was able to immediately ask for a meeting with him and confirm the deal was progressing. Marie used this as her primary example for why turning on notifications is valuable \u2014 it shows you deal activity in real time and helps you multi-thread into contacts you did not originally know were evaluating."
+          }
+        },
+        {
+          "question_number": 4,
+          "text": "Kristen explained that deal rooms cannot be deleted \u2014 only archived. Why?",
+          "options": [
+            "Deleting a deal room would also delete the associated Salesforce opportunity record \u2014 archiving preserves the deal data while removing access to the content",
+            "Deal rooms feed into analytics that track which content is being shared the most and getting the most engagement \u2014 deleting them would remove that data from the system",
+            "Archived deal rooms can be re-enabled if a deal re-opens, whereas deleted deal rooms cannot be recovered \u2014 making archiving the safer choice",
+            "Spekit stores deal room content on behalf of the customer \u2014 deleting would require legal sign-off to remove content that may be under data retention obligations"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 1950,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Kristen explained that deal rooms cannot be deleted because they all feed into analytics \u2014 the system uses them to track which content is being shared the most, which content is not being shared, and what content is actually getting engaged with. Deleting a deal room would remove that data. To remove access, you archive the deal room. Anyone who had the link will see a message that the deal room is no longer available, and the admin can always go back and re-enable an archived deal room if needed."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Kristen explained that deal rooms cannot be deleted because they all feed into analytics \u2014 the system uses them to track which content is being shared the most, which content is not being shared, and what content is actually getting engaged with. Deleting a deal room would remove that data. To remove access, you archive the deal room. Anyone who had the link will see a message that the deal room is no longer available, and the admin can always go back and re-enable an archived deal room if needed."
+          }
+        },
+        {
+          "question_number": 5,
+          "text": "Marie described a coming-soon Spekit feature called Specs that will appear in Salesforce and other tools. What does it do?",
+          "options": [
+            "It will automatically create a deal room when a new opportunity is created in Salesforce and populate it with recommended content based on the opportunity stage",
+            "It will surface small embedded content cards directly in your flow of work \u2014 such as a blue A icon on a Salesforce field \u2014 that when clicked explain processes, guidelines, or pricing right where you are without leaving the page",
+            "It will sync your Spekit deal room activity back into Salesforce opportunity fields so managers can see content engagement data alongside deal health metrics",
+            "It will recommend which Spekit deal room template to use based on the opportunity type, industry, and stage automatically populated from Salesforce"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 2550,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Marie previewed this feature during the closing section of the session: in the next 4 to 5 weeks, small content cards called Specs will start appearing in Salesforce, ZoomInfo, Outreach, Gainsight, and other tools. She demonstrated a blue A icon on a Salesforce Professional Services tab field. Clicking it opens an explanation of what Premium Success is, how to pitch it, and the process around it \u2014 right in the flow of work without leaving Salesforce. She described it as extremely helpful for rolling out new processes, guidelines, and pricing models by dropping the information exactly where people need it."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Marie previewed this feature during the closing section of the session: in the next 4 to 5 weeks, small content cards called Specs will start appearing in Salesforce, ZoomInfo, Outreach, Gainsight, and other tools. She demonstrated a blue A icon on a Salesforce Professional Services tab field. Clicking it opens an explanation of what Premium Success is, how to pitch it, and the process around it \u2014 right in the flow of work without leaving Salesforce. She described it as extremely helpful for rolling out new processes, guidelines, and pricing models by dropping the information exactly where people need it."
+          }
+        }
+      ]
+    },
+    {
+      "clip_id": 10,
+      "title": "Day 10: Leveraging Partners",
+      "trail_markers": [
+        {
+          "question_number": 1,
+          "text": "Courtney described four types of partners Amplitude works with. Which of the following is one of them?",
+          "options": [
+            "Referral-only partners who generate leads but have no involvement in delivery or co-selling",
+            "Expert services or solution partners \u2014 certified delivery specialists who can implement Amplitude on behalf of customers, provide consulting, and co-sell alongside the field team",
+            "White-label partners who resell Amplitude under their own brand name in enterprise markets",
+            "Advisory partners who provide strategic guidance on Amplitude's product roadmap but do not interact with customers"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 621,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Courtney described four primary partner types: integration and ecosystem partners (like AWS, Snowflake, HubSpot), expert services or solution partners (certified delivery specialists who can do hands-on implementation, consulting, and co-selling \u2014 companies like Slalom and Publicis), resellers (who act as the full acquisition, closing, and servicing team in markets like Brazil, Korea, and Japan where Amplitude lacks local coverage), and co-sell partners. She described solution partners as the type AEs will interact with most in day-to-day work."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Courtney described four primary partner types: integration and ecosystem partners (like AWS, Snowflake, HubSpot), expert services or solution partners (certified delivery specialists who can do hands-on implementation, consulting, and co-selling \u2014 companies like Slalom and Publicis), resellers (who act as the full acquisition, closing, and servicing team in markets like Brazil, Korea, and Japan where Amplitude lacks local coverage), and co-sell partners. She described solution partners as the type AEs will interact with most in day-to-day work."
+          }
+        },
+        {
+          "question_number": 2,
+          "text": "Courtney described AWS's role as a hyperscaler partner. What specific commercial benefit does the AWS partnership create for customers?",
+          "options": [
+            "AWS provides a shared implementation team that deploys Amplitude for free during the first 90 days of a new contract",
+            "AWS marketplace credits allow customers to effectively lower their price point when purchasing Amplitude \u2014 AWS fills in the gap through credits, acting similarly to a promo code",
+            "AWS provides co-marketing budget that Amplitude uses to run joint demand generation campaigns targeting shared enterprise accounts",
+            "AWS certifies Amplitude as a preferred analytics tool, which automatically makes Amplitude visible to all AWS enterprise customers in the marketplace"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 1332,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Courtney explained that AWS is a hyperscaler for Amplitude \u2014 they have AWS marketplace credits and transaction vehicles that customers can use as incentives to purchase Amplitude, effectively lowering the customer's price point because AWS fills in the gap with credits. She described it as like a promo code or coupon code where AWS picks up the rest. She also noted that Amplitude was just named AWS Digital Partner of the Year at the time of the session."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Courtney explained that AWS is a hyperscaler for Amplitude \u2014 they have AWS marketplace credits and transaction vehicles that customers can use as incentives to purchase Amplitude, effectively lowering the customer's price point because AWS fills in the gap with credits. She described it as like a promo code or coupon code where AWS picks up the rest. She also noted that Amplitude was just named AWS Digital Partner of the Year at the time of the session."
+          }
+        },
+        {
+          "question_number": 3,
+          "text": "Courtney's advice for a new AE heading into Q1 was to proactively reach out to their PSM. What is a PSM and what is their primary job?",
+          "options": [
+            "A PSM is a Partner Solutions Manager who owns the technical integration work between Amplitude and ecosystem partners like Snowflake and HubSpot",
+            "A PSM is a Partner Success Manager who manages Amplitude's relationships with partners in their region \u2014 they help AEs connect with the right partner contacts, provide intel on accounts, and help navigate deals where partners are involved",
+            "A PSM is a Partner Sales Manager who owns partner-sourced pipeline targets and is responsible for closing co-sell deals alongside the direct sales team",
+            "A PSM is a Partner Support Manager who handles post-sale implementation issues when a solution partner is delivering an Amplitude deployment"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 2132,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Courtney explained that PSM stands for Partner Success Manager. Their job is to manage Amplitude's relationships with partners in their region. For AEs, the PSM is the key resource for connecting with the right partner contacts, getting intel on accounts and prospects, finding out what makes an economic buyer tick, and facilitating introductions. Courtney specifically advised new AEs to proactively introduce themselves to their PSM before they even have a specific deal \u2014 so when a deal comes up, the relationship is already established."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Courtney explained that PSM stands for Partner Success Manager. Their job is to manage Amplitude's relationships with partners in their region. For AEs, the PSM is the key resource for connecting with the right partner contacts, getting intel on accounts and prospects, finding out what makes an economic buyer tick, and facilitating introductions. Courtney specifically advised new AEs to proactively introduce themselves to their PSM before they even have a specific deal \u2014 so when a deal comes up, the relationship is already established."
+          }
+        },
+        {
+          "question_number": 4,
+          "text": "Courtney addressed the question of whether bringing a partner into a deal negatively impacts the AE's commission. What is the answer?",
+          "options": [
+            "There is a small commission reduction \u2014 typically 5 to 10 percent \u2014 when a deal is partner sourced, but this is offset by the higher deal sizes that typically result from partner involvement",
+            "Commission is not impacted at all \u2014 the partner's cut comes from a separate budget and does not affect what the AE takes home, and partner involvement typically helps sell more blades and increase the total deal size",
+            "Commission is protected for the first co-sell deal per quarter but reduced on subsequent partner deals to prevent over-reliance on partners rather than direct prospecting",
+            "Commission is the same only if the AE initiated the partner relationship \u2014 if the deal was partner sourced, a different commission structure applies"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 2798,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Courtney was unequivocal: there is no negative impact on the AE's commission when a partner is involved. The partner gets a cut when the deal closes, but that comes from a separate place and does not touch what the AE takes home. She said the comp structure is not built that way. Beyond that, partner involvement usually helps sell more blades, meaning the AE's commission actually grows. She framed it as less work and bigger deals \u2014 a purely positive outcome for the direct seller."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Courtney was unequivocal: there is no negative impact on the AE's commission when a partner is involved. The partner gets a cut when the deal closes, but that comes from a separate place and does not touch what the AE takes home. She said the comp structure is not built that way. Beyond that, partner involvement usually helps sell more blades, meaning the AE's commission actually grows. She framed it as less work and bigger deals \u2014 a purely positive outcome for the direct seller."
+          }
+        },
+        {
+          "question_number": 5,
+          "text": "Courtney explained how to identify a partner-sourced opportunity in Salesforce. What are the two ways to see partner involvement on a deal?",
+          "options": [
+            "Check the deal room in Spekit for partner-tagged content, and look for the partner badge icon on the Salesforce opportunity header",
+            "On the opportunity record, hover over or click into the opportunity partner box to see the partner name and role \u2014 and on the account record, scroll down to the partner account field which shows any partner tied to that account",
+            "Filter the GTM Launch Pad by partner source in the pipeline review section, and check the S2 creation log for any opportunities marked with a partner referral flag",
+            "Look for the partner logo in the account's tech stack section and check if the opportunity has a co-sell stage tag in the Salesforce stage dropdown"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 3552,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Courtney walked through this in Salesforce. On the opportunity record, you can hover over or click into the opportunity partner box \u2014 it will pop up showing the partner name and their role (e.g. referral partner, partner sourced). On the account record itself, scrolling down reveals a partner account field that is populated with any partner tied to that account \u2014 this could be a solution partner, an integration partner like AWS or Snowflake, or a co-sell partner. She also noted you do not need to add the partner yourself \u2014 the partner team and operations handle that for compliance and payment tracking."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Courtney walked through this in Salesforce. On the opportunity record, you can hover over or click into the opportunity partner box \u2014 it will pop up showing the partner name and their role (e.g. referral partner, partner sourced). On the account record itself, scrolling down reveals a partner account field that is populated with any partner tied to that account \u2014 this could be a solution partner, an integration partner like AWS or Snowflake, or a co-sell partner. She also noted you do not need to add the partner yourself \u2014 the partner team and operations handle that for compliance and payment tracking."
+          }
+        }
+      ]
+    },
+    {
+      "clip_id": 11,
+      "title": "Day 11a: Forecasting (Forecasting in Outreach)",
+      "trail_markers": [
+        {
+          "question_number": 1,
+          "text": "Corey described the weekly forecasting cadence at Amplitude. What happens on Mondays \u2014 and what is the AE's most critical day in the cycle?",
+          "options": [
+            "Monday is when managers present forecasts to VPs \u2014 the AE's most critical day is Wednesday when they present directly to the VP",
+            "Monday is when AEs update all opportunities and ensure relevant fields are accurate \u2014 the AE's most critical days are Tuesday when managers meet with AEs for forecast calls",
+            "Monday is when AEs submit their written forecast call to their manager \u2014 the most critical day is Friday when Nate presents to Thomas",
+            "Monday is an open day for deal work \u2014 the most critical day is Thursday when VPs present to Nate and AEs need their numbers locked"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 518,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Corey explained the weekly cadence: Monday \u2014 AEs update all opportunities and ensure relevant fields are accurate. Tuesday \u2014 managers meet with their AEs for the forecast call, walking through commits across each AE. Wednesday \u2014 managers present forecasts to VPs. Thursday \u2014 VPs present to Nate. Friday \u2014 Nate presents to Thomas. Corey noted that for AEs, Tuesday and Wednesday are the critical ones. He also called out a real-world tip shared by Mike: managers like Trey Minter do look at the last update date, and being called out for a Thursday or Friday update from the previous week is something to avoid."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Corey explained the weekly cadence: Monday \u2014 AEs update all opportunities and ensure relevant fields are accurate. Tuesday \u2014 managers meet with their AEs for the forecast call, walking through commits across each AE. Wednesday \u2014 managers present forecasts to VPs. Thursday \u2014 VPs present to Nate. Friday \u2014 Nate presents to Thomas. Corey noted that for AEs, Tuesday and Wednesday are the critical ones. He also called out a real-world tip shared by Mike: managers like Trey Minter do look at the last update date, and being called out for a Thursday or Friday update from the previous week is something to avoid."
+          }
+        },
+        {
+          "question_number": 2,
+          "text": "Corey explained the three new business forecast calls \u2014 worst case, commit, and best case. What is the company-wide goal for the commit call?",
+          "options": [
+            "The commit call should be within 10% of actual close at quarter end \u2014 a reasonable range that accounts for deal slippage",
+            "The commit call should be within 5% of what was called at the start of the quarter \u2014 so if you call 100K you should finish between 95K and 105K",
+            "The commit call should match the sum of all deals in commit and strong upside forecast categories \u2014 no buffer or conversion math required",
+            "The commit call should be set conservatively at 80% of expected close to ensure it is always beaten \u2014 sandbagging is encouraged at the AE level"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 1166,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Corey stated: 'We have a goal company-wide of being within 5% of the commit number at the end of the quarter that we start off with at the beginning of the quarter.' Using his example \u2014 if you call 100K at the start of the quarter, you want to finish between 95K and 105K. He also explained the commit is the most important of the three calls, and described it as your closed one deals, your commit category deals, a portion of strong upside, and potentially some create-and-close to support the number."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Corey stated: 'We have a goal company-wide of being within 5% of the commit number at the end of the quarter that we start off with at the beginning of the quarter.' Using his example \u2014 if you call 100K at the start of the quarter, you want to finish between 95K and 105K. He also explained the commit is the most important of the three calls, and described it as your closed one deals, your commit category deals, a portion of strong upside, and potentially some create-and-close to support the number."
+          }
+        },
+        {
+          "question_number": 3,
+          "text": "Corey described the three forecast categories and their likelihood-to-close definitions. Which mapping is correct?",
+          "options": [
+            "Commit = 75% likelihood, strong upside = 50%, upside = 25%",
+            "Commit = 90% likelihood, strong upside = 50%, upside = 25%",
+            "Commit = 100% likelihood, strong upside = 75%, upside = 50%",
+            "Commit = 80% likelihood, strong upside = 60%, upside = 40%"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 1901,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Corey defined the three forecast categories by likelihood to close: commit deals should close 90% of the time, strong upside deals about 50% of the time, and upside deals about 25% of the time. He also explained the typical stage alignment: stages 2 and 3 map to upside, stage 4 maps to strong upside, and stages 5 and 6 map to commit. He noted they don't have to be perfectly aligned but if they're misaligned \u2014 like a stage 6 deal still in strong upside \u2014 managers will ask why."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Corey defined the three forecast categories by likelihood to close: commit deals should close 90% of the time, strong upside deals about 50% of the time, and upside deals about 25% of the time. He also explained the typical stage alignment: stages 2 and 3 map to upside, stage 4 maps to strong upside, and stages 5 and 6 map to commit. He noted they don't have to be perfectly aligned but if they're misaligned \u2014 like a stage 6 deal still in strong upside \u2014 managers will ask why."
+          }
+        },
+        {
+          "question_number": 4,
+          "text": "Corey described the single biggest leading indicator of customer churn in renewal forecasting. What is it \u2014 and at what threshold does risk become significant?",
+          "options": [
+            "Stakeholder turnover \u2014 losing a champion or economic buyer at a customer account is the strongest predictor of churn at any utilization level",
+            "Volume utilization \u2014 the single biggest correlation for churn is how much of the contracted volume the customer is actually using. Below 50% utilization is massive churn risk, below 60% is still high, and 70% and above starts to look healthier",
+            "Payment delinquency \u2014 customers who are 30 or more days past due on an invoice are the strongest predictor of churn regardless of their product usage",
+            "Gainsight product health score \u2014 a red health score is the single most reliable indicator of churn and overrides all other signals including utilization and payment history"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 2592,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Corey said explicitly: 'The single biggest correlation for churn is volume utilization.' He explained that Amplitude has done significant analysis on this. Below 50% utilization means massive churn risk. Below 60% is still pretty high risk. At 70% and above it starts to look better. He recommended that if a customer is below 50%, the AE should be working with the CSM on how to get the customer to use more of what they are paying for. He also mentioned Gainsight product health scores and payment history as valuable supplementary signals."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Corey said explicitly: 'The single biggest correlation for churn is volume utilization.' He explained that Amplitude has done significant analysis on this. Below 50% utilization means massive churn risk. Below 60% is still pretty high risk. At 70% and above it starts to look better. He recommended that if a customer is below 50%, the AE should be working with the CSM on how to get the customer to use more of what they are paying for. He also mentioned Gainsight product health scores and payment history as valuable supplementary signals."
+          }
+        },
+        {
+          "question_number": 5,
+          "text": "Corey explained what the renewable base includes in renewal forecasting. Which of the following is included?",
+          "options": [
+            "Only customers whose contract renewal date falls within the current quarter \u2014 early renewals and terminations are tracked separately",
+            "In-quarter renewals, out-of-quarter early renewals being pulled forward, and early terminations where a customer is churned this quarter due to non-payment \u2014 all three count toward your renewable base",
+            "All customers in your book of business regardless of renewal date \u2014 the renewable base represents your total ARR at risk across all active contracts",
+            "Only customers who have formally initiated a renewal discussion \u2014 customers who have not yet engaged are excluded until they signal intent"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 3542,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Corey defined the renewable base as including three components: in-quarter renewals (customers with a renewal date in the current quarter), out-of-quarter early renewals (a Q1 customer being renewed this quarter), and early terminations (customers who reach 120 days past due on payment, get cut off, and are churned this quarter \u2014 that ARR counts toward your renewable base). He acknowledged the early termination inclusion is counterintuitive but explained it reflects ARR that was expected to renew but will not."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Corey defined the renewable base as including three components: in-quarter renewals (customers with a renewal date in the current quarter), out-of-quarter early renewals (a Q1 customer being renewed this quarter), and early terminations (customers who reach 120 days past due on payment, get cut off, and are churned this quarter \u2014 that ARR counts toward your renewable base). He acknowledged the early termination inclusion is counterintuitive but explained it reflects ARR that was expected to renew but will not."
+          }
+        }
+      ]
+    },
+    {
+      "clip_id": 12,
+      "title": "Day 11b: Forecasting (Intro to Forecasting Services)",
+      "trail_markers": [
+        {
+          "question_number": 1,
+          "text": "Corey explained why Amplitude is asking sales to start forecasting PSP and services on opportunities. What are the two main reasons?",
+          "options": [
+            "To create a new revenue line for the finance team and to give partners more leverage in pricing negotiations with customers",
+            "To ensure the right services package is attached at the right time so customers implement well and get healthy \u2014 and to give PS teams and partners better visibility into upcoming projects so they can staff and start work faster",
+            "To give sales leaders a new metric for AE performance reviews and to reduce reliance on third-party implementation partners over time",
+            "To align services pricing with competitive benchmarks and to ensure customers are not over-purchasing implementation packages they do not need"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 105,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Corey explained two main reasons: first, attaching the right services package at the right time ensures customers implement correctly, get to a healthy state faster, and reduce future churn risk. Second, forecasting services gives the PS team and delivery partners much better visibility into what projects are coming so they can get teams assigned earlier, get customers deployed faster, and improve time to value. Nick from the Zoom chat reinforced the second point \u2014 partners especially value having visibility into upcoming work so they can staff projects quickly."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Corey explained two main reasons: first, attaching the right services package at the right time ensures customers implement correctly, get to a healthy state faster, and reduce future churn risk. Second, forecasting services gives the PS team and delivery partners much better visibility into what projects are coming so they can get teams assigned earlier, get customers deployed faster, and improve time to value. Nick from the Zoom chat reinforced the second point \u2014 partners especially value having visibility into upcoming work so they can staff projects quickly."
+          }
+        },
+        {
+          "question_number": 2,
+          "text": "At what Salesforce opportunity stage are AEs required to begin inputting a services forecast \u2014 and what two types of dollar amounts need to be entered?",
+          "options": [
+            "Stage 2 \u2014 AEs must enter both a PSP amount and a one-time implementation fee estimate as soon as an opportunity is qualified",
+            "Stage 4 and above \u2014 AEs input the PSP dollar amount if applicable and any non-recurring services dollars such as implementation or technical consulting fees",
+            "Stage 5 and above \u2014 AEs input only the PSP renewal amount since one-time services fees are handled directly by the PS team without AE involvement",
+            "Stage 3 and above \u2014 AEs input a blended services estimate covering all recurring and non-recurring fees in a single combined field"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 225,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Corey stated clearly: services forecasting is required at Stage 4 and above on any opportunity. The two inputs AEs need to provide are: the PSP (Premium Success Package) dollar amount if there is any PSP attached, and the dollar amount for any non-recurring services like implementation fees or technical consulting. These will appear as a new section in Salesforce that mirrors the existing revenue forecasting section, and a new services tab will also be added to Outreach for leadership roll-ups."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Corey stated clearly: services forecasting is required at Stage 4 and above on any opportunity. The two inputs AEs need to provide are: the PSP (Premium Success Package) dollar amount if there is any PSP attached, and the dollar amount for any non-recurring services like implementation fees or technical consulting. These will appear as a new section in Salesforce that mirrors the existing revenue forecasting section, and a new services tab will also be added to Outreach for leadership roll-ups."
+          }
+        }
+      ]
+    },
+    {
+      "clip_id": 13,
+      "title": "Day 12: Customer Stories (Power to Your Stories)",
+      "trail_markers": [
+        {
+          "question_number": 1,
+          "text": "JT described the four-part structure every great story follows. What are the four parts in order?",
+          "options": [
+            "Hook, context, social proof, and a clear call to action that drives the prospect toward the next step",
+            "Introduction (hero's current situation), conflict (the crisis that compels action), turning point (where the hero acts to resolve the conflict), and the end (the outcome showing growth, impact, or success)",
+            "Problem statement, solution overview, quantified results, and a recommended next step for the prospect",
+            "Discovery phase, challenge acknowledgment, resolution through the product, and a closing recommendation"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 367,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "JT walked through the four-part story structure: the introduction sets the hero's current situation or context. The conflict is the crisis that compels the hero to act. The turning point is the pivotal moment where the hero actually takes action to resolve the conflict. And the end is the outcome that shows growth, impact, or success. He demonstrated each part through movie plots including Harry Potter and Titanic before applying the same framework to customer stories."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "JT walked through the four-part story structure: the introduction sets the hero's current situation or context. The conflict is the crisis that compels the hero to act. The turning point is the pivotal moment where the hero actually takes action to resolve the conflict. And the end is the outcome that shows growth, impact, or success. He demonstrated each part through movie plots including Harry Potter and Titanic before applying the same framework to customer stories."
+          }
+        },
+        {
+          "question_number": 2,
+          "text": "Ari Hoffman explained what it means for a customer story to be 'personal.' What does personal mean in the context of customer storytelling?",
+          "options": [
+            "Personal means sharing your own experiences as a seller \u2014 stories from your previous companies and deals are more relatable than third-party case studies",
+            "Personal means the story is about the people, not the technology \u2014 people are the heroes because prospects can empathize with other people, not with tools. Amplitude is the Millennium Falcon, not Han Solo.",
+            "Personal means the story is tailored to the specific industry of the prospect \u2014 vertical alignment makes a story feel personal and relevant",
+            "Personal means the story is shared one-on-one rather than in a group setting \u2014 intimacy of delivery is what makes a customer story feel personal"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 857,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Ari explained that personal means the story is about the people, not the technology. People cannot relate to technology \u2014 they relate to other people. The customer is the hero because they are the ones who stuck their neck out to get budget, drove internal adoption, and whose reputation is on the line if the program fails. He used the Star Wars analogy: nobody leaves a movie saying 'I want to be the Millennium Falcon' \u2014 they say 'I want to be Han Solo.' But if you want to be Han Solo, you are flying the Millennium Falcon. Amplitude is the enabler, never the star."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Ari explained that personal means the story is about the people, not the technology. People cannot relate to technology \u2014 they relate to other people. The customer is the hero because they are the ones who stuck their neck out to get budget, drove internal adoption, and whose reputation is on the line if the program fails. He used the Star Wars analogy: nobody leaves a movie saying 'I want to be the Millennium Falcon' \u2014 they say 'I want to be Han Solo.' But if you want to be Han Solo, you are flying the Millennium Falcon. Amplitude is the enabler, never the star."
+          }
+        },
+        {
+          "question_number": 3,
+          "text": "Ari explained why a good story told at the wrong time can actually hurt rather than help. What is the key principle about relevance and timing?",
+          "options": [
+            "Stories should only be told during formal demos \u2014 dropping a story in a discovery call before you understand the prospect's pain comes across as presumptuous",
+            "A good story told when the conversation has nothing to do with it can turn someone into a detractor \u2014 relevance requires actively listening first and only bringing in a story when it fits the moment, not waiting for your turn to tell it",
+            "Stories work best late in the sales cycle near the close \u2014 bringing them in too early dilutes their impact when the prospect needs to make a final decision",
+            "Timing is mostly about matching the story to the prospect's industry \u2014 vertical relevance is what makes a story feel right at any point in the conversation"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 1437,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Ari described watching a CSM on an EBR call who had a story prepared and waited for the right moment \u2014 but the conversation never connected to the story. They forced it in anyway, and it fell flat. He warned that a good story told at the wrong time can turn someone into a detractor rather than a promoter. The principle is to actively listen first, find the transitionary moment where the story naturally fits, and then bring it in. Not every fish eats the same bait \u2014 setting the hook requires timing, not just having a hook."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Ari described watching a CSM on an EBR call who had a story prepared and waited for the right moment \u2014 but the conversation never connected to the story. They forced it in anyway, and it fell flat. He warned that a good story told at the wrong time can turn someone into a detractor rather than a promoter. The principle is to actively listen first, find the transitionary moment where the story naturally fits, and then bring it in. Not every fish eats the same bait \u2014 setting the hook requires timing, not just having a hook."
+          }
+        },
+        {
+          "question_number": 4,
+          "text": "Julia Dillon described three benefits of telling customer stories. What are they?",
+          "options": [
+            "Faster onboarding, higher product adoption, and better renewal rates",
+            "Building trust with real results instead of empty promises, demonstrating tangible business impact and ROI, and acting as a Swiss Army knife that works across prospecting, expansion, and retention",
+            "Differentiating from competitors, shortening the sales cycle, and reducing the need for expensive proof-of-concept trials",
+            "Generating referrals, improving win rates in competitive deals, and reducing customer acquisition cost"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 1990,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Julia outlined three benefits: first, customer stories build trust \u2014 prospects and customers do not want empty promises, and real results from real customers are more credible than any claim. Second, they demonstrate tangible business impact and ROI \u2014 everyone wants more ROI, and a story makes that concrete. Third, they are a Swiss Army knife \u2014 the same story can be adapted for a new prospect facing a similar problem, an expansion conversation with an existing customer, or even explaining what you do to someone outside work. She also cited the statistics: customer stories are 22 times more memorable, 68% of buyers say they influence business decisions, and 55% are more likely to buy after hearing one."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Julia outlined three benefits: first, customer stories build trust \u2014 prospects and customers do not want empty promises, and real results from real customers are more credible than any claim. Second, they demonstrate tangible business impact and ROI \u2014 everyone wants more ROI, and a story makes that concrete. Third, they are a Swiss Army knife \u2014 the same story can be adapted for a new prospect facing a similar problem, an expansion conversation with an existing customer, or even explaining what you do to someone outside work. She also cited the statistics: customer stories are 22 times more memorable, 68% of buyers say they influence business decisions, and 55% are more likely to buy after hearing one."
+          }
+        },
+        {
+          "question_number": 5,
+          "text": "Julia described where to find customer stories at Amplitude. What are the three sources she named?",
+          "options": [
+            "The Amplitude website, the competitive Slack channel, and customer success QBR decks",
+            "HiSpot (with over 100 filterable customer stories), the Win Reports Slack channel, and the Customer Verified Outcomes Slack channel",
+            "HiSpot, Spekit, and the Amplitude YouTube channel",
+            "The Amplitude website, Glean, and the customer reference database maintained by the marketing team"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 2601,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Julia named three places to find customer stories: HiSpot, which has over 100 customer stories filterable by platform, geography, company size, and features used \u2014 she gave examples like the Unity story for GA rip-and-replace and the super.com story for Experiment. The Win Reports Slack channel, which is the first place outside the deal team where a new customer story appears and a great place to see what newest customers are doing with Amplitude. And the Customer Verified Outcomes Slack channel, which is a goldmine where the customer success team shares live business outcomes in real time. She described all three as active and important sources for building your story library."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Julia named three places to find customer stories: HiSpot, which has over 100 customer stories filterable by platform, geography, company size, and features used \u2014 she gave examples like the Unity story for GA rip-and-replace and the super.com story for Experiment. The Win Reports Slack channel, which is the first place outside the deal team where a new customer story appears and a great place to see what newest customers are doing with Amplitude. And the Customer Verified Outcomes Slack channel, which is a goldmine where the customer success team shares live business outcomes in real time. She described all three as active and important sources for building your story library."
+          }
+        }
+      ]
+    },
+    {
+      "clip_id": 14,
+      "title": "Day 13: Contract Lifecycle Management",
+      "trail_markers": [
+        {
+          "question_number": 1,
+          "text": "Joy described the MSA as the umbrella or backbone agreement. What is the quickest way to close a deal from a contracting perspective \u2014 and what is the ARR threshold for negotiating a custom MSA?",
+          "options": [
+            "The quickest path is generating a custom MSA immediately \u2014 the threshold for negotiation is $25,000 ARR",
+            "The quickest path is getting the customer to accept Amplitude's online MSA, which is incorporated into every order form automatically \u2014 custom MSA negotiation is only available for deals at or above $50,000 ARR",
+            "The quickest path is skipping the MSA entirely and going straight to the order form \u2014 the MSA only applies to enterprise deals above $100,000 ARR",
+            "The quickest path is having legal draft a custom MSA before sending the order form \u2014 there is no threshold, all customers can request negotiation"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 235,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Joy was emphatic: the quickest way to close a deal is to get the customer to accept Amplitude's online MSA. It is published online, incorporated into every order form automatically, and 90%+ of Amplitude's customers are governed by it. No legal involvement is needed. Custom MSA negotiation is only available for deals at or above $50,000 ARR \u2014 below that threshold, Amplitude will not entertain MSA negotiation. Joy noted that negotiating a custom MSA can elongate the deal cycle, which is another reason to always push for the online terms first."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Joy was emphatic: the quickest way to close a deal is to get the customer to accept Amplitude's online MSA. It is published online, incorporated into every order form automatically, and 90%+ of Amplitude's customers are governed by it. No legal involvement is needed. Custom MSA negotiation is only available for deals at or above $50,000 ARR \u2014 below that threshold, Amplitude will not entertain MSA negotiation. Joy noted that negotiating a custom MSA can elongate the deal cycle, which is another reason to always push for the online terms first."
+          }
+        },
+        {
+          "question_number": 2,
+          "text": "Joy explained two important rules about the Business Associate Addendum (BAA). What are they?",
+          "options": [
+            "AEs should proactively offer BAAs to all healthcare customers \u2014 and the BAA can be negotiated just like the MSA for deals above $50,000",
+            "AEs should never proactively offer a BAA \u2014 the customer determines whether one is required. BAAs are only available to paying customers and are non-negotiable: customers must sign Amplitude's BAA as-is",
+            "BAAs are offered to all customers in regulated industries including healthcare, finance, and government \u2014 and they follow the same $50,000 ARR negotiation threshold as MSAs",
+            "AEs should ask legal before any healthcare conversation \u2014 BAAs can be negotiated but require executive approval from both sides before they can be finalized"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 504,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Joy made two points clearly. First, AEs should not proactively offer or solicit BAAs \u2014 unlike NDAs where proactivity is encouraged, for BAAs the customer determines whether one is required by their regulatory obligations under HIPAA. Amplitude does not want to encourage customers to send sensitive health data it does not need. Second, BAAs are only available to paying customers \u2014 prospects or free plan customers cannot get one \u2014 and unlike MSAs, BAAs are non-negotiable. Customers sign Amplitude's BAA as-is."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Joy made two points clearly. First, AEs should not proactively offer or solicit BAAs \u2014 unlike NDAs where proactivity is encouraged, for BAAs the customer determines whether one is required by their regulatory obligations under HIPAA. Amplitude does not want to encourage customers to send sensitive health data it does not need. Second, BAAs are only available to paying customers \u2014 prospects or free plan customers cannot get one \u2014 and unlike MSAs, BAAs are non-negotiable. Customers sign Amplitude's BAA as-is."
+          }
+        },
+        {
+          "question_number": 3,
+          "text": "Craig explained the Ironclad launch and negotiation stages. When customer red lines come back, how should you alert legal \u2014 and do you need approval before sending the first draft to the customer?",
+          "options": [
+            "Send legal a Slack message to alert them to red lines \u2014 you do need approval from legal before sending the first draft",
+            "Upload the red-lined document to the Ironclad workflow and at-mention legal in a comment \u2014 no additional Slack message is needed. You do not need approval before sending the first draft to the customer.",
+            "Email legal directly with the red-lined document attached \u2014 Ironclad comments are optional. You need legal approval before sending any draft.",
+            "Submit a Salesforce case to the legal team with the red lines \u2014 and the first draft can be sent after the workflow owner approves it in Ironclad"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 841,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Craig explained both points. For the first draft: no approval is needed \u2014 you can send the first draft directly to the customer without any legal involvement, which speeds up the process. For red lines: upload the red-lined document as a new version in the Ironclad workflow under Ironclad Documents, then at-mention the legal team member in a comment. Craig specified that a separate Slack message is not needed \u2014 the at-mention generates a notification, and keeping everything in the workflow maintains a complete history in one place."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Craig explained both points. For the first draft: no approval is needed \u2014 you can send the first draft directly to the customer without any legal involvement, which speeds up the process. For red lines: upload the red-lined document as a new version in the Ironclad workflow under Ironclad Documents, then at-mention the legal team member in a comment. Craig specified that a separate Slack message is not needed \u2014 the at-mention generates a notification, and keeping everything in the workflow maintains a complete history in one place."
+          }
+        },
+        {
+          "question_number": 4,
+          "text": "Craig described the Happy Path for getting agreements signed (Signature Option 1). What makes it the happy path \u2014 and what is one thing you must NOT do?",
+          "options": [
+            "It is the happy path because it uses Amplitude's DocuSign within Salesforce, which automatically saves signed documents to Salesforce Files with no manual storage required. You must not remove the Ironclad workflow identifier email CC recipient from the DocuSign envelope.",
+            "It is the happy path because it allows the customer to sign using their own e-signature platform \u2014 no further action is needed once they confirm signature. You must not add any additional recipients to the DocuSign envelope.",
+            "It is the happy path because legal pre-approves the document before it reaches the customer \u2014 no signature blocks need to be added manually. You must not download the MSA before attaching it to DocuSign.",
+            "It is the happy path because signed documents auto-archive in Dropbox \u2014 no Salesforce upload is needed. You must not use DocuSign for NDAs, only for order forms."
+          ],
+          "correct": 0,
+          "triggerAtSeconds": 1142,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Craig explained that Signature Option 1 is the happy path because sending through Amplitude's DocuSign within Salesforce automatically saves signed documents to the Salesforce Files related list \u2014 no manual storage is needed. The one thing you must NOT do is remove the Ironclad workflow identifier email from the CC recipient list in the DocuSign envelope. This email is automatically included to create an audit trail for Ironclad, and removing it breaks that link. Craig also noted that logging into DocuSign outside of Salesforce \u2014 even using Amplitude's DocuSign account \u2014 does not qualify as the happy path because it breaks the Salesforce opportunity link."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Craig explained that Signature Option 1 is the happy path because sending through Amplitude's DocuSign within Salesforce automatically saves signed documents to the Salesforce Files related list \u2014 no manual storage is needed. The one thing you must NOT do is remove the Ironclad workflow identifier email from the CC recipient list in the DocuSign envelope. This email is automatically included to create an audit trail for Ironclad, and removing it breaks that link. Craig also noted that logging into DocuSign outside of Salesforce \u2014 even using Amplitude's DocuSign account \u2014 does not qualify as the happy path because it breaks the Salesforce opportunity link."
+          }
+        },
+        {
+          "question_number": 5,
+          "text": "After a deal is closed, where can you find all executed agreements \u2014 and what is the exception to automatic population?",
+          "options": [
+            "All executed agreements are in Ironclad's document library \u2014 agreements signed before September 2025 are in Salesforce Files and may not appear in Ironclad",
+            "All executed agreements are under Salesforce Files on the account. Those signed via Amplitude's DocuSign in Salesforce (Option 1) or via Ironclad workflow (Option 3) populate automatically. Agreements signed via other paths must be uploaded manually, and agreements signed before September 1st 2025 may still be in Dropbox or Ironclad.",
+            "All executed agreements are in Dropbox, organized by account \u2014 Salesforce Files only stores order forms, not MSAs or NDAs",
+            "All executed agreements populate automatically in Salesforce regardless of how they were signed \u2014 no manual uploads are ever required after September 2025"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 1478,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Craig explained that all executed agreements live in the Salesforce Files related list on the account. Agreements signed through Signature Option 1 (Amplitude's DocuSign in Salesforce) or Signature Option 3 (the Ironclad workflow) populate there automatically. Any agreements signed through other paths \u2014 like the customer using their own e-signature system \u2014 must be manually uploaded to Salesforce Files. He also noted that agreements signed before September 1st, 2025 may still be found in Dropbox or Ironclad and may not have populated in Salesforce Files."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Craig explained that all executed agreements live in the Salesforce Files related list on the account. Agreements signed through Signature Option 1 (Amplitude's DocuSign in Salesforce) or Signature Option 3 (the Ironclad workflow) populate there automatically. Any agreements signed through other paths \u2014 like the customer using their own e-signature system \u2014 must be manually uploaded to Salesforce Files. He also noted that agreements signed before September 1st, 2025 may still be found in Dropbox or Ironclad and may not have populated in Salesforce Files."
+          }
+        }
+      ]
+    },
+    {
+      "clip_id": 15,
+      "title": "Day 14: Deal Desk & CPQ (How to Create a Quote)",
+      "trail_markers": [
+        {
+          "question_number": 1,
+          "text": "When starting a new quote in CPQ, what should you always select for pricing and packaging \u2014 and what is the internal quote name used for?",
+          "options": [
+            "Always select Legacy PPL to ensure backward compatibility \u2014 the internal quote name appears on the order form and is visible to the customer",
+            "Always select 2026 PPL when possible \u2014 the internal quote name is for your own reference only and never shows up on the order form",
+            "Always select 2024 PPL unless DealDesk instructs otherwise \u2014 the internal quote name is required to match the opportunity name exactly",
+            "Always select 2026 PPL \u2014 the internal quote name is automatically generated from the account name and cannot be changed"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 189,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "The presenter emphasized always going with 2026 PPL if possible \u2014 Amplitude is actively moving customers off 2024 to 2026 as often as they can. The internal quote name is entirely for the AE's reference: it helps distinguish between multiple quote options (e.g. Option 1, Option 2) and does not appear anywhere on the order form. The quote shell fields including quote name, start date, billing contact, and other details are all editable before submitting for approval."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "The presenter emphasized always going with 2026 PPL if possible \u2014 Amplitude is actively moving customers off 2024 to 2026 as often as they can. The internal quote name is entirely for the AE's reference: it helps distinguish between multiple quote options (e.g. Option 1, Option 2) and does not appear anywhere on the order form. The quote shell fields including quote name, start date, billing contact, and other details are all editable before submitting for approval."
+          }
+        },
+        {
+          "question_number": 2,
+          "text": "When configuring a 2026 PPL quote in CPQ, what is the first choice you must make when selecting a package \u2014 and what is the recommended usage term setting?",
+          "options": [
+            "First choose between Growth and Enterprise platform \u2014 usage term should always be set to monthly to give customers maximum flexibility",
+            "First choose between Events and MTUs as the consumption model \u2014 usage term should always be set to annual so customers have one large pool to draw from, avoiding overages from monthly seasonality",
+            "First choose the add-ons before selecting the base platform \u2014 usage term defaults to annual and cannot be changed after quote creation",
+            "First choose the implementation SKU \u2014 usage term should match whatever the customer's current contract uses to avoid any disruption"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 416,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "The presenter walked through the 2026 PPL quote flow: the first key decision in the package selection is choosing between Events and MTUs \u2014 the customer gets one or the other, not both. After that, usage term should be set to annual whenever possible. The reasoning: if a customer has seasonality where they use more events or MTUs in certain months, an annual usage term gives them one large bucket to draw from across the year, which avoids overages. Monthly usage terms create overage risk if the customer spikes in any given month."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "The presenter walked through the 2026 PPL quote flow: the first key decision in the package selection is choosing between Events and MTUs \u2014 the customer gets one or the other, not both. After that, usage term should be set to annual whenever possible. The reasoning: if a customer has seasonality where they use more events or MTUs in certain months, an annual usage term gives them one large bucket to draw from across the year, which avoids overages. Monthly usage terms create overage risk if the customer spikes in any given month."
+          }
+        },
+        {
+          "question_number": 3,
+          "text": "When entering event volume for a 2-year ramp deal, how do you enter the quantity in CPQ \u2014 and what does 'Save and Create Groups' do?",
+          "options": [
+            "Enter total annual events in billions directly \u2014 Save and Create Groups locks both year prices simultaneously and prevents further edits",
+            "Enter the monthly equivalent in millions (divide annual events by 12) \u2014 Save and Create Groups creates the second year term automatically so you can configure different event volumes per year for a ramp deal",
+            "Enter total contract-period events divided by 24 months \u2014 Save and Create Groups generates a DocuSign envelope for both years at once",
+            "Enter the annual amount in thousands \u2014 Save and Create Groups merges both years into a single line item for simplified billing"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 693,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "CPQ takes event quantity as a monthly figure in millions. For 5 billion events annually: divide by 1,000 to convert to millions (5,000M), then divide by 12 to get the monthly equivalent (416.67). Enter 416.67 in the field. For a ramp deal with a 24-month term, clicking Save and Create Groups automatically creates the second year term (Term 2), where you can enter different event volumes \u2014 in the demo, 7 billion events in year 2 becomes 583.33 (7,000 \u00f7 12). Always hit Quicksave after any quantity or pricing changes."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "CPQ takes event quantity as a monthly figure in millions. For 5 billion events annually: divide by 1,000 to convert to millions (5,000M), then divide by 12 to get the monthly equivalent (416.67). Enter 416.67 in the field. For a ramp deal with a 24-month term, clicking Save and Create Groups automatically creates the second year term (Term 2), where you can enter different event volumes \u2014 in the demo, 7 billion events in year 2 becomes 583.33 (7,000 \u00f7 12). Always hit Quicksave after any quantity or pricing changes."
+          }
+        },
+        {
+          "question_number": 4,
+          "text": "The presenter recommended using the Target Net Total field rather than a percentage discount. How does it work \u2014 and what must be excluded from the calculation?",
+          "options": [
+            "Enter the exact total you want the customer to pay including all products \u2014 CPQ auto-calculates the discount percentage and applies it evenly across all line items",
+            "Enter the desired deal total minus PSP and professional services costs \u2014 PSP and services are always standalone, never included in the target net total, so you subtract them first to arrive at the correct input",
+            "Enter the total ARR target excluding implementation \u2014 PSP is automatically excluded by CPQ when this field is used",
+            "Enter the gross value before any discounts \u2014 CPQ uses this as a ceiling and applies the maximum allowed discount to reach it"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 920,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "The presenter recommended Target Net Total over percentage discounts when you need an exact number. Because PSP and professional services are always standalone and excluded from the target net total calculation, you must subtract their costs manually before entering the number. Example: if the customer can pay $700K in year 2 and PSP costs $41,250, enter $658,750 as the target net total ($700K minus $41,250). CPQ then calculates the discount needed to hit that net. The same math applies if you also want to exclude implementation from year 1."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "The presenter recommended Target Net Total over percentage discounts when you need an exact number. Because PSP and professional services are always standalone and excluded from the target net total calculation, you must subtract their costs manually before entering the number. Example: if the customer can pay $700K in year 2 and PSP costs $41,250, enter $658,750 as the target net total ($700K minus $41,250). CPQ then calculates the discount needed to hit that net. The same math applies if you also want to exclude implementation from year 1."
+          }
+        },
+        {
+          "question_number": 5,
+          "text": "Before submitting a quote for approval, the presenter recommended a specific step. What is it \u2014 and what should the Notes field contain?",
+          "options": [
+            "Preview the DocuSign envelope to confirm signature blocks are placed correctly \u2014 Notes should contain the customer's billing contact and payment terms",
+            "Click Preview Approval to see which approvals will be triggered \u2014 then use the Notes field to explain the deal structure and address each approval point so approvers have the context they need to approve quickly",
+            "Send the quote to DealDesk for a pre-review via Slack before hitting submit \u2014 Notes should only contain the discount percentage being applied",
+            "Download the quote as a PDF and review it with your manager \u2014 Notes can remain empty as long as all line items are correctly configured"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 1135,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "The presenter strongly recommended clicking Preview Approval before submitting \u2014 it shows exactly which approvals will be triggered (e.g. discounting services above 10% goes to DealDesk, discounting at 25% also goes to the VP level). Once you know what approvals are firing, fill in the Notes field with deal context that addresses each approval point: why you're doing the deal, what discount was applied and why, any urgency like a signature target date. This gives approvers the information they need to move quickly rather than chasing the AE for context."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "The presenter strongly recommended clicking Preview Approval before submitting \u2014 it shows exactly which approvals will be triggered (e.g. discounting services above 10% goes to DealDesk, discounting at 25% also goes to the VP level). Once you know what approvals are firing, fill in the Notes field with deal context that addresses each approval point: why you're doing the deal, what discount was applied and why, any urgency like a signature target date. This gives approvers the information they need to move quickly rather than chasing the AE for context."
+          }
+        }
+      ]
+    },
+    {
+      "clip_id": 16,
+      "title": "Day 15a: Leveraging Solution Engineers (SE Partnership & Platform Overview)",
+      "trail_markers": [
+        {
+          "question_number": 1,
+          "text": "Matt described the SE role using two key elements. What are they \u2014 and why does the customer often trust an SE more than an AE?",
+          "options": [
+            "Technical lead and product expert \u2014 customers trust SEs more because they have more seniority and tenure than most AEs",
+            "Technical lead and trusted advisor \u2014 customers often place SEs on a pedestal and trust them more because they are not a salesperson, which allows the SE to build a different kind of relationship and credibility",
+            "Demo specialist and deal qualifier \u2014 customers trust SEs more because they control the product roadmap and can make feature commitments AEs cannot",
+            "Discovery lead and commercial strategist \u2014 customers trust SEs more because they set the price and can negotiate directly without manager approval"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 604,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Matt described the SE role as having two elements: being a technical lead who drives technical discovery, and being a trusted advisor. He explained that because SEs are not salespeople, customers typically trust them more \u2014 they are seen as coming from a different angle. This trust allows SEs to build stronger relationships and get a different level of engagement from customers. Matt's stated ultimate goal: giving the customer confidence that the solution they are choosing is the right one for their business."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Matt described the SE role as having two elements: being a technical lead who drives technical discovery, and being a trusted advisor. He explained that because SEs are not salespeople, customers typically trust them more \u2014 they are seen as coming from a different angle. This trust allows SEs to build stronger relationships and get a different level of engagement from customers. Matt's stated ultimate goal: giving the customer confidence that the solution they are choosing is the right one for their business."
+          }
+        },
+        {
+          "question_number": 2,
+          "text": "Matt described when SEs typically get involved in a deal. What is the most common stage \u2014 and how should you engage an SE before Stage 2 if needed?",
+          "options": [
+            "SEs always join at Stage 4 for the technical proof of concept \u2014 before that, ask DealDesk to assign one through the opportunity page",
+            "SEs most commonly come in at Stage 3 when you have champions mapped and need someone to deliver the demo \u2014 but before Stage 2, you can ask the SE manager informally, or invite an SE to simply sit in on an early call without any formal requirement",
+            "SEs always join at Stage 2 for qualification \u2014 there is no way to engage an SE before Stage 2 without manager approval",
+            "SEs most commonly come in at Stage 5 for commercial support \u2014 before that, all technical questions should go through the solution engineering Slack channel only"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 1362,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Matt explained that while SEs are formally requestable from Stage 2 via Salesforce, the most common entry point in practice is Stage 3 \u2014 when the customer side is mapped out and a demo needs to be delivered. However, for earlier stages, Matt said to simply ask the SE manager or reach out directly to an SE you know and ask them to sit in. He said: 'Can you just come in and sit in with me just in case something comes up? I guarantee you 99% of SEs will say yes, of course.' The formal Salesforce SE request box is the official mechanism but informal outreach to the SE manager is always welcome."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Matt explained that while SEs are formally requestable from Stage 2 via Salesforce, the most common entry point in practice is Stage 3 \u2014 when the customer side is mapped out and a demo needs to be delivered. However, for earlier stages, Matt said to simply ask the SE manager or reach out directly to an SE you know and ask them to sit in. He said: 'Can you just come in and sit in with me just in case something comes up? I guarantee you 99% of SEs will say yes, of course.' The formal Salesforce SE request box is the official mechanism but informal outreach to the SE manager is always welcome."
+          }
+        },
+        {
+          "question_number": 3,
+          "text": "Matt described what the Amplitude landing page shows during a demo. What is the Ask Amplitude feature \u2014 and what makes it different from building a chart manually?",
+          "options": [
+            "Ask Amplitude is an AI chatbot that answers questions about your account health and recommends which features to enable next \u2014 it works by connecting to your CRM",
+            "Ask Amplitude is a natural language processor that lets you type your business question first and then builds the chart for you \u2014 rather than needing to know how to construct the chart before knowing what to ask",
+            "Ask Amplitude is a search tool that finds existing dashboards built by your team that match a keyword you type \u2014 it does not create new charts",
+            "Ask Amplitude is an admin-only feature that generates automated weekly reports based on preset KPIs \u2014 end users do not have access to it"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 2270,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Matt demonstrated Ask Amplitude during the live demo: rather than thinking about the chart first and then forming the question, Ask Amplitude lets you think about the business question first and then Amplitude builds the chart. In the demo, he typed 'total sales by department' and the system interpreted the question, identified the right property (sum of revenue for complete purchase), and returned a chart showing $17 million across product categories. He described it as especially useful when users don't know how to build a specific chart \u2014 the system interprets the intent and delivers the answer."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Matt demonstrated Ask Amplitude during the live demo: rather than thinking about the chart first and then forming the question, Ask Amplitude lets you think about the business question first and then Amplitude builds the chart. In the demo, he typed 'total sales by department' and the system interpreted the question, identified the right property (sum of revenue for complete purchase), and returned a chart showing $17 million across product categories. He described it as especially useful when users don't know how to build a specific chart \u2014 the system interprets the intent and delivers the answer."
+          }
+        },
+        {
+          "question_number": 4,
+          "text": "Matt demonstrated how the funnel chart's 'performed function' filter works. What does it show \u2014 and why is it powerful?",
+          "options": [
+            "It shows which marketing campaigns drove users into the funnel \u2014 allowing marketers to compare paid versus organic traffic performance across each funnel step",
+            "It filters the funnel to show only users who previously completed a specific action \u2014 for example, users who already completed one purchase show a 27% conversion rate versus 2.4% for the full audience, revealing the threshold needed to drive repeat behavior",
+            "It shows the sequence in which users perform actions within the funnel \u2014 revealing whether users follow the intended flow or skip steps",
+            "It filters the funnel by user properties like device type or geography \u2014 allowing product teams to compare iOS versus Android conversion side by side"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 3175,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Matt demonstrated the performed function filter by asking: what happens to funnel conversion rate for users who already completed a purchase? The conversion rate jumped from 2.43% for the full audience to 27% for users who had previously purchased. He described this as immediately revealing the threshold \u2014 the line you need to get customers over to dramatically increase their likelihood of returning. He called it a powerful behavioral analysis tool that lets you understand what prior actions drive future behavior, and noted customers tend to have the most questions about this particular section."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Matt demonstrated the performed function filter by asking: what happens to funnel conversion rate for users who already completed a purchase? The conversion rate jumped from 2.43% for the full audience to 27% for users who had previously purchased. He described this as immediately revealing the threshold \u2014 the line you need to get customers over to dramatically increase their likelihood of returning. He called it a powerful behavioral analysis tool that lets you understand what prior actions drive future behavior, and noted customers tend to have the most questions about this particular section."
+          }
+        },
+        {
+          "question_number": 5,
+          "text": "Matt explained how Amplitude's session replay integration differs from standalone session replay tools. What makes it uniquely valuable?",
+          "options": [
+            "Amplitude's session replay records audio as well as screen activity \u2014 giving you a fuller picture of how users experience the product",
+            "Rather than giving you an undifferentiated list of all sessions to review, Amplitude filters session replays to only show sessions relevant to the specific analysis you are doing \u2014 such as only users who dropped off between specific funnel steps",
+            "Amplitude's session replay automatically generates a written summary of each session using AI \u2014 so you don't need to watch individual recordings",
+            "Amplitude's session replay syncs directly with your CRM so sales teams can watch sessions for their specific accounts without leaving Salesforce"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 4130,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Matt described the standard session replay experience as receiving a long undifferentiated list of sessions with no way to know which are relevant. Amplitude's integration solves this: when you click session replay from within a funnel chart, it only shows sessions that match the exact analysis \u2014 for example, only users who completed the Welcome Page \u2192 Search \u2192 Add to Cart path. Every session reviewed is specifically relevant to the question being asked. Matt described this as adding a powerful layer of qualitative data on top of quantitative analysis, with no random searching through irrelevant recordings."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Matt described the standard session replay experience as receiving a long undifferentiated list of sessions with no way to know which are relevant. Amplitude's integration solves this: when you click session replay from within a funnel chart, it only shows sessions that match the exact analysis \u2014 for example, only users who completed the Welcome Page \u2192 Search \u2192 Add to Cart path. Every session reviewed is specifically relevant to the question being asked. Matt described this as adding a powerful layer of qualitative data on top of quantitative analysis, with no random searching through irrelevant recordings."
+          }
+        }
+      ]
+    },
+    {
+      "clip_id": 17,
+      "title": "Day 15b: Leveraging Solution Engineers (Why Sell Services & Services Forecasting)",
+      "trail_markers": [
+        {
+          "question_number": 1,
+          "text": "Nicolette described four customer-first reasons to sell services. Which of the following is one of them?",
+          "options": [
+            "Services lock customers into multi-year contracts, reducing churn risk by creating switching costs",
+            "Services establish credibility from day one \u2014 even before the deal closes \u2014 by showing Amplitude's investment in the partnership and giving customers confidence they will be successful",
+            "Services are required for all deals above $100K ARR, making them a mandatory step in the sales process",
+            "Services generate upsell conversations by giving PS teams direct access to economic buyers post-sale"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 361,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Ganit and Nicolette described four customer-first reasons: services establish credibility from day one \u2014 even before the close \u2014 by showing Amplitude's investment. Services accelerate adoption by helping customers get to value faster \u2014 at Q4 end, average time-to-go-live was under 90 days. Services help customers build a good foundation: trusted data, proper taxonomy, scalable data pipelines. And services maximize ROI and set up the customer for future growth with Amplitude. Nicolette emphasized the customer-first lens throughout."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Ganit and Nicolette described four customer-first reasons: services establish credibility from day one \u2014 even before the close \u2014 by showing Amplitude's investment. Services accelerate adoption by helping customers get to value faster \u2014 at Q4 end, average time-to-go-live was under 90 days. Services help customers build a good foundation: trusted data, proper taxonomy, scalable data pipelines. And services maximize ROI and set up the customer for future growth with Amplitude. Nicolette emphasized the customer-first lens throughout."
+          }
+        },
+        {
+          "question_number": 2,
+          "text": "Corey explained why services should be brought into the conversation earlier in the sales cycle \u2014 not as an afterthought. What is the key argument?",
+          "options": [
+            "Services need to be scoped before Stage 2 so the SE team can include technical requirements in the initial discovery documentation",
+            "After a customer has chosen Amplitude, their next thought is 'how do I de-risk this decision' \u2014 bringing services in earlier addresses that concern and increases their comfort with executing the plan, which improves close rates",
+            "Services pricing must be approved by DealDesk before Stage 4, so introducing them earlier avoids approval delays at the end of the cycle",
+            "Services must appear on the first quote draft to qualify for the company's standard discount, so they need to be discussed in Stage 2 or earlier"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 774,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Corey made this argument directly: once a customer has chosen Amplitude technically, their next thought is 'how do I de-risk this decision I just made?' Bringing services in earlier gives them confidence that they can actually execute the plan \u2014 it is a lever for improving close rates. He also emphasized that renewals are almost won or lost during the implementation period: the customer is at their highest point of excitement right after signing, and services capture that momentum and drive them to successful adoption. Introducing services late risks scoping them incorrectly and losing that critical window."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Corey made this argument directly: once a customer has chosen Amplitude technically, their next thought is 'how do I de-risk this decision I just made?' Bringing services in earlier gives them confidence that they can actually execute the plan \u2014 it is a lever for improving close rates. He also emphasized that renewals are almost won or lost during the implementation period: the customer is at their highest point of excitement right after signing, and services capture that momentum and drive them to successful adoption. Introducing services late risks scoping them incorrectly and losing that critical window."
+          }
+        },
+        {
+          "question_number": 3,
+          "text": "Corey walked through the new Services Forecaster section in Salesforce. How does PSP ARR relate to the total new ARR field \u2014 and when do these fields auto-populate?",
+          "options": [
+            "PSP ARR is tracked separately from total new ARR \u2014 it does not count toward the AE's ARR quota and is excluded from the overall deal amount",
+            "PSP ARR is a subset of total new ARR \u2014 if a customer spends $250K total and $30K is PSP, you input $250K as total ARR and $30K separately as PSP ARR. Once a primary quote exists, these fields auto-populate from the quote.",
+            "PSP ARR is always entered as a separate deal and creates a new opportunity record \u2014 it is never bundled with platform ARR on the same opportunity",
+            "PSP ARR only appears in the Services Forecaster if the total deal is above $250K \u2014 smaller deals only require the one-time services field to be completed"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 1286,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Corey demonstrated this in Salesforce: PSP ARR is part of the total new ARR \u2014 not separate from it. Using his example: if a customer spends $250K total and $30K of that is PSP, you enter $250K as total new ARR and separately enter $30K in the PSP ARR field. The $30K is already included in the $250K. Once a primary quote exists on the opportunity, these Services Forecaster fields auto-populate from the quote and stay synced as the quote is updated \u2014 no duplicate data entry needed."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Corey demonstrated this in Salesforce: PSP ARR is part of the total new ARR \u2014 not separate from it. Using his example: if a customer spends $250K total and $30K of that is PSP, you enter $250K as total new ARR and separately enter $30K in the PSP ARR field. The $30K is already included in the $250K. Once a primary quote exists on the opportunity, these Services Forecaster fields auto-populate from the quote and stay synced as the quote is updated \u2014 no duplicate data entry needed."
+          }
+        },
+        {
+          "question_number": 4,
+          "text": "Corey described a specific requirement for large deals without PSP. What triggers it \u2014 and what must be included?",
+          "options": [
+            "Any deal above $100K ARR without PSP requires a DealDesk approval before advancing to Stage 5",
+            "Any opportunity with ending ARR of $250K or above that has no PSP forecasted requires the PSP Override Reasoning field to be filled out \u2014 explaining how PSP was pitched, why the customer pushed back, and any scoping that was done",
+            "Any enterprise deal without PSP requires SE sign-off in Salesforce confirming the customer was informed of implementation risks",
+            "Any deal above $500K without PSP requires VP-level approval and a written exception documented in the Ironclad contract"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 1755,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Corey explained that for any opportunity where the customer's ending ARR is $250K or above but no PSP is being forecasted, the AE must fill out the PSP Override Reasoning field in Salesforce. The field should include: how PSP was pitched, what scoping was done, why the customer declined, and any other relevant context. He noted that Thomas and Nate are reviewing this field closely \u2014 because customers without PSP have historically shown lower renewal rates and introduce more risk since they have less dedicated resourcing."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Corey explained that for any opportunity where the customer's ending ARR is $250K or above but no PSP is being forecasted, the AE must fill out the PSP Override Reasoning field in Salesforce. The field should include: how PSP was pitched, what scoping was done, why the customer declined, and any other relevant context. He noted that Thomas and Nate are reviewing this field closely \u2014 because customers without PSP have historically shown lower renewal rates and introduce more risk since they have less dedicated resourcing."
+          }
+        },
+        {
+          "question_number": 5,
+          "text": "Ganit described the difference between one-time services and Premium Success Packages (PSP). What is the key distinction?",
+          "options": [
+            "One-time services are sold only to new customers \u2014 PSP is reserved for renewals where the customer has already completed initial implementation",
+            "One-time services are time-bound engagements focused on building the initial foundation: implementation, migrations, technical consulting from kickoff to go-live. PSP is an ongoing engagement that drives continued adoption, technical expansion, and maximizes the platform over time.",
+            "One-time services are delivered by Amplitude's partners \u2014 PSP is always delivered in-house by Amplitude's PS team directly",
+            "One-time services include implementation and PSP together \u2014 there is no meaningful distinction between the two from a scoping perspective"
+          ],
+          "correct": 1,
+          "triggerAtSeconds": 2168,
+          "isRecovery": false,
+          "correct_feedback": {
+            "emoji": "\ud83c\udf32",
+            "label": "Forest Preserver! Correct:",
+            "explanation": "Ganit drew a clear line: one-time services are time-bound engagements that take the customer from zero to one \u2014 initial implementation, migrations, technical consulting, getting to go-live. They build the initial foundation and have a defined end. PSP (Premium Success Package) is an ongoing recurring engagement that drives continued adoption, supports technical expansion, helps with new instrumentation methods, and enables customers to get the most from the full breadth and depth of the platform over time. PSP is ARR; one-time services are not. Partners typically deliver one-time services; CSAs are more involved in PSP engagements."
+          },
+          "incorrect_feedback": {
+            "emoji": "\ud83d\udd25",
+            "label": "Fire Starter! Incorrect:",
+            "explanation": "Ganit drew a clear line: one-time services are time-bound engagements that take the customer from zero to one \u2014 initial implementation, migrations, technical consulting, getting to go-live. They build the initial foundation and have a defined end. PSP (Premium Success Package) is an ongoing recurring engagement that drives continued adoption, supports technical expansion, helps with new instrumentation methods, and enables customers to get the most from the full breadth and depth of the platform over time. PSP is ARR; one-time services are not. Partners typically deliver one-time services; CSAs are more involved in PSP engagements."
+          }
+        }
+      ]
+    }
+  ]
+}
