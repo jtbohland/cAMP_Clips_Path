@@ -133,7 +133,7 @@ export default function QuizOverlayV2({
         {showFeedback && (
           <div className="flex justify-end">
             <Button onClick={onContinue}>
-              Continue Watching
+              🎞️ Continue Clip
             </Button>
           </div>
         )}

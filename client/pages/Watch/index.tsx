@@ -585,7 +585,7 @@ export default function WatchPage() {
           {clip.videoUrl ? (
             <iframe
               ref={videoRef}
-              src={convertToEmbedUrl(clip.videoUrl)}
+              src={phase === "trail_marker" ? "" : convertToEmbedUrl(clip.videoUrl)}
               className="absolute inset-0 w-full h-full"
               allow="autoplay; fullscreen"
               allowFullScreen
