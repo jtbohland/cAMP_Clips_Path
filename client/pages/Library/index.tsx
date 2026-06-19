@@ -129,12 +129,11 @@ export default function LibraryPage() {
         {weekGroups.map((week) =>
           week.clips.length > 0 ? (
             <section key={week.label}>
-              {/* Week header */}
-              <div className="flex items-center gap-3 mb-3">
+              {/* Week header — explicit bg/text for dark mode visibility */}
+              <div className="flex items-center gap-3 rounded-xl bg-white px-5 py-3 shadow-[0_1px_3px_rgba(0,0,0,0.08)] mb-4">
                 <span className="text-2xl">{week.emoji}</span>
                 <h2 className="text-lg font-bold text-gray-900">{week.label}</h2>
               </div>
-              <div className="border-b border-gray-200/50 mb-4" />
 
               {/* Clips in this week */}
               <div className="flex flex-col gap-3">

@@ -25,7 +25,8 @@ export default function TopNav() {
 
   // Determine if we're on a sub-page that should show back button instead of tabs
   const currentPageMeta = PAGE_META[location.pathname] ?? null;
-  const showTabs = !currentPageMeta;
+  const isWatchPage = location.pathname.startsWith("/watch/");
+  const showTabs = !currentPageMeta && !isWatchPage;
 
   return (
     <header className="bg-white shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
@@ -80,7 +81,7 @@ export default function TopNav() {
             ))}
           </nav>
         </div>
-      ) : (
+      ) : currentPageMeta ? (
         <div className="px-6 pb-3">
           <button
             onClick={() => navigate("/library")}
@@ -100,7 +101,7 @@ export default function TopNav() {
             </div>
           </div>
         </div>
-      )}
+      ) : null}
     </header>
   );
 }

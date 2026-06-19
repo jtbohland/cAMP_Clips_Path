@@ -79,7 +79,7 @@ export default function ResumePrompt({
           </button>
           <button
             onClick={onStartFresh}
-            className="w-full py-2.5 rounded-lg text-sm font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+            className="w-full py-2.5 rounded-lg text-sm font-medium bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition-colors"
           >
             🌬️ Start Fresh
           </button>
