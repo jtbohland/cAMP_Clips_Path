@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import QuestionEditor from "@/components/QuestionEditor";
 import UnlockOverridePanel from "@/components/UnlockOverridePanel";
+import PageHeader from "@/components/PageHeader";
 
 export default function AdminPage() {
   return (
@@ -31,9 +32,9 @@ function AdminContent() {
   const { data, loading, fetching, refetch } = useApiData("GetAdminClips", {});
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Admin Panel</h1>
+    <div className="h-full overflow-auto" style={{ backgroundColor: "#F9FAFB" }}>
+      <PageHeader emoji="⚙️" title="Admin" subtitle="Manage clips, questions, and learner access" />
+      <div className="p-6 max-w-5xl mx-auto space-y-6">
         <div className="flex gap-1">
           {(["clips", "questions", "unlock"] as const).map((tab) => (
             <Button
@@ -46,28 +47,28 @@ function AdminContent() {
             </Button>
           ))}
         </div>
+
+        {activeTab === "clips" && (
+          <ClipManagement
+            data={data}
+            loading={loading}
+            fetching={fetching}
+            refetch={refetch}
+            showAddForm={showAddForm}
+            setShowAddForm={setShowAddForm}
+            editingClipId={editingClipId}
+            setEditingClipId={setEditingClipId}
+          />
+        )}
+
+        {activeTab === "questions" && (
+          <QuestionEditor clips={data?.clips ?? []} />
+        )}
+
+        {activeTab === "unlock" && (
+          <UnlockOverridePanel clips={data?.clips ?? []} />
+        )}
       </div>
-
-      {activeTab === "clips" && (
-        <ClipManagement
-          data={data}
-          loading={loading}
-          fetching={fetching}
-          refetch={refetch}
-          showAddForm={showAddForm}
-          setShowAddForm={setShowAddForm}
-          editingClipId={editingClipId}
-          setEditingClipId={setEditingClipId}
-        />
-      )}
-
-      {activeTab === "questions" && (
-        <QuestionEditor clips={data?.clips ?? []} />
-      )}
-
-      {activeTab === "unlock" && (
-        <UnlockOverridePanel clips={data?.clips ?? []} />
-      )}
     </div>
   );
 }

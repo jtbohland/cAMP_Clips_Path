@@ -8,12 +8,6 @@ const NAV_TABS = [
   { path: "/admin", label: "Admin", emoji: "⚙️" },
 ];
 
-/** Pages that show a back button instead of the tab bar */
-const PAGE_META: Record<string, { title: string; emoji: string; description: string }> = {
-  "/xp": { title: "XP-lanation", emoji: "🔭", description: "How to earn XP, unlock badges, and ascend the ranks" },
-  "/analytics": { title: "Analytics", emoji: "📊", description: "Track your progress across all clips" },
-  "/admin": { title: "Admin", emoji: "⚙️", description: "Manage the cAMP Ascent experience" },
-};
 
 export default function TopNav() {
   const navigate = useNavigate();
@@ -23,10 +17,12 @@ export default function TopNav() {
   const isActive = (path: string) =>
     location.pathname === path || location.pathname.startsWith(path + "/");
 
-  // Determine if we're on a sub-page that should show back button instead of tabs
-  const currentPageMeta = PAGE_META[location.pathname] ?? null;
+  // Sub-pages (XP, Analytics, Admin) now render their own PageHeader.
+  // Watch has its own custom header. Only Library shows the tab bar.
+  const isSubPage = ["/xp", "/analytics", "/admin"].includes(location.pathname)
+    || location.pathname.startsWith("/report/");
   const isWatchPage = location.pathname.startsWith("/watch/");
-  const showTabs = !currentPageMeta && !isWatchPage;
+  const showTabs = !isSubPage && !isWatchPage;
 
   return (
     <header className="bg-white shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
@@ -80,26 +76,6 @@ export default function TopNav() {
               </button>
             ))}
           </nav>
-        </div>
-      ) : currentPageMeta ? (
-        <div className="px-6 pb-3">
-          <button
-            onClick={() => navigate("/library")}
-            className="text-sm text-indigo-600 hover:text-indigo-800 font-medium transition-colors mb-2"
-          >
-            ← 🎞️ Back to cAMP Clips
-          </button>
-          <div className="flex items-center gap-2">
-            <span className="text-xl">{currentPageMeta.emoji}</span>
-            <div>
-              <h2 className="text-lg font-bold text-gray-900 leading-tight">
-                {currentPageMeta.title}
-              </h2>
-              <p className="text-xs text-gray-500">
-                {currentPageMeta.description}
-              </p>
-            </div>
-          </div>
         </div>
       ) : null}
     </header>

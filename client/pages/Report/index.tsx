@@ -4,6 +4,7 @@ import { useApiData } from "@/hooks/useApiData.js";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { getClipEmoji } from "@/lib/clip-emojis";
+import PageHeader from "@/components/PageHeader";
 
 /** Badge ID → display info */
 const BADGE_MAP: Record<string, { name: string; emoji: string }> = {
@@ -83,26 +84,9 @@ export default function ReportPage() {
 
   return (
     <div className="flex flex-col h-full overflow-y-auto">
-      {/* Back button */}
-      <div className="p-4 pb-0">
-        <Button
-          variant="ghost"
-          onClick={() => navigate("/library")}
-          className="text-sm font-medium text-gray-500 hover:text-gray-900"
-        >
-          ← Back to cAMP Clips
-        </Button>
-      </div>
+      <PageHeader emoji="📋" title="Ranger Report" subtitle={`${emoji} Clip ${clipSortOrder}: ${clipTitle}`} />
 
       <div className="flex-1 p-4 max-w-2xl mx-auto w-full space-y-5">
-        {/* Header */}
-        <div className="text-center">
-          <span className="text-4xl block mb-2">📋</span>
-          <h1 className="text-2xl font-bold text-[#4F46E5]">Ranger Report</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            {emoji} Clip {clipSortOrder}: {clipTitle}
-          </p>
-        </div>
 
         {/* Engagement Score + Trail Markers */}
         <Card className="p-5">
