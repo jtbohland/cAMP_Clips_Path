@@ -1,5 +1,6 @@
 import { useViewer } from "@/components/ViewerContext";
 import { useApiData } from "@/hooks/useApiData.js";
+import PageHeader from "@/components/PageHeader";
 
 
 const TIERS = [
@@ -55,6 +56,7 @@ export default function XPlanationPage() {
 
   return (
     <div className="flex flex-col h-full overflow-auto" style={{ backgroundColor: "#F0F0EF" }}>
+      <PageHeader emoji="🔭" title="XP-lanation" subtitle="How the Ascent scoring works" />
       <div className="max-w-3xl mx-auto w-full p-6 space-y-5">
         {/* Current Tier Badge */}
         {viewer && (

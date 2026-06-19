@@ -34,13 +34,13 @@ export default function PasswordGate({ children }: PasswordGateProps) {
   }
 
   return (
-    <div className="flex h-full items-center justify-center p-6">
-      <Card className="w-full max-w-sm p-8 shadow-lg">
+    <div className="flex h-full items-center justify-center p-6" style={{ backgroundColor: "#F9FAFB" }}>
+      <Card className="w-full max-w-sm p-8 shadow-xl rounded-2xl bg-white border border-gray-200" style={{ backgroundColor: "#ffffff" }}>
         <div className="mb-6 text-center">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#4F46E5]/10">
             <Icon icon="lock" className="h-7 w-7 text-[#4F46E5]" />
           </div>
-          <h2 className="text-xl font-bold">Admin Access</h2>
+          <h2 className="text-xl font-bold text-gray-900">Admin Access</h2>
           <p className="mt-2 text-sm text-gray-500">
             Enter the admin password to continue.
           </p>
@@ -48,7 +48,7 @@ export default function PasswordGate({ children }: PasswordGateProps) {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="admin-password">Password</Label>
+            <Label htmlFor="admin-password" className="text-gray-700">Password</Label>
             <Input
               id="admin-password"
               type="password"
@@ -56,9 +56,10 @@ export default function PasswordGate({ children }: PasswordGateProps) {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter admin password"
               autoFocus
+              className="border-gray-300 bg-white text-gray-900"
             />
           </div>
-          <Button type="submit" className="w-full">
+          <Button type="submit" className="w-full bg-[#4F46E5] hover:bg-[#4338CA] text-white">
             Unlock
           </Button>
         </form>
