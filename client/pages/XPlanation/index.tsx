@@ -289,7 +289,7 @@ function BadgeRow({ emoji, badge, xp, condition, earned, isMystery }: { emoji: s
         <span className={`text-lg ${!earned ? "opacity-50" : ""}`}>{emoji}</span>
         <div>
           <p className={`text-sm ${earned ? "font-bold text-gray-900" : "font-medium text-gray-500"}`}>
-            {isMystery ? "🌲 The Ranger's Secret" : badge}
+            {isMystery ? "The Ranger's Secret" : badge}
             {earned && (
               <span className="ml-2 inline-flex items-center rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-semibold text-indigo-700">
                 ✅ Earned
@@ -297,7 +297,7 @@ function BadgeRow({ emoji, badge, xp, condition, earned, isMystery }: { emoji: s
             )}
           </p>
           <p className={`text-xs ${earned ? "text-gray-500" : "text-gray-500/60"}`}>
-            {isMystery ? "🌲 The Ranger's Secret — A hidden achievement. You'll know it when you earn it." : condition}
+            {isMystery ? "A hidden achievement. You'll know it when you earn it." : condition}
           </p>
         </div>
       </div>

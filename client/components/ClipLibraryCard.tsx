@@ -75,7 +75,7 @@ export default function ClipLibraryCard({
       const deepLink = `${window.location.origin}/clip/${clip.id}`;
       navigator.clipboard
         .writeText(deepLink)
-        .then(() => toast.success("Link copied!"))
+        .then(() => toast("✅ Link copied!", { style: { backgroundColor: "#ffffff", color: "#111827", border: "1px solid #E5E7EB" } }))
         .catch(() => toast.error("Failed to copy link"));
     },
     [clip.id]

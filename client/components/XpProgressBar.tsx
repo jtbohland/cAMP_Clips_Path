@@ -127,24 +127,7 @@ export default function XpProgressBar() {
         </div>
       )}
 
-      {/* Mystery badge teaser — shows until earned */}
-      {!badges.some((b: any) => b.badgeId === "mystery") && (
-        <div
-          className={`${
-            badges.length > 0 ? "mt-2" : "border-t border-gray-200/70 pt-3"
-          }`}
-        >
-          {badges.length === 0 && (
-            <p className="text-xs font-medium text-gray-500 mb-2">Earned Bonuses</p>
-          )}
-          <span
-            className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs italic"
-            style={{ backgroundColor: "#F3F4F6", color: "#9CA3AF" }}
-          >
-            🌲 ???
-          </span>
-        </div>
-      )}
+
     </div>
   );
 }

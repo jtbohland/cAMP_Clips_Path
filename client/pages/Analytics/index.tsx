@@ -22,7 +22,7 @@ function AnalyticsContent() {
 
   if (loading) {
     return (
-      <div className="p-6 max-w-5xl mx-auto space-y-4">
+      <div className="p-6 max-w-5xl mx-auto space-y-4 bg-white" style={{ backgroundColor: "#ffffff" }}>
         <Skeleton className="h-10 w-64" />
         <div className="grid grid-cols-3 gap-4">
           {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-32" />)}
@@ -34,8 +34,8 @@ function AnalyticsContent() {
 
   if (isError) {
     return (
-      <div className="p-6 text-center">
-        <p className="text-destructive">Failed to load analytics: {error?.message ?? "Unknown error"}</p>
+      <div className="p-6 text-center bg-white" style={{ backgroundColor: "#ffffff" }}>
+        <p className="text-red-600">Failed to load analytics: {error?.message ?? "Unknown error"}</p>
       </div>
     );
   }
@@ -43,17 +43,15 @@ function AnalyticsContent() {
   const { clipStats = [], viewerStats = [], roleStats = [] } = data ?? {};
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6 h-full overflow-auto">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Analytics</h1>
-        <div className="flex gap-1">
-          {(["overview", "viewers", "roles"] as const).map((tab) => (
-            <Button key={tab} variant={activeTab === tab ? "default" : "outline"} size="sm"
-              onClick={() => setActiveTab(tab)}>
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
-            </Button>
-          ))}
-        </div>
+    <div className="p-6 max-w-5xl mx-auto space-y-6 h-full overflow-auto bg-white text-gray-900" style={{ backgroundColor: "#ffffff" }}>
+      {/* Tab bar — title handled by TopNav */}
+      <div className="flex gap-1">
+        {(["overview", "viewers", "roles"] as const).map((tab) => (
+          <Button key={tab} variant={activeTab === tab ? "default" : "outline"} size="sm"
+            onClick={() => setActiveTab(tab)}>
+            {tab.charAt(0).toUpperCase() + tab.slice(1)}
+          </Button>
+        ))}
       </div>
 
       {fetching && !loading && <div className="text-xs text-gray-500">Updating…</div>}
@@ -78,15 +76,15 @@ function OverviewTab({ clipStats }: { clipStats: any[] }) {
     <div className="space-y-4">
       {/* Summary cards */}
       <div className="grid grid-cols-3 gap-4">
-        <Card className="p-4 text-center">
+        <Card className="p-4 text-center bg-white border-gray-200">
           <div className="text-3xl font-bold text-[#4F46E5]">{clipStats.length}</div>
           <p className="text-xs text-gray-500">Live Clips</p>
         </Card>
-        <Card className="p-4 text-center">
+        <Card className="p-4 text-center bg-white border-gray-200">
           <div className="text-3xl font-bold text-[#4F46E5]">{totalViewers}</div>
           <p className="text-xs text-gray-500">Total Viewers</p>
         </Card>
-        <Card className="p-4 text-center">
+        <Card className="p-4 text-center bg-white border-gray-200">
           <div className="text-3xl font-bold text-[#4F46E5]">
             {clipStats.length > 0
               ? Math.round(clipStats.reduce((sum, c) => sum + (c.avgScore ?? 0), 0) / clipStats.filter(c => c.avgScore != null).length || 0)
@@ -98,14 +96,14 @@ function OverviewTab({ clipStats }: { clipStats: any[] }) {
 
       {/* Per-clip breakdown */}
       <div className="space-y-2">
-        <h3 className="font-semibold text-sm">Per-Clip Performance</h3>
+        <h3 className="font-semibold text-sm text-gray-900">Per-Clip Performance</h3>
         {clipStats.map((clip) => (
-          <Card key={clip.clipId} className="p-3 flex items-center gap-4">
+          <Card key={clip.clipId} className="p-3 flex items-center gap-4 bg-white border-gray-200">
             <div className="flex h-7 w-7 items-center justify-center rounded bg-gray-50 text-xs font-bold">
               {clip.sortOrder}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-medium text-sm truncate">{clip.title}</p>
+              <p className="font-medium text-sm truncate text-gray-900">{clip.title}</p>
               <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
                 <span>{clip.totalViewers} viewers</span>
                 <span>{clip.completedViewers} completed</span>
@@ -150,7 +148,7 @@ function ViewersTab({ viewerStats }: { viewerStats: any[] }) {
     <div className="space-y-3">
       <div className="flex items-center gap-3">
         <input
-          className="flex h-9 w-64 rounded-md border border-input bg-white px-3 py-1 text-sm"
+          className="flex h-9 w-64 rounded-md border border-gray-200 bg-white px-3 py-1 text-sm text-gray-900"
           placeholder="Search viewers..."
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(0); }}
@@ -160,10 +158,10 @@ function ViewersTab({ viewerStats }: { viewerStats: any[] }) {
 
       <div className="space-y-1">
         {pageData.map((v) => (
-          <Card key={v.viewerId} className="p-3 flex items-center justify-between">
+          <Card key={v.viewerId} className="p-3 flex items-center justify-between bg-white border-gray-200">
             <div className="flex items-center gap-3">
               <div>
-                <p className="text-sm font-medium">{v.name}</p>
+                <p className="text-sm font-medium text-gray-900">{v.name}</p>
                 <p className="text-xs text-gray-500">{v.email}</p>
               </div>
               <Badge variant="outline">{v.role}</Badge>
@@ -195,26 +193,26 @@ function ViewersTab({ viewerStats }: { viewerStats: any[] }) {
 function RolesTab({ roleStats }: { roleStats: any[] }) {
   return (
     <div className="space-y-4">
-      <h3 className="font-semibold text-sm">Performance by Role</h3>
+      <h3 className="font-semibold text-sm text-gray-900">Performance by Role</h3>
       <div className="grid grid-cols-1 gap-3">
         {roleStats.map((r) => (
-          <Card key={r.role} className="p-4">
+          <Card key={r.role} className="p-4 bg-white border-gray-200">
             <div className="flex items-center justify-between">
               <div>
-                <h4 className="font-semibold text-sm">{r.role}</h4>
+                <h4 className="font-semibold text-sm text-gray-900">{r.role}</h4>
                 <p className="text-xs text-gray-500">{r.viewerCount} viewer{r.viewerCount !== 1 ? "s" : ""}</p>
               </div>
               <div className="flex items-center gap-6">
                 <div className="text-center">
-                  <div className="text-lg font-bold">{r.avgScore != null ? `${r.avgScore}%` : "N/A"}</div>
+                  <div className="text-lg font-bold text-gray-900">{r.avgScore != null ? `${r.avgScore}%` : "N/A"}</div>
                   <p className="text-[10px] text-gray-500">Avg Score</p>
                 </div>
                 <div className="text-center">
-                  <div className="text-lg font-bold">{r.avgCompletion != null ? r.avgCompletion : "N/A"}</div>
+                  <div className="text-lg font-bold text-gray-900">{r.avgCompletion != null ? r.avgCompletion : "N/A"}</div>
                   <p className="text-[10px] text-gray-500">Clips/Viewer</p>
                 </div>
                 <div className="text-center">
-                  <div className="text-lg font-bold">{r.avgFocus != null ? `${r.avgFocus}%` : "N/A"}</div>
+                  <div className="text-lg font-bold text-gray-900">{r.avgFocus != null ? `${r.avgFocus}%` : "N/A"}</div>
                   <p className="text-[10px] text-gray-500">Avg Focus</p>
                 </div>
               </div>
