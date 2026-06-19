@@ -204,6 +204,7 @@ export default function WatchPage() {
     const onPause = () => setIsVideoPlaying(false);
     const onTimeUpdate = () => {
       const currentTime: number = (el as any).currentTime ?? 0;
+      console.log('[DIAG] timeupdate fired:', currentTime, 'phase:', phaseRef.current, 'markers:', trailMarkersRef.current?.length);
       const roundedT = Math.floor(currentTime);
       setElapsedSeconds(roundedT);
       lastTimeRef.current = currentTime;
@@ -228,6 +229,7 @@ export default function WatchPage() {
 
     const attachListeners = () => {
       if (cleaned) return;
+      console.log('[DIAG] attaching listeners to:', el);
       el.addEventListener("play", onPlay);
       el.addEventListener("pause", onPause);
       el.addEventListener("time-update", onTimeUpdate);
@@ -245,9 +247,14 @@ export default function WatchPage() {
     // Wait for Wistia Web Component to be fully initialized
     // If the player API is already ready, currentTime is a number (not undefined)
     if (typeof (el as any).currentTime === "number") {
+      console.log('[DIAG] Wistia player already ready, attaching immediately');
       attachListeners();
     } else {
-      el.addEventListener("api-ready", attachListeners, { once: true });
+      console.log('[DIAG] Wistia player NOT ready yet, waiting for api-ready event');
+      el.addEventListener("api-ready", () => {
+        console.log('[DIAG] Wistia player ready (api-ready fired)');
+        attachListeners();
+      }, { once: true });
     }
 
     return () => {
