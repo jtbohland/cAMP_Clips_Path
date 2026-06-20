@@ -13,17 +13,6 @@ import TranscriptPanel from "@/components/TranscriptPanel";
 import { toast } from "sonner";
 import { getClipEmoji } from "@/lib/clip-emojis";
 
-// Wistia Web Component JSX type
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      "wistia-player": React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & {
-        "media-id"?: string;
-      };
-    }
-  }
-}
-
 type WatchPhase =
   | "loading_resume"
   | "resume_prompt"
@@ -65,10 +54,8 @@ export default function WatchPage() {
     [clipData]
   );
 
-  // Wistia player ref — attached to the <wistia-player> custom element
-  const wistiaPlayerRef = useRef<HTMLElement | null>(null);
-  // Wistia JS API video object — set by _wq.push onReady
-  const wistiaVideoRef = useRef<any>(null);
+  // Wistia iframe ref — used for postMessage-based video control
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const { run: startSession } = useApi("StartSession");
   const { run: submitAnswer } = useApi("SubmitAnswer");
@@ -166,63 +153,51 @@ export default function WatchPage() {
     };
   }, [phase, isVideoPlaying]);
 
-  // Fix 1+2: Register _wq handler BEFORE loading E-v1.js to avoid timing race.
-  // Uses secondchange (not timechange) for Trail Marker cue detection.
+  // Wistia iframe postMessage listener — handles all video events
   useEffect(() => {
     if (!wistiaVideoId) return;
 
-    // 1. Register the handler BEFORE loading the script
-    (window as any)._wq = (window as any)._wq || [];
-    (window as any)._wq.push({
-      id: wistiaVideoId,
-      onReady: (video: any) => {
-        wistiaVideoRef.current = video;
+    const handleMessage = (event: MessageEvent) => {
+      // Only process Wistia messages
+      if (!event.origin.includes("wistia")) return;
 
-        video.bind("play", () => setIsVideoPlaying(true));
-        video.bind("pause", () => setIsVideoPlaying(false));
-        video.bind("end", () => setIsVideoPlaying(false));
+      const data = event.data;
+      if (!data || typeof data !== "object") return;
+      if (data.type !== "wistia") return;
 
-        video.bind("secondchange", (t: number) => {
-          setElapsedSeconds(t);
-          lastTimeRef.current = t;
-          if (phaseRef.current === "watching" && trailMarkersRef.current.length > 0) {
-            const next = trailMarkersRef.current.find(
-              (q: any) => !answeredQuestionsRef.current.has(q.id) && t >= q.triggerAtSeconds
+      const { eventType, data: eventData } = data;
+
+      if (eventType === "secondchange") {
+        const t = Math.floor(eventData?.seconds ?? 0);
+        setElapsedSeconds(t);
+        lastTimeRef.current = t;
+
+        if (phaseRef.current === "watching" && trailMarkersRef.current.length > 0) {
+          const next = trailMarkersRef.current.find(
+            (q: any) =>
+              !answeredQuestionsRef.current.has(q.id) &&
+              t >= q.triggerAtSeconds
+          );
+          if (next) {
+            const idx = trailMarkersRef.current.indexOf(next);
+            setCurrentQuestionIdx(idx);
+            // Pause via postMessage
+            iframeRef.current?.contentWindow?.postMessage(
+              { type: "wistia", method: "pause" },
+              "https://fast.wistia.net"
             );
-            if (next) {
-              const idx = trailMarkersRef.current.indexOf(next);
-              setCurrentQuestionIdx(idx);
-              try { video.pause(); } catch {}
-              setPhase("trail_marker");
-            }
+            setPhase("trail_marker");
           }
-        });
-
-        if (resumeFromSecondsRef.current !== null && resumeFromSecondsRef.current > 0) {
-          try { video.time(resumeFromSecondsRef.current); } catch {}
-          resumeFromSecondsRef.current = null;
         }
-      },
-    });
+      }
 
-    // 2. Load E-v1.js AFTER _wq is populated
-    if (!document.querySelector('script[src*="fast.wistia.com/assets/external/E-v1.js"]')) {
-      const s = document.createElement("script");
-      s.src = "https://fast.wistia.com/assets/external/E-v1.js";
-      s.async = true;
-      document.head.appendChild(s);
-    } else {
-      // Script already loaded — nudge Wistia to re-process the queue
-      try { (window as any).Wistia?.detect(); } catch {}
-    }
-
-    return () => {
-      try { wistiaVideoRef.current?.unbind("secondchange"); } catch {}
-      try { wistiaVideoRef.current?.unbind("play"); } catch {}
-      try { wistiaVideoRef.current?.unbind("pause"); } catch {}
-      try { wistiaVideoRef.current?.unbind("end"); } catch {}
-      wistiaVideoRef.current = null;
+      if (eventType === "play") setIsVideoPlaying(true);
+      if (eventType === "pause") setIsVideoPlaying(false);
+      if (eventType === "end") setIsVideoPlaying(false);
     };
+
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
   }, [wistiaVideoId]);
 
   // Check for paused session on mount
@@ -280,8 +255,11 @@ export default function WatchPage() {
   // Pause and navigate back
   const handlePauseAndBack = useCallback(async () => {
     if (sessionId && phase === "watching") {
-      // Pause the Wistia video
-      try { (wistiaPlayerRef.current as any)?.pause(); } catch { /* ignore */ }
+      // Pause the Wistia video via postMessage
+      iframeRef.current?.contentWindow?.postMessage(
+        { type: "wistia", method: "pause" },
+        "https://fast.wistia.net"
+      );
       try {
         await pauseSession({
           sessionId,
@@ -358,7 +336,10 @@ export default function WatchPage() {
         isFocusedRef.current = false;
         if (phase === "watching") {
           // Pause the Wistia video when tab goes hidden
-          try { (wistiaPlayerRef.current as any)?.pause(); } catch { /* ignore */ }
+          iframeRef.current?.contentWindow?.postMessage(
+            { type: "wistia", method: "pause" },
+            "https://fast.wistia.net"
+          );
           setTabAway(true);
         }
       } else {
@@ -386,8 +367,11 @@ export default function WatchPage() {
   // B3-1: Dismiss tab-away overlay and resume video
   const handleDismissTabOverlay = useCallback(() => {
     setTabAway(false);
-    // Resume the Wistia video
-    try { (wistiaPlayerRef.current as any)?.play(); } catch { /* ignore */ }
+    // Resume the Wistia video via postMessage
+    iframeRef.current?.contentWindow?.postMessage(
+      { type: "wistia", method: "play" },
+      "https://fast.wistia.net"
+    );
   }, []);
 
   // Trail marker checking is now handled directly in onTimeUpdate (seek-safe).
@@ -438,14 +422,20 @@ export default function WatchPage() {
   // Trail marker dismissed — resume video from where it was paused
   const handleTrailMarkerContinue = useCallback(() => {
     setPhase("watching");
-    // Resume the Wistia video — it resumes from exact pause point
-    try { (wistiaPlayerRef.current as any)?.play(); } catch { /* ignore */ }
+    // Resume the Wistia video via postMessage
+    iframeRef.current?.contentWindow?.postMessage(
+      { type: "wistia", method: "play" },
+      "https://fast.wistia.net"
+    );
   }, []);
 
   // End video — called by auto-trigger or manual
   const handleFinishWatching = useCallback(() => {
-    // Pause the video
-    try { (wistiaPlayerRef.current as any)?.pause(); } catch { /* ignore */ }
+    // Pause the video via postMessage
+    iframeRef.current?.contentWindow?.postMessage(
+      { type: "wistia", method: "pause" },
+      "https://fast.wistia.net"
+    );
 
     const allTrailMarkerCount = trailMarkers.length;
     setTotalTrailMarkers(allTrailMarkerCount || totalTrailMarkers);
@@ -603,10 +593,14 @@ export default function WatchPage() {
 
   // Transcript seek handler — seek the Wistia player to the given position
   const handleTranscriptSeek = useCallback((seconds: number) => {
-    try {
-      if (wistiaPlayerRef.current) (wistiaPlayerRef.current as any).currentTime = seconds;
-      (wistiaPlayerRef.current as any)?.play();
-    } catch { /* ignore */ }
+    iframeRef.current?.contentWindow?.postMessage(
+      { type: "wistia", method: "time", value: seconds },
+      "https://fast.wistia.net"
+    );
+    iframeRef.current?.contentWindow?.postMessage(
+      { type: "wistia", method: "play" },
+      "https://fast.wistia.net"
+    );
   }, []);
 
   // Loading state
@@ -707,10 +701,13 @@ export default function WatchPage() {
         {/* Wistia video embed */}
         <div className="flex-1 min-w-0 flex items-center justify-center bg-black relative">
           {wistiaVideoId ? (
-            <wistia-player
-              ref={wistiaPlayerRef as any}
-              media-id={wistiaVideoId}
-              style={{ width: "100%", height: "100%" }}
+            <iframe
+              ref={iframeRef}
+              src={`https://fast.wistia.net/embed/iframe/${wistiaVideoId}?autoPlay=false&silentAutoPlay=false&videoFoam=true${resumeFromSecondsRef.current ? `&time=${resumeFromSecondsRef.current}` : ""}`}
+              allowFullScreen
+              allow="autoplay; fullscreen"
+              style={{ width: "100%", height: "100%", border: "none" }}
+              title={clip.title}
             />
           ) : (
             <div className="flex flex-col items-center gap-3 text-white/70">
@@ -774,11 +771,15 @@ export default function WatchPage() {
           incorrectQuestions={incorrectQuestions}
           onTimestampClick={(seconds) => {
             setPhase("watching");
-            // Seek the Wistia player to the clicked timestamp
-            try {
-              if (wistiaPlayerRef.current) (wistiaPlayerRef.current as any).currentTime = seconds;
-              (wistiaPlayerRef.current as any)?.play();
-            } catch { /* ignore */ }
+            // Seek the Wistia player to the clicked timestamp via postMessage
+            iframeRef.current?.contentWindow?.postMessage(
+              { type: "wistia", method: "time", value: seconds },
+              "https://fast.wistia.net"
+            );
+            iframeRef.current?.contentWindow?.postMessage(
+              { type: "wistia", method: "play" },
+              "https://fast.wistia.net"
+            );
           }}
         />
       )}
