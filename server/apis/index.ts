@@ -19,6 +19,7 @@ import GetWeatherStorm from './v2/get-weather-storm.js';
 import LookupViewer from './v2/lookup-viewer.js';
 import PauseSession from './v2/pause-session.js';
 import RegisterViewer from './v2/register-viewer.js';
+import ResetViewerSessions from './v2/reset-viewer-sessions.js';
 import SaveClip from './v2/save-clip.js';
 import SaveQuestions from './v2/save-questions.js';
 import SeedContentV2 from './v2/seed-content.js';
@@ -50,6 +51,7 @@ const apis = {
   LookupViewer,
   PauseSession,
   RegisterViewer,
+  ResetViewerSessions,
   SaveClip,
   SaveQuestions,
   SeedContentV2,

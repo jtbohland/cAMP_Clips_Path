@@ -152,7 +152,9 @@ export default api({
           NULLIF(COUNT(*), 0), 1
         )::text AS completion_rate,
         (SELECT COUNT(*)::int FROM cliptracker_v2_clips WHERE status = 'live') AS total_clips
-       FROM cliptracker_v2_sessions s`,
+       FROM cliptracker_v2_sessions s
+       JOIN cliptracker_v2_viewers v ON v.id = s.viewer_id
+       WHERE v.is_admin = false`,
       OverviewRow,
       undefined,
       { label: "Overview stats" }
@@ -169,6 +171,7 @@ export default api({
         MAX(s.ended_at)::text AS last_active
        FROM cliptracker_v2_viewers v
        LEFT JOIN cliptracker_v2_sessions s ON s.viewer_id = v.id
+       WHERE v.is_admin = false
        GROUP BY v.id, v.name, v.email, v.role, v.ascent_day_1
        ORDER BY v.name ASC
        LIMIT 500`,
@@ -224,6 +227,7 @@ export default api({
         (SELECT COUNT(*)::int FROM cliptracker_v2_weather_storm w WHERE w.clip_id = c.id) AS wts_has_card
        FROM cliptracker_v2_clips c
        LEFT JOIN cliptracker_v2_sessions s ON s.clip_id = c.id
+         AND s.viewer_id NOT IN (SELECT id FROM cliptracker_v2_viewers WHERE is_admin = true)
        WHERE c.status = 'live'
        GROUP BY c.id, c.title, c.sort_order
        ORDER BY c.sort_order ASC`,
@@ -243,6 +247,7 @@ export default api({
        FROM cliptracker_v2_questions q
        JOIN cliptracker_v2_clips c ON c.id = q.clip_id
        LEFT JOIN cliptracker_v2_responses r ON r.question_id = q.id
+         AND r.session_id NOT IN (SELECT id FROM cliptracker_v2_sessions WHERE viewer_id IN (SELECT id FROM cliptracker_v2_viewers WHERE is_admin = true))
        WHERE q.is_recovery = false
        GROUP BY c.id, c.title, c.sort_order, q.id, q.question_text
        ORDER BY c.sort_order ASC, q.sort_order ASC
@@ -257,7 +262,8 @@ export default api({
       `SELECT
         COALESCE(SUM(xp_amount), 0)::int AS total_xp_distributed,
         (SELECT COUNT(*)::int FROM cliptracker_v2_badges) AS total_badges_earned
-       FROM cliptracker_v2_xp_events`,
+       FROM cliptracker_v2_xp_events
+       WHERE viewer_id NOT IN (SELECT id FROM cliptracker_v2_viewers WHERE is_admin = true)`,
       XpSummaryRow,
       undefined,
       { label: "XP summary" }
@@ -266,6 +272,7 @@ export default api({
     const badgeCounts = await ctx.integrations.db.query(
       `SELECT badge_id, COUNT(*)::int AS total_earned
        FROM cliptracker_v2_badges
+       WHERE viewer_id NOT IN (SELECT id FROM cliptracker_v2_viewers WHERE is_admin = true)
        GROUP BY badge_id
        ORDER BY total_earned DESC
        LIMIT 50`,
@@ -284,6 +291,7 @@ export default api({
        FROM cliptracker_v2_viewers v
        LEFT JOIN cliptracker_v2_xp_events x ON x.viewer_id = v.id
        LEFT JOIN cliptracker_v2_sessions s ON s.viewer_id = v.id
+       WHERE v.is_admin = false
        GROUP BY v.id, v.name, v.role
        ORDER BY total_xp DESC
        LIMIT 50`,
