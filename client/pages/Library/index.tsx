@@ -57,6 +57,33 @@ export default function LibraryPage() {
 
   return (
     <div className="flex flex-col gap-4 p-6 max-w-4xl mx-auto w-full h-full overflow-auto">
+      {/* Page header — brand + nav buttons */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <span className="text-2xl">🏕️</span>
+          <div>
+            <h1 className="text-xl font-bold text-gray-900 leading-tight">cAMP Ascent: Sales</h1>
+            <p className="text-sm text-gray-500 mt-0.5">🎞️ Watch. Engage. Ascend.</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {[
+            { path: "/xp", label: "XP-lanation", emoji: "🔭" },
+            { path: "/analytics", label: "Analytics", emoji: "📊" },
+            { path: "/admin", label: "Admin", emoji: "⚙️" },
+          ].map((nav) => (
+            <button
+              key={nav.path}
+              onClick={() => navigate(nav.path)}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-colors shadow-sm"
+            >
+              <span>{nav.emoji}</span>
+              {nav.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* XP Progress Bar */}
       <XpProgressBar />
 
