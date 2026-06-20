@@ -45,28 +45,7 @@ function getWistiaVideoId(url: string): string | null {
   }
 }
 
-/** Load Wistia player scripts for a given media ID */
-function useWistiaScript(mediaId: string | null) {
-  useEffect(() => {
-    if (!mediaId) return;
-    // Player core
-    if (!document.querySelector('script[src*="fast.wistia.com/assets/external/E-v1.js"]')) {
-      const s = document.createElement('script');
-      s.src = 'https://fast.wistia.com/assets/external/E-v1.js';
-      s.async = true;
-      document.head.appendChild(s);
-    }
-    // Per-media module
-    const moduleId = `wistia-module-${mediaId}`;
-    if (!document.getElementById(moduleId)) {
-      const s2 = document.createElement('script');
-      s2.src = `https://fast.wistia.com/embed/medias/${mediaId}.jsonp`;
-      s2.async = true;
-      s2.id = moduleId;
-      document.head.appendChild(s2);
-    }
-  }, [mediaId]);
-}
+
 
 export default function WatchPage() {
   const { clipId } = useParams<{ clipId: string }>();
@@ -86,12 +65,10 @@ export default function WatchPage() {
     [clipData]
   );
 
-  // Load Wistia player scripts
-  useWistiaScript(wistiaVideoId);
-
   // Wistia player ref — attached to the <wistia-player> custom element
   const wistiaPlayerRef = useRef<HTMLElement | null>(null);
-  const wistiaReadyRef = useRef(false);
+  // Wistia JS API video object — set by _wq.push onReady
+  const wistiaVideoRef = useRef<any>(null);
 
   const { run: startSession } = useApi("StartSession");
   const { run: submitAnswer } = useApi("SubmitAnswer");
@@ -118,6 +95,7 @@ export default function WatchPage() {
 
 
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const [reportReady, setReportReady] = useState(false);
 
   // Elapsed tracking now tied to actual video time
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -188,72 +166,62 @@ export default function WatchPage() {
     };
   }, [phase, isVideoPlaying]);
 
-  // Bind Wistia Web Component events AFTER the player API is ready.
-  // Uses phaseRef (not phase) so phase transitions don't tear down listeners.
+  // Fix 1+2: Register _wq handler BEFORE loading E-v1.js to avoid timing race.
+  // Uses secondchange (not timechange) for Trail Marker cue detection.
   useEffect(() => {
     if (!wistiaVideoId) return;
 
-    const el = wistiaPlayerRef.current;
-    if (!el) return;
+    // 1. Register the handler BEFORE loading the script
+    (window as any)._wq = (window as any)._wq || [];
+    (window as any)._wq.push({
+      id: wistiaVideoId,
+      onReady: (video: any) => {
+        wistiaVideoRef.current = video;
 
-    let cleaned = false;
+        video.bind("play", () => setIsVideoPlaying(true));
+        video.bind("pause", () => setIsVideoPlaying(false));
+        video.bind("end", () => setIsVideoPlaying(false));
 
-    const onPlay = () => setIsVideoPlaying(true);
-    const onPause = () => setIsVideoPlaying(false);
-    const onTimeUpdate = () => {
-      const currentTime: number = (el as any).currentTime ?? 0;
-      const roundedT = Math.floor(currentTime);
-      setElapsedSeconds(roundedT);
-      lastTimeRef.current = currentTime;
+        video.bind("secondchange", (t: number) => {
+          setElapsedSeconds(t);
+          lastTimeRef.current = t;
+          if (phaseRef.current === "watching" && trailMarkersRef.current.length > 0) {
+            const next = trailMarkersRef.current.find(
+              (q: any) => !answeredQuestionsRef.current.has(q.id) && t >= q.triggerAtSeconds
+            );
+            if (next) {
+              const idx = trailMarkersRef.current.indexOf(next);
+              setCurrentQuestionIdx(idx);
+              try { video.pause(); } catch {}
+              setPhase("trail_marker");
+            }
+          }
+        });
 
-      // Seek-safe trail marker check: fires on every time-update,
-      // finds the first unanswered marker at or before currentTime
-      if (phaseRef.current === "watching" && trailMarkersRef.current.length > 0) {
-        const nextUnanswered = trailMarkersRef.current.find(
-          (q: any) => !answeredQuestionsRef.current.has(q.id) && currentTime >= q.triggerAtSeconds
-        );
-        if (nextUnanswered) {
-          const idx = trailMarkersRef.current.indexOf(nextUnanswered);
-          setCurrentQuestionIdx(idx);
-          try { (el as any).pause(); } catch { /* ignore */ }
-          setPhase("trail_marker");
+        if (resumeFromSecondsRef.current !== null && resumeFromSecondsRef.current > 0) {
+          try { video.time(resumeFromSecondsRef.current); } catch {}
+          resumeFromSecondsRef.current = null;
         }
-      }
-    };
-    const onEnded = () => {
-      setIsVideoPlaying(false);
-    };
+      },
+    });
 
-    const attachListeners = () => {
-      if (cleaned) return;
-      wistiaReadyRef.current = true;
-      el.addEventListener("play", onPlay);
-      el.addEventListener("pause", onPause);
-      el.addEventListener("time-update", onTimeUpdate);
-      el.addEventListener("ended", onEnded);
-
-      // If we have a resume position, seek now that player is ready
-      if (resumeFromSecondsRef.current !== null && resumeFromSecondsRef.current > 0) {
-        try { (el as any).currentTime = resumeFromSecondsRef.current; } catch { /* ignore */ }
-        resumeFromSecondsRef.current = null;
-      }
-    };
-
-    // Wait for Wistia Web Component to be fully initialized.
-    // If the player API is already ready, currentTime is a number (not undefined).
-    if (typeof (el as any).currentTime === "number") {
-      attachListeners();
+    // 2. Load E-v1.js AFTER _wq is populated
+    if (!document.querySelector('script[src*="fast.wistia.com/assets/external/E-v1.js"]')) {
+      const s = document.createElement("script");
+      s.src = "https://fast.wistia.com/assets/external/E-v1.js";
+      s.async = true;
+      document.head.appendChild(s);
     } else {
-      el.addEventListener("api-ready", () => attachListeners(), { once: true });
+      // Script already loaded — nudge Wistia to re-process the queue
+      try { (window as any).Wistia?.detect(); } catch {}
     }
 
     return () => {
-      cleaned = true;
-      wistiaReadyRef.current = false;
-      el.removeEventListener("play", onPlay);
-      el.removeEventListener("pause", onPause);
-      el.removeEventListener("time-update", onTimeUpdate);
-      el.removeEventListener("ended", onEnded);
+      try { wistiaVideoRef.current?.unbind("secondchange"); } catch {}
+      try { wistiaVideoRef.current?.unbind("play"); } catch {}
+      try { wistiaVideoRef.current?.unbind("pause"); } catch {}
+      try { wistiaVideoRef.current?.unbind("end"); } catch {}
+      wistiaVideoRef.current = null;
     };
   }, [wistiaVideoId]);
 
@@ -433,7 +401,7 @@ export default function WatchPage() {
       const allAnswered = trailMarkers.every((q: any) => answeredQuestions.has(q.id));
       if (allAnswered || trailMarkers.length === 0) {
         autoEndedRef.current = true;
-        handleFinishWatching();
+        handleFinishWatchingRef.current();
       }
     }
   }, [elapsedSeconds, phase, clipData, trailMarkers, answeredQuestions]);
@@ -499,6 +467,7 @@ export default function WatchPage() {
             setEngagementScore(res.engagementScore);
             setScore(res.engagementScore);
           }
+          setReportReady(true);
         })
         .catch(console.error);
     }
@@ -539,6 +508,10 @@ export default function WatchPage() {
     trailMarkers, totalTrailMarkers, correctCount, sessionId, endSession,
     elapsedSeconds, focusSeconds, blurSeconds, viewer, clipId, clipData, awardXP,
   ]);
+
+  // Stable ref for handleFinishWatching — used by auto-end effect
+  const handleFinishWatchingRef = useRef(handleFinishWatching);
+  useEffect(() => { handleFinishWatchingRef.current = handleFinishWatching; }, [handleFinishWatching]);
 
   // Search & Rescue complete
   const handleSearchRescueComplete = useCallback(
@@ -789,7 +762,7 @@ export default function WatchPage() {
       )}
 
       {/* Ranger Report */}
-      {phase === "ranger_report" && (
+      {phase === "ranger_report" && reportReady && (
         <RangerReport
           clipTitle={`${getClipEmoji(clip.sortOrder)} ${clip.title}`}
           totalQuestions={trailMarkers.length || 1}
@@ -819,14 +792,25 @@ export default function WatchPage() {
       )}
 
       {/* Weather the Storm */}
-      {phase === "weather_storm" && clipData.weatherStorm && (
-        <WeatherStorm
-          overview={clipData.weatherStorm.overview}
-          takeaways={clipData.weatherStorm.takeaways}
-          timerMinutes={clipData.weatherStorm.timerMinutes}
-          clipTitle={`${getClipEmoji(clip.sortOrder)} ${clip.title}`}
-          onTimerExpire={handleWeatherExpire}
-        />
+      {phase === "weather_storm" && (
+        clipData.weatherStorm ? (
+          <WeatherStorm
+            overview={clipData.weatherStorm.overview}
+            takeaways={clipData.weatherStorm.takeaways}
+            timerMinutes={clipData.weatherStorm.timerMinutes}
+            clipTitle={`${getClipEmoji(clip.sortOrder)} ${clip.title}`}
+            onTimerExpire={handleWeatherExpire}
+          />
+        ) : (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+            <div className="bg-white rounded-2xl p-6 text-center max-w-sm">
+              <p className="font-semibold mb-3">Loading reflection content…</p>
+              <button onClick={handleWeatherExpire} className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm">
+                Continue anyway →
+              </button>
+            </div>
+          </div>
+        )
       )}
     </div>
   );
