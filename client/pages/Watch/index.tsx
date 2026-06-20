@@ -178,8 +178,8 @@ export default function WatchPage() {
       }
     };
 
-    (window.top || window).addEventListener("message", handleMessage);
-    return () => (window.top || window).removeEventListener("message", handleMessage);
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
   }, [wistiaVideoId]); // ← Only depends on wistiaVideoId, uses refs for live state
   // ────────────────────────────────────────────────────────────────────────────
 
@@ -651,7 +651,7 @@ export default function WatchPage() {
             <div style={{ position: "relative", width: "100%", maxHeight: "100%", aspectRatio: "16 / 9" }}>
               <iframe
                 ref={iframeRef}
-                src={`https://fast.wistia.net/embed/iframe/${wistiaVideoId}?autoPlay=false&silentAutoPlay=false&playerColor=ff5733${resumeFromSecondsRef.current ? `&time=${resumeFromSecondsRef.current}` : ""}`}
+                src={`https://fast.wistia.net/embed/iframe/${wistiaVideoId}?autoPlay=false&silentAutoPlay=false&playerColor=ff5733&postMessageOrigin=${encodeURIComponent(window.location.origin)}${resumeFromSecondsRef.current ? `&time=${resumeFromSecondsRef.current}` : ""}`}
                 allowFullScreen
                 allow="autoplay; fullscreen"
                 style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: "none" }}
