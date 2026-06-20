@@ -88,21 +88,33 @@ export default function RangerReport({
               </div>
             </div>
 
-            {/* Timestamp links */}
+            {/* Timestamp list — clickable only on review (pass), plain text on initial fail */}
             {incorrectQuestions.length > 0 && (
               <div className="mt-3 pl-12 space-y-1.5">
-                {incorrectQuestions.map((q) => (
-                  <button
-                    key={q.id}
-                    onClick={() => onTimestampClick?.(q.triggerAtSeconds)}
-                    className="flex items-center gap-2 text-sm text-indigo-600 hover:underline cursor-pointer w-full text-left"
-                  >
-                    <span className="font-mono bg-indigo-50 px-1.5 py-0.5 rounded text-xs">
-                      {formatTimestamp(q.triggerAtSeconds)}
-                    </span>
-                    <span className="text-gray-600 truncate">{q.questionText}</span>
-                  </button>
-                ))}
+                {incorrectQuestions.map((q) =>
+                  !needsRecovery && onTimestampClick ? (
+                    <button
+                      key={q.id}
+                      onClick={() => onTimestampClick(q.triggerAtSeconds)}
+                      className="flex items-center gap-2 text-sm text-indigo-600 hover:underline cursor-pointer w-full text-left"
+                    >
+                      <span className="font-mono bg-indigo-50 px-1.5 py-0.5 rounded text-xs">
+                        {formatTimestamp(q.triggerAtSeconds)}
+                      </span>
+                      <span className="text-gray-600 truncate">{q.questionText}</span>
+                    </button>
+                  ) : (
+                    <div
+                      key={q.id}
+                      className="flex items-center gap-2 text-sm w-full text-left"
+                    >
+                      <span className="font-mono bg-red-50 text-red-600 px-1.5 py-0.5 rounded text-xs">
+                        {formatTimestamp(q.triggerAtSeconds)}
+                      </span>
+                      <span className="text-gray-600 truncate">{q.questionText}</span>
+                    </div>
+                  )
+                )}
               </div>
             )}
           </div>
