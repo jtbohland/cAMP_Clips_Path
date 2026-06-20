@@ -41,6 +41,7 @@
     "@superblocksteam/library": "2.0.133",
     "@superblocksteam/sdk-api": "2.0.133",
     "@tailwindcss/vite": "^4.1.17",
+    "@wistia/wistia-player-react": "^0.7.8",
     "ai": "6.0.97",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
