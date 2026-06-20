@@ -158,20 +158,19 @@ export default function WatchPage() {
     if (!wistiaVideoId) return;
 
     const handleMessage = (event: MessageEvent) => {
-      // Only process Wistia messages
-      if (!event.origin.includes("wistia")) return;
-
       const data = event.data;
       if (!data || typeof data !== "object") return;
-      if (data.type !== "wistia") return;
 
-      const { eventType, data: eventData } = data;
+      // Wistia's actual postMessage format: {method: "_trigger", args: [eventName, value]}
+      if (data.method !== "_trigger") return;
+
+      const eventType = data.args?.[0];
+      const eventValue = data.args?.[1];
 
       if (eventType === "secondchange") {
-        const t = Math.floor(eventData?.seconds ?? 0);
+        const t = typeof eventValue === "number" ? Math.floor(eventValue) : 0;
         setElapsedSeconds(t);
         lastTimeRef.current = t;
-
         if (phaseRef.current === "watching" && trailMarkersRef.current.length > 0) {
           const next = trailMarkersRef.current.find(
             (q: any) =>
@@ -181,10 +180,9 @@ export default function WatchPage() {
           if (next) {
             const idx = trailMarkersRef.current.indexOf(next);
             setCurrentQuestionIdx(idx);
-            // Pause via postMessage
             iframeRef.current?.contentWindow?.postMessage(
-              { type: "wistia", method: "pause" },
-              "https://fast.wistia.net"
+              JSON.stringify({ method: "pause" }),
+              "*"
             );
             setPhase("trail_marker");
           }
@@ -257,8 +255,8 @@ export default function WatchPage() {
     if (sessionId && phase === "watching") {
       // Pause the Wistia video via postMessage
       iframeRef.current?.contentWindow?.postMessage(
-        { type: "wistia", method: "pause" },
-        "https://fast.wistia.net"
+        JSON.stringify({ method: "pause" }),
+        "*"
       );
       try {
         await pauseSession({
@@ -337,8 +335,8 @@ export default function WatchPage() {
         if (phase === "watching") {
           // Pause the Wistia video when tab goes hidden
           iframeRef.current?.contentWindow?.postMessage(
-            { type: "wistia", method: "pause" },
-            "https://fast.wistia.net"
+            JSON.stringify({ method: "pause" }),
+            "*"
           );
           setTabAway(true);
         }
@@ -369,8 +367,8 @@ export default function WatchPage() {
     setTabAway(false);
     // Resume the Wistia video via postMessage
     iframeRef.current?.contentWindow?.postMessage(
-      { type: "wistia", method: "play" },
-      "https://fast.wistia.net"
+      JSON.stringify({ method: "play" }),
+      "*"
     );
   }, []);
 
@@ -424,8 +422,8 @@ export default function WatchPage() {
     setPhase("watching");
     // Resume the Wistia video via postMessage
     iframeRef.current?.contentWindow?.postMessage(
-      { type: "wistia", method: "play" },
-      "https://fast.wistia.net"
+      JSON.stringify({ method: "play" }),
+      "*"
     );
   }, []);
 
@@ -433,8 +431,8 @@ export default function WatchPage() {
   const handleFinishWatching = useCallback(() => {
     // Pause the video via postMessage
     iframeRef.current?.contentWindow?.postMessage(
-      { type: "wistia", method: "pause" },
-      "https://fast.wistia.net"
+      JSON.stringify({ method: "pause" }),
+      "*"
     );
 
     const allTrailMarkerCount = trailMarkers.length;
@@ -594,12 +592,12 @@ export default function WatchPage() {
   // Transcript seek handler — seek the Wistia player to the given position
   const handleTranscriptSeek = useCallback((seconds: number) => {
     iframeRef.current?.contentWindow?.postMessage(
-      { type: "wistia", method: "time", value: seconds },
-      "https://fast.wistia.net"
+      JSON.stringify({ method: "time", value: seconds }),
+      "*"
     );
     iframeRef.current?.contentWindow?.postMessage(
-      { type: "wistia", method: "play" },
-      "https://fast.wistia.net"
+      JSON.stringify({ method: "play" }),
+      "*"
     );
   }, []);
 
@@ -773,12 +771,12 @@ export default function WatchPage() {
             setPhase("watching");
             // Seek the Wistia player to the clicked timestamp via postMessage
             iframeRef.current?.contentWindow?.postMessage(
-              { type: "wistia", method: "time", value: seconds },
-              "https://fast.wistia.net"
+              JSON.stringify({ method: "time", value: seconds }),
+              "*"
             );
             iframeRef.current?.contentWindow?.postMessage(
-              { type: "wistia", method: "play" },
-              "https://fast.wistia.net"
+              JSON.stringify({ method: "play" }),
+              "*"
             );
           }}
         />
