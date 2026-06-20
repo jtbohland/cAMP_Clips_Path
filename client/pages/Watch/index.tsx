@@ -699,14 +699,16 @@ export default function WatchPage() {
         {/* Wistia video embed */}
         <div className="flex-1 min-w-0 flex items-center justify-center bg-black relative">
           {wistiaVideoId ? (
-            <iframe
-              ref={iframeRef}
-              src={`https://fast.wistia.net/embed/iframe/${wistiaVideoId}?autoPlay=false&silentAutoPlay=false&videoFoam=true${resumeFromSecondsRef.current ? `&time=${resumeFromSecondsRef.current}` : ""}`}
-              allowFullScreen
-              allow="autoplay; fullscreen"
-              style={{ width: "100%", height: "100%", border: "none" }}
-              title={clip.title}
-            />
+            <div style={{ position: "relative", width: "100%", maxHeight: "100%", aspectRatio: "16 / 9" }}>
+              <iframe
+                ref={iframeRef}
+                src={`https://fast.wistia.net/embed/iframe/${wistiaVideoId}?autoPlay=false&silentAutoPlay=false&playerColor=ff5733${resumeFromSecondsRef.current ? `&time=${resumeFromSecondsRef.current}` : ""}`}
+                allowFullScreen
+                allow="autoplay; fullscreen"
+                style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: "none" }}
+                title={clip.title}
+              />
+            </div>
           ) : (
             <div className="flex flex-col items-center gap-3 text-white/70">
               <span className="text-3xl">📹</span>
