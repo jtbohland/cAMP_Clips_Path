@@ -23,7 +23,6 @@ type WatchPhase =
   | "weather_storm"
   | "complete";
 
-/** Extract Wistia video ID from URL like https://amplitude.wistia.com/medias/abc123 */
 function getWistiaVideoId(url: string): string | null {
   try {
     const u = new URL(url);
@@ -34,27 +33,22 @@ function getWistiaVideoId(url: string): string | null {
   }
 }
 
-
-
 export default function WatchPage() {
   const { clipId } = useParams<{ clipId: string }>();
   const navigate = useNavigate();
   const { viewer } = useViewer();
 
-  // API data
   const { data: clipData, loading: clipLoading } = useApiData(
     "GetClipForWatching",
     { clipId: clipId ?? "", viewerId: viewer?.id ?? "" },
     { enabled: !!clipId && !!viewer?.id }
   );
 
-  // Wistia video ID from clip URL
   const wistiaVideoId = useMemo(
     () => (clipData?.clip?.videoUrl ? getWistiaVideoId(clipData.clip.videoUrl) : null),
     [clipData]
   );
 
-  // Wistia iframe ref — used for postMessage-based video control
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const { run: startSession } = useApi("StartSession");
@@ -64,7 +58,6 @@ export default function WatchPage() {
   const { run: completeClipPath } = useApi("CompleteClipPath");
   const { run: pauseSession } = useApi("PauseSession");
 
-  // State
   const [phase, setPhase] = useState<WatchPhase>("loading_resume");
   const [pausedSessionData, setPausedSessionData] = useState<any>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -79,39 +72,24 @@ export default function WatchPage() {
   const [incorrectQuestions, setIncorrectQuestions] = useState<
     Array<{ id: string; triggerAtSeconds: number; questionText: string }>
   >([]);
-
-
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [reportReady, setReportReady] = useState(false);
-
-  // Elapsed tracking now tied to actual video time
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [focusSeconds, setFocusSeconds] = useState(0);
   const [blurSeconds, setBlurSeconds] = useState(0);
   const isFocusedRef = useRef(true);
   const lastTimeRef = useRef(0);
-
-  // Focus time tracking interval — only counts when video is playing AND tab visible
   const focusTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  // B3-1: Tab-away pause state
   const [tabAway, setTabAway] = useState(false);
-
-  // B3-4: Transcript panel
   const [showTranscript, setShowTranscript] = useState(false);
-
-  // B3-2: Track if we already auto-triggered end
   const autoEndedRef = useRef(false);
-
-  // Track resume-from position for paused sessions
   const resumeFromSecondsRef = useRef<number | null>(null);
 
-  // Refs for stale-closure-safe access inside event handlers
+  // Use refs for stale-closure-safe access — these are updated on every render cycle
   const phaseRef = useRef<WatchPhase>("loading_resume");
   const trailMarkersRef = useRef<any[]>([]);
   const answeredQuestionsRef = useRef<Set<string>>(new Set());
 
-  // Separate trail marker questions from recovery questions
   const trailMarkers = useMemo(
     () =>
       (clipData?.questions ?? [])
@@ -119,11 +97,6 @@ export default function WatchPage() {
         .sort((a: any, b: any) => a.triggerAtSeconds - b.triggerAtSeconds),
     [clipData]
   );
-
-  // Keep refs in sync with state
-  useEffect(() => { phaseRef.current = phase; }, [phase]);
-  useEffect(() => { trailMarkersRef.current = trailMarkers; }, [trailMarkers]);
-  useEffect(() => { answeredQuestionsRef.current = answeredQuestions; }, [answeredQuestions]);
 
   const recoveryQuestions = useMemo(
     () =>
@@ -133,7 +106,12 @@ export default function WatchPage() {
     [clipData]
   );
 
-  // Focus/blur time tracking — only increments when video is playing
+  // Keep refs in sync with latest state on every render
+  useEffect(() => { phaseRef.current = phase; }, [phase]);
+  useEffect(() => { trailMarkersRef.current = trailMarkers; }, [trailMarkers]);
+  useEffect(() => { answeredQuestionsRef.current = answeredQuestions; }, [answeredQuestions]);
+
+  // Focus/blur time tracking
   useEffect(() => {
     if (phase !== "watching") {
       if (focusTimerRef.current) clearInterval(focusTimerRef.current);
@@ -153,84 +131,85 @@ export default function WatchPage() {
     };
   }, [phase, isVideoPlaying]);
 
-  // Wistia iframe postMessage listener — handles all video events
+  // ─── CORE FIX: Always-on postMessage listener ───────────────────────────────
+  // Register once when wistiaVideoId is available. Use phaseRef (not phase state)
+  // inside the handler so we always read the CURRENT phase without re-registering.
+  // This avoids the race condition where the listener registers before phase="watching".
   useEffect(() => {
-    if (!wistiaVideoId || phase !== "watching") return;
+    if (!wistiaVideoId) return;
+
     const handleMessage = (event: MessageEvent) => {
       const data = event.data;
       if (!data || typeof data !== "object") return;
-
-      // Wistia's actual postMessage format: {method: "_trigger", args: [eventName, value]}
       if (data.method !== "_trigger") return;
 
       const eventType = data.args?.[0];
       const eventValue = data.args?.[1];
 
+      if (eventType === "play") { setIsVideoPlaying(true); return; }
+      if (eventType === "pause") { setIsVideoPlaying(false); return; }
+      if (eventType === "end") { setIsVideoPlaying(false); return; }
+
       if (eventType === "secondchange") {
         const t = typeof eventValue === "number" ? Math.floor(eventValue) : 0;
-        console.log("[TM]", { t, phase, tmCount: trailMarkersRef.current.length, markers: trailMarkersRef.current.map((q: any) => q.triggerAtSeconds) });
         setElapsedSeconds(t);
         lastTimeRef.current = t;
-        if (trailMarkersRef.current.length > 0) {
-          const next = trailMarkersRef.current.find(
-            (q: any) =>
-              !answeredQuestionsRef.current.has(q.id) &&
-              t >= q.triggerAtSeconds
+
+        // Only check trail markers when in watching phase — use ref for current value
+        if (phaseRef.current !== "watching") return;
+        if (trailMarkersRef.current.length === 0) return;
+
+        const next = trailMarkersRef.current.find(
+          (q: any) =>
+            !answeredQuestionsRef.current.has(q.id) &&
+            t >= q.triggerAtSeconds
+        );
+
+        if (next) {
+          const idx = trailMarkersRef.current.indexOf(next);
+          setCurrentQuestionIdx(idx);
+          // Pause video
+          iframeRef.current?.contentWindow?.postMessage(
+            JSON.stringify({ method: "pause" }),
+            "*"
           );
-          if (next) {
-            const idx = trailMarkersRef.current.indexOf(next);
-            setCurrentQuestionIdx(idx);
-            iframeRef.current?.contentWindow?.postMessage(
-              JSON.stringify({ method: "pause" }),
-              "*"
-            );
-            setPhase("trail_marker");
-          }
+          setPhase("trail_marker");
         }
       }
-
-      if (eventType === "play") setIsVideoPlaying(true);
-      if (eventType === "pause") setIsVideoPlaying(false);
-      if (eventType === "end") setIsVideoPlaying(false);
     };
 
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
-  }, [wistiaVideoId, phase]);
+  }, [wistiaVideoId]); // ← Only depends on wistiaVideoId, uses refs for live state
+  // ────────────────────────────────────────────────────────────────────────────
 
-  // Check for paused session on mount
+  // Session init on mount
   useEffect(() => {
     if (!clipId || !viewer?.id) return;
-    console.log("[SESSION] Starting session check", { clipId, viewerId: viewer.id });
     executeApi("GetPausedSession", { clipId, viewerId: viewer.id })
       .then((result: any) => {
-        console.log("[SESSION] GetPausedSession result", result);
         if (result?.hasPausedSession && result.session) {
           setPausedSessionData(result.session);
           setPhase("resume_prompt");
         } else {
           startSession({ clipId, viewerId: viewer.id })
             .then((res: any) => {
-              console.log("[SESSION] StartSession result", res);
               setSessionId(res?.sessionId ?? null);
               setPhase("watching");
             })
-            .catch((e) => console.error("[SESSION] StartSession failed", e));
+            .catch(console.error);
         }
       })
-      .catch((e) => {
-        console.error("[SESSION] GetPausedSession failed", e);
+      .catch(() => {
         startSession({ clipId, viewerId: viewer.id })
           .then((res: any) => {
-            console.log("[SESSION] Fallback StartSession result", res);
             setSessionId(res?.sessionId ?? null);
             setPhase("watching");
           })
-          .catch((e2) => console.error("[SESSION] Fallback StartSession failed", e2));
+          .catch(console.error);
       });
   }, [clipId, viewer?.id, startSession]);
 
-  // Resume handler — restore session state + seek video to saved position
   const handleResume = useCallback(() => {
     if (!pausedSessionData) return;
     setSessionId(pausedSessionData.id);
@@ -239,12 +218,10 @@ export default function WatchPage() {
     setBlurSeconds(pausedSessionData.blurSeconds);
     setAnsweredQuestions(new Set(pausedSessionData.answeredQuestionIds));
     setCorrectCount(pausedSessionData.correctCount);
-    // Store resume position so the Wistia player seeks on bind
     resumeFromSecondsRef.current = pausedSessionData.elapsedSeconds;
     setPhase("watching");
   }, [pausedSessionData]);
 
-  // Start fresh handler
   const handleStartFresh = useCallback(() => {
     if (!clipId || !viewer?.id) return;
     startSession({ clipId, viewerId: viewer.id })
@@ -255,10 +232,8 @@ export default function WatchPage() {
       .catch(console.error);
   }, [clipId, viewer?.id, startSession]);
 
-  // Pause and navigate back
   const handlePauseAndBack = useCallback(async () => {
     if (sessionId && phase === "watching") {
-      // Pause the Wistia video via postMessage
       iframeRef.current?.contentWindow?.postMessage(
         JSON.stringify({ method: "pause" }),
         "*"
@@ -297,31 +272,23 @@ export default function WatchPage() {
     return () => clearInterval(autosaveInterval);
   }, [phase, sessionId, elapsedSeconds, focusSeconds, blurSeconds, answeredQuestions, correctCount]);
 
-  // visibilitychange + beforeunload best-effort save
+  // Save on hide/unload
   useEffect(() => {
     if (phase !== "watching" || !sessionId) return;
     const saveOnHide = () => {
       if (document.visibilityState === "hidden") {
         executeApi("PauseSession", {
-          sessionId,
-          elapsedSeconds,
-          focusSeconds,
-          blurSeconds,
+          sessionId, elapsedSeconds, focusSeconds, blurSeconds,
           answeredQuestionIds: Array.from(answeredQuestions),
-          correctCount,
-          phase: "watching",
+          correctCount, phase: "watching",
         }).catch(() => {});
       }
     };
     const saveOnUnload = () => {
       executeApi("PauseSession", {
-        sessionId,
-        elapsedSeconds,
-        focusSeconds,
-        blurSeconds,
+        sessionId, elapsedSeconds, focusSeconds, blurSeconds,
         answeredQuestionIds: Array.from(answeredQuestions),
-        correctCount,
-        phase: "watching",
+        correctCount, phase: "watching",
       }).catch(() => {});
     };
     document.addEventListener("visibilitychange", saveOnHide);
@@ -332,13 +299,12 @@ export default function WatchPage() {
     };
   }, [phase, sessionId, elapsedSeconds, focusSeconds, blurSeconds, answeredQuestions, correctCount]);
 
-  // B3-1: Tab visibility — pause Wistia video + show overlay when tab hidden
+  // Tab visibility — pause video when tab hidden
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === "hidden") {
         isFocusedRef.current = false;
-        if (phase === "watching") {
-          // Pause the Wistia video when tab goes hidden
+        if (phaseRef.current === "watching") {
           iframeRef.current?.contentWindow?.postMessage(
             JSON.stringify({ method: "pause" }),
             "*"
@@ -347,15 +313,10 @@ export default function WatchPage() {
         }
       } else {
         isFocusedRef.current = true;
-        // Do NOT auto-resume — leave paused for manual restart
       }
     };
-    const handleFocus = () => {
-      isFocusedRef.current = true;
-    };
-    const handleBlur = () => {
-      isFocusedRef.current = false;
-    };
+    const handleFocus = () => { isFocusedRef.current = true; };
+    const handleBlur = () => { isFocusedRef.current = false; };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
     window.addEventListener("focus", handleFocus);
@@ -365,21 +326,17 @@ export default function WatchPage() {
       window.removeEventListener("focus", handleFocus);
       window.removeEventListener("blur", handleBlur);
     };
-  }, [phase]);
+  }, []); // No phase dependency needed — uses phaseRef
 
-  // B3-1: Dismiss tab-away overlay and resume video
   const handleDismissTabOverlay = useCallback(() => {
     setTabAway(false);
-    // Resume the Wistia video via postMessage
     iframeRef.current?.contentWindow?.postMessage(
       JSON.stringify({ method: "play" }),
       "*"
     );
   }, []);
 
-  // Trail marker checking is now handled directly in onTimeUpdate (seek-safe).
-
-  // B3-2: Auto-trigger Ranger Report when video reaches duration
+  // Auto-trigger Ranger Report at end of video
   useEffect(() => {
     if (phase !== "watching" || autoEndedRef.current) return;
     const clipDuration = clipData?.clip?.durationSeconds;
@@ -393,7 +350,6 @@ export default function WatchPage() {
     }
   }, [elapsedSeconds, phase, clipData, trailMarkers, answeredQuestions]);
 
-  // Handle trail marker answer
   const handleTrailMarkerAnswer = useCallback(
     (selectedOption: number) => {
       const question = trailMarkers[currentQuestionIdx];
@@ -422,19 +378,15 @@ export default function WatchPage() {
     [trailMarkers, currentQuestionIdx, sessionId, submitAnswer]
   );
 
-  // Trail marker dismissed — resume video from where it was paused
   const handleTrailMarkerContinue = useCallback(() => {
     setPhase("watching");
-    // Resume the Wistia video via postMessage
     iframeRef.current?.contentWindow?.postMessage(
       JSON.stringify({ method: "play" }),
       "*"
     );
   }, []);
 
-  // End video — called by auto-trigger or manual
   const handleFinishWatching = useCallback(() => {
-    // Pause the video via postMessage
     iframeRef.current?.contentWindow?.postMessage(
       JSON.stringify({ method: "pause" }),
       "*"
@@ -502,11 +454,9 @@ export default function WatchPage() {
     elapsedSeconds, focusSeconds, blurSeconds, viewer, clipId, clipData, awardXP,
   ]);
 
-  // Stable ref for handleFinishWatching — used by auto-end effect
   const handleFinishWatchingRef = useRef(handleFinishWatching);
   useEffect(() => { handleFinishWatchingRef.current = handleFinishWatching; }, [handleFinishWatching]);
 
-  // Search & Rescue complete
   const handleSearchRescueComplete = useCallback(
     (passed: boolean, rescueScore: number) => {
       setSearchRescueTriggered(true);
@@ -559,7 +509,6 @@ export default function WatchPage() {
     [navigate, viewer, clipId, sessionId, clipData, elapsedSeconds, recoveryQuestions, correctCount, trailMarkers, awardXP, completeClipPath]
   );
 
-  // Weather the Storm timer expired
   const handleWeatherExpire = useCallback(() => {
     if (viewer?.id && clipId && sessionId) {
       completeClipPath({
@@ -594,7 +543,6 @@ export default function WatchPage() {
     navigate("/library");
   }, [navigate, viewer, clipId, sessionId, clipData, elapsedSeconds, correctCount, trailMarkers, searchRescueScore, recoveryQuestions, awardXP, completeClipPath]);
 
-  // Transcript seek handler — seek the Wistia player to the given position
   const handleTranscriptSeek = useCallback((seconds: number) => {
     iframeRef.current?.contentWindow?.postMessage(
       JSON.stringify({ method: "time", value: seconds }),
@@ -606,7 +554,8 @@ export default function WatchPage() {
     );
   }, []);
 
-  // Loading state
+  // ── Render ──────────────────────────────────────────────────────────────────
+
   if (clipLoading || !clipData) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -623,7 +572,6 @@ export default function WatchPage() {
     ? `${Math.floor(clip.durationSeconds / 3600) > 0 ? Math.floor(clip.durationSeconds / 3600) + "h " : ""}${Math.floor((clip.durationSeconds % 3600) / 60)}m`
     : "";
 
-  // Resume prompt
   if (phase === "loading_resume") {
     return (
       <div className="flex items-center justify-center h-full">
@@ -651,9 +599,8 @@ export default function WatchPage() {
 
   return (
     <div className="flex flex-col h-[calc(100dvh-57px)] overflow-hidden">
-      {/* B3-3: Two-row header */}
+      {/* Header */}
       <div className="bg-white border-b border-gray-200">
-        {/* Row 1: Back + Transcript toggle + Timer */}
         <div className="flex items-center justify-between px-4 py-2">
           <button
             onClick={handlePauseAndBack}
@@ -684,8 +631,6 @@ export default function WatchPage() {
             </span>
           </div>
         </div>
-
-        {/* Row 2: Clip info + metadata */}
         <div className="px-4 pb-2">
           <h2 className="text-sm font-bold text-gray-900">
             {getClipEmoji(clip.sortOrder)} {clip.title}
@@ -699,9 +644,8 @@ export default function WatchPage() {
         </div>
       </div>
 
-      {/* Video + optional transcript panel */}
+      {/* Video + transcript */}
       <div className="flex-1 min-h-0 flex">
-        {/* Wistia video embed */}
         <div className="flex-1 min-w-0 flex items-center justify-center bg-black relative">
           {wistiaVideoId ? (
             <div style={{ position: "relative", width: "100%", maxHeight: "100%", aspectRatio: "16 / 9" }}>
@@ -724,7 +668,7 @@ export default function WatchPage() {
             </div>
           )}
 
-          {/* B3-1: Tab-away overlay */}
+          {/* Tab-away overlay */}
           {tabAway && phase === "watching" && (
             <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-10">
               <div className="text-center">
@@ -742,7 +686,6 @@ export default function WatchPage() {
           )}
         </div>
 
-        {/* B3-4: Transcript panel */}
         {showTranscript && (
           <div className="w-[300px] flex-shrink-0">
             <TranscriptPanel
@@ -776,7 +719,6 @@ export default function WatchPage() {
           incorrectQuestions={incorrectQuestions}
           onTimestampClick={(seconds) => {
             setPhase("watching");
-            // Seek the Wistia player to the clicked timestamp via postMessage
             iframeRef.current?.contentWindow?.postMessage(
               JSON.stringify({ method: "time", value: seconds }),
               "*"
