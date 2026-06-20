@@ -10,6 +10,7 @@ import SearchRescue from "@/components/SearchRescue";
 import WeatherStorm from "@/components/WeatherStorm";
 import ResumePrompt from "@/components/ResumePrompt";
 import TranscriptPanel from "@/components/TranscriptPanel";
+import { WistiaPlayer } from "@wistia/wistia-player-react";
 import { toast } from "sonner";
 import { getClipEmoji } from "@/lib/clip-emojis";
 
@@ -49,7 +50,7 @@ export default function WatchPage() {
     [clipData]
   );
 
-  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const playerRef = useRef<any>(null);
 
   const { run: startSession } = useApi("StartSession");
   const { run: submitAnswer } = useApi("SubmitAnswer");
@@ -131,55 +132,52 @@ export default function WatchPage() {
     };
   }, [phase, isVideoPlaying]);
 
-  // ─── CORE FIX: Always-on postMessage listener ───────────────────────────────
-  // Register once when wistiaVideoId is available. Use phaseRef (not phase state)
-  // inside the handler so we always read the CURRENT phase without re-registering.
-  // This avoids the race condition where the listener registers before phase="watching".
+  // ─── WistiaPlayer event binding ─────────────────────────────────────────────
+  // Bind directly to the <wistia-player> web component's DOM events.
+  // Uses refs for stale-closure-safe access to current phase, trail markers, etc.
   useEffect(() => {
-    if (!wistiaVideoId) return;
+    const player = playerRef.current;
+    if (!player || !wistiaVideoId) return;
 
-    const handleMessage = (event: MessageEvent) => {
-      const data = event.data;
-      if (!data || typeof data !== "object") return;
-      if (data.method !== "_trigger") return;
+    const handlePlay = () => setIsVideoPlaying(true);
+    const handlePause = () => setIsVideoPlaying(false);
+    const handleEnded = () => setIsVideoPlaying(false);
 
-      const eventType = data.args?.[0];
-      const eventValue = data.args?.[1];
+    const handleSecondChange = () => {
+      const t = Math.floor(player.currentTime ?? 0);
+      if (t === lastTimeRef.current) return;
+      lastTimeRef.current = t;
+      setElapsedSeconds(t);
 
-      if (eventType === "play") { setIsVideoPlaying(true); return; }
-      if (eventType === "pause") { setIsVideoPlaying(false); return; }
-      if (eventType === "end") { setIsVideoPlaying(false); return; }
+      // Only check trail markers when in watching phase — use ref for current value
+      if (phaseRef.current !== "watching") return;
+      if (trailMarkersRef.current.length === 0) return;
 
-      if (eventType === "secondchange") {
-        const t = typeof eventValue === "number" ? Math.floor(eventValue) : 0;
-        setElapsedSeconds(t);
-        lastTimeRef.current = t;
+      const next = trailMarkersRef.current.find(
+        (q: any) =>
+          !answeredQuestionsRef.current.has(q.id) &&
+          t >= q.triggerAtSeconds
+      );
 
-        // Only check trail markers when in watching phase — use ref for current value
-        if (phaseRef.current !== "watching") return;
-        if (trailMarkersRef.current.length === 0) return;
-
-        const next = trailMarkersRef.current.find(
-          (q: any) =>
-            !answeredQuestionsRef.current.has(q.id) &&
-            t >= q.triggerAtSeconds
-        );
-
-        if (next) {
-          const idx = trailMarkersRef.current.indexOf(next);
-          setCurrentQuestionIdx(idx);
-          // Pause video
-          iframeRef.current?.contentWindow?.postMessage(
-            JSON.stringify({ method: "pause" }),
-            "*"
-          );
-          setPhase("trail_marker");
-        }
+      if (next) {
+        const idx = trailMarkersRef.current.indexOf(next);
+        setCurrentQuestionIdx(idx);
+        player.pause();
+        setPhase("trail_marker");
       }
     };
 
-    window.addEventListener("message", handleMessage);
-    return () => window.removeEventListener("message", handleMessage);
+    player.addEventListener("play", handlePlay);
+    player.addEventListener("pause", handlePause);
+    player.addEventListener("ended", handleEnded);
+    player.addEventListener("second-change", handleSecondChange);
+
+    return () => {
+      player.removeEventListener("play", handlePlay);
+      player.removeEventListener("pause", handlePause);
+      player.removeEventListener("ended", handleEnded);
+      player.removeEventListener("second-change", handleSecondChange);
+    };
   }, [wistiaVideoId]); // ← Only depends on wistiaVideoId, uses refs for live state
   // ────────────────────────────────────────────────────────────────────────────
 
@@ -234,10 +232,7 @@ export default function WatchPage() {
 
   const handlePauseAndBack = useCallback(async () => {
     if (sessionId && phase === "watching") {
-      iframeRef.current?.contentWindow?.postMessage(
-        JSON.stringify({ method: "pause" }),
-        "*"
-      );
+      playerRef.current?.pause();
       try {
         await pauseSession({
           sessionId,
@@ -305,10 +300,7 @@ export default function WatchPage() {
       if (document.visibilityState === "hidden") {
         isFocusedRef.current = false;
         if (phaseRef.current === "watching") {
-          iframeRef.current?.contentWindow?.postMessage(
-            JSON.stringify({ method: "pause" }),
-            "*"
-          );
+          playerRef.current?.pause();
           setTabAway(true);
         }
       } else {
@@ -330,10 +322,7 @@ export default function WatchPage() {
 
   const handleDismissTabOverlay = useCallback(() => {
     setTabAway(false);
-    iframeRef.current?.contentWindow?.postMessage(
-      JSON.stringify({ method: "play" }),
-      "*"
-    );
+    playerRef.current?.play();
   }, []);
 
   // Auto-trigger Ranger Report at end of video
@@ -380,17 +369,11 @@ export default function WatchPage() {
 
   const handleTrailMarkerContinue = useCallback(() => {
     setPhase("watching");
-    iframeRef.current?.contentWindow?.postMessage(
-      JSON.stringify({ method: "play" }),
-      "*"
-    );
+    playerRef.current?.play();
   }, []);
 
   const handleFinishWatching = useCallback(() => {
-    iframeRef.current?.contentWindow?.postMessage(
-      JSON.stringify({ method: "pause" }),
-      "*"
-    );
+    playerRef.current?.pause();
 
     const allTrailMarkerCount = trailMarkers.length;
     setTotalTrailMarkers(allTrailMarkerCount || totalTrailMarkers);
@@ -544,14 +527,11 @@ export default function WatchPage() {
   }, [navigate, viewer, clipId, sessionId, clipData, elapsedSeconds, correctCount, trailMarkers, searchRescueScore, recoveryQuestions, awardXP, completeClipPath]);
 
   const handleTranscriptSeek = useCallback((seconds: number) => {
-    iframeRef.current?.contentWindow?.postMessage(
-      JSON.stringify({ method: "time", value: seconds }),
-      "*"
-    );
-    iframeRef.current?.contentWindow?.postMessage(
-      JSON.stringify({ method: "play" }),
-      "*"
-    );
+    const p = playerRef.current;
+    if (p) {
+      p.currentTime = seconds;
+      p.play();
+    }
   }, []);
 
   // ── Render ──────────────────────────────────────────────────────────────────
@@ -649,13 +629,14 @@ export default function WatchPage() {
         <div className="flex-1 min-w-0 flex items-center justify-center bg-black relative">
           {wistiaVideoId ? (
             <div style={{ position: "relative", width: "100%", maxHeight: "100%", aspectRatio: "16 / 9" }}>
-              <iframe
-                ref={iframeRef}
-                src={`https://fast.wistia.net/embed/iframe/${wistiaVideoId}?autoPlay=false&silentAutoPlay=false&playerColor=ff5733&postMessageOrigin=${encodeURIComponent(window.location.origin)}${resumeFromSecondsRef.current ? `&time=${resumeFromSecondsRef.current}` : ""}`}
-                allowFullScreen
-                allow="autoplay; fullscreen"
-                style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: "none" }}
-                title={clip.title}
+              <WistiaPlayer
+                ref={playerRef}
+                mediaId={wistiaVideoId}
+                playerColor="ff5733"
+                autoPlay={false}
+                silentAutoPlay={false}
+                time={resumeFromSecondsRef.current ?? undefined}
+                style={{ width: "100%", height: "100%", position: "absolute", top: 0, left: 0 }}
               />
             </div>
           ) : (
@@ -719,14 +700,11 @@ export default function WatchPage() {
           incorrectQuestions={incorrectQuestions}
           onTimestampClick={(seconds) => {
             setPhase("watching");
-            iframeRef.current?.contentWindow?.postMessage(
-              JSON.stringify({ method: "time", value: seconds }),
-              "*"
-            );
-            iframeRef.current?.contentWindow?.postMessage(
-              JSON.stringify({ method: "play" }),
-              "*"
-            );
+            const p = playerRef.current;
+            if (p) {
+              p.currentTime = seconds;
+              p.play();
+            }
           }}
         />
       )}
