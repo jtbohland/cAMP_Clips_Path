@@ -178,8 +178,8 @@ export default function WatchPage() {
       }
     };
 
-    window.addEventListener("message", handleMessage);
-    return () => window.removeEventListener("message", handleMessage);
+    (window.top || window).addEventListener("message", handleMessage);
+    return () => (window.top || window).removeEventListener("message", handleMessage);
   }, [wistiaVideoId]); // ← Only depends on wistiaVideoId, uses refs for live state
   // ────────────────────────────────────────────────────────────────────────────
 
