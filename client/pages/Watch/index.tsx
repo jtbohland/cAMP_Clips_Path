@@ -201,27 +201,32 @@ export default function WatchPage() {
   // Check for paused session on mount
   useEffect(() => {
     if (!clipId || !viewer?.id) return;
+    console.log("[SESSION] Starting session check", { clipId, viewerId: viewer.id });
     executeApi("GetPausedSession", { clipId, viewerId: viewer.id })
       .then((result: any) => {
+        console.log("[SESSION] GetPausedSession result", result);
         if (result?.hasPausedSession && result.session) {
           setPausedSessionData(result.session);
           setPhase("resume_prompt");
         } else {
           startSession({ clipId, viewerId: viewer.id })
             .then((res: any) => {
+              console.log("[SESSION] StartSession result", res);
               setSessionId(res?.sessionId ?? null);
               setPhase("watching");
             })
-            .catch(console.error);
+            .catch((e) => console.error("[SESSION] StartSession failed", e));
         }
       })
-      .catch(() => {
+      .catch((e) => {
+        console.error("[SESSION] GetPausedSession failed", e);
         startSession({ clipId, viewerId: viewer.id })
           .then((res: any) => {
+            console.log("[SESSION] Fallback StartSession result", res);
             setSessionId(res?.sessionId ?? null);
             setPhase("watching");
           })
-          .catch(console.error);
+          .catch((e2) => console.error("[SESSION] Fallback StartSession failed", e2));
       });
   }, [clipId, viewer?.id, startSession]);
 
