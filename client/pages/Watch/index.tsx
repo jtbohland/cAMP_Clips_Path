@@ -171,6 +171,7 @@ export default function WatchPage() {
         const t = typeof eventValue === "number" ? Math.floor(eventValue) : 0;
         setElapsedSeconds(t);
         lastTimeRef.current = t;
+        console.log("[TM-DIAG]", { t, phase: phaseRef.current, tmCount: trailMarkersRef.current.length, answered: answeredQuestionsRef.current.size, markers: trailMarkersRef.current.map((q: any) => ({ id: q.id.slice(0,8), at: q.triggerAtSeconds })) });
         if (phaseRef.current === "watching" && trailMarkersRef.current.length > 0) {
           const next = trailMarkersRef.current.find(
             (q: any) =>
