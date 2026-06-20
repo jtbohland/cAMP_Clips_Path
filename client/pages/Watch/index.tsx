@@ -156,8 +156,6 @@ export default function WatchPage() {
   // Wistia iframe postMessage listener — handles all video events
   useEffect(() => {
     if (!wistiaVideoId || phase !== "watching") return;
-    console.log("LISTENER REGISTERED", phase);
-
     const handleMessage = (event: MessageEvent) => {
       const data = event.data;
       if (!data || typeof data !== "object") return;
@@ -170,6 +168,7 @@ export default function WatchPage() {
 
       if (eventType === "secondchange") {
         const t = typeof eventValue === "number" ? Math.floor(eventValue) : 0;
+        console.log("[TM]", { t, phase, tmCount: trailMarkersRef.current.length, markers: trailMarkersRef.current.map((q: any) => q.triggerAtSeconds) });
         setElapsedSeconds(t);
         lastTimeRef.current = t;
         if (trailMarkersRef.current.length > 0) {
