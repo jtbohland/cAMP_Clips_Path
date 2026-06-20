@@ -132,53 +132,53 @@ export default function WatchPage() {
     };
   }, [phase, isVideoPlaying]);
 
-  // ─── WistiaPlayer event binding ─────────────────────────────────────────────
-  // Bind directly to the <wistia-player> web component's DOM events.
-  // Uses refs for stale-closure-safe access to current phase, trail markers, etc.
-  useEffect(() => {
+  // ─── WistiaPlayer event handlers (React props, not addEventListener) ────────
+  // These callbacks are passed as props to <WistiaPlayer> so they work reliably
+  // regardless of web component lifecycle timing. They use refs for stale-closure safety.
+  const handleWistiaPlay = useCallback(() => setIsVideoPlaying(true), []);
+  const handleWistiaPause = useCallback(() => setIsVideoPlaying(false), []);
+  const handleWistiaEnded = useCallback(() => setIsVideoPlaying(false), []);
+
+  const handleWistiaSecondChange = useCallback((e: any) => {
+    const t: number = typeof e?.detail?.second === "number"
+      ? e.detail.second
+      : Math.floor(playerRef.current?.currentTime ?? 0);
+
+    if (t === lastTimeRef.current) return;
+    lastTimeRef.current = t;
+    setElapsedSeconds(t);
+
+    // Only check trail markers when in watching phase
+    if (phaseRef.current !== "watching") return;
+    if (trailMarkersRef.current.length === 0) return;
+
+    const next = trailMarkersRef.current.find(
+      (q: any) =>
+        !answeredQuestionsRef.current.has(q.id) &&
+        t >= q.triggerAtSeconds
+    );
+
+    if (next) {
+      const idx = trailMarkersRef.current.indexOf(next);
+      setCurrentQuestionIdx(idx);
+      playerRef.current?.pause();
+      setPhase("trail_marker");
+    }
+
+    // Auto-end detection
     const player = playerRef.current;
-    if (!player || !wistiaVideoId) return;
-
-    const handlePlay = () => setIsVideoPlaying(true);
-    const handlePause = () => setIsVideoPlaying(false);
-    const handleEnded = () => setIsVideoPlaying(false);
-
-    const handleSecondChange = () => {
-      const t = Math.floor(player.currentTime ?? 0);
-      if (t === lastTimeRef.current) return;
-      lastTimeRef.current = t;
-      setElapsedSeconds(t);
-
-      // Only check trail markers when in watching phase — use ref for current value
-      if (phaseRef.current !== "watching") return;
-      if (trailMarkersRef.current.length === 0) return;
-
-      const next = trailMarkersRef.current.find(
-        (q: any) =>
-          !answeredQuestionsRef.current.has(q.id) &&
-          t >= q.triggerAtSeconds
-      );
-
-      if (next) {
-        const idx = trailMarkersRef.current.indexOf(next);
-        setCurrentQuestionIdx(idx);
-        player.pause();
-        setPhase("trail_marker");
+    if (player && (player.ended || (clipData?.clip?.durationSeconds && t >= clipData.clip.durationSeconds))) {
+      if (!autoEndedRef.current) {
+        const allAnswered = trailMarkersRef.current.every(
+          (q: any) => answeredQuestionsRef.current.has(q.id)
+        );
+        if (allAnswered || trailMarkersRef.current.length === 0) {
+          autoEndedRef.current = true;
+          handleFinishWatchingRef.current();
+        }
       }
-    };
-
-    player.addEventListener("play", handlePlay);
-    player.addEventListener("pause", handlePause);
-    player.addEventListener("ended", handleEnded);
-    player.addEventListener("second-change", handleSecondChange);
-
-    return () => {
-      player.removeEventListener("play", handlePlay);
-      player.removeEventListener("pause", handlePause);
-      player.removeEventListener("ended", handleEnded);
-      player.removeEventListener("second-change", handleSecondChange);
-    };
-  }, [wistiaVideoId]); // ← Only depends on wistiaVideoId, uses refs for live state
+    }
+  }, [clipData]);
   // ────────────────────────────────────────────────────────────────────────────
 
   // Session init on mount
@@ -636,6 +636,10 @@ export default function WatchPage() {
                 autoPlay={false}
                 silentAutoPlay={false}
                 time={resumeFromSecondsRef.current ?? undefined}
+                onPlay={handleWistiaPlay}
+                onPause={handleWistiaPause}
+                onEnded={handleWistiaEnded}
+                onSecondChange={handleWistiaSecondChange}
                 style={{ width: "100%", height: "100%", position: "absolute", top: 0, left: 0 }}
               />
             </div>
