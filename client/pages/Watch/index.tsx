@@ -156,6 +156,7 @@ export default function WatchPage() {
   // Wistia iframe postMessage listener — handles all video events
   useEffect(() => {
     if (!wistiaVideoId || phase !== "watching") return;
+    console.log("LISTENER REGISTERED", phase);
 
     const handleMessage = (event: MessageEvent) => {
       const data = event.data;
