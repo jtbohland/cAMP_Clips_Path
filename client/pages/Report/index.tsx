@@ -1,10 +1,14 @@
+import { useState, useMemo, useCallback } from "react";
 import { useParams, useNavigate } from "react-router";
 import { useViewer } from "@/components/ViewerContext";
 import { useApiData } from "@/hooks/useApiData.js";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { getClipEmoji } from "@/lib/clip-emojis";
 import PageHeader from "@/components/PageHeader";
+import ScoreTiles from "@/components/report/ScoreTiles";
+import BackTrackSection from "@/components/report/BackTrackSection";
+import XpCollectedSection from "@/components/report/XpCollectedSection";
+import WeatherStormCard from "@/components/report/WeatherStormCard";
+import RewatchPlayer from "@/components/report/RewatchPlayer";
 
 /** Badge ID → display info */
 const BADGE_MAP: Record<string, { name: string; emoji: string }> = {
@@ -31,10 +35,21 @@ function formatEventType(type: string): string {
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+function getWistiaVideoId(url: string): string | null {
+  try {
+    const u = new URL(url);
+    const segments = u.pathname.split("/").filter(Boolean);
+    return segments[segments.length - 1] ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export default function ReportPage() {
   const { clipId } = useParams<{ clipId: string }>();
   const navigate = useNavigate();
   const { viewer } = useViewer();
+  const [showRewatch, setShowRewatch] = useState(false);
 
   const { data: reportData, loading: reportLoading } = useApiData(
     "GetClipReport",
@@ -50,6 +65,14 @@ export default function ReportPage() {
 
   const loading = reportLoading || weatherLoading;
 
+  const wistiaVideoId = useMemo(
+    () => (reportData?.videoUrl ? getWistiaVideoId(reportData.videoUrl) : null),
+    [reportData?.videoUrl]
+  );
+
+  const handleRewatch = useCallback(() => setShowRewatch(true), []);
+  const handleCloseRewatch = useCallback(() => setShowRewatch(false), []);
+
   if (!viewer) {
     navigate("/library", { replace: true });
     return null;
@@ -59,7 +82,7 @@ export default function ReportPage() {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="flex flex-col items-center gap-3">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4F46E5]" />
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
           <p className="text-sm text-gray-500">Loading Ranger Report…</p>
         </div>
       </div>
@@ -69,8 +92,13 @@ export default function ReportPage() {
   const {
     engagementScore,
     engagementThreshold,
-    correctAnswers,
-    totalQuestions,
+    trailMarkerCorrect,
+    trailMarkerTotal,
+    searchRescueCorrect,
+    searchRescueTotal,
+    searchRescueTriggered,
+    weatherStormTriggered,
+    incorrectQuestions,
     xpEvents,
     totalXpEarned,
     badges,
@@ -81,89 +109,70 @@ export default function ReportPage() {
   const emoji = getClipEmoji(clipSortOrder);
   const passed = engagementScore !== null && engagementScore >= engagementThreshold;
   const weatherCard = weatherData?.card;
+  const hasIncorrect = incorrectQuestions.length > 0;
+
+  // Rewatch fullscreen overlay
+  if (showRewatch && wistiaVideoId) {
+    return <RewatchPlayer videoId={wistiaVideoId} clipTitle={clipTitle} onClose={handleCloseRewatch} />;
+  }
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto">
+    <div className="flex flex-col h-full overflow-y-auto bg-gray-50">
       <PageHeader emoji="📋" title="Ranger Report" subtitle={`${emoji} Clip ${clipSortOrder}: ${clipTitle}`} />
 
-      <div className="flex-1 p-4 max-w-2xl mx-auto w-full space-y-5">
+      <div className="flex-1 p-4 max-w-2xl mx-auto w-full space-y-5 pb-8">
 
-        {/* Engagement Score + Trail Markers */}
-        <Card className="p-5">
-          <div className="flex items-center justify-around">
-            <div className="text-center">
-              <div className={`text-4xl font-bold ${engagementScore === null ? "text-gray-500" : passed ? "text-green-600" : "text-red-500"}`}>
-                {engagementScore !== null ? `${engagementScore}%` : "—"}
-              </div>
-              <p className="text-xs text-gray-500 mt-1">
-                Engagement Score
-              </p>
-              <p className="text-[10px] text-gray-500">
-                {engagementThreshold}% threshold
-              </p>
-            </div>
-            <div className="h-14 w-px bg-border" />
-            <div className="text-center">
-              <div className="text-3xl font-bold text-gray-900">
-                {correctAnswers}/{totalQuestions}
-              </div>
-              <p className="text-xs text-gray-500 mt-1">Trail Markers</p>
-            </div>
-          </div>
-        </Card>
+        {/* Score Tiles */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+          <ScoreTiles
+            engagementScore={engagementScore}
+            engagementThreshold={engagementThreshold}
+            trailMarkerCorrect={trailMarkerCorrect}
+            trailMarkerTotal={trailMarkerTotal}
+            searchRescueCorrect={searchRescueCorrect}
+            searchRescueTotal={searchRescueTotal}
+            searchRescueTriggered={searchRescueTriggered}
+          />
+        </div>
 
         {/* Weather the Storm */}
         {weatherCard && (
-          <Card className="p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-xl">⛈️</span>
-              <h2 className="text-base font-bold text-gray-900">Weather the Storm</h2>
-            </div>
-            <p className="text-sm text-gray-500 mb-4 leading-relaxed">
-              {weatherCard.overview}
-            </p>
-            {weatherCard.takeaways.length > 0 && (
-              <div>
-                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">
-                  Key Takeaways
-                </h3>
-                <ul className="space-y-1.5">
-                  {weatherCard.takeaways.map((takeaway: string, i: number) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-gray-900">
-                      <span className="text-[#4F46E5] font-bold mt-0.5">•</span>
-                      <span>{takeaway}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </Card>
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+            <WeatherStormCard overview={weatherCard.overview} takeaways={weatherCard.takeaways} />
+          </div>
         )}
 
-        {/* XP Breakdown */}
-        <Card className="p-5">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-xl">✨</span>
-            <h2 className="text-base font-bold text-gray-900">XP Earned</h2>
-            <span className="ml-auto text-lg font-bold text-[#4F46E5]">+{totalXpEarned} XP</span>
+        {/* 🐾 Back Track */}
+        {hasIncorrect && (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+            <BackTrackSection incorrectQuestions={incorrectQuestions} />
           </div>
-          {xpEvents.length > 0 ? (
-            <div className="space-y-1.5">
-              {xpEvents.map((event, i) => (
-                <div key={i} className="flex items-center justify-between text-sm">
-                  <span className="text-gray-500">{formatEventType(event.eventType)}</span>
-                  <span className="font-medium text-gray-900">+{event.xpAmount} XP</span>
-                </div>
-              ))}
+        )}
+
+        {/* Perfect score celebration */}
+        {!hasIncorrect && passed && (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+            <div className="text-center py-2">
+              <span className="text-3xl">🌲</span>
+              <p className="font-bold text-sm text-green-700 mt-2">
+                Perfect run! No missed questions — forest fully preserved.
+              </p>
             </div>
-          ) : (
-            <p className="text-sm text-gray-500">No XP events recorded yet.</p>
-          )}
-        </Card>
+          </div>
+        )}
+
+        {/* 🪵 XP Collected */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+          <XpCollectedSection
+            xpEvents={xpEvents}
+            totalXpEarned={totalXpEarned}
+            formatEventType={formatEventType}
+          />
+        </div>
 
         {/* Badges */}
         {badges.length > 0 && (
-          <Card className="p-5">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
             <div className="flex items-center gap-2 mb-3">
               <span className="text-xl">🏅</span>
               <h2 className="text-base font-bold text-gray-900">Badges Earned</h2>
@@ -174,7 +183,7 @@ export default function ReportPage() {
                 return (
                   <span
                     key={badge.badgeId}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#4F46E5]/10 text-sm font-medium text-[#4F46E5]"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-50 text-sm font-medium text-indigo-700"
                   >
                     <span>{info.emoji}</span>
                     <span>{info.name}</span>
@@ -182,19 +191,27 @@ export default function ReportPage() {
                 );
               })}
             </div>
-          </Card>
+          </div>
         )}
 
-        {/* Rewatch button */}
-        <div className="flex justify-center pb-6">
-          <Button
-            variant="outline"
-            onClick={() => navigate(`/watch/${clipId}`)}
-            className="text-sm"
-          >
-            ↩ Rewatch Video
-          </Button>
+        {/* 🌱 Rewatch Clip button — inside the card area */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={handleRewatch}
+              className="flex-1 py-3 rounded-xl text-sm font-semibold bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition-colors"
+            >
+              🌱 Rewatch Clip
+            </button>
+            <button
+              onClick={() => navigate("/library")}
+              className="flex-1 py-3 rounded-xl text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition-colors"
+            >
+              🎞️ Back to cAMP Clips
+            </button>
+          </div>
         </div>
+
       </div>
     </div>
   );
