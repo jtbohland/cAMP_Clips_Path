@@ -83,6 +83,11 @@ export default function WatchPage() {
   const focusTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [tabAway, setTabAway] = useState(false);
   const [showTranscript, setShowTranscript] = useState(false);
+  const [xpData, setXpData] = useState<{
+    totalXp: number;
+    xpBreakdown: { base: number; milestones: number; bonuses: number };
+    tier: { name: string; emoji: string };
+  } | null>(null);
   const autoEndedRef = useRef(false);
   const resumeFromSecondsRef = useRef<number | null>(null);
 
@@ -427,6 +432,18 @@ export default function WatchPage() {
           if (res?.newTier) {
             toast.success(`${res.newTier.emoji} Tier up! You're now a ${res.newTier.name}!`);
           }
+          // Fetch latest XP breakdown for Ranger Report display
+          if (viewer?.id) {
+            executeApi("GetLearnerProgress", { viewerId: viewer.id })
+              .then((progress: any) => {
+                setXpData({
+                  totalXp: progress.totalXp,
+                  xpBreakdown: progress.xpBreakdown,
+                  tier: { name: progress.tier.name, emoji: progress.tier.emoji },
+                });
+              })
+              .catch(console.error);
+          }
         })
         .catch(console.error);
     }
@@ -697,9 +714,11 @@ export default function WatchPage() {
           correctAnswers={correctCount}
           score={score}
           needsRecovery={score < 80 && recoveryQuestions.length > 0}
-          onContinue={() => navigate("/library")}
+          onBackToClips={() => navigate("/library")}
+          onContinueToNext={clipData?.nextClipId ? () => navigate(`/watch/${clipData.nextClipId}`) : undefined}
           onSearchRescue={() => setPhase("search_rescue")}
           incorrectQuestions={incorrectQuestions}
+          xpData={xpData ?? undefined}
           onTimestampClick={(seconds) => {
             setPhase("watching");
             const p = playerRef.current;
