@@ -5,8 +5,8 @@ type IncorrectQuestion = {
 };
 
 type XpData = {
+  sessionBreakdown: { base: number; milestones: number; bonuses: number };
   totalXp: number;
-  xpBreakdown: { base: number; milestones: number; bonuses: number };
   tier: { name: string; emoji: string };
 };
 
@@ -141,24 +141,30 @@ export default function RangerReport({
           </div>
         )}
 
-        {/* 🪵 XP Collected — pass only */}
+        {/* 🪵 XP Collected This Session — pass only */}
         {passed && xpData && (
-          <div className="mx-6 mb-5">
-            <p className="text-sm font-bold text-gray-900 mb-2">🪵 XP Collected</p>
-            <div className="flex flex-wrap items-center gap-2 mb-2">
-              <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium" style={{ backgroundColor: "#FEF9C3", color: "#92400E" }}>
-                ☀️ Base: {xpData.xpBreakdown.base}
+          <div className="mx-6 mb-5 rounded-xl bg-indigo-50/60 border border-indigo-100 px-4 py-3">
+            <p className="text-sm font-bold text-gray-900 mb-2">🪵 XP Collected This Session</p>
+            <div className="flex flex-wrap items-center gap-2 mb-3">
+              <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200">
+                ☀️ Base: {xpData.sessionBreakdown.base}
               </span>
-              <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium" style={{ backgroundColor: "#FEF9C3", color: "#92400E" }}>
-                🏆 Milestones: {xpData.xpBreakdown.milestones}
+              <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200">
+                🏆 Milestones: {xpData.sessionBreakdown.milestones}
               </span>
-              <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium" style={{ backgroundColor: "#FEF9C3", color: "#92400E" }}>
-                ⚡ Bonuses: {xpData.xpBreakdown.bonuses}
+              <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200">
+                ⚡ Bonuses: {xpData.sessionBreakdown.bonuses}
               </span>
             </div>
-            <p className="text-xs text-gray-500">
-              {xpData.tier.emoji} {xpData.tier.name} • <span className="font-semibold text-indigo-600">{xpData.totalXp} XP</span> total
+            <p className="text-xs text-gray-600">
+              Total earned: <span className="font-semibold text-indigo-600">{xpData.sessionBreakdown.base + xpData.sessionBreakdown.milestones + xpData.sessionBreakdown.bonuses} XP</span>
             </p>
+            <div className="mt-2 pt-2 border-t border-indigo-100">
+              <p className="text-xs font-medium text-gray-500">📊 Your Progress</p>
+              <p className="text-sm text-gray-800 mt-0.5">
+                {xpData.tier.emoji} {xpData.tier.name} — <span className="font-semibold text-indigo-600">{xpData.totalXp.toLocaleString()} XP</span> total
+              </p>
+            </div>
           </div>
         )}
 

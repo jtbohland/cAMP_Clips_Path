@@ -33,6 +33,11 @@ export default api({
 
   output: z.object({
     xpAwarded: z.number(),
+    sessionBreakdown: z.object({
+      base: z.number(),
+      milestones: z.number(),
+      bonuses: z.number(),
+    }),
     badgesEarned: z.array(z.object({
       badgeId: z.string(),
       name: z.string(),
@@ -62,7 +67,7 @@ export default api({
     );
     if (adminCheck[0]?.is_admin) {
       ctx.log.info("Admin viewer — skipping XP award", { viewerId });
-      return { xpAwarded: 0, badgesEarned: [], totalXp: 0, newTier: null };
+      return { xpAwarded: 0, sessionBreakdown: { base: 0, milestones: 0, bonuses: 0 }, badgesEarned: [], totalXp: 0, newTier: null };
     }
 
     const xpEvents: Array<{ sourceId: string; eventType: string; xp: number }> = [];
@@ -455,8 +460,16 @@ export default api({
     const newTierIdx = TIER_THRESHOLDS.reduce((acc, t, i) => totalXp >= t ? i : acc, 0);
     const newTier = newTierIdx > prevTierIdx ? TIERS[newTierIdx] : null;
 
+    // Calculate per-category breakdown for this session
+    const sessionBreakdown = {
+      base: xpEvents.filter(e => e.eventType === "base").reduce((s, e) => s + e.xp, 0),
+      milestones: xpEvents.filter(e => e.eventType === "milestone").reduce((s, e) => s + e.xp, 0),
+      bonuses: xpEvents.filter(e => ["performance", "streak", "pace"].includes(e.eventType)).reduce((s, e) => s + e.xp, 0),
+    };
+
     return {
       xpAwarded: totalAwarded,
+      sessionBreakdown,
       badgesEarned,
       totalXp,
       newTier,

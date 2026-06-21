@@ -84,8 +84,8 @@ export default function WatchPage() {
   const [tabAway, setTabAway] = useState(false);
   const [showTranscript, setShowTranscript] = useState(false);
   const [xpData, setXpData] = useState<{
+    sessionBreakdown: { base: number; milestones: number; bonuses: number };
     totalXp: number;
-    xpBreakdown: { base: number; milestones: number; bonuses: number };
     tier: { name: string; emoji: string };
   } | null>(null);
   const autoEndedRef = useRef(false);
@@ -432,17 +432,25 @@ export default function WatchPage() {
           if (res?.newTier) {
             toast.success(`${res.newTier.emoji} Tier up! You're now a ${res.newTier.name}!`);
           }
-          // Fetch latest XP breakdown for Ranger Report display
+          // Store session breakdown from awardXP, then fetch cumulative totals
+          const sessionBreakdown = res?.sessionBreakdown ?? { base: 0, milestones: 0, bonuses: 0 };
           if (viewer?.id) {
             executeApi("GetLearnerProgress", { viewerId: viewer.id })
               .then((progress: any) => {
                 setXpData({
+                  sessionBreakdown,
                   totalXp: progress.totalXp,
-                  xpBreakdown: progress.xpBreakdown,
                   tier: { name: progress.tier.name, emoji: progress.tier.emoji },
                 });
               })
-              .catch(console.error);
+              .catch(() => {
+                // Even if progress fetch fails, still show session data
+                setXpData({
+                  sessionBreakdown,
+                  totalXp: res?.totalXp ?? 0,
+                  tier: { name: "Base Camper", emoji: "🏕️" },
+                });
+              });
           }
         })
         .catch(console.error);
