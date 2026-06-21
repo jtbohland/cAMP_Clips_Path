@@ -227,6 +227,13 @@ export default function WatchPage() {
 
   const handleStartFresh = useCallback(() => {
     if (!clipId || !viewer?.id) return;
+    // Reset all progress state for a truly fresh start
+    resumeFromSecondsRef.current = 0;
+    setElapsedSeconds(0);
+    setFocusSeconds(0);
+    setBlurSeconds(0);
+    setCorrectCount(0);
+    setAnsweredQuestions(new Set());
     startSession({ clipId, viewerId: viewer.id })
       .then((res: any) => {
         setSessionId(res?.sessionId ?? null);
