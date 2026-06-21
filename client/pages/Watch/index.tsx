@@ -581,46 +581,44 @@ export default function WatchPage() {
     <div className="flex flex-col h-[calc(100dvh-57px)] overflow-hidden">
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
-        <div className="flex items-center justify-between px-4 py-2">
-          <button
-            onClick={handlePauseAndBack}
-            className="text-sm text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
-          >
-            ← Back to cAMP Clips
-          </button>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setShowTranscript((v) => !v)}
-              className={`text-sm font-medium px-3 py-1 rounded-lg transition-colors ${
-                showTranscript
-                  ? "bg-indigo-600 text-white"
-                  : "text-gray-600 hover:text-indigo-600 hover:bg-indigo-50"
-              }`}
-            >
-              📄 Transcript
-            </button>
-            <span
-              className={`text-xs font-mono px-3 py-1 rounded-full ${
-                !isVideoPlaying && phase === "watching"
-                  ? "bg-amber-100 text-amber-700"
-                  : "bg-gray-100 text-gray-600"
-              }`}
-            >
-              ⏱ {Math.floor(elapsedSeconds / 60)}:{(elapsedSeconds % 60).toString().padStart(2, "0")}
-              {!isVideoPlaying && phase === "watching" && " ⏸"}
-            </span>
-          </div>
-        </div>
-        <div className="px-4 pb-2">
-          <h2 className="text-sm font-bold text-gray-900">
+        <div className="px-4 py-2">
+          <h2 className="text-lg font-bold text-gray-900">
             {getClipEmoji(clip.sortOrder)} {clip.title}
           </h2>
-          <p className="text-xs text-gray-500 mt-0.5">
+          <p className="text-sm text-gray-500 mt-0.5">
             {durationFormatted && <><span>⏱️ {durationFormatted}</span><span className="mx-1.5 text-gray-300">·</span></>}
             <span>🪧 {trailMarkers.length} Trail Markers</span>
             <span className="mx-1.5 text-gray-300">·</span>
             <span>💬 CC available — click CC on the video for captions & auto-translation</span>
           </p>
+        </div>
+        <div className="flex items-center justify-end gap-3 px-4 pb-2">
+          <button
+            onClick={() => setShowTranscript((v) => !v)}
+            className={`text-sm font-medium px-3 py-1 rounded-lg transition-colors ${
+              showTranscript
+                ? "bg-indigo-600 text-white"
+                : "text-gray-600 hover:text-indigo-600 hover:bg-indigo-50"
+            }`}
+          >
+            📄 Transcript
+          </button>
+          <span
+            className={`text-xs font-mono px-3 py-1 rounded-full ${
+              !isVideoPlaying && phase === "watching"
+                ? "bg-amber-100 text-amber-700"
+                : "bg-gray-100 text-gray-600"
+            }`}
+          >
+            ⏱ {Math.floor(elapsedSeconds / 60)}:{(elapsedSeconds % 60).toString().padStart(2, "0")}
+            {!isVideoPlaying && phase === "watching" && " ⏸"}
+          </span>
+          <button
+            onClick={handlePauseAndBack}
+            className="text-sm font-semibold px-4 py-1.5 rounded-lg bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition-colors"
+          >
+            🎞️ Back to Clips
+          </button>
         </div>
       </div>
 
@@ -727,7 +725,7 @@ export default function WatchPage() {
           <WeatherStorm
             overview={clipData.weatherStorm.overview}
             takeaways={clipData.weatherStorm.takeaways}
-            timerMinutes={clipData.weatherStorm.timerMinutes}
+            timerMinutes={2}
             clipTitle={`${getClipEmoji(clip.sortOrder)} ${clip.title}`}
             onTimerExpire={handleWeatherExpire}
           />

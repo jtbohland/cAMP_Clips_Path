@@ -1,5 +1,4 @@
 import { useState, useCallback } from "react";
-import { Button } from "@/components/ui/button";
 
 type Question = {
   id: string;
@@ -131,9 +130,12 @@ export default function QuizOverlayV2({
         {/* Continue button (only after answer) */}
         {showFeedback && (
           <div className="flex justify-end">
-            <Button onClick={onContinue}>
+            <button
+              onClick={onContinue}
+              className="px-6 py-2.5 rounded-lg text-sm font-semibold bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition-colors"
+            >
               🎞️ Continue Clip
-            </Button>
+            </button>
           </div>
         )}
       </div>

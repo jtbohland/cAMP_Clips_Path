@@ -1,7 +1,5 @@
-import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 type WeatherStormProps = {
   overview: string;
@@ -18,24 +16,56 @@ export default function WeatherStorm({
   clipTitle,
   onTimerExpire,
 }: WeatherStormProps) {
-  const navigate = useNavigate();
   const [secondsLeft, setSecondsLeft] = useState(timerMinutes * 60);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [tabHidden, setTabHidden] = useState(false);
 
-  useEffect(() => {
+  // Start / stop the countdown interval
+  const startTimer = useCallback(() => {
+    if (intervalRef.current) return; // already running
     intervalRef.current = setInterval(() => {
       setSecondsLeft((s) => {
         if (s <= 1) {
           clearInterval(intervalRef.current!);
+          intervalRef.current = null;
           return 0;
         }
         return s - 1;
       });
     }, 1000);
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
   }, []);
+
+  const stopTimer = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  }, []);
+
+  // Initial start
+  useEffect(() => {
+    startTimer();
+    return () => stopTimer();
+  }, [startTimer, stopTimer]);
+
+  // Tab visibility detection — pause timer when tab hidden, resume when visible
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === "hidden") {
+        setTabHidden(true);
+        stopTimer();
+      } else {
+        setTabHidden(false);
+        // Only restart if there's time remaining
+        setSecondsLeft((s) => {
+          if (s > 0) startTimer();
+          return s;
+        });
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, [startTimer, stopTimer]);
 
   useEffect(() => {
     if (secondsLeft === 0) {
@@ -50,30 +80,6 @@ export default function WeatherStorm({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
       <div className="w-full max-w-2xl p-6 bg-white shadow-xl border-2 border-destructive/20 rounded-xl">
-        {/* Back to library — disabled until timer expires */}
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={() => secondsLeft === 0 && navigate("/library")}
-                disabled={secondsLeft > 0}
-                className={`flex items-center gap-1 text-xs mb-4 transition-colors cursor-pointer ${
-                  secondsLeft > 0
-                    ? "text-gray-500/40 cursor-not-allowed"
-                    : "text-gray-500 hover:text-gray-900"
-                }`}
-              >
-                ← Back to cAMP Clips
-              </button>
-            </TooltipTrigger>
-            {secondsLeft > 0 && (
-              <TooltipContent>
-                <p>Finish reading to continue</p>
-              </TooltipContent>
-            )}
-          </Tooltip>
-        </TooltipProvider>
-
         {/* Header with amber background */}
         <div className="bg-[#FFFBEB] rounded-lg px-4 py-3 mb-4 border border-amber-200/50">
           <div className="flex items-center justify-between mb-2">
@@ -86,11 +92,14 @@ export default function WeatherStorm({
               <span className="text-sm font-mono font-bold text-gray-900">
                 {minutes}:{seconds.toString().padStart(2, "0")}
               </span>
+              {tabHidden && (
+                <span className="text-xs text-amber-600 font-medium">⏸</span>
+              )}
             </div>
           </div>
           <p className="text-sm text-amber-800 text-center">
             You didn't quite make it through Trail Markers or Search & Rescue — but that's okay.
-            Take 3 minutes with these key takeaways before your next clip unlocks. 🌲
+            Take {timerMinutes} minutes with these key takeaways before your next clip unlocks. 🌲
           </p>
         </div>
 
@@ -102,7 +111,8 @@ export default function WeatherStorm({
           />
         </div>
 
-        <p className="text-xs text-gray-500 mb-3">{clipTitle}</p>
+        {/* Clip title — larger, accent color */}
+        <p className="text-base font-semibold text-indigo-600 mb-3">{clipTitle}</p>
 
         {/* Overview */}
         <div className="bg-gray-50/50 rounded-lg p-4 mb-5">
