@@ -206,15 +206,9 @@ function ActionButton({
           >
             🗺️ Review Ranger Report
           </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onWatch();
-            }}
-            className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            ↩ Rewatch Video
-          </button>
+          <p className="text-xs text-gray-400 mt-1">
+            Scores • key takeaways • missed markers • XP collected • resources
+          </p>
         </div>
       );
     case "locked":

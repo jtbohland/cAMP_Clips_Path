@@ -118,7 +118,13 @@ export default function ReportPage() {
 
   return (
     <div className="flex flex-col h-full overflow-y-auto bg-gray-50">
-      <PageHeader emoji="📋" title="Ranger Report" subtitle={`${emoji} Clip ${clipSortOrder}: ${clipTitle}`} />
+      <PageHeader
+        emoji="📋"
+        title="Ranger Report Review"
+        subtitle={`${emoji} Clip ${clipSortOrder}: ${clipTitle}`}
+        showBackButton={false}
+        subtitleClassName="text-base font-semibold text-indigo-600 mt-0.5"
+      />
 
       <div className="flex-1 p-4 max-w-2xl mx-auto w-full space-y-5 pb-8">
 

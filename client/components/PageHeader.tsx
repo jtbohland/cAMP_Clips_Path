@@ -4,13 +4,15 @@ type PageHeaderProps = {
   emoji: string;
   title: string;
   subtitle: string;
+  showBackButton?: boolean;
+  subtitleClassName?: string;
 };
 
 /**
  * Standardized sub-page header bar.
  * White background, bottom border, emoji + title on left, back button on right.
  */
-export default function PageHeader({ emoji, title, subtitle }: PageHeaderProps) {
+export default function PageHeader({ emoji, title, subtitle, showBackButton = true, subtitleClassName }: PageHeaderProps) {
   const navigate = useNavigate();
 
   return (
@@ -24,17 +26,19 @@ export default function PageHeader({ emoji, title, subtitle }: PageHeaderProps) 
           <span className="text-2xl leading-tight mt-0.5">{emoji}</span>
           <div>
             <h1 className="text-xl font-bold text-gray-900 leading-tight">{title}</h1>
-            <p className="text-sm text-gray-500 mt-0.5">{subtitle}</p>
+            <p className={subtitleClassName ?? "text-sm text-gray-500 mt-0.5"}>{subtitle}</p>
           </div>
         </div>
 
         {/* Right — back button */}
-        <button
-          onClick={() => navigate("/library")}
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-colors shadow-sm"
-        >
-          🎞️ Back to cAMP Clips
-        </button>
+        {showBackButton && (
+          <button
+            onClick={() => navigate("/library")}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-colors shadow-sm"
+          >
+            🎞️ Back to cAMP Clips
+          </button>
+        )}
       </div>
     </div>
   );

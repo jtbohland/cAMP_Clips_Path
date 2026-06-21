@@ -82,6 +82,7 @@ export default function WatchPage() {
   const lastTimeRef = useRef(0);
   const focusTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [tabAway, setTabAway] = useState(false);
+  const tabAwayCountRef = useRef(0);
   const [showTranscript, setShowTranscript] = useState(false);
   const [xpData, setXpData] = useState<{
     sessionBreakdown: { base: number; milestones: number; bonuses: number };
@@ -232,6 +233,7 @@ export default function WatchPage() {
     setElapsedSeconds(0);
     setFocusSeconds(0);
     setBlurSeconds(0);
+    tabAwayCountRef.current = 0;
     setCorrectCount(0);
     setAnsweredQuestions(new Set());
     startSession({ clipId, viewerId: viewer.id })
@@ -313,6 +315,7 @@ export default function WatchPage() {
         isFocusedRef.current = false;
         if (phaseRef.current === "watching") {
           playerRef.current?.pause();
+          tabAwayCountRef.current += 1;
           setTabAway(true);
         }
       } else {
@@ -402,6 +405,7 @@ export default function WatchPage() {
         totalBlurSeconds: blurSeconds,
         totalTimeSeconds: elapsedSeconds,
         clipDurationSeconds: clipDuration,
+        tabAwayCount: tabAwayCountRef.current,
       })
         .then((res: any) => {
           if (res?.engagementScore !== undefined) {

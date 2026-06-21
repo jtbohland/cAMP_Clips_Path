@@ -16,6 +16,7 @@ export default api({
     totalBlurSeconds: z.number(),
     totalTimeSeconds: z.number(),
     clipDurationSeconds: z.number(),
+    tabAwayCount: z.number().int().min(0).default(0),
   }),
 
   output: z.object({
@@ -28,7 +29,7 @@ export default api({
     totalQuestions: z.number(),
   }),
 
-  async run(ctx, { sessionId, totalFocusSeconds, totalBlurSeconds, totalTimeSeconds, clipDurationSeconds }) {
+  async run(ctx, { sessionId, totalFocusSeconds, totalBlurSeconds, totalTimeSeconds, clipDurationSeconds, tabAwayCount }) {
     // Get all responses for this session
     const ResponseCountSchema = z.object({
       total: z.coerce.number(),
@@ -52,9 +53,13 @@ export default api({
     // Question score: percentage of correct answers (50% weight)
     const questionScore = totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0;
 
-    // Focus score: percentage of time focused vs total time (30% weight)
-    const totalActiveTime = totalFocusSeconds + totalBlurSeconds;
-    const focusScore = totalActiveTime > 0 ? (totalFocusSeconds / totalActiveTime) * 100 : 100;
+    // Focus score: penalty based on tab-away count (30% weight)
+    // 0 tab-aways = 100%, 1 = 80%, 2 = 60%, 3 = 40%, 4+ = 20%
+    const focusScore = tabAwayCount === 0 ? 100
+      : tabAwayCount === 1 ? 80
+      : tabAwayCount === 2 ? 60
+      : tabAwayCount === 3 ? 40
+      : 20;
 
     // Time score: how much of the video's duration was spent watching (20% weight)
     // Cap at 100 (viewer can spend more time than video duration due to pauses)
