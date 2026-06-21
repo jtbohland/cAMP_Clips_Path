@@ -94,7 +94,7 @@ export default function XPlanationPage() {
         </Section>
 
         {/* Base XP */}
-        <Section title="⭐ Base XP" description="Earned every time you complete a clip:">
+        <Section title="☀️ Base XP" description="Earned every time you complete a clip:">
           <div className="space-y-1">
             {BASE_XP.map((item) => (
               <XpRow key={item.action} emoji={item.emoji} label={item.action} xp={item.xp} description={item.description} />
