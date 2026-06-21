@@ -30,6 +30,8 @@ const WeatherRow = z.object({
   timer_minutes: z.coerce.number(),
 });
 
+const NextClipRow = z.object({ id: z.string() });
+
 export default api({
   name: "GetClipForWatching",
   description: "Gets clip details, all questions, and weather storm card for the player",
@@ -72,6 +74,7 @@ export default api({
         timerMinutes: z.number(),
       })
       .nullable(),
+    nextClipId: z.string().nullable(),
   }),
 
   async run(ctx, { clipId }) {
@@ -104,6 +107,16 @@ export default api({
       { label: "Get weather storm card" }
     );
 
+    // Find the next clip by sort_order
+    const nextClipRows = await ctx.integrations.db.query(
+      `SELECT id FROM cliptracker_v2_clips
+       WHERE sort_order > $1 AND status = 'live'
+       ORDER BY sort_order ASC LIMIT 1`,
+      NextClipRow,
+      [clip.sort_order],
+      { label: "Find next clip" }
+    );
+
     return {
       clip: {
         id: clip.id,
@@ -124,6 +137,7 @@ export default api({
         correctFeedback: q.correct_feedback ? (typeof q.correct_feedback === "string" ? JSON.parse(q.correct_feedback) : q.correct_feedback) : null,
         incorrectFeedback: q.incorrect_feedback ? (typeof q.incorrect_feedback === "string" ? JSON.parse(q.incorrect_feedback) : q.incorrect_feedback) : null,
       })),
+      nextClipId: nextClipRows.length > 0 ? nextClipRows[0].id : null,
       weatherStorm: weatherCards.length > 0
         ? {
             overview: weatherCards[0].overview,

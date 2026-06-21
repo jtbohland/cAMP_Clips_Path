@@ -4,16 +4,24 @@ type IncorrectQuestion = {
   questionText: string;
 };
 
+type XpData = {
+  sessionBreakdown: { base: number; milestones: number; bonuses: number };
+  totalXp: number;
+  tier: { name: string; emoji: string };
+};
+
 type RangerReportProps = {
   clipTitle: string;
   totalQuestions: number;
   correctAnswers: number;
   score: number;
-  onContinue: () => void;
+  onBackToClips: () => void;
+  onContinueToNext?: () => void;
   onSearchRescue: () => void;
   needsRecovery: boolean;
   incorrectQuestions?: IncorrectQuestion[];
   onTimestampClick?: (seconds: number) => void;
+  xpData?: XpData;
 };
 
 function formatTimestamp(seconds: number): string {
@@ -27,14 +35,17 @@ export default function RangerReport({
   totalQuestions,
   correctAnswers,
   score,
-  onContinue,
+  onBackToClips,
+  onContinueToNext,
   onSearchRescue,
   needsRecovery,
   incorrectQuestions = [],
   onTimestampClick,
+  xpData,
 }: RangerReportProps) {
   const missedCount = totalQuestions - correctAnswers;
   const isPerfect = missedCount === 0;
+  const passed = !needsRecovery;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.6)" }}>
@@ -130,10 +141,37 @@ export default function RangerReport({
           </div>
         )}
 
-        {/* B3-5 + B3-6: Action buttons */}
+        {/* 🪵 XP Collected This Session — pass only */}
+        {passed && xpData && (
+          <div className="mx-6 mb-5 rounded-xl bg-indigo-50/60 border border-indigo-100 px-4 py-3">
+            <p className="text-sm font-bold text-gray-900 mb-2">🪵 XP Collected This Session</p>
+            <div className="flex flex-wrap items-center gap-2 mb-3">
+              <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200">
+                ☀️ Base: {xpData.sessionBreakdown.base}
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200">
+                🏆 Milestones: {xpData.sessionBreakdown.milestones}
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200">
+                ⚡ Bonuses: {xpData.sessionBreakdown.bonuses}
+              </span>
+            </div>
+            <p className="text-xs text-gray-600">
+              Total earned: <span className="font-semibold text-indigo-600">{xpData.sessionBreakdown.base + xpData.sessionBreakdown.milestones + xpData.sessionBreakdown.bonuses} XP</span>
+            </p>
+            <div className="mt-2 pt-2 border-t border-indigo-100">
+              <p className="text-xs font-medium text-gray-500">📊 Your Progress</p>
+              <p className="text-sm text-gray-800 mt-0.5">
+                {xpData.tier.emoji} {xpData.tier.name} — <span className="font-semibold text-indigo-600">{xpData.totalXp.toLocaleString()} XP</span> total
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Action buttons */}
         <div className="px-6 pb-6">
           {needsRecovery ? (
-            /* Score < 80%: ONLY S&R button — no back, no skip */
+            /* Score < 80%: ONLY S&R button — no back, no skip, no escape */
             <button
               onClick={onSearchRescue}
               className="w-full py-3 rounded-xl text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition-colors"
@@ -141,20 +179,29 @@ export default function RangerReport({
               → Continue to Search & Rescue 🚁
             </button>
           ) : (
-            /* Score >= 80%: Back + Continue */
-            <div className="flex flex-col gap-2">
+            /* Score >= 80%: Two side-by-side buttons */
+            <div className="flex gap-3">
               <button
-                onClick={onContinue}
-                className="w-full py-3 rounded-xl text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition-colors"
+                onClick={onBackToClips}
+                className="flex-1 py-3 rounded-xl text-sm font-semibold bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition-colors"
               >
-                Continue to Next Clip →
+                🎞️ Back to cAMP Clips
               </button>
-              <button
-                onClick={onContinue}
-                className="w-full py-2.5 rounded-xl text-sm font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                ← Back to cAMP Clips
-              </button>
+              {onContinueToNext ? (
+                <button
+                  onClick={onContinueToNext}
+                  className="flex-1 py-3 rounded-xl text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition-colors"
+                >
+                  🚵🏼‍♂️ Continue to Next Clip
+                </button>
+              ) : (
+                <button
+                  onClick={onBackToClips}
+                  className="flex-1 py-3 rounded-xl text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition-colors"
+                >
+                  🏕️ Back to cAMP Clips
+                </button>
+              )}
             </div>
           )}
         </div>

@@ -92,7 +92,7 @@ export default function XpProgressBar() {
       {/* Breakdown row */}
       <div className="flex items-center gap-4 text-xs text-gray-500 border-t border-gray-200/70 pt-3 mb-3">
         <span>
-          📝 Base:{" "}
+          ☀️ Base:{" "}
           <span className="font-medium text-gray-900">{xpBreakdown.base}</span>
         </span>
         <span>

@@ -169,7 +169,7 @@ export default function SearchRescue({ questions, onComplete }: SearchRescueProp
               onClick={handleNext}
               className="px-6 py-2.5 rounded-xl text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition-colors"
             >
-              {currentIndex + 1 >= total ? "🏁 Finish" : "Next Question →"}
+              {currentIndex + 1 >= total ? "⛑️ Finish" : "Next Question →"}
             </button>
           </div>
         )}
