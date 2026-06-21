@@ -374,6 +374,7 @@ export default function WatchPage() {
         questionId: question.id,
         selectedOption,
         isCorrect: correct,
+        timeToAnswer: null,
       }).catch(console.error);
     },
     [trailMarkers, currentQuestionIdx, sessionId, submitAnswer]

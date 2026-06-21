@@ -15,7 +15,7 @@ export default api({
     questionId: z.string().uuid(),
     selectedOption: z.number(),
     isCorrect: z.boolean(),
-    timeToAnswer: z.number().nullable(),
+    timeToAnswer: z.number().nullable().optional(),
   }),
 
   output: z.object({
