@@ -27,6 +27,7 @@ export default api({
   }),
 
   output: z.object({
+    hasCompletedSession: z.boolean(),
     hasPausedSession: z.boolean(),
     session: z.object({
       id: z.string(),
@@ -41,6 +42,17 @@ export default api({
   }),
 
   async run(ctx, { clipId, viewerId }) {
+    // Check for completed session first
+    const completedRows = await ctx.integrations.db.query(
+      `SELECT 1 FROM cliptracker_v2_sessions
+       WHERE clip_id = $1 AND viewer_id = $2 AND completed = true
+       LIMIT 1`,
+      z.object({}),
+      [clipId, viewerId],
+      { label: "Check for completed session" }
+    );
+    const hasCompletedSession = completedRows.length > 0;
+
     const rows = await ctx.integrations.db.query(
       `SELECT id, paused_elapsed_seconds, paused_focus_seconds, paused_blur_seconds,
               paused_answered_ids, paused_correct_count, paused_phase, paused_at::text
@@ -55,7 +67,7 @@ export default api({
     );
 
     if (rows.length === 0) {
-      return { hasPausedSession: false, session: null };
+      return { hasCompletedSession, hasPausedSession: false, session: null };
     }
 
     const row = rows[0];
@@ -64,6 +76,7 @@ export default api({
       : JSON.parse(row.paused_answered_ids);
 
     return {
+      hasCompletedSession,
       hasPausedSession: true,
       session: {
         id: row.id,

@@ -192,10 +192,17 @@ export default function WatchPage() {
     if (!clipId || !viewer?.id) return;
     executeApi("GetPausedSession", { clipId, viewerId: viewer.id })
       .then((result: any) => {
+        // 1. Completed → redirect to Ranger Report
+        if (result?.hasCompletedSession) {
+          navigate(`/report/${clipId}`, { replace: true });
+          return;
+        }
+        // 2. Paused → show resume prompt
         if (result?.hasPausedSession && result.session) {
           setPausedSessionData(result.session);
           setPhase("resume_prompt");
         } else {
+          // 3. Fresh → start new session
           startSession({ clipId, viewerId: viewer.id })
             .then((res: any) => {
               setSessionId(res?.sessionId ?? null);
@@ -212,7 +219,7 @@ export default function WatchPage() {
           })
           .catch(console.error);
       });
-  }, [clipId, viewer?.id, startSession]);
+  }, [clipId, viewer?.id, startSession, navigate]);
 
   const handleResume = useCallback(() => {
     if (!pausedSessionData) return;
