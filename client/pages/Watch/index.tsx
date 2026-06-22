@@ -53,6 +53,7 @@ export default function WatchPage() {
   const playerRef = useRef<any>(null);
 
   const { run: startSession } = useApi("StartSession");
+  const { run: resetSession } = useApi("ResetSession");
   const { run: submitAnswer } = useApi("SubmitAnswer");
   const { run: endSession } = useApi("EndSession");
   const { run: awardXP } = useApi("AwardXP");
@@ -202,22 +203,29 @@ export default function WatchPage() {
     if (!clipId || !viewer?.id) return;
     executeApi("GetPausedSession", { clipId, viewerId: viewer.id })
       .then((result: any) => {
-        // 1. Paused → show resume prompt (takes priority over completed)
+        // 1. Passed clip via deep link (no ?source=library) → redirect to report
+        if (result?.hasCompletedSession && !fromLibrary.current) {
+          navigate(`/report/${clipId}`, { replace: true });
+          return;
+        }
+        // 2. Paused session → show resume prompt
         if (result?.hasPausedSession && result.session) {
           setPausedSessionData(result.session);
           setPhase("resume_prompt");
-        } else if (result?.hasCompletedSession && !fromLibrary.current) {
-          // 2. Completed via deep link (no paused session) → redirect to Ranger Report
-          navigate(`/report/${clipId}`, { replace: true });
-        } else {
-          // 3. Fresh → start new session
-          startSession({ clipId, viewerId: viewer.id })
-            .then((res: any) => {
-              setSessionId(res?.sessionId ?? null);
-              setPhase("watching");
-            })
-            .catch(console.error);
+          return;
         }
+        // 3. No paused, not passed → start/get session
+        startSession({ clipId, viewerId: viewer.id })
+          .then((res: any) => {
+            if (res?.alreadyPassed) {
+              // Safety: shouldn't reach here, but redirect if passed
+              navigate(`/report/${clipId}`, { replace: true });
+              return;
+            }
+            setSessionId(res?.sessionId ?? null);
+            setPhase("watching");
+          })
+          .catch(console.error);
       })
       .catch(() => {
         startSession({ clipId, viewerId: viewer.id })
@@ -251,13 +259,19 @@ export default function WatchPage() {
     tabAwayCountRef.current = 0;
     setCorrectCount(0);
     setAnsweredQuestions(new Set());
-    startSession({ clipId, viewerId: viewer.id })
+    // Use ResetSession to wipe responses + reset existing session row (not create a new one)
+    resetSession({ clipId, viewerId: viewer.id })
       .then((res: any) => {
+        if (res?.alreadyPassed) {
+          // Clip is done — shouldn't be able to Fresh Start a passed clip
+          navigate(`/report/${clipId}`, { replace: true });
+          return;
+        }
         setSessionId(res?.sessionId ?? null);
         setPhase("watching");
       })
       .catch(console.error);
-  }, [clipId, viewer?.id, startSession]);
+  }, [clipId, viewer?.id, resetSession, navigate]);
 
   const handlePauseAndBack = useCallback(async () => {
     if (sessionId && phase === "watching") {
