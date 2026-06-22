@@ -12,7 +12,7 @@ import ResumePrompt from "@/components/ResumePrompt";
 
 import { WistiaPlayer } from "@wistia/wistia-player-react";
 import { toast } from "sonner";
-import { getClipEmoji } from "@/lib/clip-emojis";
+
 
 type WatchPhase =
   | "loading_resume"
@@ -605,7 +605,7 @@ export default function WatchPage() {
   if (phase === "resume_prompt" && pausedSessionData) {
     return (
       <ResumePrompt
-        clipTitle={`${getClipEmoji(clip.sortOrder)} Clip ${clip.sortOrder}: ${clip.title}`}
+        clipTitle={`Clip ${clip.sortOrder}: ${clip.title}`}
         elapsedSeconds={pausedSessionData.elapsedSeconds}
         durationSeconds={clip.durationSeconds}
         answeredCount={pausedSessionData.answeredQuestionIds.length}
@@ -622,7 +622,7 @@ export default function WatchPage() {
       <div className="bg-white border-b border-gray-200">
         <div className="px-4 py-2">
           <h2 className="text-lg font-bold text-gray-900">
-            {getClipEmoji(clip.sortOrder)} {clip.title}
+            {clip.title}
           </h2>
           <p className="text-sm text-gray-500 mt-0.5">
             {durationFormatted && <><span>⏱️ {durationFormatted}</span><span className="mx-1.5 text-gray-300">·</span></>}
@@ -729,7 +729,7 @@ export default function WatchPage() {
       {/* Ranger Report */}
       {phase === "ranger_report" && reportReady && (
         <RangerReport
-          clipTitle={`${getClipEmoji(clip.sortOrder)} ${clip.title}`}
+          clipTitle={clip.title}
           totalQuestions={trailMarkers.length || 1}
           correctAnswers={correctCount}
           score={score}
@@ -765,7 +765,7 @@ export default function WatchPage() {
             overview={clipData.weatherStorm.overview}
             takeaways={clipData.weatherStorm.takeaways}
             timerMinutes={2}
-            clipTitle={`${getClipEmoji(clip.sortOrder)} ${clip.title}`}
+            clipTitle={clip.title}
             onTimerExpire={handleWeatherExpire}
           />
         ) : (

@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback } from "react";
 import { useParams, useNavigate } from "react-router";
 import { useViewer } from "@/components/ViewerContext";
 import { useApiData } from "@/hooks/useApiData.js";
-import { getClipEmoji } from "@/lib/clip-emojis";
+
 import PageHeader from "@/components/PageHeader";
 import ScoreTiles from "@/components/report/ScoreTiles";
 import BackTrackSection from "@/components/report/BackTrackSection";
@@ -108,7 +108,7 @@ export default function ReportPage() {
     resources,
   } = reportData;
 
-  const emoji = getClipEmoji(clipSortOrder);
+
   const passed = engagementScore !== null && engagementScore >= engagementThreshold;
   const weatherCard = weatherData?.card;
   const hasIncorrect = incorrectQuestions.length > 0;
@@ -123,7 +123,7 @@ export default function ReportPage() {
       <PageHeader
         emoji="📋"
         title="Ranger Report Review"
-        subtitle={`${emoji} Clip ${clipSortOrder}: ${clipTitle}`}
+        subtitle={`Clip ${clipSortOrder}: ${clipTitle}`}
         showBackButton={false}
         subtitleClassName="text-base font-semibold text-indigo-600 mt-0.5"
       />
