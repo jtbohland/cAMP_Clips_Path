@@ -50,10 +50,10 @@ export default api({
     const { total: totalQuestions, correct: correctAnswers } = responseStats[0];
 
     // Calculate scores (0-100 each)
-    // Question score: percentage of correct answers (50% weight)
+    // Question score: percentage of correct answers (25% weight)
     const questionScore = totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0;
 
-    // Focus score: penalty based on tab-away count (30% weight)
+    // Focus score: penalty based on tab-away count (30% weight — unchanged)
     // 0 tab-aways = 100%, 1 = 80%, 2 = 60%, 3 = 40%, 4+ = 20%
     const focusScore = tabAwayCount === 0 ? 100
       : tabAwayCount === 1 ? 80
@@ -61,7 +61,7 @@ export default api({
       : tabAwayCount === 3 ? 40
       : 20;
 
-    // Time score: how much of the video's duration was spent watching (20% weight)
+    // Time score: how much of the video's duration was spent watching (45% weight)
     // Cap at 100 (viewer can spend more time than video duration due to pauses)
     const timeScore = clipDurationSeconds > 0 
       ? Math.min((totalTimeSeconds / clipDurationSeconds) * 100, 100) 
@@ -69,7 +69,7 @@ export default api({
 
     // Weighted engagement score
     const engagementScore = Math.round(
-      (questionScore * 0.5) + (focusScore * 0.3) + (timeScore * 0.2)
+      (questionScore * 0.25) + (focusScore * 0.3) + (timeScore * 0.45)
     );
 
     const passed = engagementScore >= 80;

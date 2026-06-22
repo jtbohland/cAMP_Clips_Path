@@ -19,6 +19,7 @@ export default api({
   input: z.object({
     clipId: z.string().uuid(),
     viewerId: z.string().uuid(),
+    adminForce: z.boolean().default(false),
   }),
 
   output: z.object({
@@ -27,16 +28,17 @@ export default api({
     alreadyPassed: z.boolean(),
   }),
 
-  async run(ctx, { clipId, viewerId }) {
+  async run(ctx, { clipId, viewerId, adminForce }) {
     // Find the existing session
     const SessionSchema = z.object({
       id: z.string(),
       completed: z.boolean(),
       engagement_score: z.coerce.number().nullable(),
+      paused_elapsed_seconds: z.coerce.number().nullable(),
     });
 
     const sessions = await ctx.integrations.db.query(
-      `SELECT id, completed, engagement_score
+      `SELECT id, completed, engagement_score, paused_elapsed_seconds
        FROM cliptracker_v2_sessions
        WHERE clip_id = $1 AND viewer_id = $2
        LIMIT 1`,
@@ -52,11 +54,22 @@ export default api({
     const session = sessions[0];
     const passed = session.completed && (session.engagement_score ?? 0) >= 80;
 
-    if (passed) {
+    if (passed && !adminForce) {
       return {
         sessionId: session.id,
         success: false,
         alreadyPassed: true,
+      };
+    }
+
+    // Block Fresh Start if no meaningful progress (paused_elapsed_seconds ≤ 1)
+    const elapsed = session.paused_elapsed_seconds ?? 0;
+    if (elapsed <= 1 && !adminForce) {
+      // Nothing to reset — session has no meaningful progress
+      return {
+        sessionId: session.id,
+        success: true,
+        alreadyPassed: false,
       };
     }
 

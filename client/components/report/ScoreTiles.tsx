@@ -46,15 +46,23 @@ export default function ScoreTiles({
         <p className="text-xs font-medium text-gray-700 mt-1.5">🪧 Trail Markers</p>
       </div>
 
-      {/* Tile 3: Search & Rescue (only if triggered) */}
-      {searchRescueTriggered && (
-        <div className="flex-1 rounded-xl bg-gray-50 border border-gray-100 p-4 text-center">
-          <div className="text-3xl font-bold text-gray-900">
-            {searchRescueCorrect}/{searchRescueTotal}
-          </div>
-          <p className="text-xs font-medium text-gray-700 mt-1.5">🚁 Search & Rescue</p>
-        </div>
-      )}
+      {/* Tile 3: Always present — Marker Master OR S&R score */}
+      <div className="flex-1 rounded-xl bg-gray-50 border border-gray-100 p-4 text-center">
+        {searchRescueTriggered ? (
+          <>
+            <div className="text-3xl font-bold text-gray-900">
+              {searchRescueCorrect}/{searchRescueTotal}
+            </div>
+            <p className="text-xs font-medium text-gray-700 mt-1.5">🚁 Search & Rescue</p>
+          </>
+        ) : (
+          <>
+            <div className="text-3xl">✨</div>
+            <p className="text-xs font-bold text-green-700 mt-1.5">Marker Master!</p>
+            <p className="text-[10px] text-gray-400 mt-0.5">Search & Rescue wasn't needed</p>
+          </>
+        )}
+      </div>
     </div>
   );
 }
