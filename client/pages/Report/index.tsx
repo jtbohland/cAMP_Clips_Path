@@ -9,6 +9,7 @@ import BackTrackSection from "@/components/report/BackTrackSection";
 import XpCollectedSection from "@/components/report/XpCollectedSection";
 import WeatherStormCard from "@/components/report/WeatherStormCard";
 import RewatchPlayer from "@/components/report/RewatchPlayer";
+import CampGearSection from "@/components/report/CampGearSection";
 
 /** Badge ID → display info */
 const BADGE_MAP: Record<string, { name: string; emoji: string }> = {
@@ -104,6 +105,7 @@ export default function ReportPage() {
     badges,
     clipTitle,
     clipSortOrder,
+    resources,
   } = reportData;
 
   const emoji = getClipEmoji(clipSortOrder);
@@ -197,6 +199,13 @@ export default function ReportPage() {
                 );
               })}
             </div>
+          </div>
+        )}
+
+        {/* 🎒 cAMP Gear */}
+        {resources && resources.length > 0 && (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+            <CampGearSection resources={resources} />
           </div>
         )}
 

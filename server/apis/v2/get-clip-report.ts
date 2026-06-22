@@ -69,6 +69,11 @@ export default api({
     clipTitle: z.string(),
     clipSortOrder: z.number(),
     videoUrl: z.string(),
+    resources: z.array(z.object({
+      label: z.string(),
+      url: z.string(),
+      type: z.string(),
+    })).nullable(),
   }),
 
   async run(ctx, { clipId, viewerId }) {
@@ -202,19 +207,20 @@ export default api({
       { label: "Get badges for clip" }
     );
 
-    // Get clip title, sort_order, and video_url
+    // Get clip title, sort_order, video_url, and resources
     const clipInfo = await ctx.integrations.db.query(
-      `SELECT title, sort_order, video_url FROM cliptracker_v2_clips WHERE id = $1`,
+      `SELECT title, sort_order, video_url, resources FROM cliptracker_v2_clips WHERE id = $1`,
       z.object({
         title: z.string(),
         sort_order: z.coerce.number(),
         video_url: z.string(),
+        resources: z.any().nullable(),
       }),
       [clipId],
       { label: "Get clip info" }
     );
 
-    const clip = clipInfo[0] ?? { title: "Unknown Clip", sort_order: 0, video_url: "" };
+    const clip = clipInfo[0] ?? { title: "Unknown Clip", sort_order: 0, video_url: "", resources: null };
 
     const totalXpEarned = xpEvents.reduce((sum, e) => sum + e.xp_amount, 0);
 
@@ -243,6 +249,7 @@ export default api({
       clipTitle: clip.title,
       clipSortOrder: clip.sort_order,
       videoUrl: clip.video_url,
+      resources: Array.isArray(clip.resources) ? clip.resources : null,
     };
   },
 });
