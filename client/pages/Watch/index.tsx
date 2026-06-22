@@ -510,7 +510,7 @@ export default function WatchPage() {
   useEffect(() => { handleFinishWatchingRef.current = handleFinishWatching; }, [handleFinishWatching]);
 
   const handleSearchRescueComplete = useCallback(
-    (passed: boolean, rescueScore: number) => {
+    async (passed: boolean, rescueScore: number) => {
       setSearchRescueTriggered(true);
       setSearchRescueScore(rescueScore);
 
@@ -521,51 +521,60 @@ export default function WatchPage() {
 
       if (viewer?.id && clipId && sessionId) {
         const clipDuration = clipData?.clip?.durationSeconds ?? elapsedSeconds;
-        awardXP({
-          viewerId: viewer.id,
-          clipId,
-          sessionId,
-          trailMarkerCorrect: correctCount,
-          trailMarkerTotal: trailMarkers.length,
-          passedFirstPass: false,
-          searchRescueTriggered: true,
-          searchRescueScore: rescueScore,
-          searchRescueTotal: srTotal,
-          weatherStormTriggered: false,
-          totalTimeSeconds: elapsedSeconds,
-          clipDurationSeconds: clipDuration,
-        })
-          .then((res: any) => {
-            if (res?.badgesEarned?.length > 0) {
-              res.badgesEarned.forEach((b: any) => {
-                toast.success(`${b.emoji} Badge earned: ${b.name} (+${b.xp} XP)`);
-              });
-            }
-            if (res?.newTier) {
-              toast.success(`${res.newTier.emoji} Tier up! You're now a ${res.newTier.name}!`);
-            }
-            // Capture XP data for the S&R pass popup (same pattern as Ranger Report)
-            if (passed) {
-              const sessionBreakdown = res?.sessionBreakdown ?? { base: 0, milestones: 0, bonuses: 0 };
-              setXpData({
-                sessionBreakdown,
-                totalXp: res?.totalXp ?? 0,
-                tier: { name: "Base Camper", emoji: "\u{1F3D5}\uFE0F" },
-              });
-            }
-          })
-          .catch(console.error);
-      }
 
-      if (passed) {
-        if (viewer?.id && clipId && sessionId) {
-          completeClipPath({
+        // Await awardXP so XP data is ready for the popup before it renders
+        try {
+          const res: any = await awardXP({
             viewerId: viewer.id,
             clipId,
             sessionId,
-            path: "search_rescue",
-          }).catch(console.error);
+            trailMarkerCorrect: correctCount,
+            trailMarkerTotal: trailMarkers.length,
+            passedFirstPass: false,
+            searchRescueTriggered: true,
+            searchRescueScore: rescueScore,
+            searchRescueTotal: srTotal,
+            weatherStormTriggered: false,
+            totalTimeSeconds: elapsedSeconds,
+            clipDurationSeconds: clipDuration,
+          });
+          if (res?.badgesEarned?.length > 0) {
+            res.badgesEarned.forEach((b: any) => {
+              toast.success(`${b.emoji} Badge earned: ${b.name} (+${b.xp} XP)`);
+            });
+          }
+          if (res?.newTier) {
+            toast.success(`${res.newTier.emoji} Tier up! You're now a ${res.newTier.name}!`);
+          }
+          // Capture XP data for the S&R pass popup (same pattern as Ranger Report)
+          if (passed) {
+            const sessionBreakdown = res?.sessionBreakdown ?? { base: 0, milestones: 0, bonuses: 0 };
+            setXpData({
+              sessionBreakdown,
+              totalXp: res?.totalXp ?? 0,
+              tier: { name: "Base Camper", emoji: "\u{1F3D5}\uFE0F" },
+            });
+          }
+        } catch (err) {
+          console.error("awardXP failed:", err);
         }
+
+        // Await completeClipPath so completed=true is written BEFORE popup/navigation
+        if (passed) {
+          try {
+            await completeClipPath({
+              viewerId: viewer.id,
+              clipId,
+              sessionId,
+              path: "search_rescue",
+            });
+          } catch (err) {
+            console.error("completeClipPath failed:", err);
+          }
+        }
+      }
+
+      if (passed) {
         setPhase("search_rescue_passed");
       } else {
         setPhase("weather_storm");
@@ -574,36 +583,42 @@ export default function WatchPage() {
     [viewer, clipId, sessionId, clipData, elapsedSeconds, recoveryQuestions, correctCount, trailMarkers, awardXP, completeClipPath]
   );
 
-  const handleWeatherExpire = useCallback(() => {
+  const handleWeatherExpire = useCallback(async () => {
     if (viewer?.id && clipId && sessionId) {
-      completeClipPath({
-        viewerId: viewer.id,
-        clipId,
-        sessionId,
-        path: "weather_storm",
-      }).catch(console.error);
+      // Await completeClipPath so completed=true is written BEFORE navigating to Library
+      try {
+        await completeClipPath({
+          viewerId: viewer.id,
+          clipId,
+          sessionId,
+          path: "weather_storm",
+        });
+      } catch (err) {
+        console.error("completeClipPath failed:", err);
+      }
 
       const clipDuration = clipData?.clip?.durationSeconds ?? elapsedSeconds;
-      awardXP({
-        viewerId: viewer.id,
-        clipId,
-        sessionId,
-        trailMarkerCorrect: correctCount,
-        trailMarkerTotal: trailMarkers.length,
-        passedFirstPass: false,
-        searchRescueTriggered: true,
-        searchRescueScore: searchRescueScore,
-        searchRescueTotal: recoveryQuestions.length,
-        weatherStormTriggered: true,
-        totalTimeSeconds: elapsedSeconds,
-        clipDurationSeconds: clipDuration,
-      })
-        .then((res: any) => {
-          if (res?.xpAwarded) {
-            toast.success(`+${res.xpAwarded} XP — persistence pays off!`);
-          }
-        })
-        .catch(console.error);
+      try {
+        const res: any = await awardXP({
+          viewerId: viewer.id,
+          clipId,
+          sessionId,
+          trailMarkerCorrect: correctCount,
+          trailMarkerTotal: trailMarkers.length,
+          passedFirstPass: false,
+          searchRescueTriggered: true,
+          searchRescueScore: searchRescueScore,
+          searchRescueTotal: recoveryQuestions.length,
+          weatherStormTriggered: true,
+          totalTimeSeconds: elapsedSeconds,
+          clipDurationSeconds: clipDuration,
+        });
+        if (res?.xpAwarded) {
+          toast.success(`+${res.xpAwarded} XP — persistence pays off!`);
+        }
+      } catch (err) {
+        console.error("awardXP failed:", err);
+      }
     }
     navigate("/library");
   }, [navigate, viewer, clipId, sessionId, clipData, elapsedSeconds, correctCount, trailMarkers, searchRescueScore, recoveryQuestions, awardXP, completeClipPath]);
