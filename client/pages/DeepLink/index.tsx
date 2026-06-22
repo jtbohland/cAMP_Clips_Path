@@ -3,7 +3,7 @@ import { useViewer } from "@/components/ViewerContext";
 import { useApiData } from "@/hooks/useApiData.js";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { getClipEmoji } from "@/lib/clip-emojis";
+
 
 /**
  * Deep link route: /clip/:clipId
@@ -114,7 +114,7 @@ export default function DeepLinkPage() {
       (c: any) => c.sortOrder === targetClip.sortOrder - 1
     );
     const prevTitle = prevClip
-      ? `${getClipEmoji(prevClip.sortOrder)} Day ${prevClip.sortOrder}: ${prevClip.title}`
+      ? `Day ${prevClip.sortOrder}: ${prevClip.title}`
       : "the previous clip";
 
     return (
