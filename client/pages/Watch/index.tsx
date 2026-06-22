@@ -718,6 +718,7 @@ export default function WatchPage() {
                 fullscreenButton={false}
                 autoPlay={false}
                 silentAutoPlay={false}
+                resumable={false}
                 time={resumeFromSecondsRef.current ?? undefined}
                 onPlay={handleWistiaPlay}
                 onPause={handleWistiaPause}
