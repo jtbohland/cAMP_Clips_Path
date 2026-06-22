@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
-import { useParams, useNavigate } from "react-router";
+import { useParams, useNavigate, useSearchParams } from "react-router";
 import { useApiData } from "@/hooks/useApiData.js";
 import { useApi } from "@/hooks/useApi.js";
 import { executeApi } from "@/lib/executeApi.js";
@@ -187,6 +187,16 @@ export default function WatchPage() {
   }, [clipData]);
   // ────────────────────────────────────────────────────────────────────────────
 
+  // Read and clear source param ("library" = clicked from Library, absent = deep link)
+  const [searchParams, setSearchParams] = useSearchParams();
+  const fromLibrary = useRef(searchParams.get("source") === "library");
+  useEffect(() => {
+    if (searchParams.has("source")) {
+      searchParams.delete("source");
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Session init on mount
   useEffect(() => {
     if (!clipId || !viewer?.id) return;
@@ -196,8 +206,8 @@ export default function WatchPage() {
         if (result?.hasPausedSession && result.session) {
           setPausedSessionData(result.session);
           setPhase("resume_prompt");
-        } else if (result?.hasCompletedSession) {
-          // 2. Completed (no paused session) → redirect to Ranger Report
+        } else if (result?.hasCompletedSession && !fromLibrary.current) {
+          // 2. Completed via deep link (no paused session) → redirect to Ranger Report
           navigate(`/report/${clipId}`, { replace: true });
         } else {
           // 3. Fresh → start new session

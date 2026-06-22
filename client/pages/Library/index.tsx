@@ -185,7 +185,7 @@ export default function LibraryPage() {
                       attempts={clip.attempts ?? 0}
                       xpEarned={clip.xpEarned ?? 0}
                       previousClipTitle={prevClip ? prevClip.title : undefined}
-                      onWatch={() => navigate(`/watch/${clip.id}`)}
+                      onWatch={() => navigate(`/watch/${clip.id}?source=library`)}
                       onReview={() => navigate(`/report/${clip.id}`)}
                     />
                   );
