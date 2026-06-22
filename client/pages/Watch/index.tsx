@@ -8,6 +8,7 @@ import QuizOverlayV2 from "@/components/QuizOverlayV2";
 import RangerReport from "@/components/RangerReport";
 import SearchRescue from "@/components/SearchRescue";
 import WeatherStorm from "@/components/WeatherStorm";
+import SearchRescuePassPopup from "@/components/SearchRescuePassPopup";
 import ResumePrompt from "@/components/ResumePrompt";
 
 import { WistiaPlayer } from "@wistia/wistia-player-react";
@@ -21,6 +22,7 @@ type WatchPhase =
   | "trail_marker"
   | "ranger_report"
   | "search_rescue"
+  | "search_rescue_passed"
   | "weather_storm"
   | "complete";
 
@@ -69,6 +71,7 @@ export default function WatchPage() {
   const [totalTrailMarkers, setTotalTrailMarkers] = useState(0);
   const [score, setScore] = useState(0);
   const [searchRescueScore, setSearchRescueScore] = useState<number | null>(null);
+  const [srCorrectCount, setSrCorrectCount] = useState(0);
   const [searchRescueTriggered, setSearchRescueTriggered] = useState(false);
   const [engagementScore, setEngagementScore] = useState<number | null>(null);
   const [incorrectQuestions, setIncorrectQuestions] = useState<
@@ -511,9 +514,13 @@ export default function WatchPage() {
       setSearchRescueTriggered(true);
       setSearchRescueScore(rescueScore);
 
+      // Compute actual correct count from percentage
+      const srTotal = recoveryQuestions.length;
+      const computedCorrect = Math.round((rescueScore / 100) * srTotal);
+      setSrCorrectCount(computedCorrect);
+
       if (viewer?.id && clipId && sessionId) {
         const clipDuration = clipData?.clip?.durationSeconds ?? elapsedSeconds;
-        const srTotal = recoveryQuestions.length;
         awardXP({
           viewerId: viewer.id,
           clipId,
@@ -537,6 +544,15 @@ export default function WatchPage() {
             if (res?.newTier) {
               toast.success(`${res.newTier.emoji} Tier up! You're now a ${res.newTier.name}!`);
             }
+            // Capture XP data for the S&R pass popup (same pattern as Ranger Report)
+            if (passed) {
+              const sessionBreakdown = res?.sessionBreakdown ?? { base: 0, milestones: 0, bonuses: 0 };
+              setXpData({
+                sessionBreakdown,
+                totalXp: res?.totalXp ?? 0,
+                tier: { name: "Base Camper", emoji: "\u{1F3D5}\uFE0F" },
+              });
+            }
           })
           .catch(console.error);
       }
@@ -550,12 +566,12 @@ export default function WatchPage() {
             path: "search_rescue",
           }).catch(console.error);
         }
-        navigate("/library");
+        setPhase("search_rescue_passed");
       } else {
         setPhase("weather_storm");
       }
     },
-    [navigate, viewer, clipId, sessionId, clipData, elapsedSeconds, recoveryQuestions, correctCount, trailMarkers, awardXP, completeClipPath]
+    [viewer, clipId, sessionId, clipData, elapsedSeconds, recoveryQuestions, correctCount, trailMarkers, awardXP, completeClipPath]
   );
 
   const handleWeatherExpire = useCallback(() => {
@@ -787,6 +803,23 @@ export default function WatchPage() {
         />
       )}
 
+      {/* S&R Pass Popup */}
+      {phase === "search_rescue_passed" && (
+        <SearchRescuePassPopup
+          clipTitle={clip.title}
+          srCorrect={srCorrectCount}
+          srTotal={recoveryQuestions.length}
+          srScore={searchRescueScore ?? 0}
+          xpData={xpData ?? undefined}
+          onBackToClips={() => navigate("/library")}
+          onContinueToNext={
+            clipData?.nextClipId
+              ? () => navigate(`/watch/${clipData.nextClipId}`)
+              : undefined
+          }
+        />
+      )}
+
       {/* Weather the Storm */}
       {phase === "weather_storm" && (
         clipData.weatherStorm ? (
@@ -796,6 +829,10 @@ export default function WatchPage() {
             timerMinutes={2}
             clipTitle={clip.title}
             onTimerExpire={handleWeatherExpire}
+            trailCorrect={correctCount}
+            trailTotal={trailMarkers.length}
+            srCorrect={srCorrectCount}
+            srTotal={recoveryQuestions.length}
           />
         ) : (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
