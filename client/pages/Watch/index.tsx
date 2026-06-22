@@ -668,6 +668,7 @@ export default function WatchPage() {
                 ref={playerRef}
                 mediaId={wistiaVideoId}
                 playerColor="ff5733"
+                fullscreenButton={false}
                 autoPlay={false}
                 silentAutoPlay={false}
                 time={resumeFromSecondsRef.current ?? undefined}
