@@ -20,7 +20,7 @@ const ClipRow = z.object({
   video_url: z.string().nullable(),
   duration_seconds: z.coerce.number().nullable(),
   sort_order: z.coerce.number(),
-  transcript: z.string().nullable(),
+  transcript: z.any().nullable(),
 });
 
 const WeatherRow = z.object({
@@ -52,7 +52,7 @@ export default api({
       videoUrl: z.string().nullable(),
       durationSeconds: z.number().nullable(),
       sortOrder: z.number(),
-      transcript: z.string().nullable(),
+      transcript: z.any().nullable(),
     }),
     questions: z.array(
       z.object({
