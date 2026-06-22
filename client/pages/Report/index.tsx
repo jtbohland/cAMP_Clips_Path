@@ -123,15 +123,16 @@ export default function ReportPage() {
       <PageHeader
         emoji="📋"
         title="Ranger Report Review"
-        subtitle={`Clip ${clipSortOrder}: ${clipTitle}`}
         showBackButton={false}
-        subtitleClassName="text-base font-semibold text-indigo-600 mt-0.5"
       />
 
       <div className="flex-1 p-4 max-w-2xl mx-auto w-full space-y-5 pb-8">
 
         {/* Score Tiles */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+          <p className="text-base font-medium text-indigo-500 text-center mb-4">
+            Clip {clipSortOrder}: {clipTitle}
+          </p>
           <ScoreTiles
             engagementScore={engagementScore}
             engagementThreshold={engagementThreshold}

@@ -78,7 +78,7 @@ export default function ClipLibraryCard({
       const deepLink = `https://app.superblocks.com/code-mode/applications/fbc1d457-949d-4756-9cd4-ca723f3cb5ac/watch/${clip.id}`;
       navigator.clipboard
         .writeText(deepLink)
-        .then(() => toast("Link copied to clipboard!", { icon: "🔗", style: { backgroundColor: "#ffffff", color: "#111827", border: "1px solid #E5E7EB" } }))
+        .then(() => toast("🔗 Link Copied!", { style: { backgroundColor: "#dcfce7", color: "#166534", border: "1px solid #bbf7d0" } }))
         .catch(() => toast.error("Failed to copy link"));
     },
     [clip.id]
@@ -110,8 +110,8 @@ export default function ClipLibraryCard({
               </span>
             )}
             {state === "in_progress" && (
-              <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-700">
-                ▶ In Progress
+              <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-yellow-100 text-yellow-800">
+                🐌 In Progress
               </span>
             )}
             <button
