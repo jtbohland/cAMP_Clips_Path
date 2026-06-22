@@ -432,7 +432,7 @@ export default function WatchPage() {
         sessionId,
         totalFocusSeconds: focusSeconds,
         totalBlurSeconds: blurSeconds,
-        totalTimeSeconds: elapsedSeconds,
+        totalTimeSeconds: focusSeconds,
         clipDurationSeconds: clipDuration,
         tabAwayCount: tabAwayCountRef.current,
       })
