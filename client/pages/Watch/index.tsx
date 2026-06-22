@@ -9,7 +9,7 @@ import RangerReport from "@/components/RangerReport";
 import SearchRescue from "@/components/SearchRescue";
 import WeatherStorm from "@/components/WeatherStorm";
 import ResumePrompt from "@/components/ResumePrompt";
-import TranscriptPanel from "@/components/TranscriptPanel";
+
 import { WistiaPlayer } from "@wistia/wistia-player-react";
 import { toast } from "sonner";
 import { getClipEmoji } from "@/lib/clip-emojis";
@@ -563,12 +563,14 @@ export default function WatchPage() {
     navigate("/library");
   }, [navigate, viewer, clipId, sessionId, clipData, elapsedSeconds, correctCount, trailMarkers, searchRescueScore, recoveryQuestions, awardXP, completeClipPath]);
 
-  const handleTranscriptSeek = useCallback((seconds: number) => {
-    const p = playerRef.current;
-    if (p) {
-      p.currentTime = seconds;
-      p.play();
-    }
+  // Load Wistia transcript web component script
+  useEffect(() => {
+    const SCRIPT_SRC = "https://fast.wistia.com/assets/external/transcript.js";
+    if (document.querySelector(`script[src="${SCRIPT_SRC}"]`)) return;
+    const script = document.createElement("script");
+    script.src = SCRIPT_SRC;
+    script.async = true;
+    document.head.appendChild(script);
   }, []);
 
   // ── Render ──────────────────────────────────────────────────────────────────
@@ -707,13 +709,10 @@ export default function WatchPage() {
           )}
         </div>
 
-        {showTranscript && (
-          <div className="w-[300px] flex-shrink-0">
-            <TranscriptPanel
-              transcript={clip.transcript ?? null}
-              currentSeconds={elapsedSeconds}
-              onSeek={handleTranscriptSeek}
-            />
+        {showTranscript && wistiaVideoId && (
+          <div className="w-[340px] flex-shrink-0 border-l border-gray-200 overflow-y-auto bg-white">
+            {/* @ts-expect-error wistia-transcript is a web component */}
+            <wistia-transcript media-id={wistiaVideoId} accent-color="#4F46E5" />
           </div>
         )}
       </div>
