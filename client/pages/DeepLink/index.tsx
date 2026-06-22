@@ -4,7 +4,6 @@ import { useApiData } from "@/hooks/useApiData.js";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 
-
 /**
  * Deep link route: /clip/:clipId
  * Routes learners based on their exact state for this clip:
@@ -108,27 +107,28 @@ export default function DeepLinkPage() {
     );
   }
 
-  // Clip is locked — show locked message
+  // Clip is locked — show locked modal overlay
   if (!targetClip.unlocked && !viewer?.isAdmin) {
-    const prevClip = clips.find(
-      (c: any) => c.sortOrder === targetClip.sortOrder - 1
-    );
-    const prevTitle = prevClip
-      ? `Day ${prevClip.sortOrder}: ${prevClip.title}`
-      : "the previous clip";
-
     return (
-      <div className="flex items-center justify-center h-full p-6">
-        <div className="max-w-md p-6 text-center bg-white rounded-xl shadow-lg">
-          <span className="text-4xl mb-3 block">🔒</span>
-          <h2 className="text-lg font-bold text-gray-900 mb-2">Clip Locked</h2>
-          <p className="text-sm text-gray-500 mb-4">
-            You haven't unlocked this session yet. Complete{" "}
-            <strong>{prevTitle}</strong> first to continue your climb. 🏔️
-          </p>
-          <Link to="/library">
-            <Button variant="default">← Back to cAMP Clips</Button>
-          </Link>
+      <div className="flex items-center justify-center h-full p-6 bg-gray-100">
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden">
+          {/* Yellow header */}
+          <div className="bg-amber-50 border-b border-amber-100 px-6 py-5 text-center">
+            <h2 className="text-lg font-bold text-gray-900">
+              ⚠️ Clip Locked — You're Off the Trail!
+            </h2>
+          </div>
+          {/* Body */}
+          <div className="px-6 py-6 text-center">
+            <p className="text-sm text-gray-600 leading-relaxed mb-6">
+              Complete the previous clip to unlock this one and stay on your path to the summit.
+            </p>
+            <Link to="/library">
+              <button className="w-full py-3 rounded-lg text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition-colors">
+                🧭 Back to cAMP Clips
+              </button>
+            </Link>
+          </div>
         </div>
       </div>
     );
