@@ -53,7 +53,7 @@ export default function RangerReport({
         {/* Header */}
         <div className="px-6 pt-6 pb-4">
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-2xl">✨</span>
+            <span className="text-2xl">📋</span>
             <h2 className="text-xl font-bold text-gray-900">Ranger Report</h2>
           </div>
           <p className="text-sm text-gray-500">{clipTitle}</p>

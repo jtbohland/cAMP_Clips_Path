@@ -75,10 +75,10 @@ export default function ClipLibraryCard({
   const handleShare = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
-      const deepLink = `${window.location.origin}/clip/${clip.id}`;
+      const deepLink = `https://app.superblocks.com/code-mode/applications/fbc1d457-949d-4756-9cd4-ca723f3cb5ac/watch/${clip.id}`;
       navigator.clipboard
         .writeText(deepLink)
-        .then(() => toast("✅ Link copied!", { style: { backgroundColor: "#ffffff", color: "#111827", border: "1px solid #E5E7EB" } }))
+        .then(() => toast("Link copied to clipboard!", { icon: "🔗", style: { backgroundColor: "#ffffff", color: "#111827", border: "1px solid #E5E7EB" } }))
         .catch(() => toast.error("Failed to copy link"));
     },
     [clip.id]
@@ -114,15 +114,13 @@ export default function ClipLibraryCard({
                 ▶ In Progress
               </span>
             )}
-            {state !== "locked" && (
-              <button
-                onClick={handleShare}
-                className="p-1 rounded hover:bg-gray-100 transition-colors text-gray-400 hover:text-gray-600"
-                title="Copy share link"
-              >
-                🔗
-              </button>
-            )}
+            <button
+              onClick={handleShare}
+              className="p-1 rounded hover:bg-gray-100 transition-colors text-gray-400 hover:text-gray-600"
+              title="Copy share link"
+            >
+              🔗
+            </button>
           </div>
         </div>
 
