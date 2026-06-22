@@ -8,6 +8,7 @@ import EndSession from './v2/end-session.js';
 import GetAdminClips from './v2/get-admin-clips.js';
 import GetAnalyticsV2 from './v2/get-analytics.js';
 import GetAnalyticsV3 from './v2/get-analytics-v3.js';
+import MigrateClipLabels from './v2/migrate-clip-labels.js';
 import GetClipForWatching from './v2/get-clip-for-watching.js';
 import GetClipLibrary from './v2/get-clip-library.js';
 import GetClipQuestions from './v2/get-clip-questions.js';
@@ -40,6 +41,7 @@ const apis = {
   GetAdminClips,
   GetAnalyticsV2,
   GetAnalyticsV3,
+  MigrateClipLabels,
   GetClipForWatching,
   GetClipLibrary,
   GetClipQuestions,
