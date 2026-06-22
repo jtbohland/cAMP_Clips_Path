@@ -15,7 +15,7 @@ const BADGE_STYLES: Record<string, string> = {
   spekit: "bg-pink-100 text-pink-800",
   gdrive: "bg-green-100 text-green-800",
   zoom: "bg-blue-100 text-blue-800",
-  slack: "bg-amber-100 text-amber-800",
+  slack: "bg-orange-200 text-orange-900",
   glean: "bg-indigo-100 text-indigo-800",
   mindtickle: "bg-orange-100 text-orange-800",
 };

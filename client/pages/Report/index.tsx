@@ -150,6 +150,13 @@ export default function ReportPage() {
           </div>
         )}
 
+        {/* 🎒 cAMP Gear */}
+        {resources && resources.length > 0 && (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+            <CampGearSection resources={resources} />
+          </div>
+        )}
+
         {/* 🐾 Back Track */}
         {hasIncorrect && (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
@@ -199,13 +206,6 @@ export default function ReportPage() {
                 );
               })}
             </div>
-          </div>
-        )}
-
-        {/* 🎒 cAMP Gear */}
-        {resources && resources.length > 0 && (
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-            <CampGearSection resources={resources} />
           </div>
         )}
 
