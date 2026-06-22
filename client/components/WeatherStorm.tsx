@@ -7,6 +7,10 @@ type WeatherStormProps = {
   timerMinutes: number;
   clipTitle: string;
   onTimerExpire: () => void;
+  trailCorrect: number;
+  trailTotal: number;
+  srCorrect: number;
+  srTotal: number;
 };
 
 export default function WeatherStorm({
@@ -15,6 +19,10 @@ export default function WeatherStorm({
   timerMinutes,
   clipTitle,
   onTimerExpire,
+  trailCorrect,
+  trailTotal,
+  srCorrect,
+  srTotal,
 }: WeatherStormProps) {
   const [secondsLeft, setSecondsLeft] = useState(timerMinutes * 60);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -98,7 +106,7 @@ export default function WeatherStorm({
             </div>
           </div>
           <p className="text-sm text-amber-800 text-center">
-            You didn't quite make it through Trail Markers or Search & Rescue — but that's okay.
+            You didn't quite make it through 🔥 Trail Markers (<span className="font-bold text-red-600">{trailCorrect}/{trailTotal}</span>) or 🔥 Search & Rescue (<span className="font-bold text-red-600">{srCorrect}/{srTotal}</span>) — but that's okay.
             Take {timerMinutes} minutes with these key takeaways before your next clip unlocks. 🌲
           </p>
         </div>
