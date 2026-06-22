@@ -19,18 +19,22 @@ export default function LibraryPage() {
 
   const clips = useMemo(() => data?.clips ?? [], [data]);
 
+  const WEEK_EMOJI: Record<number, string> = { 2: "🥾", 3: "🏞️", 4: "🧗🏻‍♂️" };
+
   const weekGroups = useMemo(() => {
-    const weeks = [
-      { label: "Week 2", emoji: "🥾", min: 1, max: 4 },
-      { label: "Week 3", emoji: "🏞️", min: 5, max: 9 },
-      { label: "Week 4", emoji: "🧗🏻‍♂️", min: 10, max: 17 },
-    ];
-    return weeks.map((week) => ({
-      ...week,
-      clips: clips.filter(
-        (c: any) => c.sortOrder >= week.min && c.sortOrder <= week.max
-      ),
-    }));
+    const grouped = new Map<number, typeof clips>();
+    for (const clip of clips) {
+      const wk = (clip as any).weekNumber ?? 0;
+      if (!grouped.has(wk)) grouped.set(wk, []);
+      grouped.get(wk)!.push(clip);
+    }
+    return Array.from(grouped.entries())
+      .sort(([a], [b]) => a - b)
+      .map(([weekNum, weekClips]) => ({
+        label: weekNum > 0 ? `Week ${weekNum}` : "Other",
+        emoji: WEEK_EMOJI[weekNum] ?? "📦",
+        clips: weekClips,
+      }));
   }, [clips]);
 
   // Show registration if no viewer

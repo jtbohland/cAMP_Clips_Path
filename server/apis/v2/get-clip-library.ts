@@ -8,6 +8,8 @@ const ClipWithProgressSchema = z.object({
   video_url: z.string().nullable(),
   duration_seconds: z.coerce.number().nullable(),
   sort_order: z.coerce.number(),
+  week_number: z.coerce.number().nullable(),
+  day_label: z.string().nullable(),
   status: z.string(),
   best_score: z.string().nullable(),
   attempts: z.string().nullable(),
@@ -36,6 +38,8 @@ export default api({
         videoUrl: z.string().nullable(),
         durationSeconds: z.number().nullable(),
         sortOrder: z.number(),
+        weekNumber: z.number().nullable(),
+        dayLabel: z.string().nullable(),
         bestScore: z.number().nullable(),
         attempts: z.number(),
         completed: z.boolean(),
@@ -59,7 +63,7 @@ export default api({
 
     const clips = await ctx.integrations.db.query(
       `SELECT 
-        c.id, c.title, c.video_url, c.duration_seconds, c.sort_order, c.status,
+        c.id, c.title, c.video_url, c.duration_seconds, c.sort_order, c.week_number, c.day_label, c.status,
         (
           SELECT MAX(s.engagement_score)::text 
           FROM cliptracker_v2_sessions s 
@@ -126,6 +130,8 @@ export default api({
         videoUrl: clip.video_url,
         durationSeconds: clip.duration_seconds,
         sortOrder: clip.sort_order,
+        weekNumber: clip.week_number,
+        dayLabel: clip.day_label,
         bestScore: bestScore,
         attempts: clip.attempts ? parseInt(clip.attempts) : 0,
         completed: isCompleted,

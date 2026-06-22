@@ -1,4 +1,3 @@
-import { getClipEmoji } from "@/lib/clip-emojis";
 import { toast } from "sonner";
 import { useCallback } from "react";
 
@@ -7,6 +6,8 @@ type ClipLibraryCardProps = {
     id: string;
     title: string;
     sortOrder: number;
+    weekNumber: number | null;
+    dayLabel: string | null;
     videoUrl: string | null;
     durationSeconds: number | null;
     questionCount: number;
@@ -21,13 +22,16 @@ type ClipLibraryCardProps = {
   onReview?: () => void;
 };
 
-function getWeekLabel(sortOrder: number): string {
+function getWeekLabel(weekNumber: number | null, sortOrder: number): string {
+  if (weekNumber != null) return `WEEK ${weekNumber}`;
+  // Fallback for clips without week_number
   if (sortOrder <= 4) return "WEEK 2";
   if (sortOrder <= 9) return "WEEK 3";
   return "WEEK 4";
 }
 
-function getDayLabel(sortOrder: number): string {
+function getDayLabel(dayLabel: string | null, sortOrder: number): string {
+  if (dayLabel) return dayLabel.toUpperCase();
   return `DAY ${sortOrder}`;
 }
 
@@ -67,7 +71,6 @@ export default function ClipLibraryCard({
   onReview,
 }: ClipLibraryCardProps) {
   const state = getClipState(isLocked, isCompleted, attempts);
-  const emoji = getClipEmoji(clip.sortOrder);
 
   const handleShare = useCallback(
     (e: React.MouseEvent) => {
@@ -94,7 +97,7 @@ export default function ClipLibraryCard({
         {/* Row 1: Week/Day label + status badge + share */}
         <div className="flex items-center justify-between">
           <span className="text-[11px] font-bold tracking-[0.12em] text-indigo-600 uppercase">
-            {getWeekLabel(clip.sortOrder)} · {getDayLabel(clip.sortOrder)}
+            {getWeekLabel(clip.weekNumber, clip.sortOrder)} · {getDayLabel(clip.dayLabel, clip.sortOrder)}
           </span>
           <div className="flex items-center gap-2">
             {state === "completed" && (
@@ -123,13 +126,10 @@ export default function ClipLibraryCard({
           </div>
         </div>
 
-        {/* Row 2: Emoji + Title */}
-        <div className="flex items-center gap-2.5">
-          <span className="text-2xl">{emoji}</span>
-          <h3 className="text-base font-bold text-gray-900 leading-snug">
-            {getSessionTitle(clip.title)}
-          </h3>
-        </div>
+        {/* Row 2: Title (emoji is embedded in the title from DB) */}
+        <h3 className="text-base font-bold text-gray-900 leading-snug">
+          {getSessionTitle(clip.title)}
+        </h3>
 
         {/* Row 3: Metadata line */}
         <p className="text-xs text-gray-500 flex items-center gap-1.5 flex-wrap">
