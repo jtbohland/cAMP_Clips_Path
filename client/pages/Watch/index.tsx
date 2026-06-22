@@ -192,15 +192,13 @@ export default function WatchPage() {
     if (!clipId || !viewer?.id) return;
     executeApi("GetPausedSession", { clipId, viewerId: viewer.id })
       .then((result: any) => {
-        // 1. Completed → redirect to Ranger Report
-        if (result?.hasCompletedSession) {
-          navigate(`/report/${clipId}`, { replace: true });
-          return;
-        }
-        // 2. Paused → show resume prompt
+        // 1. Paused → show resume prompt (takes priority over completed)
         if (result?.hasPausedSession && result.session) {
           setPausedSessionData(result.session);
           setPhase("resume_prompt");
+        } else if (result?.hasCompletedSession) {
+          // 2. Completed (no paused session) → redirect to Ranger Report
+          navigate(`/report/${clipId}`, { replace: true });
         } else {
           // 3. Fresh → start new session
           startSession({ clipId, viewerId: viewer.id })
