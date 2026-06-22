@@ -2,6 +2,7 @@
  * API Registry — all cAMP Ascent APIs registered for runtime discovery.
  */
 import AutoLookupViewer from './v2/auto-lookup-viewer.js';
+import CleanupDuplicateSessions from './v2/cleanup-duplicate-sessions.js';
 import AwardXP from './v2/award-xp.js';
 import CompleteClipPath from './v2/complete-clip-path.js';
 import EndSession from './v2/end-session.js';
@@ -23,6 +24,7 @@ import PopulateResources from './v2/populate-resources.js';
 import RegisterViewer from './v2/register-viewer.js';
 import AdminRecoverSession from './v2/admin-recover-session.js';
 import ResetViewerSessions from './v2/reset-viewer-sessions.js';
+import ResetSession from './v2/reset-session.js';
 import SaveClip from './v2/save-clip.js';
 import SaveQuestions from './v2/save-questions.js';
 import SeedContentV2 from './v2/seed-content.js';
@@ -39,6 +41,7 @@ import SetupClipsSchemaV2 from './clips/setup-schema-v2.js';
 const apis = {
   AutoLookupViewer,
   AwardXP,
+  CleanupDuplicateSessions,
   CompleteClipPath,
   EndSession,
   GetAdminClips,
@@ -59,6 +62,7 @@ const apis = {
   AdminRecoverSession,
   RegisterViewer,
   ResetViewerSessions,
+  ResetSession,
   SaveClip,
   SaveQuestions,
   SeedContentV2,

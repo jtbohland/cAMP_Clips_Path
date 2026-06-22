@@ -103,7 +103,6 @@ export default function ClipLibraryCard({
             {state === "completed" && (
               <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-green-100 text-green-700">
                 ✅ Completed
-                {score !== null && <span className="ml-0.5">({score}%)</span>}
                 {xpEarned > 0 && (
                   <span className="ml-1 text-indigo-600">+{xpEarned} XP</span>
                 )}
