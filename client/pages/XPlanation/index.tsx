@@ -70,9 +70,9 @@ export default function XPlanationPage() {
         {/* How Engagement Scoring Works */}
         <Section title="📊 How Engagement Scoring Works" description="Your clip score is a composite of three factors:">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <ScoreCard weight="50%" label="Trail Markers" emoji="🪧" description="In-video checkpoint questions answered correctly" />
+            <ScoreCard weight="25%" label="Trail Markers" emoji="🪧" description="In-video checkpoint questions answered correctly" />
             <ScoreCard weight="30%" label="Focus Score" emoji="👁️" description="Time actively focused on the clip (not tabbed away)" />
-            <ScoreCard weight="20%" label="Time Score" emoji="⏱️" description="How much of the video you actually watched" />
+            <ScoreCard weight="45%" label="Time Score" emoji="⏱️" description="How much of the video you actually watched" />
           </div>
           <div className="mt-4 rounded-lg border border-indigo-200 bg-indigo-50 p-3">
             <p className="text-sm font-medium text-indigo-800">

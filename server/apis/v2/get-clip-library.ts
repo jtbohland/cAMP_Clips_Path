@@ -16,6 +16,7 @@ const ClipWithProgressSchema = z.object({
   completed: z.coerce.number(),
   xp_earned: z.coerce.number(),
   question_count: z.coerce.number(),
+  paused_elapsed_seconds: z.coerce.number().nullable(),
 });
 
 export default api({
@@ -46,6 +47,7 @@ export default api({
         unlocked: z.boolean(),
         xpEarned: z.number(),
         questionCount: z.number(),
+        pausedElapsedSeconds: z.number().nullable(),
       })
     ),
   }),
@@ -88,7 +90,13 @@ export default api({
           SELECT COUNT(*)::int
           FROM cliptracker_v2_questions q
           WHERE q.clip_id = c.id AND q.is_recovery = false
-        ) as question_count
+        ) as question_count,
+        (
+          SELECT s.paused_elapsed_seconds
+          FROM cliptracker_v2_sessions s
+          WHERE s.clip_id = c.id AND s.viewer_id = $1
+          LIMIT 1
+        ) as paused_elapsed_seconds
       FROM cliptracker_v2_clips c
       WHERE c.status = 'live'
       ORDER BY c.sort_order ASC`,
@@ -138,6 +146,7 @@ export default api({
         unlocked: !isLocked,
         xpEarned: clip.xp_earned,
         questionCount: clip.question_count,
+        pausedElapsedSeconds: clip.paused_elapsed_seconds ?? 0,
       };
     });
 

@@ -181,8 +181,7 @@ export default function LibraryPage() {
                       clip={clip}
                       isLocked={!clip.unlocked}
                       isCompleted={clip.completed}
-                      score={clip.bestScore}
-                      attempts={clip.attempts ?? 0}
+                      pausedElapsedSeconds={clip.pausedElapsedSeconds ?? 0}
                       xpEarned={clip.xpEarned ?? 0}
                       previousClipTitle={prevClip ? prevClip.title : undefined}
                       onWatch={() => navigate(`/watch/${clip.id}?source=library`)}

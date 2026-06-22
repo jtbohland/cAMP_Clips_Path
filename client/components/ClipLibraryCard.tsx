@@ -14,8 +14,7 @@ type ClipLibraryCardProps = {
   };
   isLocked: boolean;
   isCompleted: boolean;
-  score: number | null;
-  attempts: number;
+  pausedElapsedSeconds: number;
   xpEarned: number;
   previousClipTitle?: string;
   onWatch: () => void;
@@ -24,7 +23,6 @@ type ClipLibraryCardProps = {
 
 function getWeekLabel(weekNumber: number | null, sortOrder: number): string {
   if (weekNumber != null) return `WEEK ${weekNumber}`;
-  // Fallback for clips without week_number
   if (sortOrder <= 4) return "WEEK 2";
   if (sortOrder <= 9) return "WEEK 3";
   return "WEEK 4";
@@ -44,33 +42,42 @@ function formatDuration(seconds: number | null): string {
   return `${mins}m`;
 }
 
-/** Extract the session title without the "Day X:" prefix */
 function getSessionTitle(title: string): string {
   const match = title.match(/^Day \d+\w?:\s*(.+)$/);
   return match ? match[1] : title;
 }
 
-type ClipState = "not_started" | "in_progress" | "completed" | "locked";
+/**
+ * Exactly 3 button states (+ locked):
+ * - "watch"   → no session OR paused_elapsed_seconds ≤ 1
+ * - "resume"  → paused_elapsed_seconds > 1 (has meaningful progress)
+ * - "report"  → next clip is unlocked (completed=true AND score≥80)
+ * - "locked"  → previous clip not passed
+ */
+type ButtonState = "watch" | "resume" | "report" | "locked";
 
-function getClipState(isLocked: boolean, isCompleted: boolean, attempts: number): ClipState {
+function getButtonState(
+  isLocked: boolean,
+  isCompleted: boolean,
+  pausedElapsedSeconds: number,
+): ButtonState {
   if (isLocked) return "locked";
-  if (isCompleted) return "completed";
-  if (attempts > 0) return "in_progress";
-  return "not_started";
+  if (isCompleted) return "report";
+  if (pausedElapsedSeconds > 1) return "resume";
+  return "watch";
 }
 
 export default function ClipLibraryCard({
   clip,
   isLocked,
   isCompleted,
-  score,
-  attempts,
+  pausedElapsedSeconds,
   xpEarned,
   previousClipTitle,
   onWatch,
   onReview,
 }: ClipLibraryCardProps) {
-  const state = getClipState(isLocked, isCompleted, attempts);
+  const buttonState = getButtonState(isLocked, isCompleted, pausedElapsedSeconds);
 
   const handleShare = useCallback(
     (e: React.MouseEvent) => {
@@ -87,11 +94,11 @@ export default function ClipLibraryCard({
   return (
     <div
       className={`rounded-xl bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.08)] transition-all duration-200 ${
-        state === "locked"
+        buttonState === "locked"
           ? "opacity-55 cursor-default"
           : "hover:shadow-md cursor-pointer"
       }`}
-      onClick={state !== "locked" ? onWatch : undefined}
+      onClick={buttonState !== "locked" ? (buttonState === "report" ? onReview : onWatch) : undefined}
     >
       <div className="flex flex-col gap-3">
         {/* Row 1: Week/Day label + status badge + share */}
@@ -100,7 +107,7 @@ export default function ClipLibraryCard({
             {getWeekLabel(clip.weekNumber, clip.sortOrder)} · {getDayLabel(clip.dayLabel, clip.sortOrder)}
           </span>
           <div className="flex items-center gap-2">
-            {state === "completed" && (
+            {buttonState === "report" && (
               <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-green-100 text-green-700">
                 ✅ Completed
                 {xpEarned > 0 && (
@@ -108,7 +115,7 @@ export default function ClipLibraryCard({
                 )}
               </span>
             )}
-            {state === "in_progress" && (
+            {buttonState === "resume" && (
               <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-yellow-100 text-yellow-800">
                 🐌 In Progress
               </span>
@@ -123,12 +130,12 @@ export default function ClipLibraryCard({
           </div>
         </div>
 
-        {/* Row 2: Title (emoji is embedded in the title from DB) */}
+        {/* Row 2: Title */}
         <h3 className="text-base font-bold text-gray-900 leading-snug">
           {getSessionTitle(clip.title)}
         </h3>
 
-        {/* Row 3: Metadata line */}
+        {/* Row 3: Metadata */}
         <p className="text-xs text-gray-500 flex items-center gap-1.5 flex-wrap">
           {clip.durationSeconds ? (
             <>
@@ -145,7 +152,7 @@ export default function ClipLibraryCard({
 
         {/* Row 4: Action button */}
         <ActionButton
-          state={state}
+          buttonState={buttonState}
           previousClipTitle={previousClipTitle}
           onWatch={onWatch}
           onReview={onReview}
@@ -156,49 +163,40 @@ export default function ClipLibraryCard({
 }
 
 function ActionButton({
-  state,
+  buttonState,
   previousClipTitle,
   onWatch,
   onReview,
 }: {
-  state: ClipState;
+  buttonState: ButtonState;
   previousClipTitle?: string;
   onWatch: () => void;
   onReview?: () => void;
 }) {
-  switch (state) {
-    case "not_started":
+  switch (buttonState) {
+    case "watch":
       return (
         <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onWatch();
-          }}
+          onClick={(e) => { e.stopPropagation(); onWatch(); }}
           className="w-full py-2.5 rounded-lg text-sm font-semibold bg-green-600 hover:bg-green-700 text-white transition-colors"
         >
           🚣🏼‍♂️ Watch Clip
         </button>
       );
-    case "in_progress":
+    case "resume":
       return (
         <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onWatch();
-          }}
+          onClick={(e) => { e.stopPropagation(); onWatch(); }}
           className="w-full py-2.5 rounded-lg text-sm font-semibold bg-red-600 hover:bg-red-700 text-white transition-colors"
         >
           🧗🏼 Resume Clip
         </button>
       );
-    case "completed":
+    case "report":
       return (
         <div className="flex flex-col items-center gap-1.5">
           <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onReview ? onReview() : onWatch();
-            }}
+            onClick={(e) => { e.stopPropagation(); onReview ? onReview() : onWatch(); }}
             className="w-full py-2.5 rounded-lg text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition-colors"
           >
             🗺️ Review Ranger Report
