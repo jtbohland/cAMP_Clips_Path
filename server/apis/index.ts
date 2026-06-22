@@ -19,7 +19,9 @@ import GetViewers from './v2/get-viewers.js';
 import GetWeatherStorm from './v2/get-weather-storm.js';
 import LookupViewer from './v2/lookup-viewer.js';
 import PauseSession from './v2/pause-session.js';
+import PopulateResources from './v2/populate-resources.js';
 import RegisterViewer from './v2/register-viewer.js';
+import AdminRecoverSession from './v2/admin-recover-session.js';
 import ResetViewerSessions from './v2/reset-viewer-sessions.js';
 import SaveClip from './v2/save-clip.js';
 import SaveQuestions from './v2/save-questions.js';
@@ -52,6 +54,8 @@ const apis = {
   GetWeatherStorm,
   LookupViewer,
   PauseSession,
+  PopulateResources,
+  AdminRecoverSession,
   RegisterViewer,
   ResetViewerSessions,
   SaveClip,
