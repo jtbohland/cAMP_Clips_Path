@@ -2,7 +2,14 @@ import { api, z, postgres } from "@superblocksteam/sdk-api";
 
 const APPS_DB = "c6e32cf4-ca66-42ae-aeb3-58c84ffae574";
 
-// --- Row schemas for each query ---
+const TIERS = [
+  { tier: 1, name: "Base Camper", emoji: "🏕️", xpMin: 0, xpMax: 149 },
+  { tier: 2, name: "Trailblazer", emoji: "🥾", xpMin: 150, xpMax: 324 },
+  { tier: 3, name: "Summit Seeker", emoji: "🏔️", xpMin: 325, xpMax: 499 },
+  { tier: 4, name: "Pinnacle Achiever", emoji: "🏔️✨", xpMin: 500, xpMax: null },
+];
+
+// --- Row schemas ---
 
 const OverviewRow = z.object({
   total_sessions: z.coerce.number(),
@@ -19,9 +26,17 @@ const LearnerRow = z.object({
   role: z.string(),
   ascent_day_1: z.string().nullable(),
   clips_completed: z.coerce.number(),
-  avg_score: z.string().nullable(),
   total_xp: z.coerce.number(),
+  first_pass_avg: z.string().nullable(),
+  recovery_avg: z.string().nullable(),
+  wts_count: z.coerce.number(),
+  sr_count: z.coerce.number(),
   last_active: z.string().nullable(),
+});
+
+const LearnerBadgeRow = z.object({
+  viewer_id: z.string(),
+  badge_id: z.string(),
 });
 
 const ClipBreakdownRow = z.object({
@@ -31,11 +46,12 @@ const ClipBreakdownRow = z.object({
   total_sessions: z.coerce.number(),
   unique_viewers: z.coerce.number(),
   completed_count: z.coerce.number(),
-  avg_engagement: z.string().nullable(),
+  avg_first_pass: z.string().nullable(),
+  avg_recovery: z.string().nullable(),
   avg_focus: z.string().nullable(),
   avg_watch_seconds: z.string().nullable(),
   sr_triggered: z.coerce.number(),
-  wts_has_card: z.coerce.number(),
+  wts_count: z.coerce.number(),
 });
 
 const QuestionRow = z.object({
@@ -49,16 +65,6 @@ const QuestionRow = z.object({
   incorrect_count: z.coerce.number(),
 });
 
-const BadgeSummaryRow = z.object({
-  badge_id: z.string(),
-  total_earned: z.coerce.number(),
-});
-
-const XpSummaryRow = z.object({
-  total_xp_distributed: z.coerce.number(),
-  total_badges_earned: z.coerce.number(),
-});
-
 const LeaderboardRow = z.object({
   viewer_id: z.string(),
   name: z.string(),
@@ -68,9 +74,21 @@ const LeaderboardRow = z.object({
   badges_earned: z.coerce.number(),
 });
 
+const TierSchema = z.object({
+  tier: z.number(),
+  name: z.string(),
+  emoji: z.string(),
+  xpMin: z.number(),
+  xpMax: z.number().nullable(),
+});
+
+const BadgeSchema = z.object({
+  badgeId: z.string(),
+});
+
 export default api({
   name: "GetAnalyticsV3",
-  description: "Comprehensive 7-section analytics for cAMP Ascent admin dashboard",
+  description: "Manager-ready analytics dashboard for cAMP Ascent with cAMPers table, clip performance, and leaderboard",
 
   integrations: {
     db: postgres(APPS_DB),
@@ -93,9 +111,13 @@ export default api({
       role: z.string(),
       ascentDay1: z.string().nullable(),
       clipsCompleted: z.number(),
-      avgScore: z.number().nullable(),
       totalXp: z.number(),
-      lastActive: z.string().nullable(),
+      firstPassAvg: z.number().nullable(),
+      recoveryAvg: z.number().nullable(),
+      wtsCount: z.number(),
+      srCount: z.number(),
+      tier: TierSchema,
+      badges: z.array(BadgeSchema),
       pacingStatus: z.string(),
     })),
     clipBreakdown: z.array(z.object({
@@ -105,11 +127,12 @@ export default api({
       totalSessions: z.number(),
       uniqueViewers: z.number(),
       completedCount: z.number(),
-      avgEngagement: z.number().nullable(),
+      avgFirstPass: z.number().nullable(),
+      avgRecovery: z.number().nullable(),
       avgFocus: z.number().nullable(),
       avgWatchSeconds: z.number().nullable(),
       srTriggered: z.number(),
-      wtsHasCard: z.number(),
+      wtsCount: z.number(),
     })),
     questions: z.array(z.object({
       clipId: z.string(),
@@ -121,14 +144,6 @@ export default api({
       correctCount: z.number(),
       incorrectCount: z.number(),
     })),
-    xpSummary: z.object({
-      totalXpDistributed: z.number(),
-      totalBadgesEarned: z.number(),
-      badgeCounts: z.array(z.object({
-        badgeId: z.string(),
-        totalEarned: z.number(),
-      })),
-    }),
     leaderboard: z.array(z.object({
       rank: z.number(),
       viewerId: z.string(),
@@ -148,7 +163,7 @@ export default api({
         COUNT(DISTINCT s.viewer_id)::int AS unique_viewers,
         ROUND(AVG(s.engagement_score) FILTER (WHERE s.completed = true), 1)::text AS avg_engagement,
         ROUND(
-          COUNT(*) FILTER (WHERE s.completed = true AND s.engagement_score >= 80)::numeric * 100.0 /
+          COUNT(*) FILTER (WHERE s.completed = true)::numeric * 100.0 /
           NULLIF(COUNT(*), 0), 1
         )::text AS completion_rate,
         (SELECT COUNT(*)::int FROM cliptracker_v2_clips WHERE status = 'live') AS total_clips
@@ -160,14 +175,17 @@ export default api({
       { label: "Overview stats" }
     );
 
-    // 2. Per-learner table
+    // 2. Per-learner table — new columns: first_pass_avg, recovery_avg, wts_count, sr_count
     const learnerRows = await ctx.integrations.db.query(
       `SELECT
         v.id AS viewer_id, v.name, v.email, v.role,
         v.ascent_day_1::text AS ascent_day_1,
-        COUNT(DISTINCT s.clip_id) FILTER (WHERE s.completed = true AND s.engagement_score >= 80)::int AS clips_completed,
-        ROUND(AVG(s.engagement_score) FILTER (WHERE s.completed = true), 1)::text AS avg_score,
+        COUNT(DISTINCT s.clip_id) FILTER (WHERE s.completed = true)::int AS clips_completed,
         COALESCE((SELECT SUM(xp_amount)::int FROM cliptracker_v2_xp_events x WHERE x.viewer_id = v.id), 0) AS total_xp,
+        ROUND(AVG(s.engagement_score) FILTER (WHERE s.completed = true AND s.is_recovery_attempt = false), 1)::text AS first_pass_avg,
+        ROUND(AVG(s.engagement_score) FILTER (WHERE s.completed = true AND s.is_recovery_attempt = true), 1)::text AS recovery_avg,
+        COUNT(*) FILTER (WHERE s.attempt_number >= 3)::int AS wts_count,
+        COUNT(*) FILTER (WHERE s.is_recovery_attempt = true)::int AS sr_count,
         MAX(s.ended_at)::text AS last_active
        FROM cliptracker_v2_viewers v
        LEFT JOIN cliptracker_v2_sessions s ON s.viewer_id = v.id
@@ -177,19 +195,38 @@ export default api({
        LIMIT 500`,
       LearnerRow,
       undefined,
-      { label: "Per-learner stats" }
+      { label: "Per-learner stats with trail/recovery scores" }
     );
 
-    // Calculate pacing for each learner
+    // 2b. Badges per learner (separate query to avoid cross-join)
+    const badgeRows = await ctx.integrations.db.query(
+      `SELECT viewer_id, badge_id
+       FROM cliptracker_v2_badges
+       WHERE viewer_id NOT IN (SELECT id FROM cliptracker_v2_viewers WHERE is_admin = true)
+       ORDER BY earned_at ASC
+       LIMIT 1000`,
+      LearnerBadgeRow,
+      undefined,
+      { label: "Badges per learner" }
+    );
+
+    // Build badge map: viewer_id -> badge_id[]
+    const badgeMap = new Map<string, string[]>();
+    for (const b of badgeRows) {
+      if (!badgeMap.has(b.viewer_id)) badgeMap.set(b.viewer_id, []);
+      badgeMap.get(b.viewer_id)!.push(b.badge_id);
+    }
+
+    // Calculate pacing + tier for each learner
     const totalLiveClips = overviewRows[0]?.total_clips ?? 0;
     const now = new Date();
 
     const learners = learnerRows.map(l => {
+      // Pacing
       let pacingStatus = "not_started";
       if (l.ascent_day_1) {
         const start = new Date(l.ascent_day_1);
         const daysElapsed = Math.max(1, Math.floor((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
-        // 5 business days per clip is the expected pace
         const expectedClips = Math.min(totalLiveClips, Math.floor(daysElapsed / 5));
         if (l.clips_completed >= totalLiveClips) {
           pacingStatus = "completed";
@@ -199,6 +236,13 @@ export default api({
           pacingStatus = "behind";
         }
       }
+
+      // Tier
+      const currentTier = TIERS.reduce((acc, t) => {
+        if (l.total_xp >= t.xpMin) return t;
+        return acc;
+      }, TIERS[0]);
+
       return {
         viewerId: l.viewer_id,
         name: l.name,
@@ -206,25 +250,30 @@ export default api({
         role: l.role,
         ascentDay1: l.ascent_day_1,
         clipsCompleted: l.clips_completed,
-        avgScore: l.avg_score ? parseFloat(l.avg_score) : null,
         totalXp: l.total_xp,
-        lastActive: l.last_active,
+        firstPassAvg: l.first_pass_avg ? parseFloat(l.first_pass_avg) : null,
+        recoveryAvg: l.recovery_avg ? parseFloat(l.recovery_avg) : null,
+        wtsCount: l.wts_count,
+        srCount: l.sr_count,
+        tier: currentTier,
+        badges: (badgeMap.get(l.viewer_id) ?? []).map(id => ({ badgeId: id })),
         pacingStatus,
       };
     });
 
-    // 3. Per-clip breakdown
+    // 3. Per-clip breakdown — split avg into first_pass vs recovery, fix completion gate
     const clipRows = await ctx.integrations.db.query(
       `SELECT
         c.id AS clip_id, c.title, c.sort_order,
         COUNT(s.id)::int AS total_sessions,
         COUNT(DISTINCT s.viewer_id)::int AS unique_viewers,
-        COUNT(*) FILTER (WHERE s.completed = true AND s.engagement_score >= 80)::int AS completed_count,
-        ROUND(AVG(s.engagement_score) FILTER (WHERE s.completed = true), 1)::text AS avg_engagement,
+        COUNT(*) FILTER (WHERE s.completed = true)::int AS completed_count,
+        ROUND(AVG(s.engagement_score) FILTER (WHERE s.completed = true AND s.is_recovery_attempt = false), 1)::text AS avg_first_pass,
+        ROUND(AVG(s.engagement_score) FILTER (WHERE s.completed = true AND s.is_recovery_attempt = true), 1)::text AS avg_recovery,
         ROUND(AVG(s.focus_score) FILTER (WHERE s.completed = true), 1)::text AS avg_focus,
         ROUND(AVG(s.total_time_seconds) FILTER (WHERE s.completed = true), 0)::text AS avg_watch_seconds,
         COUNT(*) FILTER (WHERE s.is_recovery_attempt = true)::int AS sr_triggered,
-        (SELECT COUNT(*)::int FROM cliptracker_v2_weather_storm w WHERE w.clip_id = c.id) AS wts_has_card
+        COUNT(*) FILTER (WHERE s.attempt_number >= 3)::int AS wts_count
        FROM cliptracker_v2_clips c
        LEFT JOIN cliptracker_v2_sessions s ON s.clip_id = c.id
          AND s.viewer_id NOT IN (SELECT id FROM cliptracker_v2_viewers WHERE is_admin = true)
@@ -233,10 +282,10 @@ export default api({
        ORDER BY c.sort_order ASC`,
       ClipBreakdownRow,
       undefined,
-      { label: "Per-clip breakdown" }
+      { label: "Per-clip breakdown with first-pass vs recovery split" }
     );
 
-    // 4. Trail marker questions
+    // 4. Trail marker questions (unchanged)
     const questionRows = await ctx.integrations.db.query(
       `SELECT
         c.id AS clip_id, c.title AS clip_title, c.sort_order AS clip_sort_order,
@@ -257,39 +306,14 @@ export default api({
       { label: "Trail marker questions" }
     );
 
-    // 5. XP & badge summary
-    const xpSummaryRows = await ctx.integrations.db.query(
-      `SELECT
-        COALESCE(SUM(xp_amount), 0)::int AS total_xp_distributed,
-        (SELECT COUNT(*)::int FROM cliptracker_v2_badges) AS total_badges_earned
-       FROM cliptracker_v2_xp_events
-       WHERE viewer_id NOT IN (SELECT id FROM cliptracker_v2_viewers WHERE is_admin = true)`,
-      XpSummaryRow,
-      undefined,
-      { label: "XP summary" }
-    );
-
-    const badgeCounts = await ctx.integrations.db.query(
-      `SELECT badge_id, COUNT(*)::int AS total_earned
-       FROM cliptracker_v2_badges
-       WHERE viewer_id NOT IN (SELECT id FROM cliptracker_v2_viewers WHERE is_admin = true)
-       GROUP BY badge_id
-       ORDER BY total_earned DESC
-       LIMIT 50`,
-      BadgeSummaryRow,
-      undefined,
-      { label: "Badge counts" }
-    );
-
-    // 6. XP Leaderboard (top 50)
+    // 5. XP Leaderboard — FIXED: use subquery for XP instead of JOIN to avoid cross-join multiplication
     const leaderboardRows = await ctx.integrations.db.query(
       `SELECT
         v.id AS viewer_id, v.name, v.role,
-        COALESCE(SUM(x.xp_amount), 0)::int AS total_xp,
-        COUNT(DISTINCT s.clip_id) FILTER (WHERE s.completed = true AND s.engagement_score >= 80)::int AS clips_completed,
-        (SELECT COUNT(*)::int FROM cliptracker_v2_badges b WHERE b.viewer_id = v.id) AS badges_earned
+        COALESCE((SELECT SUM(xp_amount)::int FROM cliptracker_v2_xp_events x WHERE x.viewer_id = v.id), 0) AS total_xp,
+        COUNT(DISTINCT s.clip_id) FILTER (WHERE s.completed = true)::int AS clips_completed,
+        COALESCE((SELECT COUNT(*)::int FROM cliptracker_v2_badges b WHERE b.viewer_id = v.id), 0) AS badges_earned
        FROM cliptracker_v2_viewers v
-       LEFT JOIN cliptracker_v2_xp_events x ON x.viewer_id = v.id
        LEFT JOIN cliptracker_v2_sessions s ON s.viewer_id = v.id
        WHERE v.is_admin = false
        GROUP BY v.id, v.name, v.role
@@ -297,7 +321,7 @@ export default api({
        LIMIT 50`,
       LeaderboardRow,
       undefined,
-      { label: "XP leaderboard" }
+      { label: "XP leaderboard (fixed subquery)" }
     );
 
     const ov = overviewRows[0];
@@ -318,11 +342,12 @@ export default api({
         totalSessions: c.total_sessions,
         uniqueViewers: c.unique_viewers,
         completedCount: c.completed_count,
-        avgEngagement: c.avg_engagement ? parseFloat(c.avg_engagement) : null,
+        avgFirstPass: c.avg_first_pass ? parseFloat(c.avg_first_pass) : null,
+        avgRecovery: c.avg_recovery ? parseFloat(c.avg_recovery) : null,
         avgFocus: c.avg_focus ? parseFloat(c.avg_focus) : null,
         avgWatchSeconds: c.avg_watch_seconds ? parseFloat(c.avg_watch_seconds) : null,
         srTriggered: c.sr_triggered,
-        wtsHasCard: c.wts_has_card,
+        wtsCount: c.wts_count,
       })),
       questions: questionRows.map(q => ({
         clipId: q.clip_id,
@@ -334,14 +359,6 @@ export default api({
         correctCount: q.correct_count,
         incorrectCount: q.incorrect_count,
       })),
-      xpSummary: {
-        totalXpDistributed: xpSummaryRows[0]?.total_xp_distributed ?? 0,
-        totalBadgesEarned: xpSummaryRows[0]?.total_badges_earned ?? 0,
-        badgeCounts: badgeCounts.map(b => ({
-          badgeId: b.badge_id,
-          totalEarned: b.total_earned,
-        })),
-      },
       leaderboard: leaderboardRows.map((l, i) => ({
         rank: i + 1,
         viewerId: l.viewer_id,
