@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 
 type RecoveryQuestion = {
   id: string;
@@ -36,6 +36,20 @@ export default function SearchRescue({ questions, sessionId, submitAnswer, onCom
   const question = questions[currentIndex];
   const total = questions.length;
 
+  // Shuffle answer options per question — different for every learner/attempt.
+  // shuffleMap[displayIdx] = originalIdx, so visual position is randomised
+  // but correctOption / submitAnswer still use original indices.
+  const shuffleMap = useMemo(() => {
+    if (!question) return [0, 1, 2, 3];
+    const indices = question.options.map((_, i) => i);
+    // Fisher-Yates shuffle
+    for (let i = indices.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [indices[i], indices[j]] = [indices[j], indices[i]];
+    }
+    return indices;
+  }, [question?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // B3-6: Block browser back / tab close during S&R
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -59,24 +73,25 @@ export default function SearchRescue({ questions, sessionId, submitAnswer, onCom
   }, []);
 
   const handleSelect = useCallback(
-    (optIndex: number) => {
+    (displayIdx: number) => {
       if (showFeedback) return;
-      setSelectedOption(optIndex);
-      const correct = optIndex === question.correctOption;
+      const originalIdx = shuffleMap[displayIdx];
+      setSelectedOption(displayIdx); // track the DISPLAY index for highlighting
+      const correct = originalIdx === question.correctOption;
       setIsCorrect(correct);
       if (correct) setCorrectCount((c) => c + 1);
       setShowFeedback(true);
 
-      // Persist S&R answer — same fire-and-forget pattern as trail markers
+      // Persist S&R answer — submit the ORIGINAL index so DB stays consistent
       submitAnswer({
         sessionId,
         questionId: question.id,
-        selectedOption: optIndex,
+        selectedOption: originalIdx,
         isCorrect: correct,
         timeToAnswer: null,
       }).catch(console.error);
     },
-    [showFeedback, question, sessionId, submitAnswer]
+    [showFeedback, question, sessionId, submitAnswer, shuffleMap]
   );
 
   const handleNext = useCallback(() => {
@@ -124,32 +139,33 @@ export default function SearchRescue({ questions, sessionId, submitAnswer, onCom
 
         {/* Options */}
         <div className="flex flex-col gap-2 mb-4">
-          {question.options.map((option, idx) => {
+          {shuffleMap.map((originalIdx, displayIdx) => {
+            const option = question.options[originalIdx];
             let optionStyle =
               "border border-gray-200 bg-white hover:border-indigo-300 hover:bg-indigo-50/50";
 
             if (showFeedback) {
-              if (idx === question.correctOption) {
+              if (originalIdx === question.correctOption) {
                 optionStyle = "border-2 border-green-600 bg-green-50 text-green-900";
-              } else if (idx === selectedOption && !isCorrect) {
+              } else if (displayIdx === selectedOption && !isCorrect) {
                 optionStyle = "border-2 border-red-500 bg-red-50 text-red-900";
               } else {
                 optionStyle = "border border-gray-200 bg-gray-50 opacity-50";
               }
-            } else if (idx === selectedOption) {
+            } else if (displayIdx === selectedOption) {
               optionStyle = "border-2 border-indigo-600 bg-indigo-50";
             }
 
             return (
               <button
-                key={idx}
+                key={originalIdx}
                 className={`w-full text-left px-4 py-3 rounded-xl transition-all text-sm font-medium cursor-pointer ${optionStyle}`}
-                onClick={() => handleSelect(idx)}
+                onClick={() => handleSelect(displayIdx)}
                 disabled={showFeedback}
               >
                 <span className="inline-flex items-center gap-2">
                   <span className="flex-shrink-0 w-6 h-6 rounded-full border border-current/20 flex items-center justify-center text-xs font-bold">
-                    {String.fromCharCode(65 + idx)}
+                    {String.fromCharCode(65 + displayIdx)}
                   </span>
                   {option}
                 </span>

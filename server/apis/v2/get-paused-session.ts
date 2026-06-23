@@ -42,11 +42,11 @@ export default api({
   }),
 
   async run(ctx, { clipId, viewerId }) {
-    // Check for PASSED session (completed + score ≥ 80)
+    // Check for completed session (completed=true is set solely by CompleteClipPath)
     const completedRows = await ctx.integrations.db.query(
       `SELECT 1 FROM cliptracker_v2_sessions
        WHERE clip_id = $1 AND viewer_id = $2
-         AND completed = true AND engagement_score >= 80
+         AND completed = true
        LIMIT 1`,
       z.object({}),
       [clipId, viewerId],

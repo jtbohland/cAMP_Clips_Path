@@ -3,15 +3,18 @@ import { api, z, postgres } from "@superblocksteam/sdk-api";
 const APPS_DB = "c6e32cf4-ca66-42ae-aeb3-58c84ffae574";
 
 /**
- * Marks a clip as "completed" via the alternative paths:
- * - Search & Rescue pass (≥80%)
- * - Weather the Storm timer expiry
+ * Marks a clip as "completed" — the SOLE gatekeeper for completion.
+ * Called from all three valid pass paths:
+ * - first_pass: trail markers ≥ 80% engagement
+ * - search_rescue: S&R recovery score ≥ 80%
+ * - weather_storm: WtS timer expiry
  *
- * Inserts an unlock override for the NEXT clip so GetClipLibrary unlocks it.
+ * Sets completed=true on the session and inserts an unlock override for the NEXT clip.
+ * EndSession no longer sets completed=true — it only saves metrics.
  */
 export default api({
   name: "CompleteClipPath",
-  description: "Unlocks next clip after S&R pass or Weather Storm completion",
+  description: "Sole gatekeeper: marks clip completed and unlocks next clip",
 
   integrations: {
     db: postgres(APPS_DB),
@@ -20,7 +23,8 @@ export default api({
   input: z.object({
     viewerId: z.string().uuid(),
     clipId: z.string().uuid(),
-    path: z.enum(["search_rescue", "weather_storm"]),
+    path: z.enum(["first_pass", "search_rescue", "weather_storm"]),
+    sessionId: z.string().uuid().optional(),
   }),
 
   output: z.object({
@@ -29,7 +33,7 @@ export default api({
     newEngagementScore: z.number().nullable(),
   }),
 
-  async run(ctx, { viewerId, clipId, path }) {
+  async run(ctx, { viewerId, clipId, path, sessionId: inputSessionId }) {
     // Get the sort_order of this clip to find the next one
     const SortSchema = z.object({ sort_order: z.coerce.number() });
     const currentClips = await ctx.integrations.db.query(
@@ -71,17 +75,18 @@ export default api({
     // Recalculate engagement score with combined trail marker + S&R quiz results.
     // Focus and time scores stay the same (from EndSession). Only the quiz
     // component is recomputed to include all responses on this session.
+    const sessionQuery = inputSessionId
+      ? `SELECT id, focus_score, time_score FROM cliptracker_v2_sessions WHERE id = $1 LIMIT 1`
+      : `SELECT id, focus_score, time_score FROM cliptracker_v2_sessions WHERE clip_id = $1 AND viewer_id = $2 ORDER BY started_at DESC LIMIT 1`;
+    const sessionParams = inputSessionId ? [inputSessionId] : [clipId, viewerId];
     const sessionRow = await ctx.integrations.db.query(
-      `SELECT id, focus_score, time_score
-       FROM cliptracker_v2_sessions
-       WHERE clip_id = $1 AND viewer_id = $2
-       ORDER BY started_at DESC LIMIT 1`,
+      sessionQuery,
       z.object({
         id: z.string(),
         focus_score: z.coerce.number().nullable(),
         time_score: z.coerce.number().nullable(),
       }),
-      [clipId, viewerId],
+      sessionParams,
       { label: "Get session scores for recalculation" }
     );
 

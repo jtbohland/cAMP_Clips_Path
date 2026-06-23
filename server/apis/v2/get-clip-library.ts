@@ -79,7 +79,7 @@ export default api({
         (
           SELECT COUNT(*)::int 
           FROM cliptracker_v2_sessions s 
-          WHERE s.clip_id = c.id AND s.viewer_id = $1 AND s.completed = true AND s.engagement_score >= 80
+          WHERE s.clip_id = c.id AND s.viewer_id = $1 AND s.completed = true
         ) as completed,
         (
           SELECT COALESCE(SUM(xp_amount), 0)::int

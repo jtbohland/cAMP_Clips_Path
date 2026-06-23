@@ -101,7 +101,7 @@ export default api({
     const completedResult = await ctx.integrations.db.query(
       `SELECT COUNT(DISTINCT clip_id)::int as count
        FROM cliptracker_v2_sessions
-       WHERE viewer_id = $1 AND completed = true AND engagement_score >= 80`,
+       WHERE viewer_id = $1 AND completed = true`,
       CompletedSchema,
       [viewerId],
       { label: "Count completed clips" }

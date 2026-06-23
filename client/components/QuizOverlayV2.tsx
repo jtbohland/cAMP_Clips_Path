@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 
 type Question = {
   id: string;
@@ -25,16 +25,29 @@ export default function QuizOverlayV2({
   const [showFeedback, setShowFeedback] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
 
+  // Shuffle answer options per question — different for every learner/attempt.
+  // shuffleMap[displayIdx] = originalIdx
+  const shuffleMap = useMemo(() => {
+    const indices = question.options.map((_, i) => i);
+    // Fisher-Yates shuffle
+    for (let i = indices.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [indices[i], indices[j]] = [indices[j], indices[i]];
+    }
+    return indices;
+  }, [question.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleSelect = useCallback(
-    (optIndex: number) => {
+    (displayIdx: number) => {
       if (showFeedback) return; // Already answered
-      setSelectedOption(optIndex);
-      const correct = optIndex === question.correctOption;
+      const originalIdx = shuffleMap[displayIdx];
+      setSelectedOption(displayIdx); // track DISPLAY index for highlighting
+      const correct = originalIdx === question.correctOption;
       setIsCorrect(correct);
       setShowFeedback(true);
-      onAnswer(optIndex);
+      onAnswer(originalIdx); // pass ORIGINAL index to parent
     },
-    [showFeedback, question.correctOption, onAnswer]
+    [showFeedback, question.correctOption, onAnswer, shuffleMap]
   );
 
   const feedback = isCorrect
@@ -60,34 +73,35 @@ export default function QuizOverlayV2({
 
         {/* Options */}
         <div className="flex flex-col gap-2 mb-4">
-          {question.options.map((option, idx) => {
+          {shuffleMap.map((originalIdx, displayIdx) => {
+            const option = question.options[originalIdx];
             let optionStyle =
               "border border-gray-200 bg-white hover:border-indigo-400 hover:bg-indigo-50";
 
             if (showFeedback) {
-              if (idx === question.correctOption) {
+              if (originalIdx === question.correctOption) {
                 optionStyle =
                   "border-2 border-green-600 bg-green-50 text-green-900";
-              } else if (idx === selectedOption && !isCorrect) {
+              } else if (displayIdx === selectedOption && !isCorrect) {
                 optionStyle =
                   "border-2 border-red-500 bg-red-50 text-red-900";
               } else {
                 optionStyle = "border border-gray-200 bg-gray-100 opacity-50";
               }
-            } else if (idx === selectedOption) {
+            } else if (displayIdx === selectedOption) {
               optionStyle = "border-2 border-indigo-600 bg-indigo-50";
             }
 
             return (
               <button
-                key={idx}
+                key={originalIdx}
                 className={`w-full text-left px-4 py-3 rounded-lg transition-all text-sm font-medium cursor-pointer ${optionStyle}`}
-                onClick={() => handleSelect(idx)}
+                onClick={() => handleSelect(displayIdx)}
                 disabled={showFeedback}
               >
                 <span className="inline-flex items-center gap-2">
                   <span className="flex-shrink-0 w-6 h-6 rounded-full border border-current/20 flex items-center justify-center text-xs font-bold">
-                    {String.fromCharCode(65 + idx)}
+                    {String.fromCharCode(65 + displayIdx)}
                   </span>
                   {option}
                 </span>
