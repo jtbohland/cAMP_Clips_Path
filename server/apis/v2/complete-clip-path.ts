@@ -69,10 +69,13 @@ export default api({
 
     // Mark the current session as completed AND set engagement_score = 80
     // so it passes the same >= 80 threshold used by GetClipLibrary for all paths
+    // EndSession already sets completed=true with the real engagement_score,
+    // so we must NOT filter on completed=false. Just ensure engagement_score
+    // is raised to 80 (the passing threshold) on the most recent session.
     await ctx.integrations.db.execute(
       `UPDATE cliptracker_v2_sessions 
-       SET completed = true, engagement_score = 80
-       WHERE clip_id = $1 AND viewer_id = $2 AND completed = false
+       SET completed = true, engagement_score = GREATEST(engagement_score, 80)
+       WHERE clip_id = $1 AND viewer_id = $2
        AND id = (
          SELECT id FROM cliptracker_v2_sessions
          WHERE clip_id = $1 AND viewer_id = $2
