@@ -34,6 +34,7 @@ import SeedContentV2 from './v2/seed-content.js';
 import SeedQuestionsBatch from './v2/seed-questions-batch.js';
 import SeedQuestionsFromFiles from './v2/seed-questions-from-files.js';
 import SetViewerAdmin from './v2/set-viewer-admin.js';
+import FixRecoveryFlags from './v2/fix-recovery-flags.js';
 import SetupXpSchema from './v2/setup-xp-schema.js';
 import StartSession from './v2/start-session.js';
 import SubmitAnswer from './v2/submit-answer.js';
@@ -48,6 +49,7 @@ const apis = {
   CleanupDuplicateSessions,
   CompleteClipPath,
   EndSession,
+  FixRecoveryFlags,
   GetAdminClips,
   GetAnalyticsV2,
   GetAnalyticsV3,
