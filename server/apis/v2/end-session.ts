@@ -76,6 +76,8 @@ export default api({
 
     // Update the session — save metrics only.
     // completed=true is set exclusively by CompleteClipPath (first pass, S&R pass, or WtS).
+    // initial_engagement_score captures the first-pass engagement before any S&R/WtS
+    // overwrite — only set it when it's NULL (preserves the original first-pass score).
     await ctx.integrations.db.execute(
       `UPDATE cliptracker_v2_sessions 
        SET ended_at = NOW(),
@@ -85,7 +87,8 @@ export default api({
            engagement_score = $5,
            question_score = $6,
            focus_score = $7,
-           time_score = $8
+           time_score = $8,
+           initial_engagement_score = COALESCE(initial_engagement_score, $5)
        WHERE id = $1`,
       [sessionId, totalFocusSeconds, totalBlurSeconds, totalTimeSeconds, 
        engagementScore, questionScore, focusScore, timeScore],

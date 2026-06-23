@@ -414,7 +414,7 @@ export default function WatchPage() {
     playerRef.current?.play();
   }, []);
 
-  const handleFinishWatching = useCallback(() => {
+  const handleFinishWatching = useCallback(async () => {
     playerRef.current?.pause();
 
     const allTrailMarkerCount = trailMarkers.length;
@@ -423,28 +423,34 @@ export default function WatchPage() {
     const pct = Math.round((correctCount / finalTotal) * 100);
     setScore(pct);
 
+    // Await EndSession to get the REAL engagement score (questions + focus + time)
+    // S&R triggers off overall engagement < 80%, not just trail marker %
+    let passedFirstPass = false;
     if (sessionId) {
       const clipDuration = clipData?.clip?.durationSeconds ?? elapsedSeconds;
-      endSession({
-        sessionId,
-        totalFocusSeconds: focusSeconds,
-        totalBlurSeconds: blurSeconds,
-        totalTimeSeconds: focusSeconds,
-        clipDurationSeconds: clipDuration,
-        tabAwayCount: tabAwayCountRef.current,
-      })
-        .then((res: any) => {
-          if (res?.engagementScore !== undefined) {
-            setEngagementScore(res.engagementScore);
-            setScore(res.engagementScore);
-          }
-          setReportReady(true);
-        })
-        .catch(console.error);
+      try {
+        const res: any = await endSession({
+          sessionId,
+          totalFocusSeconds: focusSeconds,
+          totalBlurSeconds: blurSeconds,
+          totalTimeSeconds: elapsedSeconds,
+          clipDurationSeconds: clipDuration,
+          tabAwayCount: tabAwayCountRef.current,
+        });
+        if (res?.engagementScore !== undefined) {
+          setEngagementScore(res.engagementScore);
+          setScore(res.engagementScore);
+        }
+        setReportReady(true);
+        passedFirstPass = res?.passed === true;
+      } catch (err) {
+        console.error("endSession failed:", err);
+        // Fallback: use trail marker % if EndSession fails
+        passedFirstPass = pct >= 80;
+        setReportReady(true);
+      }
     }
 
-    const passedFirstPass =
-      Math.round((correctCount / (allTrailMarkerCount || 1)) * 100) >= 80;
     if (passedFirstPass && viewer?.id && clipId && sessionId) {
       // First-pass success → CompleteClipPath is the sole gatekeeper for completion
       completeClipPath({
@@ -474,7 +480,6 @@ export default function WatchPage() {
           });
         } catch (err) {
           if (attempt < 2) {
-            // One automatic retry on transient failure
             return awardXPWithRetry(attempt + 1);
           }
           throw err;
@@ -491,7 +496,6 @@ export default function WatchPage() {
           if (res?.newTier) {
             toast.success(`${res.newTier.emoji} Tier up! You're now a ${res.newTier.name}!`);
           }
-          // Store session breakdown from awardXP, then fetch cumulative totals
           const sessionBreakdown = res?.sessionBreakdown ?? { base: 0, milestones: 0, bonuses: 0 };
           if (viewer?.id) {
             executeApi("GetLearnerProgress", { viewerId: viewer.id })
@@ -503,7 +507,6 @@ export default function WatchPage() {
                 });
               })
               .catch(() => {
-                // Even if progress fetch fails, still show session data
                 setXpData({
                   sessionBreakdown,
                   totalXp: res?.totalXp ?? 0,
