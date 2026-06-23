@@ -113,8 +113,8 @@ export default api({
       const splitCounts = await ctx.integrations.db.query(
         `SELECT
            q.is_recovery,
-           COUNT(*)::int as total,
-           COUNT(*) FILTER (WHERE r.is_correct = true)::int as correct
+           COUNT(DISTINCT r.question_id)::int as total,
+           COUNT(DISTINCT r.question_id) FILTER (WHERE r.is_correct = true)::int as correct
          FROM cliptracker_v2_responses r
          JOIN cliptracker_v2_questions q ON q.id = r.question_id
          WHERE r.session_id = $1
@@ -143,7 +143,7 @@ export default api({
 
       // Get incorrect questions for the Back Track section
       const missed = await ctx.integrations.db.query(
-        `SELECT q.id as question_id, q.question_text, q.trigger_at_seconds, q.is_recovery
+        `SELECT DISTINCT q.id as question_id, q.question_text, q.trigger_at_seconds, q.is_recovery
          FROM cliptracker_v2_responses r
          JOIN cliptracker_v2_questions q ON q.id = r.question_id
          WHERE r.session_id = $1 AND r.is_correct = false

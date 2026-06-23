@@ -100,8 +100,8 @@ export default api({
       // Count all responses (trail markers + S&R) for the combined quiz score
       const quizStats = await ctx.integrations.db.query(
         `SELECT
-           COUNT(*)::int as total,
-           COUNT(*) FILTER (WHERE is_correct = true)::int as correct
+           COUNT(DISTINCT question_id)::int as total,
+           COUNT(DISTINCT question_id) FILTER (WHERE is_correct = true)::int as correct
          FROM cliptracker_v2_responses
          WHERE session_id = $1`,
         z.object({ total: z.coerce.number(), correct: z.coerce.number() }),

@@ -2,6 +2,7 @@
  * API Registry — all cAMP Ascent APIs registered for runtime discovery.
  */
 import AutoLookupViewer from './v2/auto-lookup-viewer.js';
+import CleanupDuplicateResponses from './v2/cleanup-duplicate-responses.js';
 import CleanupDuplicateSessions from './v2/cleanup-duplicate-sessions.js';
 import AwardXP from './v2/award-xp.js';
 import CompleteClipPath from './v2/complete-clip-path.js';
@@ -41,6 +42,7 @@ import SetupClipsSchemaV2 from './clips/setup-schema-v2.js';
 const apis = {
   AutoLookupViewer,
   AwardXP,
+  CleanupDuplicateResponses,
   CleanupDuplicateSessions,
   CompleteClipPath,
   EndSession,
