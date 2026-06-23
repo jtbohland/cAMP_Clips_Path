@@ -77,44 +77,30 @@ export default api({
   }),
 
   async run(ctx, { clipId, viewerId }) {
-    // Get the best completed session (highest engagement score)
+    // Get the single session for this viewer+clip
     const sessions = await ctx.integrations.db.query(
-      `SELECT id, engagement_score, is_recovery_attempt, attempt_number
+      `SELECT id, engagement_score, attempt_number
        FROM cliptracker_v2_sessions
        WHERE clip_id = $1 AND viewer_id = $2 AND completed = true
-       ORDER BY engagement_score DESC NULLS LAST
        LIMIT 1`,
       z.object({
         id: z.string(),
         engagement_score: z.coerce.number().nullable(),
-        is_recovery_attempt: z.boolean(),
         attempt_number: z.coerce.number(),
       }),
       [clipId, viewerId],
-      { label: "Get best completed session" }
+      { label: "Get completed session" }
     );
 
-    const bestSession = sessions[0];
-    const engagementScore = bestSession?.engagement_score ?? null;
+    const session = sessions[0];
+    const engagementScore = session?.engagement_score ?? null;
 
-    // Check if S&R was ever triggered for this clip
-    // (a recovery attempt exists, even if not the best session)
-    const recoveryCheck = await ctx.integrations.db.query(
-      `SELECT EXISTS(
-         SELECT 1 FROM cliptracker_v2_sessions
-         WHERE clip_id = $1 AND viewer_id = $2 AND is_recovery_attempt = true
-       ) as has_recovery`,
-      z.object({ has_recovery: z.boolean() }),
-      [clipId, viewerId],
-      { label: "Check if S&R was triggered" }
-    );
-    const searchRescueTriggered = recoveryCheck[0]?.has_recovery ?? false;
-
-    // Get Trail Marker results from best session, split by question type
+    // Split question results by type
     let trailMarkerCorrect = 0;
     let trailMarkerTotal = 0;
     let searchRescueCorrect = 0;
     let searchRescueTotal = 0;
+    let searchRescueTriggered = false;
     let incorrectQuestions: Array<{
       questionId: string;
       questionText: string;
@@ -122,7 +108,7 @@ export default api({
       isRecovery: boolean;
     }> = [];
 
-    if (bestSession) {
+    if (session) {
       // Get split counts: trail markers vs recovery questions
       const splitCounts = await ctx.integrations.db.query(
         `SELECT
@@ -138,7 +124,7 @@ export default api({
           total: z.coerce.number(),
           correct: z.coerce.number(),
         }),
-        [bestSession.id],
+        [session.id],
         { label: "Get split trail marker / S&R counts" }
       );
 
@@ -152,6 +138,9 @@ export default api({
         }
       }
 
+      // S&R was triggered if any recovery question responses exist
+      searchRescueTriggered = searchRescueTotal > 0;
+
       // Get incorrect questions for the Back Track section
       const missed = await ctx.integrations.db.query(
         `SELECT q.id as question_id, q.question_text, q.trigger_at_seconds, q.is_recovery
@@ -160,7 +149,7 @@ export default api({
          WHERE r.session_id = $1 AND r.is_correct = false
          ORDER BY q.is_recovery, q.trigger_at_seconds`,
         IncorrectQuestionSchema,
-        [bestSession.id],
+        [session.id],
         { label: "Get incorrect questions for Back Track" }
       );
 
@@ -172,18 +161,8 @@ export default api({
       }));
     }
 
-    // Check if Weather the Storm was triggered
-    // Weather Storm happens at attempt_number >= 3 (failed primary, failed S&R, then WtS)
-    const weatherCheck = await ctx.integrations.db.query(
-      `SELECT EXISTS(
-         SELECT 1 FROM cliptracker_v2_sessions
-         WHERE clip_id = $1 AND viewer_id = $2 AND attempt_number >= 3
-       ) as has_weather`,
-      z.object({ has_weather: z.boolean() }),
-      [clipId, viewerId],
-      { label: "Check if Weather the Storm was triggered" }
-    );
-    const weatherStormTriggered = weatherCheck[0]?.has_weather ?? false;
+    // Weather the Storm is triggered at attempt_number >= 3
+    const weatherStormTriggered = (session?.attempt_number ?? 0) >= 3;
 
     // Get XP events for this clip
     const xpEvents = await ctx.integrations.db.query(

@@ -815,6 +815,8 @@ export default function WatchPage() {
       {phase === "search_rescue" && (
         <SearchRescue
           questions={recoveryQuestions}
+          sessionId={sessionId ?? ""}
+          submitAnswer={submitAnswer}
           onComplete={handleSearchRescueComplete}
         />
       )}
