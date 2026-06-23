@@ -12,10 +12,18 @@ type RecoveryQuestion = {
 
 type SearchRescueProps = {
   questions: RecoveryQuestion[];
+  sessionId: string;
+  submitAnswer: (args: {
+    sessionId: string;
+    questionId: string;
+    selectedOption: number;
+    isCorrect: boolean;
+    timeToAnswer: null;
+  }) => Promise<any>;
   onComplete: (passed: boolean, score: number) => void;
 };
 
-export default function SearchRescue({ questions, onComplete }: SearchRescueProps) {
+export default function SearchRescue({ questions, sessionId, submitAnswer, onComplete }: SearchRescueProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
@@ -58,8 +66,17 @@ export default function SearchRescue({ questions, onComplete }: SearchRescueProp
       setIsCorrect(correct);
       if (correct) setCorrectCount((c) => c + 1);
       setShowFeedback(true);
+
+      // Persist S&R answer — same fire-and-forget pattern as trail markers
+      submitAnswer({
+        sessionId,
+        questionId: question.id,
+        selectedOption: optIndex,
+        isCorrect: correct,
+        timeToAnswer: null,
+      }).catch(console.error);
     },
-    [showFeedback, question]
+    [showFeedback, question, sessionId, submitAnswer]
   );
 
   const handleNext = useCallback(() => {
