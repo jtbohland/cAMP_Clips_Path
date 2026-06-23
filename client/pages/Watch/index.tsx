@@ -453,6 +453,14 @@ export default function WatchPage() {
     const passedFirstPass =
       Math.round((correctCount / (allTrailMarkerCount || 1)) * 100) >= 80;
     if (passedFirstPass && viewer?.id && clipId && sessionId) {
+      // First-pass success → CompleteClipPath is the sole gatekeeper for completion
+      completeClipPath({
+        viewerId: viewer.id,
+        clipId,
+        sessionId,
+        path: "first_pass",
+      }).catch(console.error);
+
       const clipDuration = clipData?.clip?.durationSeconds ?? elapsedSeconds;
       awardXP({
         viewerId: viewer.id,
@@ -504,7 +512,7 @@ export default function WatchPage() {
     setPhase("ranger_report");
   }, [
     trailMarkers, totalTrailMarkers, correctCount, sessionId, endSession,
-    elapsedSeconds, focusSeconds, blurSeconds, viewer, clipId, clipData, awardXP,
+    elapsedSeconds, focusSeconds, blurSeconds, viewer, clipId, clipData, awardXP, completeClipPath,
   ]);
 
   const handleFinishWatchingRef = useRef(handleFinishWatching);

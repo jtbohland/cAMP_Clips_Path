@@ -74,7 +74,8 @@ export default api({
 
     const passed = engagementScore >= 80;
 
-    // Update the session
+    // Update the session — save metrics only.
+    // completed=true is set exclusively by CompleteClipPath (first pass, S&R pass, or WtS).
     await ctx.integrations.db.execute(
       `UPDATE cliptracker_v2_sessions 
        SET ended_at = NOW(),
@@ -84,12 +85,11 @@ export default api({
            engagement_score = $5,
            question_score = $6,
            focus_score = $7,
-           time_score = $8,
-           completed = true
+           time_score = $8
        WHERE id = $1`,
       [sessionId, totalFocusSeconds, totalBlurSeconds, totalTimeSeconds, 
        engagementScore, questionScore, focusScore, timeScore],
-      { label: "Update session with scores" }
+      { label: "Update session with scores (metrics only)" }
     );
 
     return {
