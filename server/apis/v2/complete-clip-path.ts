@@ -26,6 +26,7 @@ export default api({
   output: z.object({
     success: z.boolean(),
     nextClipUnlocked: z.boolean(),
+    newEngagementScore: z.number().nullable(),
   }),
 
   async run(ctx, { viewerId, clipId, path }) {
@@ -67,26 +68,61 @@ export default api({
       nextClipUnlocked = true;
     }
 
-    // Mark the current session as completed AND set engagement_score = 80
-    // so it passes the same >= 80 threshold used by GetClipLibrary for all paths
-    // EndSession already sets completed=true with the real engagement_score,
-    // so we must NOT filter on completed=false. Just ensure engagement_score
-    // is raised to 80 (the passing threshold) on the most recent session.
-    await ctx.integrations.db.execute(
-      `UPDATE cliptracker_v2_sessions 
-       SET completed = true, engagement_score = GREATEST(engagement_score, 80)
+    // Recalculate engagement score with combined trail marker + S&R quiz results.
+    // Focus and time scores stay the same (from EndSession). Only the quiz
+    // component is recomputed to include all responses on this session.
+    const sessionRow = await ctx.integrations.db.query(
+      `SELECT id, focus_score, time_score
+       FROM cliptracker_v2_sessions
        WHERE clip_id = $1 AND viewer_id = $2
-       AND id = (
-         SELECT id FROM cliptracker_v2_sessions
-         WHERE clip_id = $1 AND viewer_id = $2
-         ORDER BY started_at DESC LIMIT 1
-       )`,
+       ORDER BY started_at DESC LIMIT 1`,
+      z.object({
+        id: z.string(),
+        focus_score: z.coerce.number().nullable(),
+        time_score: z.coerce.number().nullable(),
+      }),
       [clipId, viewerId],
-      { label: "Mark session completed with passing score via alternative path" }
+      { label: "Get session scores for recalculation" }
     );
 
-    ctx.log.info(`Clip completed via ${path}`, { viewerId, clipId, nextClipUnlocked });
+    let newEngagementScore: number | null = null;
 
-    return { success: true, nextClipUnlocked };
+    if (sessionRow.length > 0) {
+      const session = sessionRow[0];
+      const focusScore = session.focus_score ?? 100;
+      const timeScore = session.time_score ?? 100;
+
+      // Count all responses (trail markers + S&R) for the combined quiz score
+      const quizStats = await ctx.integrations.db.query(
+        `SELECT
+           COUNT(*)::int as total,
+           COUNT(*) FILTER (WHERE is_correct = true)::int as correct
+         FROM cliptracker_v2_responses
+         WHERE session_id = $1`,
+        z.object({ total: z.coerce.number(), correct: z.coerce.number() }),
+        [session.id],
+        { label: "Count all responses for combined quiz score" }
+      );
+
+      const { total, correct } = quizStats[0];
+      const questionScore = total > 0 ? (correct / total) * 100 : 0;
+
+      newEngagementScore = Math.round(
+        (questionScore * 0.25) + (focusScore * 0.30) + (timeScore * 0.45)
+      );
+
+      // Update session: mark completed + store the recalculated engagement score
+      await ctx.integrations.db.execute(
+        `UPDATE cliptracker_v2_sessions
+         SET completed = true, engagement_score = $2
+         WHERE id = $1`,
+        [session.id, newEngagementScore],
+        { label: "Update session with recalculated engagement score" }
+      );
+    }
+
+    ctx.log.info(`Clip completed via ${path}`, { viewerId, clipId, nextClipUnlocked, newEngagementScore });
+
+    return { success: true, nextClipUnlocked, newEngagementScore };
   },
 });
