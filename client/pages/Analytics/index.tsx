@@ -121,19 +121,19 @@ function AnalyticsContent() {
           <CampersSection learners={learners ?? []} totalClips={overview?.totalClips ?? 0} />
         </Section>
 
-        {/* 3. Clip Performance */}
+        {/* 3. XP Leaderboard */}
+        <Section title="XP Leaderboard" emoji="🏆" defaultOpen>
+          <LeaderboardSection leaderboard={leaderboard ?? []} />
+        </Section>
+
+        {/* 4. Clip Performance */}
         <Section title="Clip Performance" emoji="🎬" defaultOpen>
           <ClipBreakdownSection clips={clipBreakdown ?? []} />
         </Section>
 
-        {/* 4. Trail Markers (collapsed by default) */}
+        {/* 5. Trail Markers (collapsed by default) */}
         <Section title="Trail Markers" emoji="🪧" defaultOpen={false}>
           <QuestionsSection questions={questions ?? []} />
-        </Section>
-
-        {/* 5. XP Leaderboard */}
-        <Section title="XP Leaderboard" emoji="🏆" defaultOpen={false}>
-          <LeaderboardSection leaderboard={leaderboard ?? []} />
         </Section>
       </div>
     </div>
@@ -145,11 +145,11 @@ function AnalyticsContent() {
 function OverviewSection({ overview }: { overview: any }) {
   if (!overview) return <p className="text-sm text-gray-500 py-4">No data</p>;
   const stats = [
-    { label: "Live Clips", value: overview.totalClips, icon: "🎬" },
-    { label: "Total Sessions", value: overview.totalSessions, icon: "▶️" },
-    { label: "Unique Learners", value: overview.uniqueViewers, icon: "🧑‍🎓" },
-    { label: "Avg Engagement", value: overview.avgEngagement != null ? `${overview.avgEngagement}%` : "—", icon: "📊" },
-    { label: "Completion Rate", value: overview.completionRate != null ? `${overview.completionRate}%` : "—", icon: "✅" },
+    { label: "Live Clips", desc: "Clips published in Ascent", value: overview.totalClips, icon: "🎬" },
+    { label: "Total Sessions", desc: "All sessions started (incl. in-progress)", value: overview.totalSessions, icon: "▶️" },
+    { label: "Unique Learners", desc: "Learners who've started Ascent", value: overview.uniqueViewers, icon: "🧑‍🎓" },
+    { label: "Avg Engagement", desc: "Mean engagement across completed clips", value: overview.avgEngagement != null ? `${overview.avgEngagement}%` : "—", icon: "📊" },
+    { label: "Completion Rate", desc: "% of started sessions that are completed", value: overview.completionRate != null ? `${overview.completionRate}%` : "—", icon: "✅" },
   ];
   return (
     <div className="grid grid-cols-5 gap-3 pt-4">
@@ -158,6 +158,7 @@ function OverviewSection({ overview }: { overview: any }) {
           <div className="text-lg mb-1">{s.icon}</div>
           <div className="text-xl font-bold text-gray-900">{s.value}</div>
           <div className="text-[10px] text-gray-500 mt-0.5">{s.label}</div>
+          <div className="text-[9px] text-gray-400 mt-0.5 leading-tight">{s.desc}</div>
         </div>
       ))}
     </div>
