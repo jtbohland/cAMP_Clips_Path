@@ -9,6 +9,7 @@ type SearchRescuePassPopupProps = {
   srCorrect: number;
   srTotal: number;
   srScore: number;
+  newEngagementScore: number | null;
   xpData?: XpData;
   onBackToClips: () => void;
   onContinueToNext?: () => void;
@@ -19,6 +20,7 @@ export default function SearchRescuePassPopup({
   srCorrect,
   srTotal,
   srScore,
+  newEngagementScore,
   xpData,
   onBackToClips,
   onContinueToNext,
@@ -56,6 +58,22 @@ export default function SearchRescuePassPopup({
               <div className="text-3xl font-bold text-green-600">{srScore}%</div>
               <p className="text-xs font-medium text-gray-700 mt-1.5">
                 ✅ Recovery Score
+              </p>
+            </div>
+
+            {/* Tile 3: New Engagement Score */}
+            <div className="flex-1 rounded-xl bg-gray-50 border border-gray-100 p-4 text-center">
+              <div
+                className={`text-3xl font-bold ${
+                  newEngagementScore !== null && newEngagementScore >= 80
+                    ? "text-green-600"
+                    : "text-gray-900"
+                }`}
+              >
+                {newEngagementScore !== null ? `${newEngagementScore}%` : "—"}
+              </div>
+              <p className="text-xs font-medium text-gray-700 mt-1.5">
+                🦉 NEW Engagement Score
               </p>
             </div>
           </div>

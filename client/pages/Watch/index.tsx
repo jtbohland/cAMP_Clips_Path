@@ -73,6 +73,7 @@ export default function WatchPage() {
   const [searchRescueScore, setSearchRescueScore] = useState<number | null>(null);
   const [srCorrectCount, setSrCorrectCount] = useState(0);
   const [searchRescueTriggered, setSearchRescueTriggered] = useState(false);
+  const [newEngagementScore, setNewEngagementScore] = useState<number | null>(null);
   const [engagementScore, setEngagementScore] = useState<number | null>(null);
   const [incorrectQuestions, setIncorrectQuestions] = useState<
     Array<{ id: string; triggerAtSeconds: number; questionText: string }>
@@ -560,14 +561,18 @@ export default function WatchPage() {
         }
 
         // Await completeClipPath so completed=true is written BEFORE popup/navigation
+        // CompleteClipPath recalculates engagement with combined trail + S&R quiz
         if (passed) {
           try {
-            await completeClipPath({
+            const cpResult: any = await completeClipPath({
               viewerId: viewer.id,
               clipId,
               sessionId,
               path: "search_rescue",
             });
+            if (cpResult?.newEngagementScore != null) {
+              setNewEngagementScore(cpResult.newEngagementScore);
+            }
           } catch (err) {
             console.error("completeClipPath failed:", err);
           }
@@ -828,6 +833,7 @@ export default function WatchPage() {
           srCorrect={srCorrectCount}
           srTotal={recoveryQuestions.length}
           srScore={searchRescueScore ?? 0}
+          newEngagementScore={newEngagementScore}
           xpData={xpData ?? undefined}
           onBackToClips={() => navigate("/library")}
           onContinueToNext={
