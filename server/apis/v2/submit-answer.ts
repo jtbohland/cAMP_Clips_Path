@@ -26,7 +26,11 @@ export default api({
     await ctx.integrations.db.execute(
       `INSERT INTO cliptracker_v2_responses (session_id, question_id, selected_option, is_correct, time_to_answer_seconds)
        VALUES ($1, $2, $3, $4, $5)
-       ON CONFLICT DO NOTHING`,
+       ON CONFLICT (session_id, question_id) DO UPDATE SET
+         selected_option = EXCLUDED.selected_option,
+         is_correct = EXCLUDED.is_correct,
+         time_to_answer_seconds = EXCLUDED.time_to_answer_seconds,
+         answered_at = NOW()`,
       [sessionId, questionId, selectedOption, isCorrect, timeToAnswer],
       { label: "Record quiz answer" }
     );

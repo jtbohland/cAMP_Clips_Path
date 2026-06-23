@@ -6,7 +6,7 @@ const APPS_DB = "c6e32cf4-ca66-42ae-aeb3-58c84ffae574";
  * Fresh Start: wipes the existing session's responses and XP events,
  * then resets session columns to start fresh.
  * 
- * Blocked if the session is already passed (completed=true AND score≥80).
+ * Blocked if the session is already passed (completed=true).
  */
 export default api({
   name: "ResetSession",
@@ -52,7 +52,7 @@ export default api({
     }
 
     const session = sessions[0];
-    const passed = session.completed && (session.engagement_score ?? 0) >= 80;
+    const passed = session.completed;
 
     if (passed && !adminForce) {
       return {
