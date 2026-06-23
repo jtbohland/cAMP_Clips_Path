@@ -414,7 +414,7 @@ export default function WatchPage() {
     playerRef.current?.play();
   }, []);
 
-  const handleFinishWatching = useCallback(() => {
+  const handleFinishWatching = useCallback(async () => {
     playerRef.current?.pause();
 
     const allTrailMarkerCount = trailMarkers.length;
@@ -423,28 +423,34 @@ export default function WatchPage() {
     const pct = Math.round((correctCount / finalTotal) * 100);
     setScore(pct);
 
+    // Await EndSession to get the REAL engagement score (questions + focus + time)
+    // S&R triggers off overall engagement < 80%, not just trail marker %
+    let passedFirstPass = false;
     if (sessionId) {
       const clipDuration = clipData?.clip?.durationSeconds ?? elapsedSeconds;
-      endSession({
-        sessionId,
-        totalFocusSeconds: focusSeconds,
-        totalBlurSeconds: blurSeconds,
-        totalTimeSeconds: focusSeconds,
-        clipDurationSeconds: clipDuration,
-        tabAwayCount: tabAwayCountRef.current,
-      })
-        .then((res: any) => {
-          if (res?.engagementScore !== undefined) {
-            setEngagementScore(res.engagementScore);
-            setScore(res.engagementScore);
-          }
-          setReportReady(true);
-        })
-        .catch(console.error);
+      try {
+        const res: any = await endSession({
+          sessionId,
+          totalFocusSeconds: focusSeconds,
+          totalBlurSeconds: blurSeconds,
+          totalTimeSeconds: elapsedSeconds,
+          clipDurationSeconds: clipDuration,
+          tabAwayCount: tabAwayCountRef.current,
+        });
+        if (res?.engagementScore !== undefined) {
+          setEngagementScore(res.engagementScore);
+          setScore(res.engagementScore);
+        }
+        setReportReady(true);
+        passedFirstPass = res?.passed === true;
+      } catch (err) {
+        console.error("endSession failed:", err);
+        // Fallback: use trail marker % if EndSession fails
+        passedFirstPass = pct >= 80;
+        setReportReady(true);
+      }
     }
 
-    const passedFirstPass =
-      Math.round((correctCount / (allTrailMarkerCount || 1)) * 100) >= 80;
     if (passedFirstPass && viewer?.id && clipId && sessionId) {
       // First-pass success → CompleteClipPath is the sole gatekeeper for completion
       completeClipPath({
@@ -455,20 +461,32 @@ export default function WatchPage() {
       }).catch(console.error);
 
       const clipDuration = clipData?.clip?.durationSeconds ?? elapsedSeconds;
-      awardXP({
-        viewerId: viewer.id,
-        clipId,
-        sessionId,
-        trailMarkerCorrect: correctCount,
-        trailMarkerTotal: allTrailMarkerCount,
-        passedFirstPass: true,
-        searchRescueTriggered: false,
-        searchRescueScore: null,
-        searchRescueTotal: null,
-        weatherStormTriggered: false,
-        totalTimeSeconds: elapsedSeconds,
-        clipDurationSeconds: clipDuration,
-      })
+      // Award XP with retry — ensures XP is reliably written even on transient failures
+      const awardXPWithRetry = async (attempt = 1): Promise<any> => {
+        try {
+          return await awardXP({
+            viewerId: viewer.id,
+            clipId,
+            sessionId,
+            trailMarkerCorrect: correctCount,
+            trailMarkerTotal: allTrailMarkerCount,
+            passedFirstPass: true,
+            searchRescueTriggered: false,
+            searchRescueScore: null,
+            searchRescueTotal: null,
+            weatherStormTriggered: false,
+            totalTimeSeconds: elapsedSeconds,
+            clipDurationSeconds: clipDuration,
+          });
+        } catch (err) {
+          if (attempt < 2) {
+            return awardXPWithRetry(attempt + 1);
+          }
+          throw err;
+        }
+      };
+
+      awardXPWithRetry()
         .then((res: any) => {
           if (res?.badgesEarned?.length > 0) {
             res.badgesEarned.forEach((b: any) => {
@@ -478,7 +496,6 @@ export default function WatchPage() {
           if (res?.newTier) {
             toast.success(`${res.newTier.emoji} Tier up! You're now a ${res.newTier.name}!`);
           }
-          // Store session breakdown from awardXP, then fetch cumulative totals
           const sessionBreakdown = res?.sessionBreakdown ?? { base: 0, milestones: 0, bonuses: 0 };
           if (viewer?.id) {
             executeApi("GetLearnerProgress", { viewerId: viewer.id })
@@ -490,7 +507,6 @@ export default function WatchPage() {
                 });
               })
               .catch(() => {
-                // Even if progress fetch fails, still show session data
                 setXpData({
                   sessionBreakdown,
                   totalXp: res?.totalXp ?? 0,
@@ -499,7 +515,10 @@ export default function WatchPage() {
               });
           }
         })
-        .catch(console.error);
+        .catch((err: any) => {
+          console.error("awardXP failed after retry:", err);
+          toast.error("XP could not be saved. Your progress was recorded — XP will sync shortly.");
+        });
     }
 
     setPhase("ranger_report");
@@ -524,41 +543,50 @@ export default function WatchPage() {
       if (viewer?.id && clipId && sessionId) {
         const clipDuration = clipData?.clip?.durationSeconds ?? elapsedSeconds;
 
-        // Await awardXP so XP data is ready for the popup before it renders
-        try {
-          const res: any = await awardXP({
-            viewerId: viewer.id,
-            clipId,
-            sessionId,
-            trailMarkerCorrect: correctCount,
-            trailMarkerTotal: trailMarkers.length,
-            passedFirstPass: false,
-            searchRescueTriggered: true,
-            searchRescueScore: rescueScore,
-            searchRescueTotal: srTotal,
-            weatherStormTriggered: false,
-            totalTimeSeconds: elapsedSeconds,
-            clipDurationSeconds: clipDuration,
-          });
-          if (res?.badgesEarned?.length > 0) {
-            res.badgesEarned.forEach((b: any) => {
+        // Await awardXP with retry so XP data is ready for the popup before it renders
+        let awardRes: any = null;
+        for (let attempt = 1; attempt <= 2; attempt++) {
+          try {
+            awardRes = await awardXP({
+              viewerId: viewer.id,
+              clipId,
+              sessionId,
+              trailMarkerCorrect: correctCount,
+              trailMarkerTotal: trailMarkers.length,
+              passedFirstPass: false,
+              searchRescueTriggered: true,
+              searchRescueScore: rescueScore,
+              searchRescueTotal: srTotal,
+              weatherStormTriggered: false,
+              totalTimeSeconds: elapsedSeconds,
+              clipDurationSeconds: clipDuration,
+            });
+            break; // success — exit retry loop
+          } catch (err) {
+            if (attempt >= 2) {
+              console.error("awardXP failed after retry:", err);
+              toast.error("XP could not be saved. Your progress was recorded — XP will sync shortly.");
+            }
+          }
+        }
+        if (awardRes) {
+          if (awardRes.badgesEarned?.length > 0) {
+            awardRes.badgesEarned.forEach((b: any) => {
               toast.success(`${b.emoji} Badge earned: ${b.name} (+${b.xp} XP)`);
             });
           }
-          if (res?.newTier) {
-            toast.success(`${res.newTier.emoji} Tier up! You're now a ${res.newTier.name}!`);
+          if (awardRes.newTier) {
+            toast.success(`${awardRes.newTier.emoji} Tier up! You're now a ${awardRes.newTier.name}!`);
           }
           // Capture XP data for the S&R pass popup (same pattern as Ranger Report)
           if (passed) {
-            const sessionBreakdown = res?.sessionBreakdown ?? { base: 0, milestones: 0, bonuses: 0 };
+            const sessionBreakdown = awardRes.sessionBreakdown ?? { base: 0, milestones: 0, bonuses: 0 };
             setXpData({
               sessionBreakdown,
-              totalXp: res?.totalXp ?? 0,
-              tier: { name: "Base Camper", emoji: "\u{1F3D5}\uFE0F" },
+              totalXp: awardRes.totalXp ?? 0,
+              tier: { name: "Base Camper", emoji: "🏕️" },
             });
           }
-        } catch (err) {
-          console.error("awardXP failed:", err);
         }
 
         // Await completeClipPath so completed=true is written BEFORE popup/navigation
@@ -604,26 +632,33 @@ export default function WatchPage() {
       }
 
       const clipDuration = clipData?.clip?.durationSeconds ?? elapsedSeconds;
-      try {
-        const res: any = await awardXP({
-          viewerId: viewer.id,
-          clipId,
-          sessionId,
-          trailMarkerCorrect: correctCount,
-          trailMarkerTotal: trailMarkers.length,
-          passedFirstPass: false,
-          searchRescueTriggered: true,
-          searchRescueScore: searchRescueScore,
-          searchRescueTotal: recoveryQuestions.length,
-          weatherStormTriggered: true,
-          totalTimeSeconds: elapsedSeconds,
-          clipDurationSeconds: clipDuration,
-        });
-        if (res?.xpAwarded) {
-          toast.success(`+${res.xpAwarded} XP — persistence pays off!`);
+      let awardRes: any = null;
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        try {
+          awardRes = await awardXP({
+            viewerId: viewer.id,
+            clipId,
+            sessionId,
+            trailMarkerCorrect: correctCount,
+            trailMarkerTotal: trailMarkers.length,
+            passedFirstPass: false,
+            searchRescueTriggered: true,
+            searchRescueScore: searchRescueScore,
+            searchRescueTotal: recoveryQuestions.length,
+            weatherStormTriggered: true,
+            totalTimeSeconds: elapsedSeconds,
+            clipDurationSeconds: clipDuration,
+          });
+          break;
+        } catch (err) {
+          if (attempt >= 2) {
+            console.error("awardXP failed after retry:", err);
+            toast.error("XP could not be saved. Your progress was recorded — XP will sync shortly.");
+          }
         }
-      } catch (err) {
-        console.error("awardXP failed:", err);
+      }
+      if (awardRes?.xpAwarded) {
+        toast.success(`+${awardRes.xpAwarded} XP — persistence pays off!`);
       }
     }
     navigate("/library");

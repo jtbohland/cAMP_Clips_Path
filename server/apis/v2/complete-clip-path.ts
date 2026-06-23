@@ -116,13 +116,14 @@ export default api({
         (questionScore * 0.25) + (focusScore * 0.30) + (timeScore * 0.45)
       );
 
-      // Update session: mark completed + store the recalculated engagement score
+      // Update session: mark completed, store recalculated engagement, and flag recovery path
+      const isRecovery = path === "search_rescue" || path === "weather_storm";
       await ctx.integrations.db.execute(
         `UPDATE cliptracker_v2_sessions
-         SET completed = true, engagement_score = $2
+         SET completed = true, engagement_score = $2, is_recovery_attempt = $3
          WHERE id = $1`,
-        [session.id, newEngagementScore],
-        { label: "Update session with recalculated engagement score" }
+        [session.id, newEngagementScore, isRecovery],
+        { label: "Update session with engagement score and recovery flag" }
       );
     }
 

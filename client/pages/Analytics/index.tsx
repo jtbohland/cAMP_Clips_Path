@@ -201,10 +201,11 @@ function CampersSection({ learners, totalClips }: { learners: any[]; totalClips:
       </div>
 
       {/* Table header */}
-      <div className="grid grid-cols-[1.4fr_70px_70px_80px_60px_90px_80px_1fr] gap-2 text-[10px] font-semibold text-gray-500 uppercase tracking-wider px-3">
+      <div className="grid grid-cols-[1.4fr_70px_70px_70px_80px_60px_90px_80px_1fr] gap-2 text-[10px] font-semibold text-gray-500 uppercase tracking-wider px-3">
         <span>cAMPer</span>
         <span className="text-center">XP Earned</span>
-        <span className="text-center">Trail Score</span>
+        <span className="text-center">Clip Score</span>
+        <span className="text-center">1st Attempt</span>
         <span className="text-center">Recovery Score</span>
         <span className="text-center">⛈️ Storms</span>
         <span className="text-center">Progress</span>
@@ -218,7 +219,7 @@ function CampersSection({ learners, totalClips }: { learners: any[]; totalClips:
           const progressPct = totalClips > 0 ? Math.round((l.clipsCompleted / totalClips) * 100) : 0;
 
           return (
-            <div key={l.viewerId} className="grid grid-cols-[1.4fr_70px_70px_80px_60px_90px_80px_1fr] gap-2 items-center px-3 py-2.5 rounded-md border border-gray-100 bg-white">
+            <div key={l.viewerId} className="grid grid-cols-[1.4fr_70px_70px_70px_80px_60px_90px_80px_1fr] gap-2 items-center px-3 py-2.5 rounded-md border border-gray-100 bg-white">
               {/* cAMPer name + tier */}
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
@@ -234,9 +235,14 @@ function CampersSection({ learners, totalClips }: { learners: any[]; totalClips:
               {/* XP Earned */}
               <div className="text-center text-sm font-bold text-[#4F46E5]">{l.totalXp}</div>
 
-              {/* Trail Score */}
+              {/* Clip Score (final engagement avg across all completed) */}
               <div className="text-center text-sm font-medium text-gray-900">
-                {l.firstPassAvg != null ? `${l.firstPassAvg}%` : "—"}
+                {l.clipScoreAvg != null ? `${l.clipScoreAvg}%` : "—"}
+              </div>
+
+              {/* 1st Attempt (initial engagement before S&R improvement) */}
+              <div className="text-center text-sm font-medium text-gray-900">
+                {l.firstAttemptAvg != null ? `${l.firstAttemptAvg}%` : "—"}
               </div>
 
               {/* Recovery Score */}

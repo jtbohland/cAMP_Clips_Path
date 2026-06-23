@@ -328,7 +328,7 @@ export default api({
         `SELECT COUNT(*)::int as count FROM cliptracker_v2_badges
          WHERE viewer_id = $1 AND badge_id = 'double_summit'
          AND earned_at::date = CURRENT_DATE`,
-        ExDsSchema, [viewerId, clipId], { label: "Check double summit today" }
+        ExDsSchema, [viewerId], { label: "Check double summit today" }
       );
       if (exDs[0]?.count === 0 && (totalDs[0]?.count ?? 0) < 8) {
         xpEvents.push({ sourceId: "double_summit", eventType: "performance", xp: 5 });

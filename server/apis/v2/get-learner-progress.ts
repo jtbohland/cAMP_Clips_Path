@@ -73,11 +73,11 @@ export default api({
     for (const row of xpRows) {
       xpByType[row.event_type] = row.type_xp;
     }
-    const totalXp = (xpByType.base ?? 0) + (xpByType.milestone ?? 0) + (xpByType.performance ?? 0);
+    const totalXp = Object.values(xpByType).reduce((sum, v) => sum + v, 0);
     const xpBreakdown = {
       base: xpByType.base ?? 0,
       milestones: xpByType.milestone ?? 0,
-      bonuses: xpByType.performance ?? 0,
+      bonuses: (xpByType.performance ?? 0) + (xpByType.streak ?? 0) + (xpByType.pace ?? 0),
     };
 
     // Get badges
