@@ -355,16 +355,9 @@ export default function WatchPage() {
         isFocusedRef.current = true;
       }
     };
-    const handleFocus = () => { isFocusedRef.current = true; };
-    const handleBlur = () => { isFocusedRef.current = false; };
-
     document.addEventListener("visibilitychange", handleVisibilityChange);
-    window.addEventListener("focus", handleFocus);
-    window.addEventListener("blur", handleBlur);
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
-      window.removeEventListener("focus", handleFocus);
-      window.removeEventListener("blur", handleBlur);
     };
   }, []); // No phase dependency needed — uses phaseRef
 

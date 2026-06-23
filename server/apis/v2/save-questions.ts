@@ -19,6 +19,8 @@ export default api({
       triggerAtSeconds: z.number(),
       sortOrder: z.number(),
       isRecovery: z.boolean(),
+      correctFeedback: z.string().nullable().optional(),
+      incorrectFeedback: z.string().nullable().optional(),
     })),
   }),
 
@@ -37,9 +39,9 @@ export default api({
     // Insert new questions
     for (const q of questions) {
       await ctx.integrations.db.execute(
-        `INSERT INTO cliptracker_v2_questions (clip_id, question_text, options, correct_option, trigger_at_seconds, sort_order, is_recovery)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-        [clipId, q.questionText, JSON.stringify(q.options), q.correctOption, q.triggerAtSeconds, q.sortOrder, q.isRecovery],
+        `INSERT INTO cliptracker_v2_questions (clip_id, question_text, options, correct_option, trigger_at_seconds, sort_order, is_recovery, correct_feedback, incorrect_feedback)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+        [clipId, q.questionText, JSON.stringify(q.options), q.correctOption, q.triggerAtSeconds, q.sortOrder, q.isRecovery, q.correctFeedback ?? null, q.incorrectFeedback ?? null],
         { label: `Insert question ${q.sortOrder}` }
       );
     }
