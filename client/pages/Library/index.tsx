@@ -17,9 +17,7 @@ export default function LibraryPage() {
   const [showWelcomePreview, setShowWelcomePreview] = useState(false);
   const [showRegisterPreview, setShowRegisterPreview] = useState(false);
   const [showSummit, setShowSummit] = useState(false);
-  const [summitDismissed, setSummitDismissed] = useState(
-    () => localStorage.getItem(`summit_dismissed_${viewer?.id}`) === "true"
-  );
+  const [summitDismissed, setSummitDismissed] = useState(false);
   const [tierUnlock, setTierUnlock] = useState<number | null>(null);
 
   useEffect(() => {
@@ -64,13 +62,21 @@ export default function LibraryPage() {
     }
   }, [progressData, viewer, tierUnlock]);
 
+  // Sync summitDismissed with viewer (viewer is null at mount)
+  useEffect(() => {
+    if (viewer) {
+      setSummitDismissed(localStorage.getItem(`summit_dismissed_${viewer.id}`) === "true");
+    }
+  }, [viewer]);
+
   // Auto-trigger Summit modal when all 17 clips are completed
   const allCompleted = clips.length === 17 && clips.every((c: any) => c.completed);
   useEffect(() => {
+    if (!viewer) return; // Wait for viewer to load before deciding
     if (allCompleted && !summitDismissed && !showSummit && searchParams.get("tier") !== "test") {
       setShowSummit(true);
     }
-  }, [allCompleted, summitDismissed, showSummit, searchParams]);
+  }, [allCompleted, summitDismissed, showSummit, searchParams, viewer]);
 
   const WEEK_EMOJI: Record<number, string> = { 2: "🥾", 3: "🏞️", 4: "🧗🏻‍♂️" };
 
