@@ -51,7 +51,14 @@ export default function LibraryPage() {
   useEffect(() => {
     if (!progressData || !viewer) return;
     const currentTierNum = progressData.tier.tier;
-    const lastCelebrated = parseInt(localStorage.getItem(`tier_celebrated_${viewer.id}`) ?? "1", 10);
+    const storageKey = `tier_celebrated_${viewer.id}`;
+    const stored = localStorage.getItem(storageKey);
+    // First time seeing this feature? Seed with current tier — don't retroactively celebrate
+    if (stored === null) {
+      localStorage.setItem(storageKey, String(currentTierNum));
+      return;
+    }
+    const lastCelebrated = parseInt(stored, 10);
     if (currentTierNum > lastCelebrated && tierUnlock === null) {
       setTierUnlock(currentTierNum);
     }
