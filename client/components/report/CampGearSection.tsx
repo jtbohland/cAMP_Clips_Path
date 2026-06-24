@@ -8,6 +8,7 @@ interface Resource {
 
 interface CampGearSectionProps {
   resources: Resource[];
+  onResourceClick?: (label: string) => void;
 }
 
 const BADGE_STYLES: Record<string, string> = {
@@ -36,7 +37,7 @@ const TYPE_LABELS: Record<string, string> = {
   sfdc: "Salesforce",
 };
 
-export default function CampGearSection({ resources }: CampGearSectionProps) {
+export default function CampGearSection({ resources, onResourceClick }: CampGearSectionProps) {
   return (
     <div>
       <div className="flex items-center gap-2 mb-3">
@@ -55,6 +56,7 @@ export default function CampGearSection({ resources }: CampGearSectionProps) {
                 href={r.url}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => onResourceClick?.(r.label)}
                 className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors group"
               >
                 <span
