@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, memo } from "react";
 import PasswordGate from "@/components/PasswordGate";
 import PageHeader from "@/components/PageHeader";
 import { useApiData } from "@/hooks/useApiData";
@@ -134,6 +134,11 @@ function AnalyticsContent() {
         {/* 5. Trail Markers (collapsed by default) */}
         <Section title="Trail Markers" emoji="🪧" defaultOpen={false}>
           <QuestionsSection questions={questions ?? []} />
+        </Section>
+
+        {/* 6. Elevator Pitches (collapsed by default) */}
+        <Section title="Elevator Pitches" subtitle="Click engagement from the welcome screen" emoji="🍿" defaultOpen={false}>
+          <PitchClicksSection />
         </Section>
       </div>
     </div>
@@ -448,3 +453,67 @@ function LeaderboardSection({ leaderboard }: { leaderboard: any[] }) {
     </div>
   );
 }
+
+// --- 6. Elevator Pitch Clicks ---
+
+const PitchClicksSection = memo(function PitchClicksSection() {
+  const { data, loading } = useApiData("GetPitchClicks", {});
+
+  if (loading) {
+    return <div className="py-4"><Skeleton className="h-32" /></div>;
+  }
+
+  const summary = data?.summary ?? [];
+  const clicks = data?.clicks ?? [];
+
+  if (summary.length === 0 && clicks.length === 0) {
+    return <p className="text-sm text-gray-500 text-center py-6">No pitch clicks recorded yet</p>;
+  }
+
+  return (
+    <div className="space-y-4 pt-4">
+      {/* Summary cards */}
+      {summary.length > 0 && (
+        <div className="grid grid-cols-4 gap-3">
+          {summary.map(s => (
+            <div key={s.pitchName} className="text-center p-3 rounded-lg border border-gray-100 bg-[#fafafa]">
+              <div className="text-lg mb-1">🍿</div>
+              <div className="text-sm font-semibold text-gray-900 truncate">{s.pitchName}</div>
+              <div className="text-xl font-bold text-[#4F46E5] mt-1">{s.clickCount}</div>
+              <div className="text-[10px] text-gray-500">
+                {s.uniqueViewers} unique {s.uniqueViewers === 1 ? "viewer" : "viewers"}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Recent clicks table */}
+      {clicks.length > 0 && (
+        <div>
+          <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Recent Clicks</h4>
+          <div className="rounded-lg border border-gray-200 overflow-hidden">
+            <div className="grid grid-cols-[1fr_1fr_140px] gap-2 px-3 py-2 bg-gray-50 text-[10px] font-semibold text-gray-500 uppercase tracking-wide border-b border-gray-200">
+              <div>cAMPer</div>
+              <div>Pitch</div>
+              <div>When</div>
+            </div>
+            {clicks.slice(0, 20).map((c, i) => (
+              <div key={i} className="grid grid-cols-[1fr_1fr_140px] gap-2 px-3 py-2 border-b border-gray-50 last:border-0">
+                <div className="text-sm text-gray-900 truncate">{c.viewerName}</div>
+                <div className="text-sm text-gray-700 truncate">{c.pitchName}</div>
+                <div className="text-xs text-gray-500">
+                  {new Date(c.clickedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}{" "}
+                  {new Date(c.clickedAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+                </div>
+              </div>
+            ))}
+          </div>
+          {clicks.length > 20 && (
+            <p className="text-xs text-gray-400 mt-1 text-center">Showing 20 of {clicks.length} clicks</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+});

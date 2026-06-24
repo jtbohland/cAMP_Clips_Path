@@ -52,6 +52,8 @@ export default api({
     badges: z.array(BadgeSchema),
     clipsCompleted: z.number(),
     ascentDay1: z.string().nullable(),
+    managerName: z.string().nullable(),
+    leaderboardRank: z.number(),
   }),
 
   async run(ctx, { viewerId }) {
@@ -109,13 +111,26 @@ export default api({
     const clipsCompleted = completedResult[0]?.count ?? 0;
 
     // Get ascent_day_1
-    const ViewerDateSchema = z.object({ ascent_day_1: z.string().nullable() });
+    const ViewerDateSchema = z.object({ ascent_day_1: z.string().nullable(), manager_name: z.string().nullable() });
     const viewerDate = await ctx.integrations.db.query(
-      `SELECT ascent_day_1::text FROM cliptracker_v2_viewers WHERE id = $1`,
+      `SELECT ascent_day_1::text, manager_name FROM cliptracker_v2_viewers WHERE id = $1`,
       ViewerDateSchema,
       [viewerId],
       { label: "Get ascent day 1" }
     );
+
+    // Leaderboard rank — count non-admin viewers with higher XP + 1
+    const RankSchema = z.object({ rank: z.coerce.number() });
+    const rankResult = await ctx.integrations.db.query(
+      `SELECT COUNT(*) + 1 AS rank
+       FROM cliptracker_v2_viewers v
+       WHERE COALESCE(v.is_admin, false) = false
+         AND COALESCE((SELECT SUM(xp_amount)::int FROM cliptracker_v2_xp_events x WHERE x.viewer_id = v.id), 0) > $1`,
+      RankSchema,
+      [totalXp],
+      { label: "Get leaderboard rank" }
+    );
+    const leaderboardRank = rankResult[0]?.rank ?? 1;
 
     // Determine tier
     const currentTier = TIERS.reduce((acc, t) => {
@@ -147,6 +162,8 @@ export default api({
       })),
       clipsCompleted,
       ascentDay1: viewerDate[0]?.ascent_day_1 ?? null,
+      managerName: viewerDate[0]?.manager_name ?? null,
+      leaderboardRank,
     };
   },
 });
