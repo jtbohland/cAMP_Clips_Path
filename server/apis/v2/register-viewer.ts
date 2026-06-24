@@ -2,7 +2,7 @@ import { api, z, postgres } from "@superblocksteam/sdk-api";
 
 const APPS_DB = "c6e32cf4-ca66-42ae-aeb3-58c84ffae574";
 
-const ROLES = ['SDR', 'Velocity AE', 'Emerging AE', 'Majors AE', 'Strategic AEs', 'PSM', 'Renewals'] as const;
+const ROLES = ['SDR', 'Velocity AE', 'Emerging AE', 'Majors AE', 'Strat AE', 'PSM', 'Renewals', 'Admin'] as const;
 
 const ViewerSchema = z.object({
   id: z.string(),
@@ -26,6 +26,8 @@ export default api({
     name: z.string().min(1),
     role: z.enum(ROLES),
     ascentDay1: z.string(),
+    managerName: z.string().min(1),
+    managerEmail: z.string().email(),
   }),
 
   output: z.object({
@@ -33,7 +35,7 @@ export default api({
     isNew: z.boolean(),
   }),
 
-  async run(ctx, { email, name, role, ascentDay1 }) {
+  async run(ctx, { email, name, role, ascentDay1, managerName, managerEmail }) {
     // Check if viewer already exists
     const existing = await ctx.integrations.db.query(
       "SELECT id, email, name, role, ascent_day_1::text as \"ascentDay1\", COALESCE(is_admin, false) as \"isAdmin\" FROM cliptracker_v2_viewers WHERE email = $1",
@@ -46,13 +48,18 @@ export default api({
       return { viewer: existing[0], isNew: false };
     }
 
+    // Admin role guard — only pre-approved admins may register as Admin
+    if (role === 'Admin') {
+      throw new Error('The Admin role is restricted. If you believe this is an error, please reach out to your program lead.');
+    }
+
     // Create new viewer
     const created = await ctx.integrations.db.query(
-      `INSERT INTO cliptracker_v2_viewers (email, name, role, ascent_day_1)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO cliptracker_v2_viewers (email, name, role, ascent_day_1, manager_name, manager_email)
+       VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING id, email, name, role, ascent_day_1::text as "ascentDay1", COALESCE(is_admin, false) as "isAdmin"`,
       ViewerSchema,
-      [email, name, role, ascentDay1],
+      [email, name, role, ascentDay1, managerName, managerEmail],
       { label: "Register new viewer" }
     );
 

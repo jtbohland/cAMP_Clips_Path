@@ -1,19 +1,17 @@
 import { useState, useCallback } from "react";
-import { useNavigate } from "react-router";
 import { useApi } from "@/hooks/useApi";
 import { useViewer } from "@/components/ViewerContext";
 import { toast } from "sonner";
-import { FIRST_CLIP_ID } from "@/lib/constants";
+import WelcomeModal from "@/components/WelcomeModal";
 
 const ROLES = [
-  "Account Executive",
+  "SDR",
   "Velocity AE",
-  "Partner Sales Manager",
-  "Majors AE",
   "Emerging AE",
-  "Strategic AE",
-  "Renewals",
+  "Majors AE",
+  "Strat AE",
   "PSM",
+  "Renewals",
   "Admin",
 ] as const;
 
@@ -23,18 +21,21 @@ function getTodayString(): string {
 }
 
 export default function RegistrationForm() {
-  const navigate = useNavigate();
   const { setViewer } = useViewer();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("");
+  const [managerName, setManagerName] = useState("");
+  const [managerEmail, setManagerEmail] = useState("");
   const [ascentDay1, setAscentDay1] = useState(getTodayString());
   const { run: registerViewer, loading } = useApi("RegisterViewer");
+  const [showWelcome, setShowWelcome] = useState(false);
+  const [registeredViewerId, setRegisteredViewerId] = useState<string | null>(null);
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
-      if (!name.trim() || !email.trim() || !role || !ascentDay1) {
+      if (!name.trim() || !email.trim() || !role || !managerName.trim() || !managerEmail.trim() || !ascentDay1) {
         toast.error("Please fill in all fields");
         return;
       }
@@ -43,12 +44,19 @@ export default function RegistrationForm() {
           email: email.trim().toLowerCase(),
           name: name.trim(),
           role,
+          managerName: managerName.trim(),
+          managerEmail: managerEmail.trim().toLowerCase(),
           ascentDay1,
         });
         if (result?.viewer) {
           setViewer(result.viewer);
-          toast.success(result.isNew ? "Welcome! You're all set." : "Welcome back!");
-          navigate(`/watch/${FIRST_CLIP_ID}`, { replace: true });
+          if (result.isNew) {
+            // New registration — show welcome modal
+            setRegisteredViewerId(result.viewer.id);
+            setShowWelcome(true);
+          } else {
+            toast.success("Welcome back!");
+          }
         }
       } catch (error) {
         const message =
@@ -58,8 +66,18 @@ export default function RegistrationForm() {
         toast.error("Registration failed: " + message);
       }
     },
-    [name, email, role, ascentDay1, registerViewer, setViewer, navigate]
+    [name, email, role, managerName, managerEmail, ascentDay1, registerViewer, setViewer]
   );
+
+  // After registration, show welcome modal
+  if (showWelcome && registeredViewerId) {
+    return (
+      <WelcomeModal
+        viewerId={registeredViewerId}
+        onDismiss={() => setShowWelcome(false)}
+      />
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
@@ -129,6 +147,39 @@ export default function RegistrationForm() {
                 </option>
               ))}
             </select>
+          </div>
+
+          {/* Manager's Full Name */}
+          <div className="space-y-1.5">
+            <label htmlFor="reg-manager-name" className="block text-sm font-medium text-gray-700">
+              Manager's Full Name
+              <span className="ml-1 font-normal text-xs text-gray-400 italic">(please check spelling before submitting)</span>
+            </label>
+            <input
+              id="reg-manager-name"
+              type="text"
+              placeholder="Alex Johnson"
+              value={managerName}
+              onChange={(e) => setManagerName(e.target.value)}
+              required
+              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+            />
+          </div>
+
+          {/* Manager's Email */}
+          <div className="space-y-1.5">
+            <label htmlFor="reg-manager-email" className="block text-sm font-medium text-gray-700">
+              Manager's Email
+            </label>
+            <input
+              id="reg-manager-email"
+              type="email"
+              placeholder="alex.johnson@amplitude.com"
+              value={managerEmail}
+              onChange={(e) => setManagerEmail(e.target.value)}
+              required
+              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+            />
           </div>
 
           {/* Day 1 of Ascent */}

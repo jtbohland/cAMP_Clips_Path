@@ -1,15 +1,37 @@
-import { useMemo, useState } from "react";
-import { useNavigate } from "react-router";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router";
 import { useApiData } from "@/hooks/useApiData.js";
 import { useViewer } from "@/components/ViewerContext";
 import ClipLibraryCard from "@/components/ClipLibraryCard";
 import RegistrationForm from "@/components/RegistrationForm";
 import XpProgressBar from "@/components/XpProgressBar";
+import WelcomeModal from "@/components/WelcomeModal";
+import SummitModal from "@/components/SummitModal";
+import TierUnlockModal from "@/components/TierUnlockModal";
 
 export default function LibraryPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { viewer, isLoading: viewerLoading } = useViewer();
   const [showBeforeYouBegin, setShowBeforeYouBegin] = useState(true);
+  const [showWelcomePreview, setShowWelcomePreview] = useState(false);
+  const [showRegisterPreview, setShowRegisterPreview] = useState(false);
+  const [showSummit, setShowSummit] = useState(false);
+  const [summitDismissed, setSummitDismissed] = useState(
+    () => localStorage.getItem(`summit_dismissed_${viewer?.id}`) === "true"
+  );
+  const [tierUnlock, setTierUnlock] = useState<number | null>(null);
+
+  useEffect(() => {
+    setShowWelcomePreview(searchParams.get("welcome") === "test");
+    setShowRegisterPreview(searchParams.get("register") === "test");
+    if (searchParams.get("summit") === "test") {
+      setShowSummit(true);
+    }
+    if (searchParams.get("tier") === "test") {
+      setTierUnlock(-1); // -1 signals preview mode
+    }
+  }, [searchParams]);
 
   const { data, loading } = useApiData(
     "GetClipLibrary",
@@ -17,7 +39,31 @@ export default function LibraryPage() {
     { enabled: !!viewer?.id }
   );
 
+  const { data: progressData } = useApiData(
+    "GetLearnerProgress",
+    { viewerId: viewer?.id ?? "" },
+    { enabled: !!viewer?.id }
+  );
+
   const clips = useMemo(() => data?.clips ?? [], [data]);
+
+  // Auto-trigger Tier Unlock modal when tier advances past last celebrated
+  useEffect(() => {
+    if (!progressData || !viewer) return;
+    const currentTierNum = progressData.tier.tier;
+    const lastCelebrated = parseInt(localStorage.getItem(`tier_celebrated_${viewer.id}`) ?? "1", 10);
+    if (currentTierNum > lastCelebrated && tierUnlock === null) {
+      setTierUnlock(currentTierNum);
+    }
+  }, [progressData, viewer, tierUnlock]);
+
+  // Auto-trigger Summit modal when all 17 clips are completed
+  const allCompleted = clips.length === 17 && clips.every((c: any) => c.completed);
+  useEffect(() => {
+    if (allCompleted && !summitDismissed && !showSummit && searchParams.get("tier") !== "test") {
+      setShowSummit(true);
+    }
+  }, [allCompleted, summitDismissed, showSummit, searchParams]);
 
   const WEEK_EMOJI: Record<number, string> = { 2: "🥾", 3: "🏞️", 4: "🧗🏻‍♂️" };
 
@@ -40,6 +86,72 @@ export default function LibraryPage() {
   // Show registration if no viewer
   if (!viewerLoading && !viewer) {
     return <RegistrationForm />;
+  }
+
+  // Preview flags
+  const isTierPreview = searchParams.get("tier") === "test";
+  const isSummitPreview = searchParams.get("summit") === "test";
+
+  // Summit modal — auto-triggers after completing all 17 clips (or ?summit=test)
+  if (showSummit && viewer && !isTierPreview) {
+    const xp = progressData?.totalXp ?? 0;
+    const tName = progressData?.tier?.name ?? "Climber";
+    const tEmoji = progressData?.tier?.emoji ?? "🏔️";
+    return (
+      <SummitModal
+        learnerName={viewer.name}
+        totalXp={xp}
+        tierName={tName}
+        tierEmoji={tEmoji}
+        managerName={progressData?.managerName ?? null}
+        onDismiss={() => {
+          setShowSummit(false);
+          if (!isSummitPreview) {
+            setSummitDismissed(true);
+            localStorage.setItem(`summit_dismissed_${viewer.id}`, "true");
+          }
+        }}
+      />
+    );
+  }
+
+  // Tier unlock modal — triggers when XP crosses a new tier threshold
+  if (tierUnlock !== null && viewer && progressData) {
+    const tier = progressData.tier;
+    const nextTier = progressData.nextTier;
+    const xpNeeded = nextTier ? nextTier.xpMin - progressData.totalXp : null;
+    return (
+      <TierUnlockModal
+        tierName={tier.name}
+        tierEmoji={tier.emoji}
+        totalXp={progressData.totalXp}
+        leaderboardRank={progressData.leaderboardRank}
+        nextTierName={nextTier?.name ?? null}
+        nextTierEmoji={nextTier?.emoji ?? null}
+        xpToNextTier={xpNeeded}
+        onDismiss={() => {
+          setTierUnlock(null);
+          if (!isTierPreview) {
+            localStorage.setItem(`tier_celebrated_${viewer.id}`, String(tier.tier));
+          }
+        }}
+      />
+    );
+  }
+
+  // Registration form preview via ?register=test
+  if (showRegisterPreview) {
+    return <RegistrationForm />;
+  }
+
+  // Welcome modal preview via ?welcome=test
+  if (showWelcomePreview && viewer) {
+    return (
+      <WelcomeModal
+        viewerId={viewer.id}
+        onDismiss={() => setShowWelcomePreview(false)}
+      />
+    );
   }
 
   if (loading) {

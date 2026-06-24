@@ -17,6 +17,7 @@ import GetClipLibrary from './v2/get-clip-library.js';
 import GetClipQuestions from './v2/get-clip-questions.js';
 import GetClipReport from './v2/get-clip-report.js';
 import GetPausedSession from './v2/get-paused-session.js';
+import GetPitchClicks from './v2/get-pitch-clicks.js';
 import GetLearnerProgress from './v2/get-learner-progress.js';
 import GetViewers from './v2/get-viewers.js';
 import GetWeatherStorm from './v2/get-weather-storm.js';
@@ -40,7 +41,10 @@ import FixChrisXP from './v2/fix-chris-xp.js';
 import BackfillFeedback from './v2/backfill-feedback.js';
 import FixChrisClip3 from './v2/fix-chris-clip3.js';
 import ResetJTSessions from './v2/reset-jt-sessions.js';
+import AddManagerColumns from './v2/add-manager-columns.js';
+import CreatePitchClicksTable from './v2/create-pitch-clicks-table.js';
 import FixRecoveryFlags from './v2/fix-recovery-flags.js';
+import LogPitchClick from './v2/log-pitch-click.js';
 import SetupXpSchema from './v2/setup-xp-schema.js';
 import StartSession from './v2/start-session.js';
 import SubmitAnswer from './v2/submit-answer.js';
@@ -56,11 +60,14 @@ const apis = {
   CompleteClipPath,
   EndSession,
 AddInitialEngagementColumn,
+AddManagerColumns,
 AddWatchedSecondsColumn,
 BackfillFeedback,
 FixChrisXP,
 FixChrisClip3,
+CreatePitchClicksTable,
 FixRecoveryFlags,
+LogPitchClick,
 ResetJTSessions,
   GetAdminClips,
   GetAnalyticsV2,
@@ -71,6 +78,7 @@ ResetJTSessions,
   GetClipQuestions,
   GetClipReport,
   GetPausedSession,
+  GetPitchClicks,
   GetLearnerProgress,
   GetViewers,
   GetWeatherStorm,
