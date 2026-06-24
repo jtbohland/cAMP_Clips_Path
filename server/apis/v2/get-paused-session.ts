@@ -7,6 +7,7 @@ const PausedSessionRow = z.object({
   paused_elapsed_seconds: z.coerce.number(),
   paused_focus_seconds: z.coerce.number(),
   paused_blur_seconds: z.coerce.number(),
+  paused_watched_seconds: z.coerce.number().default(0),
   paused_answered_ids: z.any(),
   paused_correct_count: z.coerce.number(),
   paused_phase: z.string().nullable(),
@@ -32,6 +33,7 @@ export default api({
     session: z.object({
       id: z.string(),
       elapsedSeconds: z.number(),
+      watchedSeconds: z.number(),
       focusSeconds: z.number(),
       blurSeconds: z.number(),
       answeredQuestionIds: z.array(z.string()),
@@ -56,6 +58,7 @@ export default api({
 
     const rows = await ctx.integrations.db.query(
       `SELECT id, paused_elapsed_seconds, paused_focus_seconds, paused_blur_seconds,
+              COALESCE(paused_watched_seconds, paused_elapsed_seconds) as paused_watched_seconds,
               paused_answered_ids, paused_correct_count, paused_phase, paused_at::text
        FROM cliptracker_v2_sessions
        WHERE clip_id = $1 AND viewer_id = $2
@@ -82,6 +85,7 @@ export default api({
       session: {
         id: row.id,
         elapsedSeconds: row.paused_elapsed_seconds,
+        watchedSeconds: row.paused_watched_seconds,
         focusSeconds: row.paused_focus_seconds,
         blurSeconds: row.paused_blur_seconds,
         answeredQuestionIds: answeredIds,

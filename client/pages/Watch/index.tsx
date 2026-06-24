@@ -81,10 +81,12 @@ export default function WatchPage() {
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [reportReady, setReportReady] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [watchedSeconds, setWatchedSeconds] = useState(0);
   const [focusSeconds, setFocusSeconds] = useState(0);
   const [blurSeconds, setBlurSeconds] = useState(0);
   const isFocusedRef = useRef(true);
   const lastTimeRef = useRef(0);
+  const lastWatchedTimeRef = useRef(0);
   const focusTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [tabAway, setTabAway] = useState(false);
   const tabAwayCountRef = useRef(0);
@@ -148,7 +150,20 @@ export default function WatchPage() {
   // regardless of web component lifecycle timing. They use refs for stale-closure safety.
   const handleWistiaPlay = useCallback(() => setIsVideoPlaying(true), []);
   const handleWistiaPause = useCallback(() => setIsVideoPlaying(false), []);
-  const handleWistiaEnded = useCallback(() => setIsVideoPlaying(false), []);
+  const handleWistiaEnded = useCallback(() => {
+    setIsVideoPlaying(false);
+    // When Wistia fires "ended", the video reached the end — trigger completion
+    // if we're in watching phase and all trail markers are answered
+    if (phaseRef.current === "watching" && !autoEndedRef.current) {
+      const allAnswered = trailMarkersRef.current.every(
+        (q: any) => answeredQuestionsRef.current.has(q.id)
+      );
+      if (allAnswered || trailMarkersRef.current.length === 0) {
+        autoEndedRef.current = true;
+        handleFinishWatchingRef.current();
+      }
+    }
+  }, []);
 
   const handleWistiaSecondChange = useCallback((e: any) => {
     const t: number = typeof e?.detail?.second === "number"
@@ -156,6 +171,16 @@ export default function WatchPage() {
       : Math.floor(playerRef.current?.currentTime ?? 0);
 
     if (t === lastTimeRef.current) return;
+
+    // ── Seek/scrub protection ──
+    // Only count time that advances organically (≤ 3s delta covers up to ~2x speed).
+    // Seeking/scrubbing forward produces a large delta → not counted.
+    const delta = t - lastWatchedTimeRef.current;
+    if (delta > 0 && delta <= 3) {
+      setWatchedSeconds((prev) => prev + delta);
+    }
+    lastWatchedTimeRef.current = t;
+
     lastTimeRef.current = t;
     setElapsedSeconds(t);
 
@@ -176,9 +201,11 @@ export default function WatchPage() {
       setPhase("trail_marker");
     }
 
-    // Auto-end detection
+    // Auto-end detection — use tolerance of 5s for the duration check
+    // (Wistia secondchange reports Math.floor, so last value can be durationSeconds - 1)
     const player = playerRef.current;
-    if (player && (player.ended || (clipData?.clip?.durationSeconds && t >= clipData.clip.durationSeconds))) {
+    const clipDur = clipData?.clip?.durationSeconds;
+    if (player && (player.ended || (clipDur && t >= clipDur - 5))) {
       if (!autoEndedRef.current) {
         const allAnswered = trailMarkersRef.current.every(
           (q: any) => answeredQuestionsRef.current.has(q.id)
@@ -245,6 +272,8 @@ export default function WatchPage() {
     if (!pausedSessionData) return;
     setSessionId(pausedSessionData.id);
     setElapsedSeconds(pausedSessionData.elapsedSeconds);
+    setWatchedSeconds(pausedSessionData.watchedSeconds ?? pausedSessionData.elapsedSeconds);
+    lastWatchedTimeRef.current = pausedSessionData.elapsedSeconds;
     setFocusSeconds(pausedSessionData.focusSeconds);
     setBlurSeconds(pausedSessionData.blurSeconds);
     setAnsweredQuestions(new Set(pausedSessionData.answeredQuestionIds));
@@ -263,6 +292,8 @@ export default function WatchPage() {
     tabAwayCountRef.current = 0;
     setCorrectCount(0);
     setAnsweredQuestions(new Set());
+    setWatchedSeconds(0);
+    lastWatchedTimeRef.current = 0;
     // Use ResetSession to wipe responses + reset existing session row (not create a new one)
     resetSession({ clipId, viewerId: viewer.id })
       .then((res: any) => {
@@ -286,6 +317,7 @@ export default function WatchPage() {
           elapsedSeconds,
           focusSeconds,
           blurSeconds,
+          watchedSeconds,
           answeredQuestionIds: Array.from(answeredQuestions),
           correctCount,
           phase: "watching",
@@ -295,7 +327,7 @@ export default function WatchPage() {
       }
     }
     navigate("/library");
-  }, [sessionId, phase, pauseSession, elapsedSeconds, focusSeconds, blurSeconds, answeredQuestions, correctCount, navigate]);
+  }, [sessionId, phase, pauseSession, elapsedSeconds, focusSeconds, blurSeconds, watchedSeconds, answeredQuestions, correctCount, navigate]);
 
   // 30-second autosave
   useEffect(() => {
@@ -306,13 +338,14 @@ export default function WatchPage() {
         elapsedSeconds,
         focusSeconds,
         blurSeconds,
+        watchedSeconds,
         answeredQuestionIds: Array.from(answeredQuestions),
         correctCount,
         phase: "watching",
       }).catch(() => {});
     }, 30_000);
     return () => clearInterval(autosaveInterval);
-  }, [phase, sessionId, elapsedSeconds, focusSeconds, blurSeconds, answeredQuestions, correctCount]);
+  }, [phase, sessionId, elapsedSeconds, focusSeconds, blurSeconds, watchedSeconds, answeredQuestions, correctCount]);
 
   // Save on hide/unload
   useEffect(() => {
@@ -320,7 +353,7 @@ export default function WatchPage() {
     const saveOnHide = () => {
       if (document.visibilityState === "hidden") {
         executeApi("PauseSession", {
-          sessionId, elapsedSeconds, focusSeconds, blurSeconds,
+          sessionId, elapsedSeconds, focusSeconds, blurSeconds, watchedSeconds,
           answeredQuestionIds: Array.from(answeredQuestions),
           correctCount, phase: "watching",
         }).catch(() => {});
@@ -328,7 +361,7 @@ export default function WatchPage() {
     };
     const saveOnUnload = () => {
       executeApi("PauseSession", {
-        sessionId, elapsedSeconds, focusSeconds, blurSeconds,
+        sessionId, elapsedSeconds, focusSeconds, blurSeconds, watchedSeconds,
         answeredQuestionIds: Array.from(answeredQuestions),
         correctCount, phase: "watching",
       }).catch(() => {});
@@ -339,7 +372,7 @@ export default function WatchPage() {
       document.removeEventListener("visibilitychange", saveOnHide);
       window.removeEventListener("beforeunload", saveOnUnload);
     };
-  }, [phase, sessionId, elapsedSeconds, focusSeconds, blurSeconds, answeredQuestions, correctCount]);
+  }, [phase, sessionId, elapsedSeconds, focusSeconds, blurSeconds, watchedSeconds, answeredQuestions, correctCount]);
 
   // Tab visibility — pause video when tab hidden
   useEffect(() => {
@@ -371,7 +404,7 @@ export default function WatchPage() {
     if (phase !== "watching" || autoEndedRef.current) return;
     const clipDuration = clipData?.clip?.durationSeconds;
     if (!clipDuration || clipDuration <= 0) return;
-    if (elapsedSeconds >= clipDuration) {
+    if (elapsedSeconds >= clipDuration - 5) {
       const allAnswered = trailMarkers.every((q: any) => answeredQuestions.has(q.id));
       if (allAnswered || trailMarkers.length === 0) {
         autoEndedRef.current = true;
@@ -433,7 +466,7 @@ export default function WatchPage() {
           sessionId,
           totalFocusSeconds: focusSeconds,
           totalBlurSeconds: blurSeconds,
-          totalTimeSeconds: elapsedSeconds,
+          totalTimeSeconds: watchedSeconds,
           clipDurationSeconds: clipDuration,
           tabAwayCount: tabAwayCountRef.current,
         });
@@ -475,7 +508,7 @@ export default function WatchPage() {
             searchRescueScore: null,
             searchRescueTotal: null,
             weatherStormTriggered: false,
-            totalTimeSeconds: elapsedSeconds,
+            totalTimeSeconds: watchedSeconds,
             clipDurationSeconds: clipDuration,
           });
         } catch (err) {
@@ -524,7 +557,7 @@ export default function WatchPage() {
     setPhase("ranger_report");
   }, [
     trailMarkers, totalTrailMarkers, correctCount, sessionId, endSession,
-    elapsedSeconds, focusSeconds, blurSeconds, viewer, clipId, clipData, awardXP, completeClipPath,
+    watchedSeconds, focusSeconds, blurSeconds, viewer, clipId, clipData, awardXP, completeClipPath,
   ]);
 
   const handleFinishWatchingRef = useRef(handleFinishWatching);
@@ -558,7 +591,7 @@ export default function WatchPage() {
               searchRescueScore: rescueScore,
               searchRescueTotal: srTotal,
               weatherStormTriggered: false,
-              totalTimeSeconds: elapsedSeconds,
+              totalTimeSeconds: watchedSeconds,
               clipDurationSeconds: clipDuration,
             });
             break; // success — exit retry loop
@@ -646,7 +679,7 @@ export default function WatchPage() {
             searchRescueScore: searchRescueScore,
             searchRescueTotal: recoveryQuestions.length,
             weatherStormTriggered: true,
-            totalTimeSeconds: elapsedSeconds,
+            totalTimeSeconds: watchedSeconds,
             clipDurationSeconds: clipDuration,
           });
           break;
@@ -662,7 +695,7 @@ export default function WatchPage() {
       }
     }
     navigate("/library");
-  }, [navigate, viewer, clipId, sessionId, clipData, elapsedSeconds, correctCount, trailMarkers, searchRescueScore, recoveryQuestions, awardXP, completeClipPath]);
+  }, [navigate, viewer, clipId, sessionId, clipData, watchedSeconds, correctCount, trailMarkers, searchRescueScore, recoveryQuestions, awardXP, completeClipPath]);
 
   // Load Wistia transcript web component script
   useEffect(() => {
