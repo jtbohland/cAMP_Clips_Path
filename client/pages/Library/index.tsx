@@ -123,15 +123,15 @@ export default function LibraryPage() {
     return <RegistrationForm />;
   }
 
-  // 3. Preview overrides (editor only — before data gate)
-  if (isRegisterPreview) return <RegistrationForm />;
-  if (isWelcomePreview) {
-    return <WelcomeModal viewerId={viewer.id} onDismiss={() => {}} />;
-  }
-
-  // 4. Data still loading → skeleton (prevents ANY modal from rendering prematurely)
+  // 3. Data still loading → skeleton (prevents ANY modal from rendering prematurely)
   if (!dataReady) {
     return <LoadingSkeleton />;
+  }
+
+  // 4. Preview overrides (admin only — never affects real users, even if params leak to deployed URL)
+  if (viewer.isAdmin && isRegisterPreview) return <RegistrationForm />;
+  if (viewer.isAdmin && isWelcomePreview) {
+    return <WelcomeModal viewerId={viewer.id} onDismiss={() => {}} />;
   }
 
   // ──────────────────── MODALS (only when dataReady) ────────────────────
