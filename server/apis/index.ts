@@ -37,6 +37,7 @@ import SetViewerAdmin from './v2/set-viewer-admin.js';
 import AddInitialEngagementColumn from './v2/add-initial-engagement-column.js';
 import AddWatchedSecondsColumn from './v2/add-watched-seconds-column.js';
 import FixChrisXP from './v2/fix-chris-xp.js';
+import BackfillFeedback from './v2/backfill-feedback.js';
 import FixChrisClip3 from './v2/fix-chris-clip3.js';
 import ResetJTSessions from './v2/reset-jt-sessions.js';
 import FixRecoveryFlags from './v2/fix-recovery-flags.js';
@@ -56,6 +57,7 @@ const apis = {
   EndSession,
 AddInitialEngagementColumn,
 AddWatchedSecondsColumn,
+BackfillFeedback,
 FixChrisXP,
 FixChrisClip3,
 FixRecoveryFlags,

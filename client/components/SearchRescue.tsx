@@ -106,7 +106,17 @@ export default function SearchRescue({ questions, sessionId, submitAnswer, onCom
     }
   }, [currentIndex, total, correctCount, onComplete]);
 
-  const feedback = isCorrect ? question?.correctFeedback : question?.incorrectFeedback;
+  const feedback = isCorrect
+    ? (question?.correctFeedback ?? {
+        emoji: "🌲",
+        label: "Forest Preserver! Correct:",
+        explanation: `The correct answer was: ${question?.options[question?.correctOption]}`,
+      })
+    : (question?.incorrectFeedback ?? {
+        emoji: "🔥",
+        label: "Fire Starter! Incorrect:",
+        explanation: `The correct answer was: ${question?.options[question?.correctOption]}`,
+      });
 
   if (!question) return null;
 
@@ -175,7 +185,7 @@ export default function SearchRescue({ questions, sessionId, submitAnswer, onCom
         </div>
 
         {/* Feedback */}
-        {showFeedback && feedback && (
+        {showFeedback && (
           <div
             className={`rounded-xl p-4 mb-4 border ${
               isCorrect ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"
