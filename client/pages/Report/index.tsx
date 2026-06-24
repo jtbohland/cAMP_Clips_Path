@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from "react";
 import { useParams, useNavigate } from "react-router";
 import { useViewer } from "@/components/ViewerContext";
 import { useApiData } from "@/hooks/useApiData.js";
+import { useApi } from "@/hooks/useApi.js";
 
 import PageHeader from "@/components/PageHeader";
 import ScoreTiles from "@/components/report/ScoreTiles";
@@ -51,6 +52,11 @@ export default function ReportPage() {
   const navigate = useNavigate();
   const { viewer } = useViewer();
   const [showRewatch, setShowRewatch] = useState(false);
+
+  const { run: logClick } = useApi("LogPitchClick");
+  const handleResourceClick = useCallback((label: string) => {
+    if (viewer?.id) logClick({ viewerId: viewer.id, pitchName: `cAMP Gear: ${label}` });
+  }, [viewer?.id, logClick]);
 
   const { data: reportData, loading: reportLoading } = useApiData(
     "GetClipReport",
@@ -154,7 +160,7 @@ export default function ReportPage() {
         {/* 🎒 cAMP Gear */}
         {resources && resources.length > 0 && (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-            <CampGearSection resources={resources} />
+            <CampGearSection resources={resources} onResourceClick={handleResourceClick} />
           </div>
         )}
 

@@ -19,6 +19,7 @@ type ClipLibraryCardProps = {
   previousClipTitle?: string;
   onWatch: () => void;
   onReview?: () => void;
+  onWheelAndDeal?: () => void;
 };
 
 function getWeekLabel(weekNumber: number | null, sortOrder: number): string {
@@ -67,6 +68,9 @@ function getButtonState(
   return "watch";
 }
 
+// Clips that show the Wheel & Deal practice button (every 3rd: 3, 6, 9, 12, 15)
+const WHEEL_AND_DEAL_SORT_ORDERS = new Set([3, 6, 9, 12, 15]);
+
 export default function ClipLibraryCard({
   clip,
   isLocked,
@@ -76,6 +80,7 @@ export default function ClipLibraryCard({
   previousClipTitle,
   onWatch,
   onReview,
+  onWheelAndDeal,
 }: ClipLibraryCardProps) {
   const buttonState = getButtonState(isLocked, isCompleted, pausedElapsedSeconds);
 
@@ -157,6 +162,21 @@ export default function ClipLibraryCard({
           onWatch={onWatch}
           onReview={onReview}
         />
+
+        {/* Wheel & Deal button — always visible on qualifying tiles */}
+        {WHEEL_AND_DEAL_SORT_ORDERS.has(clip.sortOrder) && onWheelAndDeal && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onWheelAndDeal(); }}
+            className="w-full py-2.5 rounded-lg text-sm font-semibold bg-[#7C3AED] hover:bg-[#6D28D9] text-white transition-colors"
+          >
+            🎡 Wheel & Deal
+          </button>
+        )}
+        {WHEEL_AND_DEAL_SORT_ORDERS.has(clip.sortOrder) && onWheelAndDeal && (
+          <p className="text-[11px] text-gray-400 text-center -mt-1">
+            REMEMBER: product-fluency practice — solo or multiplayer — as prep for cAMP 201.
+          </p>
+        )}
       </div>
     </div>
   );

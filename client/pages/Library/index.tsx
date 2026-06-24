@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { useApiData } from "@/hooks/useApiData.js";
+import { useApi } from "@/hooks/useApi.js";
 import { useViewer } from "@/components/ViewerContext";
 import ClipLibraryCard from "@/components/ClipLibraryCard";
 import RegistrationForm from "@/components/RegistrationForm";
@@ -29,6 +30,13 @@ export default function LibraryPage() {
   const [showBeforeYouBegin, setShowBeforeYouBegin] = useState(true);
   const [showSummit, setShowSummit] = useState(false);
   const [tierUnlock, setTierUnlock] = useState<number | null>(null);
+
+  const { run: logClick } = useApi("LogPitchClick");
+  const WHEEL_AND_DEAL_URL = "https://app.superblocks.com/code-mode/applications/fef97ebe-4fb9-401f-b97c-c52c1693b31b/";
+  const handleWheelAndDeal = useCallback(() => {
+    if (viewer?.id) logClick({ viewerId: viewer.id, pitchName: "Wheel & Deal" });
+    window.open(WHEEL_AND_DEAL_URL, "_blank");
+  }, [viewer?.id, logClick]);
 
   // Preview params — only honored on in-editor navigation, NOT on initial page load.
   // On first load, strip test params from URL so "view deployed app" can never carry them.
@@ -329,6 +337,7 @@ export default function LibraryPage() {
                         previousClipTitle={prevClip ? prevClip.title : undefined}
                         onWatch={() => navigate(`/watch/${clip.id}?source=library`)}
                         onReview={() => navigate(`/report/${clip.id}`)}
+                        onWheelAndDeal={handleWheelAndDeal}
                       />
                     );
                   })}

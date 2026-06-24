@@ -136,8 +136,8 @@ function AnalyticsContent() {
           <QuestionsSection questions={questions ?? []} />
         </Section>
 
-        {/* 6. Elevator Pitches (collapsed by default) */}
-        <Section title="Elevator Pitches" subtitle="Click engagement from the welcome screen" emoji="🍿" defaultOpen={false}>
+        {/* 6. cAMP Gear Clicks (collapsed by default) */}
+        <Section title="cAMP Gear Clicks" subtitle="Elevator pitches · cAMP Gear resources · Wheel & Deal" emoji="🎒" defaultOpen={false}>
           <PitchClicksSection />
         </Section>
       </div>
@@ -467,7 +467,7 @@ const PitchClicksSection = memo(function PitchClicksSection() {
   const clicks = data?.clicks ?? [];
 
   if (summary.length === 0 && clicks.length === 0) {
-    return <p className="text-sm text-gray-500 text-center py-6">No pitch clicks recorded yet</p>;
+    return <p className="text-sm text-gray-500 text-center py-6">No clicks recorded yet</p>;
   }
 
   return (
@@ -477,7 +477,7 @@ const PitchClicksSection = memo(function PitchClicksSection() {
         <div className="grid grid-cols-4 gap-3">
           {summary.map(s => (
             <div key={s.pitchName} className="text-center p-3 rounded-lg border border-gray-100 bg-[#fafafa]">
-              <div className="text-lg mb-1">🍿</div>
+              <div className="text-lg mb-1">🎒</div>
               <div className="text-sm font-semibold text-gray-900 truncate">{s.pitchName}</div>
               <div className="text-xl font-bold text-[#4F46E5] mt-1">{s.clickCount}</div>
               <div className="text-[10px] text-gray-500">
