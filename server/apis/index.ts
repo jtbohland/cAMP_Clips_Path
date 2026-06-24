@@ -35,7 +35,10 @@ import SeedQuestionsBatch from './v2/seed-questions-batch.js';
 import SeedQuestionsFromFiles from './v2/seed-questions-from-files.js';
 import SetViewerAdmin from './v2/set-viewer-admin.js';
 import AddInitialEngagementColumn from './v2/add-initial-engagement-column.js';
+import AddWatchedSecondsColumn from './v2/add-watched-seconds-column.js';
 import FixChrisXP from './v2/fix-chris-xp.js';
+import FixChrisClip3 from './v2/fix-chris-clip3.js';
+import ResetJTSessions from './v2/reset-jt-sessions.js';
 import FixRecoveryFlags from './v2/fix-recovery-flags.js';
 import SetupXpSchema from './v2/setup-xp-schema.js';
 import StartSession from './v2/start-session.js';
@@ -52,8 +55,11 @@ const apis = {
   CompleteClipPath,
   EndSession,
 AddInitialEngagementColumn,
+AddWatchedSecondsColumn,
 FixChrisXP,
+FixChrisClip3,
 FixRecoveryFlags,
+ResetJTSessions,
   GetAdminClips,
   GetAnalyticsV2,
   GetAnalyticsV3,

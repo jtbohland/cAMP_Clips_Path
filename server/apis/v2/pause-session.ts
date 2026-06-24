@@ -15,6 +15,7 @@ export default api({
     elapsedSeconds: z.number(),
     focusSeconds: z.number(),
     blurSeconds: z.number(),
+    watchedSeconds: z.number().default(0),
     answeredQuestionIds: z.array(z.string()),
     correctCount: z.number(),
     phase: z.string(),
@@ -24,7 +25,7 @@ export default api({
     success: z.boolean(),
   }),
 
-  async run(ctx, { sessionId, elapsedSeconds, focusSeconds, blurSeconds, answeredQuestionIds, correctCount, phase }) {
+  async run(ctx, { sessionId, elapsedSeconds, focusSeconds, blurSeconds, watchedSeconds, answeredQuestionIds, correctCount, phase }) {
     await ctx.integrations.db.execute(
       `UPDATE cliptracker_v2_sessions SET
         paused_at = NOW(),
@@ -33,9 +34,10 @@ export default api({
         paused_blur_seconds = $4,
         paused_answered_ids = $5::jsonb,
         paused_correct_count = $6,
-        paused_phase = $7
+        paused_phase = $7,
+        paused_watched_seconds = $8
        WHERE id = $1 AND completed = false`,
-      [sessionId, elapsedSeconds, focusSeconds, blurSeconds, JSON.stringify(answeredQuestionIds), correctCount, phase],
+      [sessionId, elapsedSeconds, focusSeconds, blurSeconds, JSON.stringify(answeredQuestionIds), correctCount, phase, watchedSeconds],
       { label: "Save pause state" }
     );
 
