@@ -38,6 +38,12 @@ export default function LibraryPage() {
     window.open(WHEEL_AND_DEAL_URL, "_blank");
   }, [viewer?.id, logClick]);
 
+  const CAMP_QUIZ_URL = "https://app.superblocks.com/code-mode/applications/303818de-7c76-409c-a430-4404529ab864/";
+  const handleCampQuiz = useCallback(() => {
+    if (viewer?.id) logClick({ viewerId: viewer.id, pitchName: "cAMP Quiz" });
+    window.open(CAMP_QUIZ_URL, "_blank");
+  }, [viewer?.id, logClick]);
+
   // Preview params — only honored on in-editor navigation, NOT on initial page load.
   // On first load, strip test params from URL so "view deployed app" can never carry them.
   const isInitialLoad = useRef(true);
@@ -338,6 +344,7 @@ export default function LibraryPage() {
                         onWatch={() => navigate(`/watch/${clip.id}?source=library`)}
                         onReview={() => navigate(`/report/${clip.id}`)}
                         onWheelAndDeal={handleWheelAndDeal}
+                        onCampQuiz={handleCampQuiz}
                       />
                     );
                   })}
