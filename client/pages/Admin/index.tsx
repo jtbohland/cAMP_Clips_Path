@@ -32,7 +32,7 @@ function AdminContent() {
   const { data, loading, fetching, refetch } = useApiData("GetAdminClips", {});
 
   return (
-    <div className="h-full overflow-auto" style={{ backgroundColor: "#F9FAFB" }}>
+    <div className="h-full overflow-auto" style={{ backgroundColor: "#ECFDF5" }}>
       <PageHeader emoji="⚙️" title="Admin" subtitle="Manage clips, questions, and learner access" />
       <div className="p-6 max-w-5xl mx-auto space-y-6">
         <div className="flex gap-1">

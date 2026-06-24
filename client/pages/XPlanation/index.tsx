@@ -55,7 +55,7 @@ export default function XPlanationPage() {
   const earnedBadgeIds = new Set(badges.map((b: any) => b.badgeId));
 
   return (
-    <div className="flex flex-col h-full overflow-auto" style={{ backgroundColor: "#F0F0EF" }}>
+    <div className="flex flex-col h-full overflow-auto" style={{ backgroundColor: "#ECFDF5" }}>
       <PageHeader emoji="🔭" title="XP-lanation" subtitle="How the Ascent scoring works" />
       <div className="max-w-3xl mx-auto w-full p-6 space-y-5">
         {/* Current Tier Badge */}

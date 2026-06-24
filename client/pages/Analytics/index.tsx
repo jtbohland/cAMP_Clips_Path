@@ -73,7 +73,7 @@ function AnalyticsContent() {
 
   if (loading) {
     return (
-      <div className="flex flex-col h-full bg-white">
+      <div className="flex flex-col h-full" style={{ backgroundColor: "#ECFDF5" }}>
         <PageHeader emoji="📊" title="Analytics" subtitle="Performance data across all learners and clips" />
         <div className="p-6 max-w-6xl mx-auto space-y-4 w-full">
           <div className="grid grid-cols-5 gap-4">
@@ -87,7 +87,7 @@ function AnalyticsContent() {
 
   if (isError) {
     return (
-      <div className="flex flex-col h-full bg-white">
+      <div className="flex flex-col h-full" style={{ backgroundColor: "#ECFDF5" }}>
         <PageHeader emoji="📊" title="Analytics" subtitle="Performance data across all learners and clips" />
         <div className="p-6 text-center">
           <p className="text-red-600">Failed to load analytics: {error?.message ?? "Unknown error"}</p>
@@ -99,10 +99,10 @@ function AnalyticsContent() {
   const { overview, learners, clipBreakdown, questions, leaderboard } = data ?? {};
 
   return (
-    <div className="flex flex-col h-full overflow-auto bg-white">
+    <div className="flex flex-col h-full overflow-auto" style={{ backgroundColor: "#ECFDF5" }}>
       <PageHeader emoji="📊" title="Analytics" subtitle="Performance data across all learners and clips" />
 
-      {fetching && !loading && <div className="text-xs text-gray-500 px-6 pt-3">Updating…</div>}
+      {fetching && !loading && <div className="text-xs text-gray-600 px-6 pt-3">Updating…</div>}
 
       <div className={`p-6 max-w-6xl mx-auto w-full space-y-4 ${fetching && !loading ? "opacity-70" : ""}`}>
 
