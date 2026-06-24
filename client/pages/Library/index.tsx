@@ -222,15 +222,15 @@ export default function LibraryPage() {
 
   // ──────────────────── MAIN LIBRARY VIEW ────────────────────
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    <div className="flex flex-col h-full overflow-hidden" style={{ backgroundColor: "#ECFDF5" }}>
       {/* Page header */}
-      <div className="border-b border-gray-200 px-6 py-4" style={{ backgroundColor: "#ffffff" }}>
+      <div className="border-b border-green-900/20 px-6 py-4" style={{ backgroundColor: "#1B4332" }}>
         <div className="flex items-center justify-between max-w-4xl mx-auto w-full">
           <div className="flex items-center gap-2.5">
             <span className="text-2xl">🏕️</span>
             <div>
-              <h1 className="text-xl font-bold text-gray-900 leading-tight">cAMP Ascent: Sales</h1>
-              <p className="text-sm text-gray-500 mt-0.5">🎞️ Watch. Engage. Ascend.</p>
+              <h1 className="text-xl font-bold text-white leading-tight">cAMP Ascent: Sales</h1>
+              <p className="text-sm text-green-200 mt-0.5">🎞️ Watch. Engage. Ascend.</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -242,7 +242,7 @@ export default function LibraryPage() {
               <button
                 key={nav.path}
                 onClick={() => navigate(nav.path)}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-colors shadow-sm"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-green-200/30 bg-white/15 text-sm font-medium text-white hover:bg-white/25 transition-colors shadow-sm"
               >
                 <span>{nav.emoji}</span>
                 {nav.label}
