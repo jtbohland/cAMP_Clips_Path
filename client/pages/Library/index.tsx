@@ -17,9 +17,7 @@ export default function LibraryPage() {
   const [showWelcomePreview, setShowWelcomePreview] = useState(false);
   const [showRegisterPreview, setShowRegisterPreview] = useState(false);
   const [showSummit, setShowSummit] = useState(false);
-  const [summitDismissed, setSummitDismissed] = useState(
-    () => localStorage.getItem(`summit_dismissed_${viewer?.id}`) === "true"
-  );
+  const [summitDismissed, setSummitDismissed] = useState(false);
   const [tierUnlock, setTierUnlock] = useState<number | null>(null);
 
   useEffect(() => {
@@ -64,13 +62,39 @@ export default function LibraryPage() {
     }
   }, [progressData, viewer, tierUnlock]);
 
-  // Auto-trigger Summit modal when all 17 clips are completed
+  // Summit modal: sync + auto-trigger in one effect to prevent race conditions
   const allCompleted = clips.length === 17 && clips.every((c: any) => c.completed);
   useEffect(() => {
-    if (allCompleted && !summitDismissed && !showSummit && searchParams.get("tier") !== "test") {
+    if (!viewer || loading) return; // Wait for viewer AND clip data
+    const key = `summit_dismissed_${viewer.id}`;
+    const stored = localStorage.getItem(key);
+
+    // First time seeing summit feature? Seed based on current state
+    if (stored === null) {
+      if (allCompleted) {
+        // Already completed before feature existed — don't retroactively celebrate
+        localStorage.setItem(key, "true");
+        setSummitDismissed(true);
+      } else {
+        // Not yet completed — seed as not dismissed so it fires when they finish
+        localStorage.setItem(key, "false");
+        setSummitDismissed(false);
+      }
+      return;
+    }
+
+    // Key exists — sync state and trigger if appropriate
+    if (stored === "true") {
+      setSummitDismissed(true);
+      return;
+    }
+
+    // Not dismissed + all completed = show summit
+    setSummitDismissed(false);
+    if (allCompleted && !showSummit && searchParams.get("tier") !== "test") {
       setShowSummit(true);
     }
-  }, [allCompleted, summitDismissed, showSummit, searchParams]);
+  }, [viewer, loading, allCompleted, showSummit, searchParams]);
 
   const WEEK_EMOJI: Record<number, string> = { 2: "🥾", 3: "🏞️", 4: "🧗🏻‍♂️" };
 
