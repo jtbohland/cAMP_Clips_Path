@@ -20,6 +20,7 @@ type ClipLibraryCardProps = {
   onWatch: () => void;
   onReview?: () => void;
   onWheelAndDeal?: () => void;
+  onCampQuiz?: () => void;
 };
 
 function getWeekLabel(weekNumber: number | null, sortOrder: number): string {
@@ -68,6 +69,8 @@ function getButtonState(
   return "watch";
 }
 
+// Clips that show the cAMP Quiz button
+const CAMP_QUIZ_SORT_ORDERS = new Set([1, 2, 3, 4, 5, 7, 9, 10, 12, 13, 14, 15, 17]);
 // Clips that show the Wheel & Deal practice button (every 3rd: 3, 6, 9, 12, 15)
 const WHEEL_AND_DEAL_SORT_ORDERS = new Set([3, 6, 9, 12, 15]);
 
@@ -81,6 +84,7 @@ export default function ClipLibraryCard({
   onWatch,
   onReview,
   onWheelAndDeal,
+  onCampQuiz,
 }: ClipLibraryCardProps) {
   const buttonState = getButtonState(isLocked, isCompleted, pausedElapsedSeconds);
 
@@ -162,6 +166,21 @@ export default function ClipLibraryCard({
           onWatch={onWatch}
           onReview={onReview}
         />
+
+        {/* cAMP Quiz button — always visible on qualifying tiles */}
+        {CAMP_QUIZ_SORT_ORDERS.has(clip.sortOrder) && onCampQuiz && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onCampQuiz(); }}
+            className="w-full py-2.5 rounded-lg text-sm font-semibold bg-[#EA580C] hover:bg-[#C2410C] text-white transition-colors"
+          >
+            🧠 cAMP Quiz
+          </button>
+        )}
+        {CAMP_QUIZ_SORT_ORDERS.has(clip.sortOrder) && onCampQuiz && (
+          <p className="text-[11px] text-gray-400 text-center -mt-1">
+            Content Knowledge Checks — validate your learning after each session
+          </p>
+        )}
 
         {/* Wheel & Deal button — always visible on qualifying tiles */}
         {WHEEL_AND_DEAL_SORT_ORDERS.has(clip.sortOrder) && onWheelAndDeal && (
