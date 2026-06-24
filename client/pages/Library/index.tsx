@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { useApiData } from "@/hooks/useApiData.js";
 import { useViewer } from "@/components/ViewerContext";
@@ -30,17 +30,44 @@ export default function LibraryPage() {
   const [showSummit, setShowSummit] = useState(false);
   const [tierUnlock, setTierUnlock] = useState<number | null>(null);
 
-  // Preview params (only used in editor via ?param=test)
-  const isTierPreview = searchParams.get("tier") === "test";
-  const isSummitPreview = searchParams.get("summit") === "test";
-  const isWelcomePreview = searchParams.get("welcome") === "test";
-  const isRegisterPreview = searchParams.get("register") === "test";
+  // Preview params — only honored on in-editor navigation, NOT on initial page load.
+  // On first load, strip test params from URL so "view deployed app" can never carry them.
+  const isInitialLoad = useRef(true);
+  const [previewMode, setPreviewMode] = useState<string | null>(null);
 
-  // Handle preview params
   useEffect(() => {
-    if (isSummitPreview) setShowSummit(true);
-    if (isTierPreview) setTierUnlock(-1);
-  }, [isSummitPreview, isTierPreview]);
+    const TEST_PARAMS = ["welcome", "register", "summit", "tier"];
+    const hasTestParams = TEST_PARAMS.some((p) => searchParams.get(p) === "test");
+
+    if (isInitialLoad.current) {
+      isInitialLoad.current = false;
+      // Strip test params on initial page load — don't process them
+      if (hasTestParams) {
+        const cleaned = new URLSearchParams(searchParams);
+        TEST_PARAMS.forEach((p) => cleaned.delete(p));
+        const cleanUrl = cleaned.toString()
+          ? `${window.location.pathname}?${cleaned.toString()}`
+          : window.location.pathname;
+        window.history.replaceState({}, "", cleanUrl);
+      }
+      return;
+    }
+
+    // Subsequent navigations (editor preview) — honor test params
+    if (searchParams.get("tier") === "test") {
+      setPreviewMode("tier");
+      setTierUnlock(-1);
+    } else if (searchParams.get("summit") === "test") {
+      setPreviewMode("summit");
+      setShowSummit(true);
+    } else if (searchParams.get("register") === "test") {
+      setPreviewMode("register");
+    } else if (searchParams.get("welcome") === "test") {
+      setPreviewMode("welcome");
+    } else {
+      setPreviewMode(null);
+    }
+  }, [searchParams]);
 
   const { data, loading } = useApiData(
     "GetClipLibrary",
@@ -62,7 +89,7 @@ export default function LibraryPage() {
 
   // Auto-trigger Tier Unlock — only after all data ready
   useEffect(() => {
-    if (!dataReady || isTierPreview) return;
+    if (!dataReady || previewMode === "tier") return;
     const currentTierNum = progressData!.tier.tier;
     const storageKey = `tier_celebrated_${viewer!.id}`;
     const stored = localStorage.getItem(storageKey);
@@ -75,11 +102,11 @@ export default function LibraryPage() {
     if (currentTierNum > lastCelebrated && tierUnlock === null) {
       setTierUnlock(currentTierNum);
     }
-  }, [dataReady, isTierPreview, progressData, viewer, tierUnlock]);
+  }, [dataReady, previewMode, progressData, viewer, tierUnlock]);
 
   // Auto-trigger Summit — only after all data ready
   useEffect(() => {
-    if (!dataReady || isTierPreview) return;
+    if (!dataReady || previewMode === "tier") return;
     const key = `summit_dismissed_${viewer!.id}`;
     const stored = localStorage.getItem(key);
     if (stored === null) {
@@ -92,7 +119,7 @@ export default function LibraryPage() {
     if (allCompleted && !showSummit) {
       setShowSummit(true);
     }
-  }, [dataReady, allCompleted, showSummit, isTierPreview, viewer]);
+  }, [dataReady, allCompleted, showSummit, previewMode, viewer]);
 
   const WEEK_EMOJI: Record<number, string> = { 2: "🥾", 3: "🏞️", 4: "🧗🏻‍♂️" };
 
@@ -129,15 +156,15 @@ export default function LibraryPage() {
   }
 
   // 4. Preview overrides (admin only — never affects real users, even if params leak to deployed URL)
-  if (viewer.isAdmin && isRegisterPreview) return <RegistrationForm />;
-  if (viewer.isAdmin && isWelcomePreview) {
+  if (viewer.isAdmin && previewMode === "register") return <RegistrationForm />;
+  if (viewer.isAdmin && previewMode === "welcome") {
     return <WelcomeModal viewerId={viewer.id} onDismiss={() => {}} />;
   }
 
   // ──────────────────── MODALS (only when dataReady) ────────────────────
 
   // Summit modal (higher priority than tier)
-  if (showSummit && !isTierPreview) {
+  if (showSummit && previewMode !== "tier") {
     return (
       <SummitModal
         learnerName={viewer.name}
@@ -147,7 +174,7 @@ export default function LibraryPage() {
         managerName={progressData!.managerName ?? null}
         onDismiss={() => {
           setShowSummit(false);
-          if (!isSummitPreview) {
+          if (previewMode !== "summit") {
             localStorage.setItem(`summit_dismissed_${viewer.id}`, "true");
           }
         }}
@@ -171,7 +198,7 @@ export default function LibraryPage() {
         xpToNextTier={xpNeeded}
         onDismiss={() => {
           setTierUnlock(null);
-          if (!isTierPreview) {
+          if (previewMode !== "tier") {
             localStorage.setItem(`tier_celebrated_${viewer.id}`, String(tier.tier));
           }
         }}
