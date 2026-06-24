@@ -51,8 +51,16 @@ export default function QuizOverlayV2({
   );
 
   const feedback = isCorrect
-    ? question.correctFeedback
-    : question.incorrectFeedback;
+    ? (question.correctFeedback ?? {
+        emoji: "🌲",
+        label: "Forest Preserver! Correct:",
+        explanation: `The correct answer was: ${question.options[question.correctOption]}`,
+      })
+    : (question.incorrectFeedback ?? {
+        emoji: "🔥",
+        label: "Fire Starter! Incorrect:",
+        explanation: `The correct answer was: ${question.options[question.correctOption]}`,
+      });
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
@@ -111,7 +119,7 @@ export default function QuizOverlayV2({
         </div>
 
         {/* Feedback panel */}
-        {showFeedback && feedback && (
+        {showFeedback && (
           <div
             className={`rounded-lg p-4 mb-4 border ${
               isCorrect
