@@ -310,11 +310,12 @@ export default api({
       `SELECT COUNT(DISTINCT clip_id)::int as count
        FROM cliptracker_v2_xp_events
        WHERE viewer_id = $1 AND source_id = 'watch'
+       AND clip_id != $2
        AND created_at::date = CURRENT_DATE`,
-      TodayCountSchema, [viewerId], { label: "Count today clips" }
+      TodayCountSchema, [viewerId, clipId], { label: "Count today clips (excl current)" }
     );
-    // We already counted this clip's watch event above but it's not inserted yet
-    // So if there's already >= 1 clip completed today, this makes it the 2nd
+    // Exclude current clip to avoid double-counting from retries/duplicate calls.
+    // If there's >= 1 OTHER clip completed today, this makes it the 2nd.
     if (todayClips[0]?.count >= 1) {
       // Cap at 8 total Double Summit awards across the program
       const TotalDsSchema = z.object({ count: z.coerce.number() });
