@@ -279,21 +279,25 @@ function CampersSection({ learners, totalClips }: { learners: any[]; totalClips:
               {/* Pacing */}
               <div className={`text-center text-[11px] font-semibold ${pacing.color}`}>{pacing.label}</div>
 
-              {/* Merit Badges */}
+              {/* Merit Badges — consolidated with ×N for duplicates */}
               <div className="flex flex-wrap gap-1 min-w-0">
-                {l.badges.length > 0 ? l.badges.map((b: any) => {
-                  const info = BADGE_MAP[b.badgeId] ?? { name: b.badgeId, emoji: "🎖️" };
-                  return (
-                    <span
-                      key={b.badgeId}
-                      className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-100 text-[10px] font-medium text-indigo-700 whitespace-nowrap"
-                      title={info.name}
-                    >
-                      <span>{info.emoji}</span>
-                      <span>{info.name}</span>
-                    </span>
-                  );
-                }) : (
+                {l.badges.length > 0 ? (() => {
+                  const counts: Record<string, number> = {};
+                  l.badges.forEach((b: any) => { counts[b.badgeId] = (counts[b.badgeId] || 0) + 1; });
+                  return Object.entries(counts).map(([badgeId, count]) => {
+                    const info = BADGE_MAP[badgeId] ?? { name: badgeId, emoji: "🎖️" };
+                    return (
+                      <span
+                        key={badgeId}
+                        className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-100 text-[10px] font-medium text-indigo-700 whitespace-nowrap"
+                        title={count > 1 ? `${info.name} ×${count}` : info.name}
+                      >
+                        <span>{info.emoji}</span>
+                        <span>{info.name}{count > 1 && <span className="ml-0.5 text-[9px] font-bold text-amber-600">×{count}</span>}</span>
+                      </span>
+                    );
+                  });
+                })() : (
                   <span className="text-[10px] text-gray-400">—</span>
                 )}
               </div>
