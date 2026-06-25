@@ -15,6 +15,34 @@ const ROLES = [
   "Admin",
 ] as const;
 
+const MANAGERS = [
+  { name: "Adam Yapkowitz", email: "adam.yapkowitz@amplitude.com" },
+  { name: "Alice Steels", email: "alice.steels@amplitude.com" },
+  { name: "Anush Arora", email: "anush.arora@amplitude.com" },
+  { name: "Brian Wagner", email: "brian.wagner@amplitude.com" },
+  { name: "Gamon Yaklich", email: "gamony@amplitude.com" },
+  { name: "Halle Morris", email: "halle.morris@amplitude.com" },
+  { name: "Jeremy Grinbaum", email: "jeremy.grinbaum@amplitude.com" },
+  { name: "Jessica Arnold", email: "jessica.arnold@amplitude.com" },
+  { name: "Joe Skupinsky", email: "joe.skupinsky@amplitude.com" },
+  { name: "Kazuki Hirose", email: "kazuki.hirose@amplitude.com" },
+  { name: "Kevin Shain", email: "kevin.shain@amplitude.com" },
+  { name: "Kier Johnson", email: "kier.johnson@amplitude.com" },
+  { name: "Lauren Hargarten", email: "lauren.hargarten@amplitude.com" },
+  { name: "Lee Edwards", email: "lee.edwards@amplitude.com" },
+  { name: "Madhuri Krishnan", email: "madhuri.krishnan@amplitude.com" },
+  { name: "Maggie Peracchi", email: "maggie.peracchi@amplitude.com" },
+  { name: "Mathieu Di Franco", email: "mathieu.difranco@amplitude.com" },
+  { name: "Matt Bennett", email: "matthew.bennett@amplitude.com" },
+  { name: "Nick Iyengar", email: "nick.iyengar@amplitude.com" },
+  { name: "Nick Ryan", email: "nick.ryan@amplitude.com" },
+  { name: "Nicolette Conti", email: "nicolette@amplitude.com" },
+  { name: "Rhiannon Sheehan", email: "rhiannon.sheehan@amplitude.com" },
+  { name: "Rob Bow", email: "robert@amplitude.com" },
+  { name: "Shawn Hensley", email: "shawn.hensley@amplitude.com" },
+  { name: "Tansu Yegen", email: "tansu.yegen@amplitude.com" },
+] as const;
+
 function getTodayString(): string {
   const d = new Date();
   return d.toISOString().split("T")[0]; // YYYY-MM-DD
@@ -149,37 +177,31 @@ export default function RegistrationForm() {
             </select>
           </div>
 
-          {/* Manager's Full Name */}
+          {/* Manager */}
           <div className="space-y-1.5">
-            <label htmlFor="reg-manager-name" className="block text-sm font-medium text-gray-700">
-              Manager's Full Name
-              <span className="ml-1 font-normal text-xs text-gray-400 italic">(please check spelling before submitting)</span>
+            <label htmlFor="reg-manager" className="block text-sm font-medium text-gray-700">
+              Manager
             </label>
-            <input
-              id="reg-manager-name"
-              type="text"
-              placeholder="Alex Johnson"
+            <select
+              id="reg-manager"
               value={managerName}
-              onChange={(e) => setManagerName(e.target.value)}
+              onChange={(e) => {
+                const selected = MANAGERS.find((m) => m.name === e.target.value);
+                setManagerName(selected?.name ?? "");
+                setManagerEmail(selected?.email ?? "");
+              }}
               required
-              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-            />
-          </div>
-
-          {/* Manager's Email */}
-          <div className="space-y-1.5">
-            <label htmlFor="reg-manager-email" className="block text-sm font-medium text-gray-700">
-              Manager's Email
-            </label>
-            <input
-              id="reg-manager-email"
-              type="email"
-              placeholder="alex.johnson@amplitude.com"
-              value={managerEmail}
-              onChange={(e) => setManagerEmail(e.target.value)}
-              required
-              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-            />
+              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 appearance-none bg-white bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%236B7280%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M6%209l6%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[length:16px] bg-[right_10px_center] bg-no-repeat"
+            >
+              <option value="" disabled>
+                Select your manager
+              </option>
+              {MANAGERS.map((m) => (
+                <option key={m.email} value={m.name}>
+                  {m.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Day 1 of Ascent */}
