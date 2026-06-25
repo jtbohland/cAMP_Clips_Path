@@ -351,9 +351,9 @@ export default function LibraryPage() {
           {weekGroups.map((week) =>
             week.clips.length > 0 ? (
               <section key={week.label}>
-                <div className="flex items-center gap-3 rounded-xl bg-white px-5 py-3 shadow-[0_1px_3px_rgba(0,0,0,0.08)] mb-4">
+                <div className="flex items-center gap-3 rounded-xl px-5 py-3 shadow-[0_1px_3px_rgba(0,0,0,0.08)] mb-4" style={{ backgroundColor: "#1B4332" }}>
                   <span className="text-2xl">{week.emoji}</span>
-                  <h2 className="text-lg font-bold text-gray-900">{week.label}</h2>
+                  <h2 className="text-lg font-bold text-white">{week.label}</h2>
                 </div>
 
                 <div className="flex flex-col gap-3">

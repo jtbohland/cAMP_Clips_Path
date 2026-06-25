@@ -429,7 +429,9 @@ export default function WatchPage() {
           },
         ]);
       }
-      setAnsweredQuestions((prev) => new Set(prev).add(question.id));
+      const updatedSet = new Set(answeredQuestions).add(question.id);
+      answeredQuestionsRef.current = updatedSet; // Sync ref immediately — prevents race at 2x speed
+      setAnsweredQuestions(updatedSet);
       setTotalTrailMarkers((t) => t + 1);
       submitAnswer({
         sessionId,
@@ -439,13 +441,25 @@ export default function WatchPage() {
         timeToAnswer: null,
       }).catch(console.error);
     },
-    [trailMarkers, currentQuestionIdx, sessionId, submitAnswer]
+    [trailMarkers, currentQuestionIdx, sessionId, submitAnswer, answeredQuestions]
   );
 
   const handleTrailMarkerContinue = useCallback(() => {
+    // Safety net: if video already ended while quiz was showing, complete now
+    const player = playerRef.current;
+    const clipDur = clipData?.clip?.durationSeconds;
+    const videoAlreadyEnded = player?.ended || (clipDur && lastTimeRef.current >= clipDur - 5);
+    const allAnswered = trailMarkersRef.current.every(
+      (q: any) => answeredQuestionsRef.current.has(q.id)
+    );
+    if (videoAlreadyEnded && allAnswered && !autoEndedRef.current) {
+      autoEndedRef.current = true;
+      handleFinishWatchingRef.current();
+      return;
+    }
     setPhase("watching");
-    playerRef.current?.play();
-  }, []);
+    player?.play();
+  }, [clipData]);
 
   const handleFinishWatching = useCallback(async () => {
     playerRef.current?.pause();
