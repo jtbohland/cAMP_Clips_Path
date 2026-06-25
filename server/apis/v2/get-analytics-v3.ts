@@ -24,6 +24,7 @@ const LearnerRow = z.object({
   name: z.string(),
   email: z.string(),
   role: z.string(),
+  manager_name: z.string().nullable(),
   ascent_day_1: z.string().nullable(),
   clips_completed: z.coerce.number(),
   total_xp: z.coerce.number(),
@@ -110,6 +111,7 @@ export default api({
       name: z.string(),
       email: z.string(),
       role: z.string(),
+      managerName: z.string().nullable(),
       ascentDay1: z.string().nullable(),
       clipsCompleted: z.number(),
       totalXp: z.number(),
@@ -181,6 +183,7 @@ export default api({
     const learnerRows = await ctx.integrations.db.query(
       `SELECT
         v.id AS viewer_id, v.name, v.email, v.role,
+        v.manager_name,
         v.ascent_day_1::text AS ascent_day_1,
         COUNT(DISTINCT s.clip_id) FILTER (WHERE s.completed = true)::int AS clips_completed,
         COALESCE((SELECT SUM(xp_amount)::int FROM cliptracker_v2_xp_events x WHERE x.viewer_id = v.id), 0) AS total_xp,
@@ -193,7 +196,7 @@ export default api({
        FROM cliptracker_v2_viewers v
        LEFT JOIN cliptracker_v2_sessions s ON s.viewer_id = v.id
        WHERE v.is_admin = false
-       GROUP BY v.id, v.name, v.email, v.role, v.ascent_day_1
+       GROUP BY v.id, v.name, v.email, v.role, v.manager_name, v.ascent_day_1
        ORDER BY v.name ASC
        LIMIT 500`,
       LearnerRow,
@@ -251,6 +254,7 @@ export default api({
         name: l.name,
         email: l.email,
         role: l.role,
+        managerName: l.manager_name,
         ascentDay1: l.ascent_day_1,
         clipsCompleted: l.clips_completed,
         totalXp: l.total_xp,
