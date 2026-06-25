@@ -21,6 +21,9 @@ type ClipLibraryCardProps = {
   onReview?: () => void;
   onWheelAndDeal?: () => void;
   onCampQuiz?: () => void;
+  onZoomClipWatch?: () => void;
+  onZoomClipReview?: () => void;
+  zoomClipWatched?: boolean;
 };
 
 function getWeekLabel(weekNumber: number | null, sortOrder: number): string {
@@ -73,6 +76,8 @@ function getButtonState(
 const CAMP_QUIZ_SORT_ORDERS = new Set([1, 2, 3, 4, 5, 7, 9, 10, 12, 13, 14, 15, 17]);
 // Clips that show the Wheel & Deal practice button (every 3rd: 3, 6, 9, 12, 15)
 const WHEEL_AND_DEAL_SORT_ORDERS = new Set([3, 6, 9, 12, 15]);
+// Sort order 4 has an additional Zoom clip (Reachdesk) — shows extra button
+const REACHDESK_SORT_ORDER = 4;
 
 export default function ClipLibraryCard({
   clip,
@@ -85,6 +90,9 @@ export default function ClipLibraryCard({
   onReview,
   onWheelAndDeal,
   onCampQuiz,
+  onZoomClipWatch,
+  onZoomClipReview,
+  zoomClipWatched,
 }: ClipLibraryCardProps) {
   const buttonState = getButtonState(isLocked, isCompleted, pausedElapsedSeconds);
 
@@ -141,10 +149,10 @@ export default function ClipLibraryCard({
 
         {/* Row 2: Title */}
         <h3 className="text-base font-bold text-gray-900 leading-snug">
-          {getSessionTitle(clip.title)}
+          {clip.sortOrder === REACHDESK_SORT_ORDER ? "📇 Prospecting Process + Reachdesk" : getSessionTitle(clip.title)}
         </h3>
 
-        {/* Row 3: Metadata */}
+        {/* Row 3: Metadata — standard for all clips */}
         <p className="text-xs text-gray-500 flex items-center gap-1.5 flex-wrap">
           {clip.durationSeconds ? (
             <>
@@ -156,16 +164,44 @@ export default function ClipLibraryCard({
           <span className="text-gray-300">·</span>
           <span>80% engagement required</span>
           <span className="text-gray-300">·</span>
-          <span>Ranger Report ✨</span>
+          <span>📋 Ranger Report</span>
         </p>
 
-        {/* Row 4: Action button */}
+        {/* Row 4: Action button — standard for ALL clips */}
         <ActionButton
           buttonState={buttonState}
           previousClipTitle={previousClipTitle}
           onWatch={onWatch}
           onReview={onReview}
         />
+
+        {/* Reachdesk Zoom Clip — additional button for sort order 4 only */}
+        {clip.sortOrder === REACHDESK_SORT_ORDER && buttonState !== "locked" && onZoomClipWatch && (
+          <div className="border-t border-gray-100 pt-3 mt-1">
+            <p className="text-xs text-gray-500 flex items-center gap-1.5 flex-wrap mb-2">
+              <span>⏱️ 44m</span>
+              <span className="text-gray-300">·</span>
+              <span>🪧 0 Trail Markers</span>
+              <span className="text-gray-300">·</span>
+              <span>👀 View tracked in Zoom</span>
+            </p>
+            {zoomClipWatched ? (
+              <button
+                onClick={(e) => { e.stopPropagation(); onZoomClipReview ? onZoomClipReview() : onZoomClipWatch(); }}
+                className="w-full py-2.5 rounded-lg text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition-colors"
+              >
+                🗺️ Review Reachdesk Report
+              </button>
+            ) : (
+              <button
+                onClick={(e) => { e.stopPropagation(); onZoomClipWatch(); }}
+                className="w-full py-2.5 rounded-lg text-sm font-semibold bg-green-600 hover:bg-green-700 text-white transition-colors"
+              >
+                🚣🏼‍♂️ Watch Clip
+              </button>
+            )}
+          </div>
+        )}
 
         {/* cAMP Quiz button — always visible on qualifying tiles */}
         {CAMP_QUIZ_SORT_ORDERS.has(clip.sortOrder) && onCampQuiz && (

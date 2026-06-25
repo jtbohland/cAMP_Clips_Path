@@ -44,6 +44,25 @@ export default function LibraryPage() {
     window.open(CAMP_QUIZ_URL, "_blank");
   }, [viewer?.id, logClick]);
 
+  // Reachdesk Zoom clip (sort order 4) — tracked via localStorage
+  const REACHDESK_ZOOM_URL = "https://amplitude.zoom.us/clips/share/1HnN8co4TT-XfIREH0ZodQ?pageType=web";
+  const reachdeskStorageKey = viewer?.id ? `reachdesk_watched_${viewer.id}` : null;
+  const [reachdeskWatched, setReachdeskWatched] = useState(() => {
+    if (!reachdeskStorageKey) return false;
+    return localStorage.getItem(reachdeskStorageKey) === "true";
+  });
+  const handleReachdeskWatch = useCallback(() => {
+    if (viewer?.id) logClick({ viewerId: viewer.id, pitchName: "Reachdesk Zoom Clip" });
+    window.open(REACHDESK_ZOOM_URL, "_blank");
+    // Mark as watched — unlocks the Reachdesk report
+    if (reachdeskStorageKey) {
+      localStorage.setItem(reachdeskStorageKey, "true");
+      setReachdeskWatched(true);
+    }
+    // Auto-navigate to the Reachdesk Ranger Report
+    navigate("/report/reachdesk");
+  }, [viewer?.id, logClick, reachdeskStorageKey, navigate]);
+
   // Preview params — only honored on in-editor navigation, NOT on initial page load.
   // On first load, strip test params from URL so "view deployed app" can never carry them.
   const isInitialLoad = useRef(true);
@@ -234,6 +253,15 @@ export default function LibraryPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <a
+              href="https://docs.google.com/document/d/13f7KQNiPEcTdtVl4vBM2izuwewNA1zA1NWY0Bj91hDo/edit?tab=t.0"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-green-200/30 bg-white/15 text-sm font-medium text-white hover:bg-white/25 transition-colors shadow-sm"
+            >
+              <span>🧭</span>
+              Ascent Guide
+            </a>
             {[
               { path: "/xp", label: "XP-lanation", emoji: "🔭" },
               { path: "/analytics", label: "Analytics", emoji: "📊" },
@@ -345,6 +373,9 @@ export default function LibraryPage() {
                         onReview={() => navigate(`/report/${clip.id}`)}
                         onWheelAndDeal={handleWheelAndDeal}
                         onCampQuiz={handleCampQuiz}
+                        onZoomClipWatch={clip.sortOrder === 4 ? handleReachdeskWatch : undefined}
+                        onZoomClipReview={clip.sortOrder === 4 ? () => navigate(`/report/reachdesk`) : undefined}
+                        zoomClipWatched={clip.sortOrder === 4 ? reachdeskWatched : undefined}
                       />
                     );
                   })}
