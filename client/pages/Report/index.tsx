@@ -11,6 +11,7 @@ import XpCollectedSection from "@/components/report/XpCollectedSection";
 import WeatherStormCard from "@/components/report/WeatherStormCard";
 import RewatchPlayer from "@/components/report/RewatchPlayer";
 import CampGearSection from "@/components/report/CampGearSection";
+import ReachdeskReport from "@/components/report/ReachdeskReport";
 
 /** Badge ID → display info */
 const BADGE_MAP: Record<string, { name: string; emoji: string }> = {
@@ -52,6 +53,11 @@ export default function ReportPage() {
   const navigate = useNavigate();
   const { viewer } = useViewer();
   const [showRewatch, setShowRewatch] = useState(false);
+
+  // Special Reachdesk report — static content, no API call needed
+  if (clipId === "reachdesk") {
+    return <ReachdeskReport />;
+  }
 
   const { run: logClick } = useApi("LogPitchClick");
   const handleResourceClick = useCallback((label: string) => {
