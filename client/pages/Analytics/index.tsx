@@ -235,8 +235,11 @@ function CampersSection({ learners, totalClips }: { learners: any[]; totalClips:
                   </span>
                 </div>
                 <p className="text-[11px] text-gray-500 truncate">{l.email}</p>
-                {l.managerName && (
-                  <p className="text-[10px] text-purple-600 truncate">👤 {l.managerName}</p>
+                {l.managerName && l.managerName !== "n/a" && (
+                  <span className="inline-flex items-center gap-0.5 mt-0.5 px-1.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-100 text-[10px] font-medium text-indigo-700 whitespace-nowrap">
+                    <span>💼</span>
+                    <span>{l.managerName}</span>
+                  </span>
                 )}
               </div>
 
