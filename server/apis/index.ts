@@ -40,6 +40,7 @@ import AddWatchedSecondsColumn from './v2/add-watched-seconds-column.js';
 import FixChrisXP from './v2/fix-chris-xp.js';
 import FixKabirDoubleSummit from './v2/fix-kabir-double-summit.js';
 import BackfillFeedback from './v2/backfill-feedback.js';
+import BackfillManagers from './v2/backfill-managers.js';
 import FixChrisClip3 from './v2/fix-chris-clip3.js';
 import ResetJTSessions from './v2/reset-jt-sessions.js';
 import AddManagerColumns from './v2/add-manager-columns.js';
@@ -64,6 +65,7 @@ AddInitialEngagementColumn,
 AddManagerColumns,
 AddWatchedSecondsColumn,
 BackfillFeedback,
+BackfillManagers,
 FixChrisXP,
 FixKabirDoubleSummit,
 FixChrisClip3,

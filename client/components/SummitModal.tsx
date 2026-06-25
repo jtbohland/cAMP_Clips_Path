@@ -219,13 +219,18 @@ export default function SummitModal({
           </div>
         </div>
 
-        {/* Back to cAMP Clips button */}
+        {/* Back to cAMP Clips button — locked until they copy the Slack message */}
         <div className="px-8 pb-8 pt-2">
           <button
             onClick={onDismiss}
-            className="w-full py-3 rounded-lg text-sm font-bold bg-indigo-50 border border-indigo-200 text-indigo-600 hover:bg-indigo-100 transition-colors"
+            disabled={!copied}
+            className={`w-full py-3 rounded-lg text-sm font-bold transition-colors ${
+              copied
+                ? "bg-indigo-50 border border-indigo-200 text-indigo-600 hover:bg-indigo-100 cursor-pointer"
+                : "bg-gray-100 border border-gray-200 text-gray-400 cursor-not-allowed"
+            }`}
           >
-            🎞️ Back to cAMP Clips
+            {copied ? "🎞️ Back to cAMP Clips" : "🔒 Copy Slack message to unlock"}
           </button>
         </div>
       </div>
