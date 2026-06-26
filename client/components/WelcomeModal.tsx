@@ -143,6 +143,7 @@ export default function WelcomeModal({ viewerId, onDismiss }: WelcomeModalProps)
                           <WistiaPlayer
                             mediaId={pitch.mediaId}
                             playerColor="#4F46E5"
+                            volumeControl={false}
                             aspect={16 / 9}
                           />
                         </div>
