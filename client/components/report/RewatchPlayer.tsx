@@ -41,7 +41,6 @@ export default function RewatchPlayer({ videoId, clipTitle, onClose }: RewatchPl
           <WistiaPlayer
             mediaId={videoId}
             playerColor="4F46E5"
-            volumeControl={false}
             autoPlay={true}
           />
         </div>
