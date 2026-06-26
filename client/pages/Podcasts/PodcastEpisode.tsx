@@ -134,7 +134,6 @@ export default function PodcastEpisode({
               mediaId={mediaId}
               playerColor="#1B4332"
               fullscreenButton={false}
-              volumeControl={false}
               autoPlay={false}
               onSecondChange={handleSecondChange}
             />
