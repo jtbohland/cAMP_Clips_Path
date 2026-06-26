@@ -52,6 +52,10 @@ import StartSession from './v2/start-session.js';
 import SubmitAnswer from './v2/submit-answer.js';
 import UnlockClipForViewer from './v2/unlock-clip.js';
 import SetupClipsSchemaV2 from './clips/setup-schema-v2.js';
+import SetupPodcastSchema from './v2/setup-podcast-schema.js';
+import TrackPodcastProgress from './v2/track-podcast-progress.js';
+import GetPodcastProgress from './v2/get-podcast-progress.js';
+import AwardPodcastXp from './v2/award-podcast-xp.js';
 
 const apis = {
   AutoLookupViewer,
@@ -105,6 +109,10 @@ ResetJTSessions,
   SubmitAnswer,
   UnlockClipForViewer,
   SetupClipsSchemaV2,
+  SetupPodcastSchema,
+  TrackPodcastProgress,
+  GetPodcastProgress,
+  AwardPodcastXp,
 } as const;
 
 export default apis;

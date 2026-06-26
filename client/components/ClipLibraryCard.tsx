@@ -24,6 +24,7 @@ type ClipLibraryCardProps = {
   onZoomClipWatch?: () => void;
   onZoomClipReview?: () => void;
   zoomClipWatched?: boolean;
+  onPodcasts?: () => void;
 };
 
 function getWeekLabel(weekNumber: number | null, sortOrder: number): string {
@@ -93,6 +94,7 @@ export default function ClipLibraryCard({
   onZoomClipWatch,
   onZoomClipReview,
   zoomClipWatched,
+  onPodcasts,
 }: ClipLibraryCardProps) {
   const buttonState = getButtonState(isLocked, isCompleted, pausedElapsedSeconds);
 
@@ -230,6 +232,21 @@ export default function ClipLibraryCard({
         {WHEEL_AND_DEAL_SORT_ORDERS.has(clip.sortOrder) && onWheelAndDeal && (
           <p className="text-[11px] text-gray-400 text-center -mt-1">
             REMEMBER: product-fluency practice — solo or multiplayer — as prep for cAMP 201.
+          </p>
+        )}
+
+        {/* PODcast button — sort order 13 (Customer Stories) */}
+        {clip.sortOrder === 13 && onPodcasts && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onPodcasts(); }}
+            className="w-full py-2.5 rounded-lg text-sm font-semibold bg-[#CA8A04] hover:bg-[#A16207] text-white transition-colors"
+          >
+            🎧 Listen to PODcasts
+          </button>
+        )}
+        {clip.sortOrder === 13 && onPodcasts && (
+          <p className="text-[11px] text-gray-400 text-center -mt-1">
+            Real Amplitude PODs break down complex wins — listen at your own pace
           </p>
         )}
       </div>

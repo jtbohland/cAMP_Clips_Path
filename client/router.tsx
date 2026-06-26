@@ -67,6 +67,13 @@ export const router = createBrowserRouter([
           })),
       },
       {
+        path: "/podcasts",
+        lazy: () =>
+          import("./pages/Podcasts/index.js").then((mod) => ({
+            Component: mod.default,
+          })),
+      },
+      {
         path: "*",
         Component: () => (
           <PageNotFound
