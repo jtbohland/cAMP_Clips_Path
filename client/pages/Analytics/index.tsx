@@ -24,6 +24,7 @@ const BADGE_MAP: Record<string, { name: string; emoji: string }> = {
   double_summit: { name: "Double Summit", emoji: "⛰️" },
   on_the_trail: { name: "On the Trail", emoji: "🗓️" },
   the_ascent: { name: "The Ascent", emoji: "🧗" },
+  podcast_cast: { name: "The Full Cast", emoji: "🎣" },
 };
 
 const PACING_LABEL: Record<string, { label: string; color: string }> = {
@@ -155,9 +156,10 @@ function OverviewSection({ overview }: { overview: any }) {
     { label: "Unique Learners", desc: "Learners who've started Ascent", value: overview.uniqueViewers, icon: "🧑‍🎓" },
     { label: "Avg Engagement", desc: "Mean engagement across completed clips", value: overview.avgEngagement != null ? `${overview.avgEngagement}%` : "—", icon: "📊" },
     { label: "Completion Rate", desc: "% of started sessions that are completed", value: overview.completionRate != null ? `${overview.completionRate}%` : "—", icon: "✅" },
+    { label: "cAMP Gear", desc: "Total clicks on pitches, PODcasts & resources", value: overview.totalGearClicks ?? 0, icon: "🎒" },
   ];
   return (
-    <div className="grid grid-cols-5 gap-3 pt-4">
+    <div className="grid grid-cols-6 gap-3 pt-4">
       {stats.map(s => (
         <div key={s.label} className="text-center p-3 rounded-lg border border-gray-100 bg-[#fafafa]">
           <div className="text-lg mb-1">{s.icon}</div>
@@ -206,13 +208,14 @@ function CampersSection({ learners, totalClips }: { learners: any[]; totalClips:
       </div>
 
       {/* Table header */}
-      <div className="grid grid-cols-[1.4fr_70px_70px_70px_80px_60px_90px_80px_1fr] gap-2 text-[10px] font-semibold text-gray-500 uppercase tracking-wider px-3">
+      <div className="grid grid-cols-[1.4fr_70px_70px_70px_80px_60px_60px_90px_80px_1fr] gap-2 text-[10px] font-semibold text-gray-500 uppercase tracking-wider px-3">
         <span>cAMPer</span>
         <span className="text-center">XP Earned</span>
         <span className="text-center">Clip Score</span>
         <span className="text-center">1st Attempt</span>
         <span className="text-center">Recovery Score</span>
         <span className="text-center">⛈️ Storms</span>
+        <span className="text-center">🎒 Gear</span>
         <span className="text-center">Progress</span>
         <span className="text-center">On Track?</span>
         <span>Merit Badges</span>
@@ -224,7 +227,7 @@ function CampersSection({ learners, totalClips }: { learners: any[]; totalClips:
           const progressPct = totalClips > 0 ? Math.round((l.clipsCompleted / totalClips) * 100) : 0;
 
           return (
-            <div key={l.viewerId} className="grid grid-cols-[1.4fr_70px_70px_70px_80px_60px_90px_80px_1fr] gap-2 items-center px-3 py-2.5 rounded-md border border-gray-100 bg-white">
+            <div key={l.viewerId} className="grid grid-cols-[1.4fr_70px_70px_70px_80px_60px_60px_90px_80px_1fr] gap-2 items-center px-3 py-2.5 rounded-md border border-gray-100 bg-white">
               {/* cAMPer name + tier */}
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
@@ -265,6 +268,15 @@ function CampersSection({ learners, totalClips }: { learners: any[]; totalClips:
               <div className="text-center text-sm font-medium text-gray-900">
                 {l.wtsCount > 0 ? (
                   <span className="text-amber-600 font-semibold">{l.wtsCount}</span>
+                ) : (
+                  <span className="text-gray-400">0</span>
+                )}
+              </div>
+
+              {/* Gear Clicks */}
+              <div className="text-center text-sm font-medium text-gray-900">
+                {l.gearClicks > 0 ? (
+                  <span className="text-indigo-600 font-semibold">{l.gearClicks}</span>
                 ) : (
                   <span className="text-gray-400">0</span>
                 )}

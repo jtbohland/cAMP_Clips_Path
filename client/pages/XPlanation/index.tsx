@@ -39,6 +39,7 @@ const MILESTONE_BONUSES = [
   { badge: "Into the Summit Push", xp: 10, emoji: "🪢", condition: "Unlock Week 4 (complete Clip 9)" },
   { badge: "Summit Reached", xp: 25, emoji: "🏔️✨", condition: "Complete all 17 clips" },
   { badge: "The Ranger's Secret", xp: 20, emoji: "🌲", condition: "Complete all 17 clips without EVER triggering Weather the Storm" },
+  { badge: "The Full Cast", xp: 50, emoji: "🎣", condition: "Listen to 80%+ of all 4 PODcast episodes" },
 ];
 
 export default function XPlanationPage() {
@@ -147,8 +148,9 @@ export default function XPlanationPage() {
                 badge={b.badge}
                 xp={b.xp}
                 condition={b.condition}
-                earned={earnedBadgeIds.has(b.badge.toLowerCase().replace(/ /g, "_"))}
+                earned={earnedBadgeIds.has(b.badge === "The Full Cast" ? "podcast_cast" : b.badge.toLowerCase().replace(/ /g, "_"))}
                 isMystery={b.badge === "The Ranger's Secret"}
+
               />
             ))}
           </div>

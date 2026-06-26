@@ -376,6 +376,7 @@ export default function LibraryPage() {
                         onZoomClipWatch={clip.sortOrder === 4 ? handleReachdeskWatch : undefined}
                         onZoomClipReview={clip.sortOrder === 4 ? () => navigate(`/report/reachdesk`) : undefined}
                         zoomClipWatched={clip.sortOrder === 4 ? reachdeskWatched : undefined}
+                        onPodcasts={clip.sortOrder === 13 ? () => navigate("/podcasts") : undefined}
                       />
                     );
                   })}

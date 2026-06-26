@@ -105,6 +105,7 @@ export default api({
       avgEngagement: z.number().nullable(),
       completionRate: z.number().nullable(),
       totalClips: z.number(),
+      totalGearClicks: z.number(),
     }),
     learners: z.array(z.object({
       viewerId: z.string(),
@@ -120,6 +121,7 @@ export default api({
       recoveryAvg: z.number().nullable(),
       wtsCount: z.number(),
       srCount: z.number(),
+      gearClicks: z.number(),
       tier: TierSchema,
       badges: z.array(BadgeSchema),
       pacingStatus: z.string(),
@@ -204,7 +206,34 @@ export default api({
       { label: "Per-learner stats with trail/recovery scores" }
     );
 
-    // 2b. Badges per learner (separate query to avoid cross-join)
+    // 2b. Total gear clicks for overview
+    const GearCountRow = z.object({ total: z.coerce.number() });
+    const gearCountRows = await ctx.integrations.db.query(
+      `SELECT COUNT(*)::int AS total FROM cliptracker_v2_pitch_clicks
+       WHERE viewer_id NOT IN (SELECT id FROM cliptracker_v2_viewers WHERE is_admin = true)`,
+      GearCountRow,
+      undefined,
+      { label: "Total gear clicks" }
+    );
+
+    // 2c. Gear clicks per learner
+    const LearnerGearRow = z.object({ viewer_id: z.string(), click_count: z.coerce.number() });
+    const learnerGearRows = await ctx.integrations.db.query(
+      `SELECT viewer_id, COUNT(*)::int AS click_count
+       FROM cliptracker_v2_pitch_clicks
+       WHERE viewer_id NOT IN (SELECT id FROM cliptracker_v2_viewers WHERE is_admin = true)
+       GROUP BY viewer_id
+       LIMIT 500`,
+      LearnerGearRow,
+      undefined,
+      { label: "Gear clicks per learner" }
+    );
+    const gearClickMap = new Map<string, number>();
+    for (const g of learnerGearRows) {
+      gearClickMap.set(g.viewer_id, g.click_count);
+    }
+
+    // 2d. Badges per learner (separate query to avoid cross-join)
     const badgeRows = await ctx.integrations.db.query(
       `SELECT viewer_id, badge_id
        FROM cliptracker_v2_badges
@@ -263,6 +292,7 @@ export default api({
         recoveryAvg: l.recovery_avg ? parseFloat(l.recovery_avg) : null,
         wtsCount: l.wts_count,
         srCount: l.sr_count,
+        gearClicks: gearClickMap.get(l.viewer_id) ?? 0,
         tier: currentTier,
         badges: (badgeMap.get(l.viewer_id) ?? []).map(id => ({ badgeId: id })),
         pacingStatus,
@@ -341,6 +371,7 @@ export default api({
         avgEngagement: ov.avg_engagement ? parseFloat(ov.avg_engagement) : null,
         completionRate: ov.completion_rate ? parseFloat(ov.completion_rate) : null,
         totalClips: ov.total_clips,
+        totalGearClicks: gearCountRows[0]?.total ?? 0,
       },
       learners,
       clipBreakdown: clipRows.map(c => ({
