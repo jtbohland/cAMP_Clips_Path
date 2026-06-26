@@ -10,6 +10,8 @@ import SearchRescue from "@/components/SearchRescue";
 import WeatherStorm from "@/components/WeatherStorm";
 import SearchRescuePassPopup from "@/components/SearchRescuePassPopup";
 import ResumePrompt from "@/components/ResumePrompt";
+import AscentGuidePanel from "@/components/AscentGuidePanel.js";
+import { getGuideEntryForClip } from "@/config/ascentGuide.js";
 
 import { WistiaPlayer } from "@wistia/wistia-player-react";
 import { toast } from "sonner";
@@ -91,6 +93,7 @@ export default function WatchPage() {
   const [tabAway, setTabAway] = useState(false);
   const tabAwayCountRef = useRef(0);
   const [showTranscript, setShowTranscript] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(true);
   const [xpData, setXpData] = useState<{
     sessionBreakdown: { base: number; milestones: number; bonuses: number };
     totalXp: number;
@@ -735,6 +738,7 @@ export default function WatchPage() {
   }
 
   const clip = clipData.clip;
+  const guideEntry = getGuideEntryForClip(clip.sortOrder);
   const durationFormatted = clip.durationSeconds
     ? `${Math.floor(clip.durationSeconds / 3600) > 0 ? Math.floor(clip.durationSeconds / 3600) + "h " : ""}${Math.floor((clip.durationSeconds % 3600) / 60)}m`
     : "";
@@ -779,27 +783,41 @@ export default function WatchPage() {
             <span>💬 CC available — click CC on the video for captions & auto-translation</span>
           </p>
         </div>
+        {/* Ascent Guide Panel */}
+        {guideEntry && (
+          <AscentGuidePanel
+            entry={guideEntry}
+            isOpen={guideOpen}
+            onSwatAway={() => setGuideOpen(false)}
+          />
+        )}
         <div className="flex items-center justify-end gap-3 px-4 pb-2">
+          {/* Timer pill — always yellow */}
+          <span className="text-xs font-mono px-3 py-1 rounded-full bg-amber-100 text-amber-700">
+            ⏱ {Math.floor(elapsedSeconds / 60)}:{(elapsedSeconds % 60).toString().padStart(2, "0")}
+            {!isVideoPlaying && phase === "watching" && " ⏸"}
+          </span>
+          {/* Transcript — blue outlined button */}
           <button
             onClick={() => setShowTranscript((v) => !v)}
-            className={`text-sm font-medium px-3 py-1 rounded-lg transition-colors ${
+            className={`text-sm font-semibold px-3 py-1.5 rounded-lg transition-colors ${
               showTranscript
-                ? "bg-indigo-600 text-white"
-                : "text-gray-600 hover:text-indigo-600 hover:bg-indigo-50"
+                ? "bg-blue-600 text-white"
+                : "bg-blue-100 text-blue-700 hover:bg-blue-200"
             }`}
           >
             📄 Transcript
           </button>
-          <span
-            className={`text-xs font-mono px-3 py-1 rounded-full ${
-              !isVideoPlaying && phase === "watching"
-                ? "bg-amber-100 text-amber-700"
-                : "bg-gray-100 text-gray-600"
-            }`}
-          >
-            ⏱ {Math.floor(elapsedSeconds / 60)}:{(elapsedSeconds % 60).toString().padStart(2, "0")}
-            {!isVideoPlaying && phase === "watching" && " ⏸"}
-          </span>
+          {/* Ascent Guide chip — only shows when panel is collapsed */}
+          {guideEntry && !guideOpen && (
+            <button
+              onClick={() => setGuideOpen(true)}
+              className="text-sm font-semibold px-3 py-1.5 rounded-lg transition-colors bg-green-100 text-green-700 hover:bg-green-200"
+            >
+              🧭 Ascent Guide
+            </button>
+          )}
+          {/* Back to Clips — unchanged */}
           <button
             onClick={handlePauseAndBack}
             className="text-sm font-semibold px-4 py-1.5 rounded-lg bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition-colors"
