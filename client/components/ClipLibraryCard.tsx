@@ -239,7 +239,7 @@ export default function ClipLibraryCard({
         {clip.sortOrder === 13 && onPodcasts && (
           <button
             onClick={(e) => { e.stopPropagation(); onPodcasts(); }}
-            className="w-full py-2.5 rounded-lg text-sm font-semibold bg-[#CA8A04] hover:bg-[#A16207] text-white transition-colors"
+            className="w-full py-2.5 rounded-lg text-sm font-semibold bg-[#fec302] hover:bg-[#e5b002] text-gray-900 transition-colors"
           >
             🎧 Listen to PODcasts
           </button>
