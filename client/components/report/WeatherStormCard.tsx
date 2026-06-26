@@ -7,8 +7,8 @@ export default function WeatherStormCard({ overview, takeaways }: WeatherStormCa
   return (
     <div>
       <div className="flex items-center gap-2 mb-3">
-        <span className="text-xl">⛈️</span>
-        <h2 className="text-base font-bold text-gray-900">Weather the Storm</h2>
+        <span className="text-xl">🍫</span>
+        <h2 className="text-base font-bold text-gray-900">S'More to Know</h2>
       </div>
       <p className="text-sm text-gray-500 mb-4 leading-relaxed">{overview}</p>
       {takeaways.length > 0 && (
