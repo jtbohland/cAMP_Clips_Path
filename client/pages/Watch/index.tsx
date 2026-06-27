@@ -92,6 +92,8 @@ export default function WatchPage() {
   const focusTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [tabAway, setTabAway] = useState(false);
   const tabAwayCountRef = useRef(0);
+  const lowVolumeSecondsRef = useRef(0);
+  const isLowVolumeRef = useRef(false);
   const [showTranscript, setShowTranscript] = useState(false);
   const [guideOpen, setGuideOpen] = useState(true);
   const [xpData, setXpData] = useState<{
@@ -128,7 +130,7 @@ export default function WatchPage() {
   useEffect(() => { trailMarkersRef.current = trailMarkers; }, [trailMarkers]);
   useEffect(() => { answeredQuestionsRef.current = answeredQuestions; }, [answeredQuestions]);
 
-  // Focus/blur time tracking
+  // Focus/blur + low-volume time tracking
   useEffect(() => {
     if (phase !== "watching") {
       if (focusTimerRef.current) clearInterval(focusTimerRef.current);
@@ -141,12 +143,24 @@ export default function WatchPage() {
         } else {
           setBlurSeconds((s) => s + 1);
         }
+        // Accumulate low-volume seconds (muted or volume < 10%)
+        if (isLowVolumeRef.current) {
+          lowVolumeSecondsRef.current += 1;
+        }
       }
     }, 1000);
     return () => {
       if (focusTimerRef.current) clearInterval(focusTimerRef.current);
     };
   }, [phase, isVideoPlaying]);
+
+  // ─── Wistia volumechange tracking ──────────────────────────────────────────
+  // Detect when volume drops below 10% or is muted → flag for low-volume accumulation
+  const handleWistiaVolumeChange = useCallback((e: any) => {
+    const volume: number = typeof e?.detail?.volume === "number" ? e.detail.volume : 1;
+    const isMuted: boolean = e?.detail?.isMuted === true;
+    isLowVolumeRef.current = isMuted || volume < 0.1;
+  }, []);
 
   // ─── WistiaPlayer event handlers (React props, not addEventListener) ────────
   // These callbacks are passed as props to <WistiaPlayer> so they work reliably
@@ -277,6 +291,7 @@ export default function WatchPage() {
     setElapsedSeconds(pausedSessionData.elapsedSeconds);
     setWatchedSeconds(pausedSessionData.watchedSeconds ?? pausedSessionData.elapsedSeconds);
     lastWatchedTimeRef.current = pausedSessionData.elapsedSeconds;
+    lowVolumeSecondsRef.current = pausedSessionData.lowVolumeSeconds ?? 0;
     setFocusSeconds(pausedSessionData.focusSeconds);
     setBlurSeconds(pausedSessionData.blurSeconds);
     setAnsweredQuestions(new Set(pausedSessionData.answeredQuestionIds));
@@ -293,6 +308,7 @@ export default function WatchPage() {
     setFocusSeconds(0);
     setBlurSeconds(0);
     tabAwayCountRef.current = 0;
+    lowVolumeSecondsRef.current = 0;
     setCorrectCount(0);
     setAnsweredQuestions(new Set());
     setWatchedSeconds(0);
@@ -324,6 +340,7 @@ export default function WatchPage() {
           answeredQuestionIds: Array.from(answeredQuestions),
           correctCount,
           phase: "watching",
+          lowVolumeSeconds: lowVolumeSecondsRef.current,
         });
       } catch (e) {
         console.error("Pause save failed:", e);
@@ -345,6 +362,7 @@ export default function WatchPage() {
         answeredQuestionIds: Array.from(answeredQuestions),
         correctCount,
         phase: "watching",
+        lowVolumeSeconds: lowVolumeSecondsRef.current,
       }).catch(() => {});
     }, 30_000);
     return () => clearInterval(autosaveInterval);
@@ -359,6 +377,7 @@ export default function WatchPage() {
           sessionId, elapsedSeconds, focusSeconds, blurSeconds, watchedSeconds,
           answeredQuestionIds: Array.from(answeredQuestions),
           correctCount, phase: "watching",
+          lowVolumeSeconds: lowVolumeSecondsRef.current,
         }).catch(() => {});
       }
     };
@@ -367,6 +386,7 @@ export default function WatchPage() {
         sessionId, elapsedSeconds, focusSeconds, blurSeconds, watchedSeconds,
         answeredQuestionIds: Array.from(answeredQuestions),
         correctCount, phase: "watching",
+        lowVolumeSeconds: lowVolumeSecondsRef.current,
       }).catch(() => {});
     };
     document.addEventListener("visibilitychange", saveOnHide);
@@ -486,6 +506,7 @@ export default function WatchPage() {
           totalTimeSeconds: watchedSeconds,
           clipDurationSeconds: clipDuration,
           tabAwayCount: tabAwayCountRef.current,
+          lowVolumeSeconds: lowVolumeSecondsRef.current,
         });
         if (res?.engagementScore !== undefined) {
           setEngagementScore(res.engagementScore);
@@ -845,6 +866,7 @@ export default function WatchPage() {
                 onPause={handleWistiaPause}
                 onEnded={handleWistiaEnded}
                 onSecondChange={handleWistiaSecondChange}
+                onVolumeChange={handleWistiaVolumeChange}
                 style={{ width: "100%", height: "100%", position: "absolute", top: 0, left: 0 }}
               />
             </div>

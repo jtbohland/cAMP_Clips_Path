@@ -135,6 +135,7 @@ export default function PodcastEpisode({
               playerColor="#1B4332"
               fullscreenButton={false}
               autoPlay={false}
+              volumeControl={false}
               onSecondChange={handleSecondChange}
             />
           </div>

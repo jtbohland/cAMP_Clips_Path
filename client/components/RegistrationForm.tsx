@@ -213,9 +213,9 @@ export default function RegistrationForm() {
               id="reg-day1"
               type="date"
               value={ascentDay1}
-              onChange={(e) => setAscentDay1(e.target.value)}
-              required
-              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+              readOnly
+              tabIndex={-1}
+              className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-600 cursor-not-allowed"
             />
             <p className="text-xs text-amber-600 font-medium">
               ⚠️ Defaults to today. Do not click "Start the Ascent" if you are not ready to begin!
