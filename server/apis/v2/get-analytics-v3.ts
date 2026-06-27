@@ -256,19 +256,56 @@ export default api({
     const totalLiveClips = overviewRows[0]?.total_clips ?? 0;
     const now = new Date();
 
+    // Weekday-based pacing schedule: 15 weekdays → 17 clips
+    // Days 5 and 9 are content-review days (no new clips expected)
+    const EXPECTED_CLIPS = [0, 1, 2, 3, 4, 4, 5, 7, 9, 9, 10, 12, 13, 14, 15, 17];
+    const TOTAL_WEEKDAYS = 15;
+    const TOTAL_CLIPS_SCHEDULE = 17;
+
+    function countWeekdays(start: Date, end: Date): number {
+      const s = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+      const e = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+      if (e < s) return 0;
+      let count = 0;
+      const cursor = new Date(s);
+      while (cursor <= e) {
+        const dow = cursor.getDay();
+        if (dow !== 0 && dow !== 6) count++;
+        cursor.setDate(cursor.getDate() + 1);
+      }
+      return count;
+    }
+
+    function getTopicDaysBehind(completed: number, weekdaysElapsed: number): number {
+      if (completed >= TOTAL_CLIPS_SCHEDULE) return 0;
+      let learnerWeekday = 0;
+      for (let i = 1; i < EXPECTED_CLIPS.length; i++) {
+        if (completed >= EXPECTED_CLIPS[i]) learnerWeekday = i;
+        else break;
+      }
+      return Math.max(0, Math.min(weekdaysElapsed, TOTAL_WEEKDAYS) - learnerWeekday);
+    }
+
     const learners = learnerRows.map(l => {
-      // Pacing
+      // Weekday-based pacing (5-tier)
       let pacingStatus = "not_started";
       if (l.ascent_day_1) {
         const start = new Date(l.ascent_day_1);
-        const daysElapsed = Math.max(1, Math.floor((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
-        const expectedClips = Math.min(totalLiveClips, Math.floor(daysElapsed / 5));
-        if (l.clips_completed >= totalLiveClips) {
+        const weekdaysElapsed = countWeekdays(start, now);
+        const daysBehind = getTopicDaysBehind(l.clips_completed, weekdaysElapsed);
+
+        if (l.clips_completed >= TOTAL_CLIPS_SCHEDULE) {
           pacingStatus = "completed";
-        } else if (l.clips_completed >= expectedClips) {
-          pacingStatus = "on_track";
+        } else if (daysBehind <= 0) {
+          pacingStatus = "summit_bound";
+        } else if (daysBehind <= 2) {
+          pacingStatus = "off_the_trail";
+        } else if (daysBehind <= 5) {
+          pacingStatus = "lost_in_the_woods";
+        } else if (daysBehind <= 9) {
+          pacingStatus = "rockslide";
         } else {
-          pacingStatus = "behind";
+          pacingStatus = "avalanche_warning";
         }
       }
 

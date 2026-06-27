@@ -28,10 +28,16 @@ const BADGE_MAP: Record<string, { name: string; emoji: string }> = {
 };
 
 const PACING_LABEL: Record<string, { label: string; color: string }> = {
+  summit_bound: { label: "🧗🏻‍♂️ Summit Bound", color: "text-green-600" },
+  off_the_trail: { label: "🧭 Off the Trail", color: "text-amber-600" },
+  lost_in_the_woods: { label: "🌲 Lost in Woods", color: "text-orange-600" },
+  rockslide: { label: "🪨 Rockslide", color: "text-red-600" },
+  avalanche_warning: { label: "❄️ Avalanche", color: "text-blue-800" },
+  completed: { label: "🏔️✨ Completed", color: "text-[#4F46E5]" },
+  not_started: { label: "Not Started", color: "text-gray-400" },
+  // Legacy fallbacks
   on_track: { label: "On Track", color: "text-green-600" },
   behind: { label: "Behind", color: "text-amber-600" },
-  completed: { label: "Completed", color: "text-[#4F46E5]" },
-  not_started: { label: "Not Started", color: "text-gray-400" },
 };
 
 export default function AnalyticsPage() {
