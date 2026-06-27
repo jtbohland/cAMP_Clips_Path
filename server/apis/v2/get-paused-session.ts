@@ -8,6 +8,7 @@ const PausedSessionRow = z.object({
   paused_focus_seconds: z.coerce.number(),
   paused_blur_seconds: z.coerce.number(),
   paused_watched_seconds: z.coerce.number().default(0),
+  low_volume_seconds: z.coerce.number().default(0),
   paused_answered_ids: z.any(),
   paused_correct_count: z.coerce.number(),
   paused_phase: z.string().nullable(),
@@ -40,6 +41,7 @@ export default api({
       correctCount: z.number(),
       phase: z.string().nullable(),
       pausedAt: z.string(),
+      lowVolumeSeconds: z.number(),
     }).nullable(),
   }),
 
@@ -59,7 +61,8 @@ export default api({
     const rows = await ctx.integrations.db.query(
       `SELECT id, paused_elapsed_seconds, paused_focus_seconds, paused_blur_seconds,
               COALESCE(paused_watched_seconds, paused_elapsed_seconds) as paused_watched_seconds,
-              paused_answered_ids, paused_correct_count, paused_phase, paused_at::text
+              paused_answered_ids, paused_correct_count, paused_phase, paused_at::text,
+              COALESCE(low_volume_seconds, 0) as low_volume_seconds
        FROM cliptracker_v2_sessions
        WHERE clip_id = $1 AND viewer_id = $2
          AND paused_at IS NOT NULL AND completed = false
@@ -92,6 +95,7 @@ export default api({
         correctCount: row.paused_correct_count,
         phase: row.paused_phase,
         pausedAt: row.paused_at,
+        lowVolumeSeconds: row.low_volume_seconds,
       },
     };
   },

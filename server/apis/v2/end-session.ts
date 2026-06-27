@@ -17,6 +17,7 @@ export default api({
     totalTimeSeconds: z.number(),
     clipDurationSeconds: z.number(),
     tabAwayCount: z.number().int().min(0).default(0),
+    lowVolumeSeconds: z.number().default(0),
   }),
 
   output: z.object({
@@ -29,7 +30,7 @@ export default api({
     totalQuestions: z.number(),
   }),
 
-  async run(ctx, { sessionId, totalFocusSeconds, totalBlurSeconds, totalTimeSeconds, clipDurationSeconds, tabAwayCount }) {
+  async run(ctx, { sessionId, totalFocusSeconds, totalBlurSeconds, totalTimeSeconds, clipDurationSeconds, tabAwayCount, lowVolumeSeconds }) {
     // Get all responses for this session
     const ResponseCountSchema = z.object({
       total: z.coerce.number(),
@@ -53,13 +54,21 @@ export default api({
     // Question score: percentage of correct answers (25% weight)
     const questionScore = totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0;
 
-    // Focus score: penalty based on tab-away count (30% weight — unchanged)
-    // 0 tab-aways = 100%, 1 = 80%, 2 = 60%, 3 = 40%, 4+ = 20%
-    const focusScore = tabAwayCount === 0 ? 100
+    // Focus score: blended tab-away (60%) + volume (40%)
+    // Tab score: 0 tab-aways = 100%, 1 = 80%, 2 = 60%, 3 = 40%, 4+ = 20%
+    const tabScore = tabAwayCount === 0 ? 100
       : tabAwayCount === 1 ? 80
       : tabAwayCount === 2 ? 60
       : tabAwayCount === 3 ? 40
       : 20;
+
+    // Volume score: % of watched time at adequate volume (>=10%)
+    // If lowVolumeSeconds is 0 or missing (old sessions), no penalty
+    const volumeScore = totalTimeSeconds > 0 && lowVolumeSeconds > 0
+      ? Math.max(0, ((totalTimeSeconds - lowVolumeSeconds) / totalTimeSeconds) * 100)
+      : 100;
+
+    const focusScore = (tabScore * 0.6) + (volumeScore * 0.4);
 
     // Time score: how much of the video's duration was spent watching (45% weight)
     // Cap at 100 (viewer can spend more time than video duration due to pauses)
@@ -84,6 +93,7 @@ export default api({
            total_focus_seconds = $2,
            total_blur_seconds = $3,
            total_time_seconds = $4,
+           low_volume_seconds = $9,
            engagement_score = $5,
            question_score = $6,
            focus_score = $7,
@@ -91,7 +101,7 @@ export default api({
            initial_engagement_score = COALESCE(initial_engagement_score, $5)
        WHERE id = $1`,
       [sessionId, totalFocusSeconds, totalBlurSeconds, totalTimeSeconds, 
-       engagementScore, questionScore, focusScore, timeScore],
+       engagementScore, questionScore, focusScore, timeScore, lowVolumeSeconds],
       { label: "Update session with scores (metrics only)" }
     );
 

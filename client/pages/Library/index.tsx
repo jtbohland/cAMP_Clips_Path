@@ -154,7 +154,26 @@ export default function LibraryPage() {
     }
   }, [dataReady, allCompleted, showSummit, previewMode, viewer]);
 
-  const WEEK_EMOJI: Record<number, string> = { 2: "🥾", 3: "🏞️", 4: "🧗🏻‍♂️" };
+  const WEEK_META: Record<number, { emoji: string; title: string; time: string; note: string }> = {
+    2: {
+      emoji: "🥾",
+      title: "Building Your Revenue Engine Foundations",
+      time: "⏱ Total: 7h 18m | Daily average: ~1h 28m per day",
+      note: "These times are approximate and reflect course + video durations, plus ~20 minutes per day for quizzes. They do not include any extra time you spend reading or reviewing linked resources.",
+    },
+    3: {
+      emoji: "🏞️",
+      title: "Designing & Winning Strategic Deals",
+      time: "⏱ Total: 7h 16m | Daily average: ~1h 27m per day",
+      note: "These times are approximate and reflect course + video durations, plus ~20 minutes per day for quizzes. They do not include any extra time you spend reading or reviewing linked resources.",
+    },
+    4: {
+      emoji: "🧗🏻‍♂️",
+      title: "Executing, Governing & Scaling Deals",
+      time: "⏱ Total: 9h 55m | Daily average: ~2h per day",
+      note: "These times are approximate and reflect course + video durations, plus ~20 minutes per day for quizzes. They do not include any extra time you spend reading or reviewing linked resources.",
+    },
+  };
 
   const weekGroups = useMemo(() => {
     const grouped = new Map<number, typeof clips>();
@@ -165,11 +184,17 @@ export default function LibraryPage() {
     }
     return Array.from(grouped.entries())
       .sort(([a], [b]) => a - b)
-      .map(([weekNum, weekClips]) => ({
-        label: weekNum > 0 ? `Week ${weekNum}` : "Other",
-        emoji: WEEK_EMOJI[weekNum] ?? "📦",
-        clips: weekClips,
-      }));
+      .map(([weekNum, weekClips]) => {
+        const meta = WEEK_META[weekNum];
+        return {
+          label: weekNum > 0 ? `Week ${weekNum}` : "Other",
+          emoji: meta?.emoji ?? "📦",
+          title: meta?.title ?? null,
+          time: meta?.time ?? null,
+          note: meta?.note ?? null,
+          clips: weekClips,
+        };
+      });
   }, [clips]);
 
   // ──────────────────── RENDER GATES ────────────────────
@@ -351,9 +376,20 @@ export default function LibraryPage() {
           {weekGroups.map((week) =>
             week.clips.length > 0 ? (
               <section key={week.label}>
-                <div className="flex items-center gap-3 rounded-xl px-5 py-3 shadow-[0_1px_3px_rgba(0,0,0,0.08)] mb-4" style={{ backgroundColor: "#1B4332" }}>
-                  <span className="text-2xl">{week.emoji}</span>
-                  <h2 className="text-lg font-bold text-white">{week.label}</h2>
+                <div className="flex flex-col items-center rounded-xl px-5 py-4 shadow-[0_1px_3px_rgba(0,0,0,0.08)] mb-4 text-center" style={{ backgroundColor: "#1B4332" }}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">{week.emoji}</span>
+                    <h2 className="text-lg font-bold text-white">{week.label}</h2>
+                  </div>
+                  {week.title && (
+                    <p className="text-sm font-semibold text-emerald-200 mt-1">{week.title}</p>
+                  )}
+                  {week.time && (
+                    <p className="text-xs text-white mt-1">{week.time}</p>
+                  )}
+                  {week.note && (
+                    <p className="text-[10px] text-gray-300 mt-1.5 max-w-xl leading-snug">{week.note}</p>
+                  )}
                 </div>
 
                 <div className="flex flex-col gap-3">

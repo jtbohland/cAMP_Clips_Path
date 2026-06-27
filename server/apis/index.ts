@@ -37,6 +37,7 @@ import SeedQuestionsFromFiles from './v2/seed-questions-from-files.js';
 import SetViewerAdmin from './v2/set-viewer-admin.js';
 import AddInitialEngagementColumn from './v2/add-initial-engagement-column.js';
 import AddWatchedSecondsColumn from './v2/add-watched-seconds-column.js';
+import AddLowVolumeColumn from './v2/add-low-volume-column.js';
 import FixChrisXP from './v2/fix-chris-xp.js';
 import FixKabirDoubleSummit from './v2/fix-kabir-double-summit.js';
 import BackfillFeedback from './v2/backfill-feedback.js';
@@ -56,6 +57,7 @@ import SetupPodcastSchema from './v2/setup-podcast-schema.js';
 import TrackPodcastProgress from './v2/track-podcast-progress.js';
 import GetPodcastProgress from './v2/get-podcast-progress.js';
 import AwardPodcastXp from './v2/award-podcast-xp.js';
+import FixGabiDate from './v2/fix-gabi-date.js';
 
 const apis = {
   AutoLookupViewer,
@@ -68,6 +70,7 @@ const apis = {
 AddInitialEngagementColumn,
 AddManagerColumns,
 AddWatchedSecondsColumn,
+AddLowVolumeColumn,
 BackfillFeedback,
 BackfillManagers,
 FixChrisXP,
@@ -113,6 +116,7 @@ ResetJTSessions,
   TrackPodcastProgress,
   GetPodcastProgress,
   AwardPodcastXp,
+  FixGabiDate,
 } as const;
 
 export default apis;
