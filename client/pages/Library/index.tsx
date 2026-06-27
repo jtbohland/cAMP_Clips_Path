@@ -9,6 +9,16 @@ import XpProgressBar from "@/components/XpProgressBar";
 import WelcomeModal from "@/components/WelcomeModal";
 import SummitModal from "@/components/SummitModal";
 import TierUnlockModal from "@/components/TierUnlockModal";
+import PacingModal from "@/components/PacingModal";
+import {
+  countWeekdays,
+  getExpectedClips,
+  getTopicDaysBehind,
+  getPacingTier,
+  getMissedClips,
+  getSummitDay,
+  TOTAL_CLIPS,
+} from "@/lib/pacing";
 
 function LoadingSkeleton() {
   return (
@@ -30,6 +40,8 @@ export default function LibraryPage() {
   const [showBeforeYouBegin, setShowBeforeYouBegin] = useState(true);
   const [showSummit, setShowSummit] = useState(false);
   const [tierUnlock, setTierUnlock] = useState<number | null>(null);
+  const [showPacing, setShowPacing] = useState(false);
+  const pacingShownRef = useRef(false);
 
   const { run: logClick } = useApi("LogPitchClick");
   const WHEEL_AND_DEAL_URL = "https://app.superblocks.com/code-mode/applications/fef97ebe-4fb9-401f-b97c-c52c1693b31b/";
@@ -69,7 +81,7 @@ export default function LibraryPage() {
   const [previewMode, setPreviewMode] = useState<string | null>(null);
 
   useEffect(() => {
-    const TEST_PARAMS = ["welcome", "register", "summit", "tier"];
+    const TEST_PARAMS = ["welcome", "register", "summit", "tier", "pacing"];
     const hasTestParams = TEST_PARAMS.some((p) => searchParams.get(p) === "test");
 
     if (isInitialLoad.current) {
@@ -87,7 +99,10 @@ export default function LibraryPage() {
     }
 
     // Subsequent navigations (editor preview) — honor test params
-    if (searchParams.get("tier") === "test") {
+    if (searchParams.get("pacing") === "test") {
+      setPreviewMode("pacing");
+      setShowPacing(true);
+    } else if (searchParams.get("tier") === "test") {
       setPreviewMode("tier");
       setTierUnlock(-1);
     } else if (searchParams.get("summit") === "test") {
@@ -117,6 +132,29 @@ export default function LibraryPage() {
   const clips = useMemo(() => data?.clips ?? [], [data]);
   const allCompleted = clips.length === 17 && clips.every((c: any) => c.completed);
 
+  // ── Pacing calculation ──
+  const pacingInfo = useMemo(() => {
+    if (!progressData?.ascentDay1 || clips.length === 0) return null;
+    const startDate = new Date(progressData.ascentDay1 + "T00:00:00");
+    const today = new Date();
+    const weekdaysElapsed = countWeekdays(startDate, today);
+    const clipsCompleted = progressData.clipsCompleted;
+    const tier = getPacingTier(clipsCompleted, weekdaysElapsed, true);
+    const daysBehind = getTopicDaysBehind(clipsCompleted, weekdaysElapsed);
+    const missedClips = getMissedClips(
+      clips.map((c: any) => ({
+        sortOrder: c.sortOrder,
+        weekNumber: c.weekNumber,
+        dayLabel: c.dayLabel,
+        title: c.title,
+        completed: c.completed,
+      })),
+      weekdaysElapsed
+    );
+    const summitDay = getSummitDay(startDate);
+    return { tier, daysBehind, clipsCompleted, weekdaysElapsed, missedClips, summitDay };
+  }, [progressData, clips]);
+
   // Gate: ALL data must be loaded before any modal logic runs
   const dataReady = !!viewer && !!data && !!progressData;
 
@@ -136,6 +174,42 @@ export default function LibraryPage() {
       setTierUnlock(currentTierNum);
     }
   }, [dataReady, previewMode, progressData, viewer, tierUnlock]);
+
+  // Auto-trigger Pacing Modal — once per calendar day
+  useEffect(() => {
+    if (!dataReady || !pacingInfo || previewMode === "pacing") return;
+    if (pacingShownRef.current) return;
+    if (showSummit || tierUnlock !== null) return; // don't stack modals
+
+    const storageKey = `pacing_shown_${viewer!.id}`;
+    const todayStr = new Date().toLocaleDateString();
+    const lastShown = localStorage.getItem(storageKey);
+
+    if (lastShown !== todayStr) {
+      pacingShownRef.current = true;
+      setShowPacing(true);
+      localStorage.setItem(storageKey, todayStr);
+    }
+  }, [dataReady, pacingInfo, showSummit, tierUnlock, previewMode, viewer]);
+
+  // visibilitychange — re-trigger pacing modal for stale tabs (new day)
+  useEffect(() => {
+    if (!dataReady || !viewer) return;
+
+    const handleVisibility = () => {
+      if (document.hidden) return;
+      const storageKey = `pacing_shown_${viewer.id}`;
+      const todayStr = new Date().toLocaleDateString();
+      const lastShown = localStorage.getItem(storageKey);
+      if (lastShown !== todayStr && pacingInfo && !showSummit && tierUnlock === null) {
+        setShowPacing(true);
+        localStorage.setItem(storageKey, todayStr);
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, [dataReady, viewer, pacingInfo, showSummit, tierUnlock]);
 
   // Auto-trigger Summit — only after all data ready
   useEffect(() => {
@@ -218,6 +292,22 @@ export default function LibraryPage() {
   if (viewer.isAdmin && previewMode === "welcome") {
     return <WelcomeModal viewerId={viewer.id} onDismiss={() => {}} />;
   }
+  if (viewer.isAdmin && previewMode === "pacing" && pacingInfo) {
+    return (
+      <div className="h-full" style={{ backgroundColor: "#ECFDF5" }}>
+        <PacingModal
+          tier={pacingInfo.tier}
+          daysBehind={pacingInfo.daysBehind}
+          clipsCompleted={pacingInfo.clipsCompleted}
+          totalClips={TOTAL_CLIPS}
+          weekdaysElapsed={pacingInfo.weekdaysElapsed}
+        missedClips={pacingInfo.missedClips}
+        summitDay={pacingInfo.summitDay}
+        onDismiss={() => setShowPacing(false)}
+      />
+    </div>
+  );
+}
 
   // ──────────────────── MODALS (only when dataReady) ────────────────────
 
@@ -266,6 +356,19 @@ export default function LibraryPage() {
 
   // ──────────────────── MAIN LIBRARY VIEW ────────────────────
   return (
+    <>
+    {showPacing && pacingInfo && (
+      <PacingModal
+        tier={pacingInfo.tier}
+        daysBehind={pacingInfo.daysBehind}
+        clipsCompleted={pacingInfo.clipsCompleted}
+        totalClips={TOTAL_CLIPS}
+        weekdaysElapsed={pacingInfo.weekdaysElapsed}
+        missedClips={pacingInfo.missedClips}
+        summitDay={pacingInfo.summitDay}
+        onDismiss={() => setShowPacing(false)}
+      />
+    )}
     <div className="flex flex-col h-full overflow-hidden" style={{ backgroundColor: "#ECFDF5" }}>
       {/* Page header */}
       <div className="border-b border-green-900/20 px-6 py-4" style={{ backgroundColor: "#1B4332" }}>
@@ -430,5 +533,6 @@ export default function LibraryPage() {
         )}
       </div>
     </div>
+    </>
   );
 }

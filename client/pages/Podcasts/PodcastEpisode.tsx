@@ -23,9 +23,16 @@ export default function PodcastEpisode({
   onPercentChange,
 }: PodcastEpisodeProps) {
   const playerRef = useRef<any>(null);
-  const lastReportedRef = useRef(0);
 
-  // When collapsing, stop the video
+  // --- Anti-scrub: track cumulative real seconds listened ---
+  const lastTimeRef = useRef<number>(0);
+  const cumulativeSecondsRef = useRef<number>(0);
+  const lastReportedPercentRef = useRef<number>(0);
+
+  // --- Pause-on-tab: track whether user manually paused ---
+  const userPausedRef = useRef<boolean>(true); // starts paused (autoPlay=false)
+
+  // When collapsing, stop the player
   useEffect(() => {
     if (!isExpanded && playerRef.current) {
       try {
@@ -36,18 +43,19 @@ export default function PodcastEpisode({
     }
   }, [isExpanded]);
 
-  // Override Wistia's default pause-on-tab-hidden behavior
+  // Override Wistia's default pause-on-tab-hidden behavior —
+  // but ONLY if the user was actively playing (not manually paused)
   useEffect(() => {
     if (!isExpanded) return;
 
     const handleVisibilityChange = () => {
-      // When the page becomes hidden, Wistia pauses by default.
-      // We resume immediately to allow background listening.
-      if (document.hidden && playerRef.current) {
-        // Small delay to let Wistia's own handler fire first, then resume
+      if (document.hidden && playerRef.current && !userPausedRef.current) {
+        // Wistia auto-pauses on tab hide — resume after a short delay
         setTimeout(() => {
           try {
-            playerRef.current?.play();
+            if (!userPausedRef.current) {
+              playerRef.current?.play();
+            }
           } catch {
             // ignore
           }
@@ -59,21 +67,40 @@ export default function PodcastEpisode({
     return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, [isExpanded]);
 
+  // Track play/pause state from user actions
+  const handlePlay = useCallback(() => {
+    userPausedRef.current = false;
+  }, []);
+
+  const handlePause = useCallback(() => {
+    userPausedRef.current = true;
+  }, []);
+
+  // Anti-scrub: only count seconds where playback advanced naturally (~1-3s from last tick)
   const handleSecondChange = useCallback(
     (e: CustomEvent) => {
       const player = e.target as any;
       if (!player) return;
 
-      const duration = player.duration;
-      if (!duration || duration <= 0) return;
+      const totalDuration = player.duration;
+      if (!totalDuration || totalDuration <= 0) return;
 
       const currentTime = player.currentTime ?? 0;
-      const percent = currentTime / duration;
+      const delta = currentTime - lastTimeRef.current;
 
-      // Only report at meaningful intervals (every 5% change)
-      if (Math.abs(percent - lastReportedRef.current) >= 0.05) {
-        lastReportedRef.current = percent;
-        onPercentChange(mediaId, percent);
+      // Natural playback: time advances by 0.5–3s (accounts for speed up to 2×)
+      // Scrub jump: delta is large (>3s) or negative — don't count those
+      if (delta > 0.5 && delta <= 3) {
+        cumulativeSecondsRef.current += delta;
+      }
+
+      lastTimeRef.current = currentTime;
+
+      // Report cumulative percent at 5% intervals
+      const cumulativePercent = Math.min(cumulativeSecondsRef.current / totalDuration, 1);
+      if (cumulativePercent - lastReportedPercentRef.current >= 0.05) {
+        lastReportedPercentRef.current = cumulativePercent;
+        onPercentChange(mediaId, cumulativePercent);
       }
     },
     [mediaId, onPercentChange]
@@ -136,6 +163,8 @@ export default function PodcastEpisode({
               fullscreenButton={false}
               autoPlay={false}
               volumeControl={false}
+              onPlay={handlePlay}
+              onPause={handlePause}
               onSecondChange={handleSecondChange}
             />
           </div>
