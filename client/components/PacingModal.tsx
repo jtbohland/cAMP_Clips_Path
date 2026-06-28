@@ -14,6 +14,7 @@ interface PacingModalProps {
   weekdaysElapsed: number;
   missedClips: MissedClip[];
   summitDay: Date | null;
+  isDayBeforeSummit?: boolean;
   onDismiss: () => void;
 }
 
@@ -25,6 +26,7 @@ export default function PacingModal({
   weekdaysElapsed,
   missedClips,
   summitDay,
+  isDayBeforeSummit,
   onDismiss,
 }: PacingModalProps) {
   const config = PACING_TIERS[tier];
@@ -144,6 +146,17 @@ export default function PacingModal({
                   </p>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Pre-Summit warning banner */}
+          {tier === "avalanche_warning" && isDayBeforeSummit && (
+            <div className="rounded-lg px-4 py-3 mb-4 border border-amber-400 bg-amber-50">
+              <p className="text-sm font-bold text-amber-800">⚠️ Tomorrow is Summit Day</p>
+              <p className="text-xs text-amber-700 mt-1 leading-relaxed">
+                If you're unable to finish by then, there will be additional steps to complete
+                starting the following day to keep your Ascent moving forward.
+              </p>
             </div>
           )}
 
