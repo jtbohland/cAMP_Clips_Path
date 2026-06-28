@@ -39,7 +39,7 @@ export default function TrailManifesto({ viewerId }: TrailManifestoProps) {
     return (
       <button
         onClick={handleReRead}
-        className="w-full py-3 rounded-xl text-sm font-bold text-white transition-colors shadow-[0_1px_3px_rgba(0,0,0,0.08)] hover:shadow-md"
+        className="w-full py-3 rounded-xl text-sm font-bold text-white transition-all shadow-[0_1px_3px_rgba(0,0,0,0.08)] hover:shadow-md hover:brightness-125"
         style={{ backgroundColor: "#1B4332" }}
       >
         🔦 Welcome to the Trail — Weeks 2 through 4
@@ -128,14 +128,14 @@ export default function TrailManifesto({ viewerId }: TrailManifestoProps) {
         </p>
       </div>
 
-      {/* Swat Away / Close button */}
+      {/* Swat Away button */}
       <div className="px-6 pb-5">
         <button
           onClick={dismissed ? handleClose : handleSwatAway}
           className="w-full py-3 rounded-xl text-sm font-bold text-white transition-colors hover:opacity-90"
           style={{ backgroundColor: "#1B4332" }}
         >
-          {dismissed ? "Close" : "🦟 Swat Away"}
+          🦟 Swat Away
         </button>
       </div>
     </div>
