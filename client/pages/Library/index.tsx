@@ -4,12 +4,15 @@ import { useApiData } from "@/hooks/useApiData.js";
 import { useApi } from "@/hooks/useApi.js";
 import { useViewer } from "@/components/ViewerContext";
 import ClipLibraryCard from "@/components/ClipLibraryCard";
+import PairedClipCard from "@/components/PairedClipCard";
 import RegistrationForm from "@/components/RegistrationForm";
 import XpProgressBar from "@/components/XpProgressBar";
 import WelcomeModal from "@/components/WelcomeModal";
 import SummitModal from "@/components/SummitModal";
 import TierUnlockModal from "@/components/TierUnlockModal";
 import PacingModal from "@/components/PacingModal";
+import AnchorFailureModal from "@/components/AnchorFailureModal";
+import LightAnchorModal from "@/components/LightAnchorModal";
 import {
   countWeekdays,
   getExpectedClips,
@@ -17,6 +20,9 @@ import {
   getPacingTier,
   getMissedClips,
   getSummitDay,
+  getAscentAdjustmentDay,
+  isAfterDate,
+  isDayBeforeSummitDay,
   TOTAL_CLIPS,
 } from "@/lib/pacing";
 
@@ -41,7 +47,11 @@ export default function LibraryPage() {
   const [showSummit, setShowSummit] = useState(false);
   const [tierUnlock, setTierUnlock] = useState<number | null>(null);
   const [showPacing, setShowPacing] = useState(false);
+  const [showAnchorFailure, setShowAnchorFailure] = useState(false);
+  const [showLightAnchor, setShowLightAnchor] = useState(false);
+  const [showAnchorEscalated, setShowAnchorEscalated] = useState(false);
   const pacingShownRef = useRef(false);
+  const anchorCheckedRef = useRef(false);
 
   const { run: logClick } = useApi("LogPitchClick");
   const WHEEL_AND_DEAL_URL = "https://app.superblocks.com/code-mode/applications/fef97ebe-4fb9-401f-b97c-c52c1693b31b/";
@@ -132,6 +142,10 @@ export default function LibraryPage() {
   const clips = useMemo(() => data?.clips ?? [], [data]);
   const allCompleted = clips.length === 17 && clips.every((c: any) => c.completed);
 
+  // A/B pair sort orders — these get merged into a single card
+  const AB_PAIRS: [number, number][] = [[6, 7], [8, 9], [11, 12], [16, 17]];
+  const pairedSortOrders = new Set(AB_PAIRS.flat());
+
   // ── Pacing calculation ──
   const pacingInfo = useMemo(() => {
     if (!progressData?.ascentDay1 || clips.length === 0) return null;
@@ -152,7 +166,16 @@ export default function LibraryPage() {
       weekdaysElapsed
     );
     const summitDay = getSummitDay(startDate);
-    return { tier, daysBehind, clipsCompleted, weekdaysElapsed, missedClips, summitDay };
+    const incompleteSessions = TOTAL_CLIPS - clipsCompleted;
+    const adjustmentDay = getAscentAdjustmentDay(summitDay, incompleteSessions);
+    const afterSummitDay = isAfterDate(summitDay);
+    const afterAdjustmentDay = isAfterDate(adjustmentDay);
+    const dayBeforeSummit = isDayBeforeSummitDay(summitDay);
+    return {
+      tier, daysBehind, clipsCompleted, weekdaysElapsed, missedClips, summitDay,
+      startDate, adjustmentDay, afterSummitDay, afterAdjustmentDay, dayBeforeSummit,
+      incompleteSessions,
+    };
   }, [progressData, clips]);
 
   // Gate: ALL data must be loaded before any modal logic runs
@@ -228,6 +251,44 @@ export default function LibraryPage() {
     }
   }, [dataReady, allCompleted, showSummit, previewMode, viewer]);
 
+  // ── Anchor Failure detection — once per session ──
+  useEffect(() => {
+    if (!dataReady || !pacingInfo || !viewer) return;
+    if (anchorCheckedRef.current) return;
+    if (allCompleted) return; // no anchor needed if done
+    if (!pacingInfo.afterSummitDay) return; // not past summit day yet
+
+    anchorCheckedRef.current = true;
+
+    const anchorSlackKey = `anchor_failure_slack_sent_${viewer.id}`;
+    const adjustmentDeadlineKey = `anchor_adjustment_deadline_${viewer.id}`;
+    const adjustmentSlackKey = `anchor_adjustment_slack_sent_${viewer.id}`;
+
+    const anchorSlackSent = localStorage.getItem(anchorSlackKey) === "true";
+    const adjustmentSlackSent = localStorage.getItem(adjustmentSlackKey) === "true";
+
+    // Store the adjustment deadline the first time anchor failure triggers
+    if (!localStorage.getItem(adjustmentDeadlineKey) && pacingInfo.adjustmentDay) {
+      localStorage.setItem(adjustmentDeadlineKey, pacingInfo.adjustmentDay.toISOString());
+    }
+
+    // Read stored adjustment day (frozen from first trigger)
+    const storedAdjStr = localStorage.getItem(adjustmentDeadlineKey);
+    const storedAdjDay = storedAdjStr ? new Date(storedAdjStr) : pacingInfo.adjustmentDay;
+    const afterAdj = storedAdjDay ? isAfterDate(storedAdjDay) : false;
+
+    if (!anchorSlackSent) {
+      // Anchor Failure #1 — first time, requires Slack
+      setShowAnchorFailure(true);
+    } else if (afterAdj && !adjustmentSlackSent) {
+      // Anchor Failure #2 — escalated, missed adjustment deadline too
+      setShowAnchorEscalated(true);
+    } else {
+      // Light anchor — daily reminder
+      setShowLightAnchor(true);
+    }
+  }, [dataReady, pacingInfo, viewer, allCompleted]);
+
   const WEEK_META: Record<number, { emoji: string; title: string; time: string; note: string }> = {
     2: {
       emoji: "🥾",
@@ -301,12 +362,13 @@ export default function LibraryPage() {
           clipsCompleted={pacingInfo.clipsCompleted}
           totalClips={TOTAL_CLIPS}
           weekdaysElapsed={pacingInfo.weekdaysElapsed}
-        missedClips={pacingInfo.missedClips}
-        summitDay={pacingInfo.summitDay}
-        onDismiss={() => setShowPacing(false)}
-      />
-    </div>
-  );
+          missedClips={pacingInfo.missedClips}
+          summitDay={pacingInfo.summitDay}
+          isDayBeforeSummit={pacingInfo.dayBeforeSummit}
+          onDismiss={() => setShowPacing(false)}
+        />
+      </div>
+    );
 }
 
   // ──────────────────── MODALS (only when dataReady) ────────────────────
@@ -366,7 +428,65 @@ export default function LibraryPage() {
         weekdaysElapsed={pacingInfo.weekdaysElapsed}
         missedClips={pacingInfo.missedClips}
         summitDay={pacingInfo.summitDay}
+        isDayBeforeSummit={pacingInfo.dayBeforeSummit}
         onDismiss={() => setShowPacing(false)}
+      />
+    )}
+    {/* Anchor Failure #1 — first time past Summit Day */}
+    {showAnchorFailure && pacingInfo && (
+      <AnchorFailureModal
+        learnerName={viewer.name}
+        managerName={progressData!.managerName ?? null}
+        startDate={pacingInfo.startDate}
+        summitDay={pacingInfo.summitDay}
+        adjustmentDay={pacingInfo.adjustmentDay}
+        sessionsBehind={pacingInfo.incompleteSessions}
+        missedClips={pacingInfo.missedClips}
+        onDismiss={() => {
+          localStorage.setItem(`anchor_failure_slack_sent_${viewer.id}`, "true");
+          if (!localStorage.getItem(`anchor_adjustment_deadline_${viewer.id}`)) {
+            localStorage.setItem(`anchor_adjustment_deadline_${viewer.id}`, pacingInfo.adjustmentDay.toISOString());
+          }
+          setShowAnchorFailure(false);
+        }}
+      />
+    )}
+    {/* Anchor Failure #2 — escalated, missed Ascent Adjustment too */}
+    {showAnchorEscalated && pacingInfo && (
+      <AnchorFailureModal
+        learnerName={viewer.name}
+        managerName={progressData!.managerName ?? null}
+        startDate={pacingInfo.startDate}
+        summitDay={pacingInfo.summitDay}
+        adjustmentDay={(() => {
+          const stored = localStorage.getItem(`anchor_adjustment_deadline_${viewer.id}`);
+          return stored ? new Date(stored) : pacingInfo.adjustmentDay;
+        })()}
+        sessionsBehind={pacingInfo.incompleteSessions}
+        missedClips={pacingInfo.missedClips}
+        isEscalated
+        onDismiss={() => {
+          localStorage.setItem(`anchor_adjustment_slack_sent_${viewer.id}`, "true");
+          setShowAnchorEscalated(false);
+        }}
+      />
+    )}
+    {/* Light Anchor — daily reminder */}
+    {showLightAnchor && pacingInfo && (
+      <LightAnchorModal
+        summitDay={pacingInfo.summitDay}
+        adjustmentDay={(() => {
+          const stored = localStorage.getItem(`anchor_adjustment_deadline_${viewer.id}`);
+          return stored ? new Date(stored) : pacingInfo.adjustmentDay;
+        })()}
+        adjustmentMissed={(() => {
+          const stored = localStorage.getItem(`anchor_adjustment_deadline_${viewer.id}`);
+          return stored ? isAfterDate(new Date(stored)) : false;
+        })()}
+        clipsCompleted={pacingInfo.clipsCompleted}
+        totalClips={TOTAL_CLIPS}
+        missedClips={pacingInfo.missedClips}
+        onDismiss={() => setShowLightAnchor(false)}
       />
     )}
     <div className="flex flex-col h-full overflow-hidden" style={{ backgroundColor: "#ECFDF5" }}>
@@ -496,29 +616,79 @@ export default function LibraryPage() {
                 </div>
 
                 <div className="flex flex-col gap-3">
-                  {week.clips.map((clip: any) => {
-                    const overallIdx = clips.findIndex((c: any) => c.id === clip.id);
-                    const prevClip = overallIdx > 0 ? clips[overallIdx - 1] : undefined;
-                    return (
-                      <ClipLibraryCard
-                        key={clip.id}
-                        clip={clip}
-                        isLocked={!clip.unlocked}
-                        isCompleted={clip.completed}
-                        pausedElapsedSeconds={clip.pausedElapsedSeconds ?? 0}
-                        xpEarned={clip.xpEarned ?? 0}
-                        previousClipTitle={prevClip ? prevClip.title : undefined}
-                        onWatch={() => navigate(`/watch/${clip.id}?source=library`)}
-                        onReview={() => navigate(`/report/${clip.id}`)}
-                        onWheelAndDeal={handleWheelAndDeal}
-                        onCampQuiz={handleCampQuiz}
-                        onZoomClipWatch={clip.sortOrder === 4 ? handleReachdeskWatch : undefined}
-                        onZoomClipReview={clip.sortOrder === 4 ? () => navigate(`/report/reachdesk`) : undefined}
-                        zoomClipWatched={clip.sortOrder === 4 ? reachdeskWatched : undefined}
-                        onPodcasts={clip.sortOrder === 13 ? () => navigate("/podcasts") : undefined}
-                      />
-                    );
-                  })}
+                  {(() => {
+                    const rendered = new Set<string>();
+                    return week.clips.map((clip: any) => {
+                      if (rendered.has(clip.id)) return null;
+
+                      // Check if this clip is part of an A/B pair
+                      const pair = AB_PAIRS.find(([a, b]) => clip.sortOrder === a);
+                      if (pair) {
+                        const clipB = week.clips.find((c: any) => c.sortOrder === pair[1]);
+                        if (clipB) {
+                          rendered.add(clip.id);
+                          rendered.add(clipB.id);
+                          const overallIdxA = clips.findIndex((c: any) => c.id === clip.id);
+                          const prevClipA = overallIdxA > 0 ? clips[overallIdxA - 1] : undefined;
+                          return (
+                            <PairedClipCard
+                              key={`pair-${clip.id}`}
+                              clipA={clip}
+                              clipB={clipB}
+                              stateA={{
+                                isLocked: !clip.unlocked,
+                                isCompleted: clip.completed,
+                                pausedElapsedSeconds: clip.pausedElapsedSeconds ?? 0,
+                                xpEarned: clip.xpEarned ?? 0,
+                              }}
+                              stateB={{
+                                isLocked: !clipB.unlocked,
+                                isCompleted: clipB.completed,
+                                pausedElapsedSeconds: clipB.pausedElapsedSeconds ?? 0,
+                                xpEarned: clipB.xpEarned ?? 0,
+                              }}
+                              previousClipTitle={prevClipA ? prevClipA.title : undefined}
+                              onWatchA={() => navigate(`/watch/${clip.id}?source=library`)}
+                              onWatchB={() => navigate(`/watch/${clipB.id}?source=library`)}
+                              onReviewA={() => navigate(`/report/${clip.id}`)}
+                              onReviewB={() => navigate(`/report/${clipB.id}`)}
+                              onWheelAndDeal={handleWheelAndDeal}
+                              onCampQuiz={handleCampQuiz}
+                            />
+                          );
+                        }
+                      }
+
+                      // Skip B clips that are already rendered in a pair
+                      if (AB_PAIRS.some(([, b]) => clip.sortOrder === b)) {
+                        return null;
+                      }
+
+                      // Standard single clip card
+                      rendered.add(clip.id);
+                      const overallIdx = clips.findIndex((c: any) => c.id === clip.id);
+                      const prevClip = overallIdx > 0 ? clips[overallIdx - 1] : undefined;
+                      return (
+                        <ClipLibraryCard
+                          key={clip.id}
+                          clip={clip}
+                          isLocked={!clip.unlocked}
+                          isCompleted={clip.completed}
+                          pausedElapsedSeconds={clip.pausedElapsedSeconds ?? 0}
+                          xpEarned={clip.xpEarned ?? 0}
+                          previousClipTitle={prevClip ? prevClip.title : undefined}
+                          onWatch={() => navigate(`/watch/${clip.id}?source=library`)}
+                          onReview={() => navigate(`/report/${clip.id}`)}
+                          onWheelAndDeal={handleWheelAndDeal}
+                          onCampQuiz={handleCampQuiz}
+                          onZoomClipWatch={clip.sortOrder === 4 ? handleReachdeskWatch : undefined}
+                          onZoomClipReview={clip.sortOrder === 4 ? () => navigate(`/report/reachdesk`) : undefined}
+                          zoomClipWatched={clip.sortOrder === 4 ? reachdeskWatched : undefined}
+                          onPodcasts={clip.sortOrder === 13 ? () => navigate("/podcasts") : undefined}
+                        />
+                      );
+                    });
+                  })()}
                 </div>
               </section>
             ) : null

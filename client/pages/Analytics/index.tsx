@@ -33,6 +33,7 @@ const PACING_LABEL: Record<string, { label: string; color: string }> = {
   lost_in_the_woods: { label: "🌲 Lost in Woods", color: "text-orange-600" },
   rockslide: { label: "🪨 Rockslide", color: "text-red-600" },
   avalanche_warning: { label: "❄️ Avalanche", color: "text-blue-800" },
+  anchor_failure: { label: "⛓️‍💥 Anchor Failure", color: "text-red-700" },
   completed: { label: "🏔️✨ Completed", color: "text-[#4F46E5]" },
   not_started: { label: "Not Started", color: "text-gray-400" },
   // Legacy fallbacks
@@ -156,24 +157,59 @@ function AnalyticsContent() {
 
 function OverviewSection({ overview }: { overview: any }) {
   if (!overview) return <p className="text-sm text-gray-500 py-4">No data</p>;
-  const stats = [
+  const topRow = [
     { label: "Live Clips", desc: "Clips published in Ascent", value: overview.totalClips, icon: "🎬" },
     { label: "Total Sessions", desc: "All sessions started (incl. in-progress)", value: overview.totalSessions, icon: "▶️" },
     { label: "Unique Learners", desc: "Learners who've started Ascent", value: overview.uniqueViewers, icon: "🧑‍🎓" },
     { label: "Avg Engagement", desc: "Mean engagement across completed clips", value: overview.avgEngagement != null ? `${overview.avgEngagement}%` : "—", icon: "📊" },
+  ];
+  const bottomRow = [
     { label: "Completion Rate", desc: "% of started sessions that are completed", value: overview.completionRate != null ? `${overview.completionRate}%` : "—", icon: "✅" },
     { label: "cAMP Gear", desc: "Total clicks on pitches, PODcasts & resources", value: overview.totalGearClicks ?? 0, icon: "🎒" },
   ];
+
+  const onTime = overview.onTimeFinishers ?? 0;
+  const anchor = overview.anchorFailureCount ?? 0;
+
   return (
-    <div className="grid grid-cols-6 gap-3 pt-4">
-      {stats.map(s => (
-        <div key={s.label} className="text-center p-3 rounded-lg border border-gray-100 bg-[#fafafa]">
-          <div className="text-lg mb-1">{s.icon}</div>
-          <div className="text-xl font-bold text-gray-900">{s.value}</div>
-          <div className="text-[10px] text-gray-500 mt-0.5">{s.label}</div>
-          <div className="text-[9px] text-gray-400 mt-0.5 leading-tight">{s.desc}</div>
+    <div className="space-y-3 pt-4">
+      <div className="grid grid-cols-4 gap-3">
+        {topRow.map(s => (
+          <div key={s.label} className="text-center p-3 rounded-lg border border-gray-100 bg-[#fafafa]">
+            <div className="text-lg mb-1">{s.icon}</div>
+            <div className="text-xl font-bold text-gray-900">{s.value}</div>
+            <div className="text-[10px] text-gray-500 mt-0.5">{s.label}</div>
+            <div className="text-[9px] text-gray-400 mt-0.5 leading-tight">{s.desc}</div>
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-3 gap-3">
+        {bottomRow.map(s => (
+          <div key={s.label} className="text-center p-3 rounded-lg border border-gray-100 bg-[#fafafa]">
+            <div className="text-lg mb-1">{s.icon}</div>
+            <div className="text-xl font-bold text-gray-900">{s.value}</div>
+            <div className="text-[10px] text-gray-500 mt-0.5">{s.label}</div>
+            <div className="text-[9px] text-gray-400 mt-0.5 leading-tight">{s.desc}</div>
+          </div>
+        ))}
+        {/* Pacing tile */}
+        <div className="text-center p-3 rounded-lg border border-gray-100 bg-[#fafafa]">
+          <div className="text-lg mb-1">🏁</div>
+          <div className="flex items-center justify-center gap-3">
+            <div>
+              <div className="text-xl font-bold text-green-600">{onTime}</div>
+              <div className="text-[10px] text-gray-500">On Time</div>
+            </div>
+            <div className="text-gray-300 text-lg font-light">|</div>
+            <div>
+              <div className="text-xl font-bold text-red-600">{anchor}</div>
+              <div className="text-[10px] text-gray-500">Anchor Failure</div>
+            </div>
+          </div>
+          <div className="text-[10px] text-gray-500 mt-0.5">Pacing</div>
+          <div className="text-[9px] text-gray-400 mt-0.5 leading-tight">Finished on time vs triggered Anchor Failure</div>
         </div>
-      ))}
+      </div>
     </div>
   );
 }
@@ -295,7 +331,14 @@ function CampersSection({ learners, totalClips }: { learners: any[]; totalClips:
               </div>
 
               {/* Pacing */}
-              <div className={`text-center text-[11px] font-semibold ${pacing.color}`}>{pacing.label}</div>
+              <div className="text-center">
+                <div className={`text-[11px] font-semibold ${pacing.color}`}>{pacing.label}</div>
+                {l.isAnchorFailure && l.ascentAdjustmentDay && (
+                  <div className="text-[9px] text-red-500 mt-0.5">
+                    🌄 {new Date(l.ascentAdjustmentDay + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                  </div>
+                )}
+              </div>
 
               {/* Merit Badges — consolidated with ×N for duplicates */}
               <div className="flex flex-wrap gap-1 min-w-0">

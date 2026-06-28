@@ -52,6 +52,7 @@ export type PacingTier =
   | "lost_in_the_woods"
   | "rockslide"
   | "avalanche_warning"
+  | "anchor_failure"
   | "completed"
   | "not_started";
 
@@ -122,6 +123,17 @@ export const PACING_TIERS: Record<PacingTier, PacingTierConfig> = {
     bodyText: "#1E3A5F",
     borderColor: "#2563EB",
     message: "You're at risk of falling too far behind — let's get moving today.",
+  },
+  anchor_failure: {
+    key: "anchor_failure",
+    label: "Anchor Failure",
+    emoji: "⛓️‍💥",
+    headerBg: "#1C1917",
+    headerText: "#FBBF24",
+    bodyBg: "#FEF3C7",
+    bodyText: "#1C1917",
+    borderColor: "#DC2626",
+    message: "You've passed your Summit Day deadline — let's get back on track.",
   },
   completed: {
     key: "completed",
@@ -261,6 +273,47 @@ export function getSummitDay(startDate: Date): Date {
     if (dow !== 0 && dow !== 6) weekdaysCounted++;
   }
   return cursor;
+}
+
+/**
+ * Calculate the Ascent Adjustment deadline.
+ * = summitDay + N weekdays, where N = number of incomplete sessions.
+ */
+export function getAscentAdjustmentDay(summitDay: Date, incompleteSessions: number): Date {
+  const cursor = new Date(summitDay.getFullYear(), summitDay.getMonth(), summitDay.getDate());
+  let added = 0;
+  while (added < incompleteSessions) {
+    cursor.setDate(cursor.getDate() + 1);
+    const dow = cursor.getDay();
+    if (dow !== 0 && dow !== 6) added++;
+  }
+  return cursor;
+}
+
+/**
+ * Check if today is past a given date (inclusive check — true if today > date).
+ */
+export function isAfterDate(date: Date): boolean {
+  const today = new Date();
+  const todayNorm = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const dateNorm = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  return todayNorm > dateNorm;
+}
+
+/**
+ * Check if today is the day before Summit Day (weekday 14 of 15).
+ */
+export function isDayBeforeSummitDay(summitDay: Date): boolean {
+  const today = new Date();
+  const todayNorm = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const summitNorm = new Date(summitDay.getFullYear(), summitDay.getMonth(), summitDay.getDate());
+  // Walk backward from summit day to find the previous weekday
+  const prevWeekday = new Date(summitNorm);
+  prevWeekday.setDate(prevWeekday.getDate() - 1);
+  while (prevWeekday.getDay() === 0 || prevWeekday.getDay() === 6) {
+    prevWeekday.setDate(prevWeekday.getDate() - 1);
+  }
+  return todayNorm.getTime() === prevWeekday.getTime();
 }
 
 export { TOTAL_CLIPS, TOTAL_WEEKDAYS, EXPECTED_CLIPS_BY_WEEKDAY };

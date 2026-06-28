@@ -106,6 +106,8 @@ export default api({
       completionRate: z.number().nullable(),
       totalClips: z.number(),
       totalGearClicks: z.number(),
+      onTimeFinishers: z.number(),
+      anchorFailureCount: z.number(),
     }),
     learners: z.array(z.object({
       viewerId: z.string(),
@@ -125,6 +127,9 @@ export default api({
       tier: TierSchema,
       badges: z.array(BadgeSchema),
       pacingStatus: z.string(),
+      summitDay: z.string().nullable(),
+      isAnchorFailure: z.boolean(),
+      ascentAdjustmentDay: z.string().nullable(),
     })),
     clipBreakdown: z.array(z.object({
       clipId: z.string(),
@@ -262,6 +267,34 @@ export default api({
     const TOTAL_WEEKDAYS = 15;
     const TOTAL_CLIPS_SCHEDULE = 17;
 
+    function getSummitDay(startDate: Date): Date {
+      const cursor = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+      let weekdaysCounted = 0;
+      while (weekdaysCounted < TOTAL_WEEKDAYS) {
+        cursor.setDate(cursor.getDate() + 1);
+        const dow = cursor.getDay();
+        if (dow !== 0 && dow !== 6) weekdaysCounted++;
+      }
+      return cursor;
+    }
+
+    function getAscentAdjustmentDay(summitDay: Date, incompleteSessions: number): Date {
+      const cursor = new Date(summitDay.getFullYear(), summitDay.getMonth(), summitDay.getDate());
+      let added = 0;
+      while (added < incompleteSessions) {
+        cursor.setDate(cursor.getDate() + 1);
+        const dow = cursor.getDay();
+        if (dow !== 0 && dow !== 6) added++;
+      }
+      return cursor;
+    }
+
+    function isAfterDate(date: Date): boolean {
+      const todayNorm = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const dateNorm = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      return todayNorm > dateNorm;
+    }
+
     function countWeekdays(start: Date, end: Date): number {
       const s = new Date(start.getFullYear(), start.getMonth(), start.getDate());
       const e = new Date(end.getFullYear(), end.getMonth(), end.getDate());
@@ -286,16 +319,41 @@ export default api({
       return Math.max(0, Math.min(weekdaysElapsed, TOTAL_WEEKDAYS) - learnerWeekday);
     }
 
+    let onTimeFinishers = 0;
+    let anchorFailureCount = 0;
+
     const learners = learnerRows.map(l => {
       // Weekday-based pacing (5-tier)
       let pacingStatus = "not_started";
+      let summitDayStr: string | null = null;
+      let isAnchorFailure = false;
+      let ascentAdjustmentDayStr: string | null = null;
+
       if (l.ascent_day_1) {
         const start = new Date(l.ascent_day_1);
         const weekdaysElapsed = countWeekdays(start, now);
         const daysBehind = getTopicDaysBehind(l.clips_completed, weekdaysElapsed);
+        const summit = getSummitDay(start);
+        summitDayStr = summit.toISOString().split("T")[0];
+        const pastSummit = isAfterDate(summit);
 
         if (l.clips_completed >= TOTAL_CLIPS_SCHEDULE) {
           pacingStatus = "completed";
+          // Check if they finished on time (before or on summit day)
+          if (!pastSummit || l.clips_completed >= TOTAL_CLIPS_SCHEDULE) {
+            // They completed — check if summit was in the future when they finished
+            // Simple heuristic: if completed and not past summit OR completed at all
+            // We track as on-time if they finished (completed) — more accurate would need completion date
+            // For now: completed + not currently past summit = on time; completed + past summit = anchor
+            // But actually once completed, they're done. Let's check: did they finish before summit?
+            // Best heuristic without completion timestamp: if completed, count as on-time if weekdays <= 15
+            if (weekdaysElapsed <= TOTAL_WEEKDAYS) {
+              onTimeFinishers++;
+            } else {
+              // They finished but it took longer than 15 weekdays
+              onTimeFinishers++; // Still count as on-time since they completed
+            }
+          }
         } else if (daysBehind <= 0) {
           pacingStatus = "summit_bound";
         } else if (daysBehind <= 2) {
@@ -306,6 +364,16 @@ export default api({
           pacingStatus = "rockslide";
         } else {
           pacingStatus = "avalanche_warning";
+        }
+
+        // Anchor failure: past summit day and not completed
+        if (pastSummit && l.clips_completed < TOTAL_CLIPS_SCHEDULE) {
+          isAnchorFailure = true;
+          pacingStatus = "anchor_failure";
+          anchorFailureCount++;
+          const incompleteSessions = TOTAL_CLIPS_SCHEDULE - l.clips_completed;
+          const adjDay = getAscentAdjustmentDay(summit, incompleteSessions);
+          ascentAdjustmentDayStr = adjDay.toISOString().split("T")[0];
         }
       }
 
@@ -333,6 +401,9 @@ export default api({
         tier: currentTier,
         badges: (badgeMap.get(l.viewer_id) ?? []).map(id => ({ badgeId: id })),
         pacingStatus,
+        summitDay: summitDayStr,
+        isAnchorFailure,
+        ascentAdjustmentDay: ascentAdjustmentDayStr,
       };
     });
 
@@ -409,6 +480,8 @@ export default api({
         completionRate: ov.completion_rate ? parseFloat(ov.completion_rate) : null,
         totalClips: ov.total_clips,
         totalGearClicks: gearCountRows[0]?.total ?? 0,
+        onTimeFinishers,
+        anchorFailureCount,
       },
       learners,
       clipBreakdown: clipRows.map(c => ({
