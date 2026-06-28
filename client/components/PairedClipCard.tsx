@@ -1,5 +1,5 @@
 import { toast } from "sonner";
-import { useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 
 /**
  * Merged A/B clip card — renders two clips in one tile for dual-session days.
@@ -104,14 +104,13 @@ function splitEmoji(title: string): [string, string] {
   return ["", title];
 }
 
-/** Merged title: one emoji upfront, then both clip names */
-function getMergedTitle(clipA: ClipData, clipB: ClipData): string {
+/** Merged title parts for rendering with pill badges */
+function getMergedTitleParts(clipA: ClipData, clipB: ClipData): { emoji: string; nameA: string; nameB: string } {
   const titleA = getSessionTitle(clipA.title);
   const titleB = getSessionTitle(clipB.title);
   const [emojiA, nameA] = splitEmoji(titleA);
   const [, nameB] = splitEmoji(titleB);
-  const prefix = emojiA ? `${emojiA} ` : "";
-  return `${prefix}${nameA} (Clip 1) + ${nameB} (Clip 2)`;
+  return { emoji: emojiA, nameA, nameB };
 }
 
 /** Overall status pill for the card */
@@ -207,26 +206,25 @@ export default function PairedClipCard({
                 🐌 In Progress
               </span>
             )}
-            <button
-              onClick={handleShareA}
-              className="p-1 rounded hover:bg-gray-100 transition-colors text-gray-400 hover:text-gray-600"
-              title="Copy Clip 1 link"
-            >
-              🔗
-            </button>
-            <button
-              onClick={handleShareB}
-              className="p-1 rounded hover:bg-gray-100 transition-colors text-gray-400 hover:text-gray-600"
-              title="Copy Clip 2 link"
-            >
-              🔗
-            </button>
+            <ShareDropdown onCopyA={handleShareA} onCopyB={handleShareB} />
           </div>
         </div>
 
-        {/* Row 2: Merged title */}
-        <h3 className="text-base font-bold text-gray-900 leading-snug">
-          {getMergedTitle(clipA, clipB)}
+        {/* Row 2: Merged title with pill badges */}
+        <h3 className="text-base font-bold text-gray-900 leading-snug flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
+          {(() => {
+            const { emoji, nameA, nameB } = getMergedTitleParts(clipA, clipB);
+            return (
+              <>
+                {emoji && <span>{emoji}</span>}
+                <span>{nameA}</span>
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-semibold tracking-wide uppercase">Clip 1</span>
+                <span className="text-gray-400 font-normal">+</span>
+                <span>{nameB}</span>
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-semibold tracking-wide uppercase">Clip 2</span>
+              </>
+            );
+          })()}
         </h3>
 
         {/* Clip A section */}
@@ -377,4 +375,46 @@ function ClipButton({
         </button>
       );
   }
+}
+
+function ShareDropdown({ onCopyA, onCopyB }: { onCopyA: (e: React.MouseEvent) => void; onCopyB: (e: React.MouseEvent) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={(e) => { e.stopPropagation(); setOpen(o => !o); }}
+        className="p-1 rounded hover:bg-gray-100 transition-colors text-gray-400 hover:text-gray-600"
+        title="Share clip link"
+      >
+        🔗
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full mt-1 w-44 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+          <button
+            onClick={(e) => { onCopyA(e); setOpen(false); }}
+            className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors"
+          >
+            📋 Copy Clip 1 Link
+          </button>
+          <button
+            onClick={(e) => { onCopyB(e); setOpen(false); }}
+            className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors"
+          >
+            📋 Copy Clip 2 Link
+          </button>
+        </div>
+      )}
+    </div>
+  );
 }
