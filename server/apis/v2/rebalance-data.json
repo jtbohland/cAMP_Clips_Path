@@ -1,0 +1,412 @@
+{
+  "clip_1_ideal_customer_profiles": {
+    "clip_id": "9d023d60-9cf5-4d9a-8907-d59055edec33",
+    "questions": [
+      {
+        "id": "7496029d-d036-41f2-8ac5-edd96be57e1a",
+        "type": "first_pass",
+        "sort_order": 1,
+        "correct_option": 1,
+        "question_text": "Michelle described five key industries that Amplitude focuses its efforts on. Which of the following is one of those five?",
+        "original_options": [
+          "Travel and hospitality",
+          "Media and entertainment",
+          "Government and public sector",
+          "Telecommunications"
+        ],
+        "rebalanced_options": [
+          "Travel and hospitality",
+          "Media and entertainment",
+          "Government and public sector",
+          "Telecommunications"
+        ],
+        "notes": "Already balanced — all options are short industry names of similar length. No change needed."
+      },
+      {
+        "id": "5b67b282-4ae6-4911-bccb-196b7db86fa1",
+        "type": "first_pass",
+        "sort_order": 2,
+        "correct_option": 2,
+        "question_text": "According to Michelle, value maps are required for which type of deals at Amplitude?",
+        "original_options": [
+          "Any deal involving a new logo customer",
+          "All deals regardless of size",
+          "Deals of $250,000 or higher",
+          "Deals that involve more than one product blade"
+        ],
+        "rebalanced_options": [
+          "Any deal involving a new logo customer, regardless of ACV",
+          "All deals regardless of size or segment",
+          "Deals of $250,000 or higher",
+          "Deals that span more than one product blade"
+        ],
+        "notes": "Correct answer was already one of the shortest. Slightly padded wrong options to prevent elimination by brevity."
+      },
+      {
+        "id": "1915f1c0-72ee-490f-b7aa-20360bc5aeb8",
+        "type": "first_pass",
+        "sort_order": 3,
+        "correct_option": 1,
+        "question_text": "Julia described three core challenges product managers commonly face. Which of the following was one of them?",
+        "original_options": [
+          "Difficulty integrating data tools with Salesforce",
+          "Slow feedback loops when validating ideas",
+          "Lack of budget authority for analytics tools",
+          "Too much dependence on marketing teams for roadmap input"
+        ],
+        "rebalanced_options": [
+          "Difficulty integrating data tools with Salesforce and downstream CRMs",
+          "Slow feedback loops when validating product ideas",
+          "Lack of budget authority for analytics and experimentation tools",
+          "Over-reliance on marketing teams for roadmap prioritization input"
+        ],
+        "notes": "Correct answer was slightly shorter. Equalized all options to similar length and plausibility."
+      },
+      {
+        "id": "21fd5106-521b-466f-8764-e693446678b4",
+        "type": "first_pass",
+        "sort_order": 4,
+        "correct_option": 1,
+        "question_text": "In the roleplay, Michelle's character represented the data analyst persona. What was her core frustration that made the case for a self-serve analytics platform?",
+        "original_options": [
+          "Her team didn't have access to Amplitude's dashboards",
+          "She was constantly fielding repetitive ad hoc requests that prevented her from doing deeper analysis",
+          "Leadership wouldn't approve budget for a new analytics tool",
+          "Product and marketing teams weren't sharing their data with her"
+        ],
+        "rebalanced_options": [
+          "Her team lacked access to Amplitude's dashboards, forcing them to rely on manual exports and outdated spreadsheets",
+          "She was drowning in repetitive ad hoc requests, preventing deeper analysis",
+          "Leadership wouldn't approve budget for a new analytics tool despite clear ROI from the existing data stack",
+          "Product and marketing teams were siloing their data, leaving her without the cross-functional visibility she needed"
+        ],
+        "notes": "MAJOR rebalance. Correct answer (idx 1) compressed from 99→72 chars. Wrong answers inflated with plausible detail. All now sound like real analyst frustrations."
+      },
+      {
+        "id": "3c8eac12-ead3-4a30-b4a3-4bae03da146b",
+        "type": "first_pass",
+        "sort_order": 5,
+        "correct_option": 2,
+        "question_text": "Michelle described two archetypes within the data and analytics persona. She called one the 'honest reporter.' What did she call the second archetype?",
+        "original_options": [
+          "The data scientist",
+          "The insights architect",
+          "The back ender — the data engineer focused on integrations and pipelines",
+          "The analytics lead — responsible for data governance and trust"
+        ],
+        "rebalanced_options": [
+          "The data scientist — focused on building predictive models and statistical analysis",
+          "The insights architect — responsible for translating raw data into strategic recommendations",
+          "The back ender — the data engineer focused on integrations and pipelines",
+          "The analytics lead — responsible for data governance, trust, and cross-team reporting standards"
+        ],
+        "notes": "MAJOR rebalance. Correct answer (idx 2) was 71 chars while wrong options were 18-61. Inflated options 0 and 1 with plausible archetype descriptions. All options now have a label + role description format."
+      },
+      {
+        "id": "d532b2ab-6837-4072-90b6-c91374507e6f",
+        "type": "recovery",
+        "sort_order": 1,
+        "correct_option": 1,
+        "question_text": "According to the session, which three industries represent the top landing spots for Amplitude's enterprise and emerging enterprise segment?",
+        "original_options": [
+          "Retail, healthcare, and media and entertainment",
+          "Technology, retail, and financial services",
+          "Financial services, healthcare, and B2B SaaS",
+          "Media and entertainment, technology, and healthcare"
+        ],
+        "rebalanced_options": [
+          "Retail, healthcare, and media and entertainment",
+          "Technology, retail, and financial services",
+          "Financial services, healthcare, and B2B SaaS",
+          "Media and entertainment, technology, and healthcare"
+        ],
+        "notes": "Already balanced — all options are three-industry lists of similar length. No change needed."
+      },
+      {
+        "id": "83262833-87f9-4788-9656-c8ce3ac89fa7",
+        "type": "recovery",
+        "sort_order": 2,
+        "correct_option": 1,
+        "question_text": "Julia explained why personas matter using a specific statistic. What did she say about the group of personas covered in the session?",
+        "original_options": [
+          "They represent 100% of Amplitude's enterprise buyers",
+          "About 75% of users and 65% of buyers are represented in the personas discussed",
+          "They account for over 90% of Amplitude's annual recurring revenue",
+          "About 50% of users and 80% of buyers fall into these persona groups"
+        ],
+        "rebalanced_options": [
+          "They represent 100% of Amplitude's enterprise buyers across all segments",
+          "About 75% of users and 65% of buyers fall within the personas discussed",
+          "They account for over 90% of Amplitude's annual recurring revenue globally",
+          "About 50% of users and 80% of buyers are represented in these persona groups"
+        ],
+        "notes": "Correct answer (idx 1) was the longest. Compressed slightly and equalized all options to similar length with trailing detail."
+      },
+      {
+        "id": "722728a9-e1fa-4fb0-a77a-71dced197447",
+        "type": "recovery",
+        "sort_order": 3,
+        "correct_option": 2,
+        "question_text": "In the roleplay debrief, Julia asked which value driver — acquisition, monetization, or retention — the fictional company was primarily trying to solve for. What was the answer the group agreed on?",
+        "original_options": [
+          "Retention, because the data analyst wanted to reduce churn",
+          "Monetization, because marketing was focused on converting campaigns to revenue",
+          "Acquisition, because the marketing character was trying to understand how campaign traffic was converting",
+          "All three equally — the group agreed no single driver was primary"
+        ],
+        "rebalanced_options": [
+          "Retention, because the data analyst wanted to reduce churn and improve user engagement over time",
+          "Monetization, because marketing was focused on converting campaign spend into measurable pipeline revenue",
+          "Acquisition, because the marketing character was tracking how campaign traffic converted on product features",
+          "All three equally — the group debated but agreed no single driver was the clear primary focus"
+        ],
+        "notes": "Correct answer (idx 2) was longest. Compressed slightly and inflated other options to match length. All now ~90-100 chars with plausible reasoning."
+      },
+      {
+        "id": "569621c8-28f1-4c4b-a90e-c7f52d454459",
+        "type": "recovery",
+        "sort_order": 4,
+        "correct_option": 1,
+        "question_text": "Michelle described industry use case cheat sheets as a resource for AEs. What are the three value drivers these cheat sheets are organized around?",
+        "original_options": [
+          "Awareness, consideration, and conversion",
+          "Acquisition, monetization, and retention",
+          "Prospecting, discovery, and closing",
+          "Engagement, activation, and expansion"
+        ],
+        "rebalanced_options": [
+          "Awareness, consideration, and conversion",
+          "Acquisition, monetization, and retention",
+          "Prospecting, discovery, and closing",
+          "Engagement, activation, and expansion"
+        ],
+        "notes": "Already balanced — all are three-word triads of similar length. No change needed."
+      },
+      {
+        "id": "8a1da8d1-b249-4221-8226-574e24ba42bc",
+        "type": "recovery",
+        "sort_order": 5,
+        "correct_option": 2,
+        "question_text": "Julia described the marketing persona and what makes it a compelling expansion opportunity. What did she say about marketing teams' budget compared to product teams?",
+        "original_options": [
+          "Marketing teams have smaller budgets but faster approval cycles",
+          "Marketing teams have roughly equivalent budgets but more stakeholders involved",
+          "Marketing teams always have a budget and if you can make a case to a marketer there is a better chance of getting a deal done",
+          "Marketing teams have more budget but require executive sign-off that product teams typically don't"
+        ],
+        "rebalanced_options": [
+          "Marketing teams tend to have smaller budgets but faster approval cycles, making them a quicker path to close",
+          "Marketing teams carry roughly equivalent budgets but involve more stakeholders, slowing down procurement",
+          "Marketing always has budget — if you make a strong case to a marketer, there's a better chance of getting a deal done",
+          "Marketing teams have larger budgets but require executive sign-off that product teams can typically bypass"
+        ],
+        "notes": "MAJOR rebalance. Correct answer (idx 2) was 124 chars, longest by far. Compressed to ~112. Inflated all wrong options with plausible strategic reasoning. All now similar length."
+      }
+    ]
+  },
+  "clip_2_top_of_funnel": {
+    "clip_id": "d766d4fb-62e6-42b1-9927-02560c552cac",
+    "questions": [
+      {
+        "id": "c643bebb-e1f3-4866-9596-529ae0380178",
+        "type": "first_pass",
+        "sort_order": 1,
+        "correct_option": 1,
+        "question_text": "According to the session, what was the primary goal of the TOFU project — and what specific improvement did it deliver in lead delivery speed?",
+        "original_options": [
+          "To reduce duplicate MQLs — leads now arrive deduplicated within 24 hours instead of 48",
+          "To get leads to reps faster so they can work them faster — leads now arrive in under 5 minutes instead of the previous 30 minutes",
+          "To improve lead quality scoring — person scores now update in real time instead of overnight",
+          "To simplify Salesforce — all lead management was moved out of the GTM dashboard into a single contact list"
+        ],
+        "rebalanced_options": [
+          "To reduce duplicate MQLs — leads now arrive deduplicated within 24 hours instead of the previous 48-hour enrichment window",
+          "To get leads to reps faster — leads now arrive in under 5 minutes instead of the previous 30-minute enrichment window",
+          "To improve lead quality scoring — person scores now update in real time instead of the previous overnight batch process",
+          "To simplify Salesforce routing — all lead management was moved from the GTM dashboard into a single streamlined contact list"
+        ],
+        "notes": "MAJOR rebalance. Correct (idx 1) was longest at 128 chars. Compressed slightly and inflated all wrong options to match with plausible operational detail. All now ~100-115 chars."
+      },
+      {
+        "id": "7de11a1d-6275-4d19-9371-11b5c445f7d4",
+        "type": "first_pass",
+        "sort_order": 2,
+        "correct_option": 1,
+        "question_text": "The session introduced a new sales stage called the SAL. What does SAL stand for, and where does it sit in the sales process?",
+        "original_options": [
+          "Sales Aligned Lead — it sits between S1 and S2, triggered when a meeting has occurred",
+          "Sales Accepted Lead — it sits between MQL and S0, triggered when positive activity has been taken toward booking a meeting",
+          "Sales Actioned Lead — it sits before the MQL stage, triggered when a rep first views a lead",
+          "Sales Assigned Lead — it sits between S0 and S1, triggered when a meeting is booked and confirmed"
+        ],
+        "rebalanced_options": [
+          "Sales Aligned Lead — sits between S1 and S2, triggered when a meeting has occurred and next steps are confirmed",
+          "Sales Accepted Lead — sits between MQL and S0, triggered when positive activity has been taken toward booking a meeting",
+          "Sales Actioned Lead — sits before the MQL stage, triggered when a rep first views and acknowledges an inbound lead",
+          "Sales Assigned Lead — sits between S0 and S1, triggered when a meeting is formally booked and confirmed by both parties"
+        ],
+        "notes": "Correct (idx 1) was longest. Inflated wrong options with plausible pipeline stage detail. All now similar length with the same structure: acronym + position + trigger."
+      },
+      {
+        "id": "3e919fe1-d309-43df-b746-e2b074c28ae6",
+        "type": "first_pass",
+        "sort_order": 3,
+        "correct_option": 2,
+        "question_text": "The session explained that MQL SLA hours are based on working hours. A hand raiser MQL arrives at 7pm on a Friday. When does the SLA clock start?",
+        "original_options": [
+          "Immediately — the SLA starts the moment the MQL is assigned regardless of day or time",
+          "Saturday at 9am — the next calendar day when work could reasonably begin",
+          "Monday at 9am — when working hours resume in the rep's time zone",
+          "Friday at 9pm — two hours after the MQL was received, since hand raiser SLAs are one hour"
+        ],
+        "rebalanced_options": [
+          "Immediately — the SLA starts the moment the MQL is assigned regardless of day or time, even after hours",
+          "Saturday at 9am — the next calendar day when working hours could reasonably begin for the assigned rep",
+          "Monday at 9am — when working hours resume in the rep's time zone after the weekend",
+          "Friday at 9pm — two hours after the MQL was received, since hand raiser SLAs allow a one-hour buffer"
+        ],
+        "notes": "Correct (idx 2) was actually shorter than some wrong options. Minor equalization — all now have explanatory clause after the time."
+      },
+      {
+        "id": "6be7cabd-bc99-4861-b828-b06c6ce77bd9",
+        "type": "first_pass",
+        "sort_order": 4,
+        "correct_option": 2,
+        "question_text": "If an MQL goes into breach, what is the escalation sequence that follows?",
+        "original_options": [
+          "The MQL is automatically disqualified after 24 hours and reassigned to another rep on the team",
+          "The breach is logged silently — the rep and manager are notified by email at the end of the week",
+          "The rep is tagged in the breach channel along with their FLM, who has 24 hours to follow up. If the FLM doesn't resolve it, the VP is tagged and has 48 hours to work with the manager to resolve it",
+          "The VP is notified immediately and has 24 hours to reassign the MQL before it is escalated to the CRO"
+        ],
+        "rebalanced_options": [
+          "The MQL is automatically disqualified after 24 hours and reassigned to another rep on the team through the round-robin pool",
+          "The breach is logged silently — the rep and their frontline manager are notified by email digest at the end of the week",
+          "The rep and FLM are tagged in the breach channel. The FLM has 24 hours to follow up directly. If unresolved, the VP is tagged with 48 hours to work through the manager",
+          "The VP is notified immediately and has 24 hours to reassign the MQL before it escalates to the CRO for review"
+        ],
+        "notes": "MAJOR rebalance. Correct (idx 2) was 196 chars, far longer. Compressed to ~155 by tightening phrasing. Inflated wrong options to 100-115 chars with plausible escalation mechanics."
+      },
+      {
+        "id": "306808c8-92c2-421c-9dee-9ae85c94f807",
+        "type": "first_pass",
+        "sort_order": 5,
+        "correct_option": 2,
+        "question_text": "Justin described the Sales Performance Dashboard built in Tableau. What is the SLA adherence target the team is aiming for right off the bat?",
+        "original_options": [
+          "100% — the expectation is full adherence with exceptions handled case by case",
+          "90% — a high bar that accounts for occasional back-to-back meeting conflicts",
+          "80% — a realistic target that accounts for the varying demands across different roles",
+          "70% — a baseline for the first quarter that will increase as reps build the habit"
+        ],
+        "rebalanced_options": [
+          "100% — full adherence is expected with exceptions handled case by case through manager approval",
+          "90% — a high bar that accounts for occasional back-to-back meetings and calendar conflicts",
+          "80% — a realistic target that accounts for varying demands across different roles like SDRs vs AEs",
+          "70% — a first-quarter baseline that will increase as reps build the habit and systems stabilize"
+        ],
+        "notes": "Correct (idx 2) was slightly longer. Minor equalization — all now have a percentage + rationale of similar length."
+      },
+      {
+        "id": "70655011-7b6f-4f6e-92e9-16e1d3a1908d",
+        "type": "recovery",
+        "sort_order": 1,
+        "correct_option": 1,
+        "question_text": "The session described three buckets of MQL types in priority order. What are they, from highest to lowest priority?",
+        "original_options": [
+          "Executive campaign leads, product signals, hand raisers",
+          "Hand raisers, product signals, other MQLs (events and marketing content)",
+          "Product signals, hand raisers, inbound content leads",
+          "Other MQLs, product signals, hand raisers"
+        ],
+        "rebalanced_options": [
+          "Executive campaign leads, product signals, hand raisers",
+          "Hand raisers, product signals, other MQLs (events and marketing content)",
+          "Product signals, hand raisers, inbound content leads",
+          "Other MQLs (events and content), product signals, hand raisers"
+        ],
+        "notes": "Correct (idx 1) was longest due to parenthetical. Added parenthetical to option 3 to balance. All options are now three-bucket lists of similar length."
+      },
+      {
+        "id": "0e414529-49ca-4834-bf7a-57c9c2581672",
+        "type": "recovery",
+        "sort_order": 2,
+        "correct_option": 2,
+        "question_text": "According to the session, what is the correct action in Salesforce if you receive an MQL that you believe was incorrectly routed to you?",
+        "original_options": [
+          "Post in the team Slack channel asking who owns the correct territory",
+          "Escalate to your manager and ask them to handle the rerouting",
+          "Handle the reroute directly on the MQL page in Salesforce using the accept, disqualify, or reroute buttons — no manager or team channel needed",
+          "Disqualify the MQL and add a note explaining the routing error so the ops team can reassign it"
+        ],
+        "rebalanced_options": [
+          "Post in the team Slack channel asking who owns the correct territory so they can claim it and take action",
+          "Escalate to your manager directly and ask them to handle the rerouting through the ops team on your behalf",
+          "Handle the reroute directly on the MQL page in Salesforce using the accept, disqualify, or reroute buttons",
+          "Disqualify the MQL and add a detailed note explaining the routing error so ops can reassign it correctly"
+        ],
+        "notes": "MAJOR rebalance. Correct (idx 2) was 143 chars, far longer. Compressed by removing 'no manager or team channel needed' (the point is what TO do, not what NOT to do). Inflated wrong options with action-oriented detail."
+      },
+      {
+        "id": "cb6a4b4f-f1e9-4113-9512-4c63774f100b",
+        "type": "recovery",
+        "sort_order": 3,
+        "correct_option": 1,
+        "question_text": "The session explained what happens when an MQL goes inactive after a future event is logged. What causes it to drop out of your funnel?",
+        "original_options": [
+          "If you log a future event more than 90 days out it automatically drops at the 90-day mark",
+          "If the future event date passes and you take no action on it, it drops out of your funnel due to inactivity and resurfaces to someone else",
+          "If you don't log at least two touches within 7 days of logging the future event, it drops out automatically",
+          "If the contact opens your email but doesn't respond within 14 days of the future event date, it is automatically disqualified"
+        ],
+        "rebalanced_options": [
+          "If you log a future event more than 90 days out, it automatically drops at the 90-day mark and resurfaces to another rep",
+          "If the future event date passes and no action is taken, the MQL drops out due to inactivity and resurfaces to someone else",
+          "If you don't log at least two touches within 7 days of the future event, it drops out automatically and goes back to the pool",
+          "If the contact opens your email but doesn't respond within 14 days of the future event date, it's automatically disqualified"
+        ],
+        "notes": "Correct (idx 1) was longest. Compressed slightly. Inflated wrong options to match with plausible inactivity rules. All now ~110-120 chars."
+      },
+      {
+        "id": "d5903743-dfc3-4eec-b1b1-1f8804d086d9",
+        "type": "recovery",
+        "sort_order": 4,
+        "correct_option": 1,
+        "question_text": "When disqualifying an MQL in Salesforce, the session emphasized that selecting the correct disqualification reason is important. Why?",
+        "original_options": [
+          "It determines whether the MQL gets reassigned to another rep or returned to the general lead pool for redistribution",
+          "Your disqualification reason feeds directly back to the marketing team, who use it to decide whether to nurture, re-enrich, or drop the lead — wrong reasons create downstream problems for the whole team",
+          "It affects your personal SLA adherence score and is tracked on the Sales Performance Dashboard under disqualification accuracy",
+          "It triggers an automatic notification to your FLM who reviews all disqualifications in your weekly one-on-one"
+        ],
+        "rebalanced_options": [
+          "It determines whether the MQL gets reassigned to another rep or returned to the general pool — wrong routing wastes time across teams",
+          "Your disqualification reason feeds back to marketing, who use it to nurture, re-enrich, or drop the lead — wrong reasons cause downstream problems",
+          "It affects your personal SLA adherence score, tracked on the Sales Performance Dashboard under disqualification accuracy metrics",
+          "It triggers an automatic notification to your FLM who reviews all disqualifications during your weekly one-on-one pipeline review"
+        ],
+        "notes": "MAJOR rebalance. Correct (idx 1) was 198 chars, far longest. Compressed to ~145 by removing redundant phrasing. All wrong options inflated to ~120-130 chars with plausible operational consequences."
+      },
+      {
+        "id": "ef1e91c7-50df-45c4-add0-9c9e00bbd3c6",
+        "type": "recovery",
+        "sort_order": 5,
+        "correct_option": 1,
+        "question_text": "When going out of office, the session described a new Salesforce out-of-office process. What are the two key things a rep needs to do?",
+        "original_options": [
+          "Block their calendar in Outlook and update their Slack status — the Salesforce system updates automatically",
+          "Fill out the out-of-office form in their Salesforce profile AND designate an alternate user to work their MQLs in their absence",
+          "Notify their manager by email and set an auto-reply in Gmail — the manager handles the Salesforce update",
+          "Disqualify all open MQLs before leaving and reassign any in-progress SALs to a teammate manually"
+        ],
+        "rebalanced_options": [
+          "Block their calendar in Outlook and update their Slack status — the Salesforce system syncs and updates OOO automatically",
+          "Fill out the out-of-office form in their Salesforce profile and designate an alternate user to work their MQLs while away",
+          "Notify their manager by email and set an auto-reply in Gmail — the manager handles the Salesforce OOO update directly",
+          "Disqualify all open MQLs before leaving and manually reassign any in-progress SALs to a designated teammate"
+        ],
+        "notes": "Correct (idx 1) was longest. Compressed slightly ('in their absence' → 'while away'). Inflated wrong options with plausible OOO process steps. All now ~100-115 chars."
+      }
+    ]
+  }
+}
