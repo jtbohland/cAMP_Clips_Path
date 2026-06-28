@@ -13,6 +13,7 @@ import TierUnlockModal from "@/components/TierUnlockModal";
 import PacingModal from "@/components/PacingModal";
 import AnchorFailureModal from "@/components/AnchorFailureModal";
 import LightAnchorModal from "@/components/LightAnchorModal";
+import TrailManifesto from "@/components/TrailManifesto";
 import {
   countWeekdays,
   getExpectedClips,
@@ -43,7 +44,6 @@ export default function LibraryPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { viewer, isLoading: viewerLoading } = useViewer();
-  const [showBeforeYouBegin, setShowBeforeYouBegin] = useState(true);
   const [showSummit, setShowSummit] = useState(false);
   const [tierUnlock, setTierUnlock] = useState<number | null>(null);
   const [showPacing, setShowPacing] = useState(false);
@@ -532,38 +532,31 @@ export default function LibraryPage() {
         {/* XP Progress Bar */}
         <XpProgressBar />
 
+        {/* Welcome to the Trail — Weeks 2-4 manifesto */}
+        <TrailManifesto viewerId={viewer.id} />
+
         {/* Before You Begin — collapsible */}
-        {showBeforeYouBegin && (
-          <div className="bg-[#EEF2FF] rounded-xl border border-indigo-200/60 shadow-sm overflow-hidden mb-2">
-            <div className="flex items-center justify-between px-5 py-3 border-b border-indigo-200/40">
-              <div>
-                <h2 className="text-sm font-bold text-gray-900 flex items-center gap-2">
-                  🎬 Before You Begin
-                </h2>
-                <p className="text-xs text-gray-500 mt-0.5">
-                  How cAMP Ascent works — read before watching your first clip
-                </p>
-              </div>
-              <button
-                onClick={() => setShowBeforeYouBegin(false)}
-                className="text-gray-400 hover:text-gray-600 text-lg leading-none px-1"
-                aria-label="Dismiss"
-              >
-                ×
-              </button>
+          <div className="rounded-xl border border-gray-200 shadow-sm overflow-hidden mb-2">
+            <div className="px-5 py-3 bg-[#1B4332] rounded-t-xl">
+              <h2 className="text-sm font-bold text-white flex items-center gap-2">
+                🎬 Before You Begin
+              </h2>
+              <p className="text-xs text-white/70 mt-0.5">
+                How cAMP Ascent works — read before watching your first clip
+              </p>
             </div>
 
-            <div className="divide-y divide-indigo-100/50 bg-white/70 rounded-b-xl">
-              <div className="flex items-start gap-3 px-5 py-3">
-                <span className="text-lg mt-0.5">👁️</span>
+            <div className="divide-y divide-gray-100 rounded-b-xl">
+              <div className="flex items-start gap-3 px-5 py-3 bg-white">
+                <span className="text-lg mt-0.5">🔇</span>
                 <div>
-                  <p className="text-sm font-semibold text-gray-900">Stay on the tab while watching</p>
+                  <p className="text-sm font-semibold text-gray-900">Stay on the tab & keep your volume on</p>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    Focus time counts toward your engagement score. Switching tabs pauses the video and stops your timer.
+                    Engagement is scored on two factors: tab focus (60%) and volume (40%). Switching tabs pauses the video and stops your timer. Muting won't pause it, but it drops your volume score — so keep it on.
                   </p>
                 </div>
               </div>
-              <div className="flex items-start gap-3 px-5 py-3">
+              <div className="flex items-start gap-3 px-5 py-3 bg-white">
                 <span className="text-lg mt-0.5">🪧</span>
                 <div>
                   <p className="text-sm font-semibold text-gray-900">Answer Trail Markers as they appear</p>
@@ -572,7 +565,7 @@ export default function LibraryPage() {
                   </p>
                 </div>
               </div>
-              <div className="flex items-start gap-3 px-5 py-3">
+              <div className="flex items-start gap-3 px-5 py-3 bg-white">
                 <span className="text-lg mt-0.5">🚁</span>
                 <div>
                   <p className="text-sm font-semibold text-gray-900">Didn't pass? Search & Rescue kicks in</p>
@@ -581,18 +574,26 @@ export default function LibraryPage() {
                   </p>
                 </div>
               </div>
-              <div className="flex items-start gap-3 px-5 py-3 bg-[#FFF7ED]">
+              <div className="flex items-start gap-3 px-5 py-3 bg-[#BBF7D0]">
                 <span className="text-lg mt-0.5">⛈️</span>
                 <div>
-                  <p className="text-sm font-semibold text-[#92400E]">Fail S&R? Weather the Storm adds 3 minutes</p>
-                  <p className="text-xs text-[#92400E]/80 mt-0.5">
-                    You'll get a 3-minute study break with the session highlights before the next clip unlocks. Stay engaged and you'll rarely see this.
+                  <p className="text-sm font-semibold text-emerald-900">Fail S&R? Weather the Storm adds 2 minutes</p>
+                  <p className="text-xs text-emerald-800/80 mt-0.5">
+                    You'll get a 2-minute study break with the session highlights before the next clip unlocks. Stay engaged and you'll rarely see this.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 px-5 py-3 bg-[#A7F3D0]">
+                <span className="text-lg mt-0.5">🔭</span>
+                <div>
+                  <p className="text-sm font-semibold text-emerald-900">Check out the XP-lanation tab</p>
+                  <p className="text-xs text-emerald-800/80 mt-0.5">
+                    Everything you need to know about how XP works across clips. Earn points to maximize your Ascent and climb the leaderboard.
                   </p>
                 </div>
               </div>
             </div>
           </div>
-        )}
 
         {/* Clip list grouped by week */}
         <div className="flex flex-col gap-6">
