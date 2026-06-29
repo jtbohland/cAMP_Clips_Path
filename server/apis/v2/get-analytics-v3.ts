@@ -24,6 +24,7 @@ const LearnerRow = z.object({
   name: z.string(),
   email: z.string(),
   role: z.string(),
+  timezone: z.string().nullable(),
   manager_name: z.string().nullable(),
   ascent_day_1: z.string().nullable(),
   clips_completed: z.coerce.number(),
@@ -71,6 +72,7 @@ const LeaderboardRow = z.object({
   viewer_id: z.string(),
   name: z.string(),
   role: z.string(),
+  timezone: z.string().nullable(),
   total_xp: z.coerce.number(),
   clips_completed: z.coerce.number(),
   badges_earned: z.coerce.number(),
@@ -114,6 +116,7 @@ export default api({
       name: z.string(),
       email: z.string(),
       role: z.string(),
+      timezone: z.string().nullable(),
       managerName: z.string().nullable(),
       ascentDay1: z.string().nullable(),
       clipsCompleted: z.number(),
@@ -160,6 +163,7 @@ export default api({
       viewerId: z.string(),
       name: z.string(),
       role: z.string(),
+      timezone: z.string().nullable(),
       totalXp: z.number(),
       clipsCompleted: z.number(),
       badgesEarned: z.number(),
@@ -190,6 +194,7 @@ export default api({
     const learnerRows = await ctx.integrations.db.query(
       `SELECT
         v.id AS viewer_id, v.name, v.email, v.role,
+        v.timezone,
         v.manager_name,
         v.ascent_day_1::text AS ascent_day_1,
         COUNT(DISTINCT s.clip_id) FILTER (WHERE s.completed = true)::int AS clips_completed,
@@ -203,7 +208,7 @@ export default api({
        FROM cliptracker_v2_viewers v
        LEFT JOIN cliptracker_v2_sessions s ON s.viewer_id = v.id
        WHERE v.is_admin = false
-       GROUP BY v.id, v.name, v.email, v.role, v.manager_name, v.ascent_day_1
+       GROUP BY v.id, v.name, v.email, v.role, v.timezone, v.manager_name, v.ascent_day_1
        ORDER BY v.name ASC
        LIMIT 500`,
       LearnerRow,
@@ -388,6 +393,7 @@ export default api({
         name: l.name,
         email: l.email,
         role: l.role,
+        timezone: l.timezone,
         managerName: l.manager_name,
         ascentDay1: l.ascent_day_1,
         clipsCompleted: l.clips_completed,
@@ -455,14 +461,14 @@ export default api({
     // 5. XP Leaderboard — FIXED: use subquery for XP instead of JOIN to avoid cross-join multiplication
     const leaderboardRows = await ctx.integrations.db.query(
       `SELECT
-        v.id AS viewer_id, v.name, v.role,
+        v.id AS viewer_id, v.name, v.role, v.timezone,
         COALESCE((SELECT SUM(xp_amount)::int FROM cliptracker_v2_xp_events x WHERE x.viewer_id = v.id), 0) AS total_xp,
         COUNT(DISTINCT s.clip_id) FILTER (WHERE s.completed = true)::int AS clips_completed,
         COALESCE((SELECT COUNT(*)::int FROM cliptracker_v2_badges b WHERE b.viewer_id = v.id), 0) AS badges_earned
        FROM cliptracker_v2_viewers v
        LEFT JOIN cliptracker_v2_sessions s ON s.viewer_id = v.id
        WHERE v.is_admin = false
-       GROUP BY v.id, v.name, v.role
+       GROUP BY v.id, v.name, v.role, v.timezone
        ORDER BY total_xp DESC
        LIMIT 50`,
       LeaderboardRow,
@@ -513,6 +519,7 @@ export default api({
         viewerId: l.viewer_id,
         name: l.name,
         role: l.role,
+        timezone: l.timezone,
         totalXp: l.total_xp,
         clipsCompleted: l.clips_completed,
         badgesEarned: l.badges_earned,
