@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import Week1AnalyticsSection from "@/components/analytics/Week1AnalyticsSection";
 
 /** Badge ID → display info */
 const BADGE_MAP: Record<string, { name: string; emoji: string }> = {
@@ -25,6 +26,7 @@ const BADGE_MAP: Record<string, { name: string; emoji: string }> = {
   on_the_trail: { name: "On the Trail", emoji: "🗓️" },
   the_ascent: { name: "The Ascent", emoji: "🧗" },
   podcast_cast: { name: "The Full Cast", emoji: "🎣" },
+  approach_complete: { name: "The Approach", emoji: "🚡" },
 };
 
 const ROLE_PILL: Record<string, { bg: string; text: string; border: string }> = {
@@ -157,7 +159,12 @@ function AnalyticsContent() {
           <OverviewSection overview={overview} />
         </Section>
 
-        {/* 2. cAMPers Table */}
+        {/* 2. The Approach (Week 1) */}
+        <Section title="The Approach" subtitle="Week 1 onboarding — MEDDPICC, cAMP 101, Challenger, Wheel & Deal" emoji="🚡" defaultOpen={false}>
+          <Week1AnalyticsSection />
+        </Section>
+
+        {/* 3. cAMPers Table */}
         <Section
           title="cAMPers"
           subtitle="Manager view — track each new hire's progress through Ascent"
