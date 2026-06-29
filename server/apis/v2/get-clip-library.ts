@@ -17,6 +17,7 @@ const ClipWithProgressSchema = z.object({
   xp_earned: z.coerce.number(),
   question_count: z.coerce.number(),
   paused_elapsed_seconds: z.coerce.number().nullable(),
+  resource_count: z.coerce.number(),
 });
 
 export default api({
@@ -48,6 +49,9 @@ export default api({
         xpEarned: z.number(),
         questionCount: z.number(),
         pausedElapsedSeconds: z.number().nullable(),
+        isTopicDay: z.boolean(),
+        resourceCount: z.number(),
+        resourcesClicked: z.number(),
       })
     ),
   }),
@@ -96,7 +100,8 @@ export default api({
           FROM cliptracker_v2_sessions s
           WHERE s.clip_id = c.id AND s.viewer_id = $1
           LIMIT 1
-        ) as paused_elapsed_seconds
+        ) as paused_elapsed_seconds,
+        COALESCE(jsonb_array_length(c.resources), 0)::int as resource_count
       FROM cliptracker_v2_clips c
       WHERE c.status = 'live'
       ORDER BY c.sort_order ASC`,
@@ -115,9 +120,31 @@ export default api({
     );
     const overrideSet = new Set(overrides.map((o) => o.clip_id));
 
+    // Get resource click counts for topic days
+    const ResourceClickSchema = z.object({ clip_id: z.string(), clicked: z.coerce.number() });
+    const resourceClicks = await ctx.integrations.db.query(
+      `SELECT clip_id, COUNT(*)::int as clicked FROM cliptracker_v2_resource_clicks WHERE viewer_id = $1 GROUP BY clip_id`,
+      ResourceClickSchema,
+      [viewerId],
+      { label: "Get resource click counts" }
+    );
+    const clickCountMap = new Map(resourceClicks.map(r => [r.clip_id, r.clicked]));
+
+    // Check which topic days have been completed via XP (swiss_army_knife event)
+    const TopicCompleteSchema = z.object({ clip_id: z.string() });
+    const topicCompleted = await ctx.integrations.db.query(
+      "SELECT clip_id FROM cliptracker_v2_xp_events WHERE viewer_id = $1 AND event_type = 'swiss_army_knife'",
+      TopicCompleteSchema,
+      [viewerId],
+      { label: "Check topic day completions" }
+    );
+    const topicCompletedSet = new Set(topicCompleted.map(t => t.clip_id));
+
     const result = clips.map((clip, index) => {
       const bestScore = clip.best_score ? parseFloat(clip.best_score) : null;
-      const isCompleted = clip.completed > 0;
+      const isTopicDay = clip.video_url === null && clip.duration_seconds === null;
+      const resourceCount = clip.resource_count;
+      const isCompleted = isTopicDay ? topicCompletedSet.has(clip.id) : clip.completed > 0;
 
       // Admins get all clips unlocked
       let isLocked = true;
@@ -147,6 +174,9 @@ export default api({
         xpEarned: clip.xp_earned,
         questionCount: clip.question_count,
         pausedElapsedSeconds: clip.paused_elapsed_seconds ?? 0,
+        isTopicDay,
+        resourceCount,
+        resourcesClicked: clickCountMap.get(clip.id) ?? 0,
       };
     });
 

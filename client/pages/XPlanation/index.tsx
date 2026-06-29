@@ -26,6 +26,7 @@ const PERFORMANCE_BONUSES = [
   { badge: "Search & Rescue Hero", xp: 8, emoji: "🚁", condition: "Perfect score on Search & Rescue questions" },
   { badge: "Storm Chaser", xp: 3, emoji: "⛈️", condition: "Hit Weather Storm on previous clip, then pass the next clip first try" },
   { badge: "Double Summit", xp: 5, emoji: "⛰️", condition: "Complete 2 clips in one calendar day" },
+  { badge: "Swiss Army Knife", xp: 10, emoji: "🪓", condition: "All tools. All terrain. You're ready for anything. (Review all resources on a topic day — ×2 available: Day 5, Day 9)" },
 ];
 
 const STREAK_BONUSES = [
@@ -203,7 +204,7 @@ export default function XPlanationPage() {
         {/* Max Possible XP */}
         <div className="rounded-xl bg-white border border-gray-200 shadow-[0_1px_3px_rgba(0,0,0,0.08)] p-5 text-center space-y-2">
           <p className="text-lg font-bold text-gray-900">
-            🏆 Theoretical Maximum: ~725 XP
+            🏆 Theoretical Maximum: ~745 XP
           </p>
           <p className="text-sm text-gray-500">
             A strong, engaged learner typically lands around <span className="font-semibold text-gray-900">400–450 XP</span> (Summit Seeker).

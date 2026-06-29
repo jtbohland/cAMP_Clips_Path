@@ -46,6 +46,13 @@ export const router = createBrowserRouter([
           })),
       },
       {
+        path: "/topic-gear/:topicKey/:clipId",
+        lazy: () =>
+          import("./pages/TopicGear/index.js").then((mod) => ({
+            Component: mod.default,
+          })),
+      },
+      {
         path: "/report/:clipId",
         lazy: () =>
           import("./pages/Report/index.js").then((mod) => ({

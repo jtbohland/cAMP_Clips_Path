@@ -16,7 +16,6 @@ import LightAnchorModal from "@/components/LightAnchorModal";
 import TrailManifesto from "@/components/TrailManifesto";
 import {
   countWeekdays,
-  getExpectedClips,
   getTopicDaysBehind,
   getPacingTier,
   getMissedClips,
@@ -24,7 +23,7 @@ import {
   getAscentAdjustmentDay,
   isAfterDate,
   isDayBeforeSummitDay,
-  TOTAL_CLIPS,
+  TOTAL_SESSIONS,
 } from "@/lib/pacing";
 
 function LoadingSkeleton() {
@@ -85,7 +84,7 @@ export default function LibraryPage() {
     navigate("/report/reachdesk");
   }, [viewer?.id, logClick, reachdeskStorageKey, navigate]);
 
-  // Deal Desk bonus clips (sort order 15) — tracked via localStorage
+  // Deal Desk bonus clips (sort order 17 after topic day insertion) — tracked via localStorage
   const bonus1StorageKey = viewer?.id ? `deal_desk_bonus1_watched_${viewer.id}` : null;
   const bonus2StorageKey = viewer?.id ? `deal_desk_bonus2_watched_${viewer.id}` : null;
   const [bonus1Watched, setBonus1Watched] = useState(() => {
@@ -174,10 +173,11 @@ export default function LibraryPage() {
   );
 
   const clips = useMemo(() => data?.clips ?? [], [data]);
-  const allCompleted = clips.length === 17 && clips.every((c: any) => c.completed);
+  const allCompleted = clips.length >= TOTAL_SESSIONS && clips.every((c: any) => c.completed);
 
-  // A/B pair sort orders — these get merged into a single card
-  const AB_PAIRS: [number, number][] = [[6, 7], [8, 9], [11, 12], [16, 17]];
+  // A/B pair sort orders — updated after Day 5 + Day 9 topic day insertion
+  // Old: [6,7],[8,9],[11,12],[16,17] → New: [7,8],[9,10],[13,14],[18,19]
+  const AB_PAIRS: [number, number][] = [[7, 8], [9, 10], [13, 14], [18, 19]];
   const pairedSortOrders = new Set(AB_PAIRS.flat());
 
   // ── Pacing calculation ──
@@ -186,9 +186,10 @@ export default function LibraryPage() {
     const startDate = new Date(progressData.ascentDay1 + "T00:00:00");
     const today = new Date();
     const weekdaysElapsed = countWeekdays(startDate, today);
-    const clipsCompleted = progressData.clipsCompleted;
-    const tier = getPacingTier(clipsCompleted, weekdaysElapsed, true);
-    const daysBehind = getTopicDaysBehind(clipsCompleted, weekdaysElapsed);
+    // Count ALL completed rows (video clips + topic days) for pacing
+    const sessionsCompleted = clips.filter((c: any) => c.completed).length;
+    const tier = getPacingTier(sessionsCompleted, weekdaysElapsed, true);
+    const daysBehind = getTopicDaysBehind(sessionsCompleted, weekdaysElapsed);
     const missedClips = getMissedClips(
       clips.map((c: any) => ({
         sortOrder: c.sortOrder,
@@ -200,13 +201,13 @@ export default function LibraryPage() {
       weekdaysElapsed
     );
     const summitDay = getSummitDay(startDate);
-    const incompleteSessions = TOTAL_CLIPS - clipsCompleted;
+    const incompleteSessions = TOTAL_SESSIONS - sessionsCompleted;
     const adjustmentDay = getAscentAdjustmentDay(summitDay, incompleteSessions);
     const afterSummitDay = isAfterDate(summitDay);
     const afterAdjustmentDay = isAfterDate(adjustmentDay);
     const dayBeforeSummit = isDayBeforeSummitDay(summitDay);
     return {
-      tier, daysBehind, clipsCompleted, weekdaysElapsed, missedClips, summitDay,
+      tier, daysBehind, clipsCompleted: sessionsCompleted, weekdaysElapsed, missedClips, summitDay,
       startDate, adjustmentDay, afterSummitDay, afterAdjustmentDay, dayBeforeSummit,
       incompleteSessions,
     };
@@ -394,7 +395,7 @@ export default function LibraryPage() {
           tier={pacingInfo.tier}
           daysBehind={pacingInfo.daysBehind}
           clipsCompleted={pacingInfo.clipsCompleted}
-          totalClips={TOTAL_CLIPS}
+          totalClips={TOTAL_SESSIONS}
           weekdaysElapsed={pacingInfo.weekdaysElapsed}
           missedClips={pacingInfo.missedClips}
           summitDay={pacingInfo.summitDay}
@@ -458,7 +459,7 @@ export default function LibraryPage() {
         tier={pacingInfo.tier}
         daysBehind={pacingInfo.daysBehind}
         clipsCompleted={pacingInfo.clipsCompleted}
-        totalClips={TOTAL_CLIPS}
+        totalClips={TOTAL_SESSIONS}
         weekdaysElapsed={pacingInfo.weekdaysElapsed}
         missedClips={pacingInfo.missedClips}
         summitDay={pacingInfo.summitDay}
@@ -518,7 +519,7 @@ export default function LibraryPage() {
           return stored ? isAfterDate(new Date(stored)) : false;
         })()}
         clipsCompleted={pacingInfo.clipsCompleted}
-        totalClips={TOTAL_CLIPS}
+        totalClips={TOTAL_SESSIONS}
         missedClips={pacingInfo.missedClips}
         onDismiss={() => setShowLightAnchor(false)}
       />
@@ -716,16 +717,21 @@ export default function LibraryPage() {
                           onReview={() => navigate(`/report/${clip.id}`)}
                           onWheelAndDeal={handleWheelAndDeal}
                           onCampQuiz={handleCampQuiz}
+                          onViewGear={
+                            clip.isTopicDay
+                              ? () => navigate(`/topic-gear/${clip.sortOrder === 5 ? "day5" : "day9"}/${clip.id}`)
+                              : undefined
+                          }
                           onZoomClipWatch={clip.sortOrder === 4 ? handleReachdeskWatch : undefined}
                           onZoomClipReview={clip.sortOrder === 4 ? () => navigate(`/report/reachdesk`) : undefined}
                           zoomClipWatched={clip.sortOrder === 4 ? reachdeskWatched : undefined}
-                          onPodcasts={clip.sortOrder === 13 ? () => navigate("/podcasts") : undefined}
-                          onBonusClip1Watch={clip.sortOrder === 15 ? handleBonusClip1Watch : undefined}
-                          onBonusClip1Review={clip.sortOrder === 15 ? handleBonusClip1Review : undefined}
-                          bonusClip1Watched={clip.sortOrder === 15 ? bonus1Watched : undefined}
-                          onBonusClip2Watch={clip.sortOrder === 15 ? handleBonusClip2Watch : undefined}
-                          onBonusClip2Review={clip.sortOrder === 15 ? handleBonusClip2Review : undefined}
-                          bonusClip2Watched={clip.sortOrder === 15 ? bonus2Watched : undefined}
+                          onPodcasts={clip.sortOrder === 15 ? () => navigate("/podcasts") : undefined}
+                          onBonusClip1Watch={clip.sortOrder === 17 ? handleBonusClip1Watch : undefined}
+                          onBonusClip1Review={clip.sortOrder === 17 ? handleBonusClip1Review : undefined}
+                          bonusClip1Watched={clip.sortOrder === 17 ? bonus1Watched : undefined}
+                          onBonusClip2Watch={clip.sortOrder === 17 ? handleBonusClip2Watch : undefined}
+                          onBonusClip2Review={clip.sortOrder === 17 ? handleBonusClip2Review : undefined}
+                          bonusClip2Watched={clip.sortOrder === 17 ? bonus2Watched : undefined}
                         />
                       );
                     });

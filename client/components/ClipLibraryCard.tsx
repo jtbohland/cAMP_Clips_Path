@@ -11,6 +11,9 @@ type ClipLibraryCardProps = {
     videoUrl: string | null;
     durationSeconds: number | null;
     questionCount: number;
+    isTopicDay?: boolean;
+    resourceCount?: number;
+    resourcesClicked?: number;
   };
   isLocked: boolean;
   isCompleted: boolean;
@@ -19,6 +22,7 @@ type ClipLibraryCardProps = {
   previousClipTitle?: string;
   onWatch: () => void;
   onReview?: () => void;
+  onViewGear?: () => void;
   onWheelAndDeal?: () => void;
   onCampQuiz?: () => void;
   onZoomClipWatch?: () => void;
@@ -79,15 +83,17 @@ function getButtonState(
   return "watch";
 }
 
-// Clips that show the cAMP Quiz button
-const CAMP_QUIZ_SORT_ORDERS = new Set([1, 2, 3, 4, 5, 7, 9, 10, 12, 13, 14, 15, 17]);
-// Clips that show the Wheel & Deal practice button (every 3rd: 3, 6, 9, 12, 15)
-const WHEEL_AND_DEAL_SORT_ORDERS = new Set([3, 6, 9, 12, 15]);
+// ── Sort order constants (updated after Day 5/Day 9 topic day insertion) ──
+// Topic days: sort_order 5 (Renewal Ops), 11 (Pricing & Packaging)
+const TOPIC_DAY_SORT_ORDERS = new Set([5, 11]);
+// Clips that show the cAMP Quiz button (includes topic days 5, 11)
+const CAMP_QUIZ_SORT_ORDERS = new Set([1, 2, 3, 4, 5, 6, 8, 10, 11, 12, 14, 15, 16, 17, 19]);
+// Clips that show the Wheel & Deal practice button
+const WHEEL_AND_DEAL_SORT_ORDERS = new Set([3, 7, 10, 14, 17]);
 // Sort order 4 has an additional Zoom clip (Reachdesk) — shows extra button
 const REACHDESK_SORT_ORDER = 4;
-
-// Sort order 15 (Deal Desk & CPQ) has two bonus Wistia clips
-const DEAL_DESK_SORT_ORDER = 15;
+// Sort order 17 (Deal Desk & CPQ) has two bonus Wistia clips
+const DEAL_DESK_SORT_ORDER = 17;
 
 export default function ClipLibraryCard({
   clip,
@@ -98,6 +104,7 @@ export default function ClipLibraryCard({
   previousClipTitle,
   onWatch,
   onReview,
+  onViewGear,
   onWheelAndDeal,
   onCampQuiz,
   onZoomClipWatch,
@@ -111,6 +118,7 @@ export default function ClipLibraryCard({
   onBonusClip2Review,
   bonusClip2Watched,
 }: ClipLibraryCardProps) {
+  const isTopicDay = clip.isTopicDay ?? false;
   const buttonState = getButtonState(isLocked, isCompleted, pausedElapsedSeconds);
 
   const handleShare = useCallback(
@@ -132,7 +140,7 @@ export default function ClipLibraryCard({
           ? "opacity-55 cursor-default"
           : "hover:shadow-md cursor-pointer"
       }`}
-      onClick={buttonState !== "locked" ? (buttonState === "report" ? onReview : onWatch) : undefined}
+      onClick={buttonState !== "locked" ? (isTopicDay ? onViewGear : (buttonState === "report" ? onReview : onWatch)) : undefined}
     >
       <div className="flex flex-col gap-3">
         {/* Row 1: Week/Day label + status badge + share */}
@@ -169,28 +177,65 @@ export default function ClipLibraryCard({
           {clip.sortOrder === REACHDESK_SORT_ORDER ? "📇 Prospecting Process + Reachdesk" : getSessionTitle(clip.title)}
         </h3>
 
-        {/* Row 3: Metadata — standard for all clips */}
-        <p className="text-xs text-gray-500 flex items-center gap-1.5 flex-wrap">
-          {clip.durationSeconds ? (
-            <>
-              <span>⏱️ {formatDuration(clip.durationSeconds)}</span>
-              <span className="text-gray-300">·</span>
-            </>
-          ) : null}
-          <span>🪧 {clip.questionCount} Trail Markers</span>
-          <span className="text-gray-300">·</span>
-          <span>80% engagement required</span>
-          <span className="text-gray-300">·</span>
-          <span>📋 Ranger Report</span>
-        </p>
+        {/* Row 3: Metadata */}
+        {isTopicDay ? (
+          <>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-500">🎒 {clip.resourceCount ?? 0} Resources</span>
+              <span className="text-gray-300 text-xs">·</span>
+              <span className="text-xs text-gray-500">🪧 0 Trail Markers</span>
+              <span className="text-gray-300 text-xs">·</span>
+              <span className="text-xs text-gray-500">🪓 +10 XP</span>
+            </div>
+            {/* Resource progress bar */}
+            {!isLocked && (clip.resourceCount ?? 0) > 0 && (
+              <div className="flex items-center gap-2">
+                <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{
+                      width: `${((clip.resourcesClicked ?? 0) / (clip.resourceCount ?? 1)) * 100}%`,
+                      backgroundColor: isCompleted ? "#16a34a" : "#6366F1",
+                    }}
+                  />
+                </div>
+                <span className="text-xs font-semibold text-indigo-600 min-w-[3rem] text-right">
+                  {clip.resourcesClicked ?? 0}/{clip.resourceCount ?? 0}
+                </span>
+              </div>
+            )}
+          </>
+        ) : (
+          <p className="text-xs text-gray-500 flex items-center gap-1.5 flex-wrap">
+            {clip.durationSeconds ? (
+              <>
+                <span>⏱️ {formatDuration(clip.durationSeconds)}</span>
+                <span className="text-gray-300">·</span>
+              </>
+            ) : null}
+            <span>🪧 {clip.questionCount} Trail Markers</span>
+            <span className="text-gray-300">·</span>
+            <span>80% engagement required</span>
+            <span className="text-gray-300">·</span>
+            <span>📋 Ranger Report</span>
+          </p>
+        )}
 
-        {/* Row 4: Action button — standard for ALL clips */}
-        <ActionButton
-          buttonState={buttonState}
-          previousClipTitle={previousClipTitle}
-          onWatch={onWatch}
-          onReview={onReview}
-        />
+        {/* Row 4: Action button */}
+        {isTopicDay ? (
+          <TopicDayActionButton
+            buttonState={buttonState}
+            previousClipTitle={previousClipTitle}
+            onViewGear={onViewGear}
+          />
+        ) : (
+          <ActionButton
+            buttonState={buttonState}
+            previousClipTitle={previousClipTitle}
+            onWatch={onWatch}
+            onReview={onReview}
+          />
+        )}
 
         {/* Reachdesk Zoom Clip — additional button for sort order 4 only */}
         {clip.sortOrder === REACHDESK_SORT_ORDER && buttonState !== "locked" && onZoomClipWatch && (
@@ -305,8 +350,8 @@ export default function ClipLibraryCard({
           </p>
         )}
 
-        {/* PODcast button — sort order 13 (Customer Stories) */}
-        {clip.sortOrder === 13 && onPodcasts && (
+        {/* PODcast button — sort order 15 (Customer Stories) */}
+        {clip.sortOrder === 15 && onPodcasts && (
           <button
             onClick={(e) => { e.stopPropagation(); onPodcasts(); }}
             className="w-full py-2.5 rounded-lg text-sm font-semibold bg-[#fec302] hover:bg-[#e5b002] text-gray-900 transition-colors"
@@ -314,7 +359,7 @@ export default function ClipLibraryCard({
             🎧 Listen to PODcasts
           </button>
         )}
-        {clip.sortOrder === 13 && onPodcasts && (
+        {clip.sortOrder === 15 && onPodcasts && (
           <p className="text-[11px] text-gray-400 text-center -mt-1">
             Real Amplitude PODs break down complex wins — listen at your own pace
           </p>
@@ -375,6 +420,56 @@ function ActionButton({
           className="w-full py-2.5 rounded-lg text-sm font-medium bg-gray-100 text-gray-400 cursor-not-allowed"
         >
           🔒 Watch & pass{" "}
+          {previousClipTitle
+            ? getPreviousClipShortName(previousClipTitle)
+            : "the previous clip"}{" "}
+          to unlock
+        </button>
+      );
+  }
+}
+
+function TopicDayActionButton({
+  buttonState,
+  previousClipTitle,
+  onViewGear,
+}: {
+  buttonState: ButtonState;
+  previousClipTitle?: string;
+  onViewGear?: () => void;
+}) {
+  switch (buttonState) {
+    case "watch":
+    case "resume":
+      return (
+        <button
+          onClick={(e) => { e.stopPropagation(); onViewGear?.(); }}
+          className="w-full py-2.5 rounded-lg text-sm font-semibold bg-green-600 hover:bg-green-700 text-white transition-colors"
+        >
+          🎒 View cAMP Gear
+        </button>
+      );
+    case "report":
+      return (
+        <div className="flex flex-col items-center gap-1.5">
+          <button
+            onClick={(e) => { e.stopPropagation(); onViewGear?.(); }}
+            className="w-full py-2.5 rounded-lg text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition-colors"
+          >
+            🎒 View cAMP Gear
+          </button>
+          <p className="text-xs text-gray-400 mt-1">
+            All resources reviewed — 🪓 Swiss Army Knife earned
+          </p>
+        </div>
+      );
+    case "locked":
+      return (
+        <button
+          disabled
+          className="w-full py-2.5 rounded-lg text-sm font-medium bg-gray-100 text-gray-400 cursor-not-allowed"
+        >
+          🔒 Complete{" "}
           {previousClipTitle
             ? getPreviousClipShortName(previousClipTitle)
             : "the previous clip"}{" "}

@@ -5,46 +5,51 @@
  * learner's ascent_day_1. Weekends (Sat / Sun) are skipped.
  * Days 5 and 9 are content-review days (no video clips).
  *
- * Topic-day mapping (derived from DB day_label values):
- *   Weekday 1  → Day 1   (sort 1)        1 clip
- *   Weekday 2  → Day 2   (sort 2)        1 clip
- *   Weekday 3  → Day 3   (sort 3)        1 clip
- *   Weekday 4  → Day 4   (sort 4)        1 clip
- *   Weekday 5  → Day 5   (no clips — content review day)
- *   Weekday 6  → Day 6   (sort 5)        1 clip
- *   Weekday 7  → Day 7   (sorts 6-7)     2 clips (a/b)
- *   Weekday 8  → Day 8   (sorts 8-9)     2 clips (a/b)
- *   Weekday 9  → Day 9   (no clips — content review day)
- *   Weekday 10 → Day 10  (sort 10)       1 clip
- *   Weekday 11 → Day 11  (sorts 11-12)   2 clips (a/b)
- *   Weekday 12 → Day 12  (sort 13)       1 clip
- *   Weekday 13 → Day 13  (sort 14)       1 clip
- *   Weekday 14 → Day 14  (sort 15)       1 clip
- *   Weekday 15 → Day 15  (sorts 16-17)   2 clips (a/b)
+ * Topic-day mapping (sort_orders updated after Day 5/Day 9 topic day insertion):
+ *   Weekday 1  → Day 1   (sort 1)         1 clip
+ *   Weekday 2  → Day 2   (sort 2)         1 clip
+ *   Weekday 3  → Day 3   (sort 3)         1 clip
+ *   Weekday 4  → Day 4   (sort 4)         1 clip
+ *   Weekday 5  → Day 5   (sort 5, TOPIC)  0 clips — resource review day
+ *   Weekday 6  → Day 6   (sort 6)         1 clip
+ *   Weekday 7  → Day 7   (sorts 7-8)      2 clips (a/b)
+ *   Weekday 8  → Day 8   (sorts 9-10)     2 clips (a/b)
+ *   Weekday 9  → Day 9   (sort 11, TOPIC) 0 clips — resource review day
+ *   Weekday 10 → Day 10  (sort 12)        1 clip
+ *   Weekday 11 → Day 11  (sorts 13-14)    2 clips (a/b)
+ *   Weekday 12 → Day 12  (sort 15)        1 clip
+ *   Weekday 13 → Day 13  (sort 16)        1 clip
+ *   Weekday 14 → Day 14  (sort 17)        1 clip
+ *   Weekday 15 → Day 15  (sorts 18-19)    2 clips (a/b)
  */
 
-// Cumulative clips expected after each weekday (index 0 = before start)
-const EXPECTED_CLIPS_BY_WEEKDAY = [
+// Cumulative sessions (clips + topic days) expected after each weekday.
+// Since sort_orders are consecutive 1–19, this also equals the max sort_order
+// a learner should have completed through by that weekday.
+const EXPECTED_SESSIONS_BY_WEEKDAY = [
   0,   // 0 weekdays elapsed
-  1,   // weekday 1  → Day 1
-  2,   // weekday 2  → Day 2
-  3,   // weekday 3  → Day 3
-  4,   // weekday 4  → Day 4
-  4,   // weekday 5  → Day 5 (content review — no new clips)
-  5,   // weekday 6  → Day 6
-  7,   // weekday 7  → Day 7a+7b
-  9,   // weekday 8  → Day 8a+8b
-  9,   // weekday 9  → Day 9 (content review — no new clips)
-  10,  // weekday 10 → Day 10
-  12,  // weekday 11 → Day 11a+11b
-  13,  // weekday 12 → Day 12
-  14,  // weekday 13 → Day 13
-  15,  // weekday 14 → Day 14
-  17,  // weekday 15 → Day 15a+15b (all done)
+  1,   // weekday 1  → Day 1   (sort 1)
+  2,   // weekday 2  → Day 2   (sort 2)
+  3,   // weekday 3  → Day 3   (sort 3)
+  4,   // weekday 4  → Day 4   (sort 4)
+  5,   // weekday 5  → Day 5   (sort 5, topic day)
+  6,   // weekday 6  → Day 6   (sort 6)
+  8,   // weekday 7  → Day 7   (sorts 7-8, a/b)
+  10,  // weekday 8  → Day 8   (sorts 9-10, a/b)
+  11,  // weekday 9  → Day 9   (sort 11, topic day)
+  12,  // weekday 10 → Day 10  (sort 12)
+  14,  // weekday 11 → Day 11  (sorts 13-14, a/b)
+  15,  // weekday 12 → Day 12  (sort 15)
+  16,  // weekday 13 → Day 13  (sort 16)
+  17,  // weekday 14 → Day 14  (sort 17)
+  19,  // weekday 15 → Day 15  (sorts 18-19, a/b — all done)
 ];
 
 const TOTAL_WEEKDAYS = 15;
-const TOTAL_CLIPS = 17;
+const TOTAL_SESSIONS = 19;
+
+// Legacy alias — some consumers still reference TOTAL_CLIPS
+const TOTAL_CLIPS = TOTAL_SESSIONS;
 
 export type PacingTier =
   | "summit_bound"
@@ -181,24 +186,27 @@ export function countWeekdays(startDate: Date, endDate: Date): number {
 }
 
 /**
- * Get the number of clips a learner should have completed by now.
+ * Get the number of sessions (clips + topic days) a learner should have
+ * completed by now. Since sort_orders are consecutive 1–19, this also
+ * equals the max sort_order that should be done.
  */
-export function getExpectedClips(weekdaysElapsed: number): number {
+export function getExpectedSessions(weekdaysElapsed: number): number {
   const capped = Math.min(weekdaysElapsed, TOTAL_WEEKDAYS);
-  return EXPECTED_CLIPS_BY_WEEKDAY[capped] ?? TOTAL_CLIPS;
+  return EXPECTED_SESSIONS_BY_WEEKDAY[capped] ?? TOTAL_SESSIONS;
 }
 
 /**
  * Get the number of topic-days a learner is behind.
  * Returns 0 if on pace or ahead.
+ * sessionsCompleted = total completed rows (video clips + topic days).
  */
-export function getTopicDaysBehind(clipsCompleted: number, weekdaysElapsed: number): number {
-  if (clipsCompleted >= TOTAL_CLIPS) return 0;
+export function getTopicDaysBehind(sessionsCompleted: number, weekdaysElapsed: number): number {
+  if (sessionsCompleted >= TOTAL_SESSIONS) return 0;
 
-  // Find which weekday the learner's completed clips correspond to
+  // Find which weekday the learner's completed sessions correspond to
   let learnerWeekday = 0;
-  for (let i = 1; i < EXPECTED_CLIPS_BY_WEEKDAY.length; i++) {
-    if (clipsCompleted >= EXPECTED_CLIPS_BY_WEEKDAY[i]) {
+  for (let i = 1; i < EXPECTED_SESSIONS_BY_WEEKDAY.length; i++) {
+    if (sessionsCompleted >= EXPECTED_SESSIONS_BY_WEEKDAY[i]) {
       learnerWeekday = i;
     } else {
       break;
@@ -213,14 +221,14 @@ export function getTopicDaysBehind(clipsCompleted: number, weekdaysElapsed: numb
  * Determine the pacing tier based on topic-days behind.
  */
 export function getPacingTier(
-  clipsCompleted: number,
+  sessionsCompleted: number,
   weekdaysElapsed: number,
   hasStarted: boolean,
 ): PacingTier {
   if (!hasStarted) return "not_started";
-  if (clipsCompleted >= TOTAL_CLIPS) return "completed";
+  if (sessionsCompleted >= TOTAL_SESSIONS) return "completed";
 
-  const daysBehind = getTopicDaysBehind(clipsCompleted, weekdaysElapsed);
+  const daysBehind = getTopicDaysBehind(sessionsCompleted, weekdaysElapsed);
 
   if (daysBehind <= 0) return "summit_bound";
   if (daysBehind <= 2) return "off_the_trail";
@@ -243,11 +251,11 @@ export function getMissedClips(
   clips: Array<{ sortOrder: number; weekNumber: number | null; dayLabel: string | null; title: string; completed: boolean }>,
   weekdaysElapsed: number,
 ): MissedClip[] {
-  const expectedClipCount = getExpectedClips(weekdaysElapsed);
+  const maxExpectedSortOrder = getExpectedSessions(weekdaysElapsed);
   const missed: MissedClip[] = [];
 
   for (const clip of clips) {
-    if (clip.sortOrder > expectedClipCount) break; // beyond what's expected
+    if (clip.sortOrder > maxExpectedSortOrder) break; // beyond what's expected
     if (!clip.completed) {
       missed.push({
         weekNumber: clip.weekNumber ?? 0,
@@ -316,4 +324,4 @@ export function isDayBeforeSummitDay(summitDay: Date): boolean {
   return todayNorm.getTime() === prevWeekday.getTime();
 }
 
-export { TOTAL_CLIPS, TOTAL_WEEKDAYS, EXPECTED_CLIPS_BY_WEEKDAY };
+export { TOTAL_CLIPS, TOTAL_SESSIONS, TOTAL_WEEKDAYS, EXPECTED_SESSIONS_BY_WEEKDAY };
