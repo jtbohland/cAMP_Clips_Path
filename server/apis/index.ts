@@ -6,6 +6,7 @@ import CleanupDuplicateResponses from './v2/cleanup-duplicate-responses.js';
 import CleanupDuplicateSessions from './v2/cleanup-duplicate-sessions.js';
 import AwardXP from './v2/award-xp.js';
 import BackfillBadges from './v2/backfill-badges.js';
+import BackfillTimezones from './v2/backfill-timezones.js';
 import CompleteClipPath from './v2/complete-clip-path.js';
 import EndSession from './v2/end-session.js';
 import GetAdminClips from './v2/get-admin-clips.js';
@@ -70,6 +71,7 @@ const apis = {
   AutoLookupViewer,
   AwardXP,
   BackfillBadges,
+  BackfillTimezones,
   CleanupDuplicateResponses,
   CleanupDuplicateSessions,
   CompleteClipPath,

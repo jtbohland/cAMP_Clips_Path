@@ -27,6 +27,44 @@ const BADGE_MAP: Record<string, { name: string; emoji: string }> = {
   podcast_cast: { name: "The Full Cast", emoji: "🎣" },
 };
 
+const ROLE_PILL: Record<string, { bg: string; text: string; border: string }> = {
+  "SDR":         { bg: "bg-purple-100",  text: "text-purple-500",  border: "border-purple-200" },
+  "Velocity AE": { bg: "bg-purple-50",   text: "text-purple-700",  border: "border-purple-300" },
+  "Emerging AE": { bg: "bg-cyan-50",     text: "text-cyan-700",    border: "border-cyan-200" },
+  "Majors AE":   { bg: "bg-blue-100",    text: "text-blue-800",    border: "border-blue-300" },
+  "Strat AE":    { bg: "bg-emerald-50",  text: "text-emerald-700", border: "border-emerald-200" },
+  "PSM":         { bg: "bg-orange-50",   text: "text-orange-700",  border: "border-orange-200" },
+  "Renewals":    { bg: "bg-yellow-50",   text: "text-yellow-700",  border: "border-yellow-300" },
+};
+
+function RolePill({ role }: { role: string }) {
+  const r = ROLE_PILL[role];
+  if (!r) return <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-gray-100 border border-gray-200 text-[10px] font-medium text-gray-600 whitespace-nowrap">{role}</span>;
+  return (
+    <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full ${r.bg} border ${r.border} ${r.text} text-[10px] font-medium whitespace-nowrap`}>
+      {role}
+    </span>
+  );
+}
+
+const TIMEZONE_PILL: Record<string, { emoji: string; label: string; bg: string; text: string; border: string }> = {
+  NAMER: { emoji: "🌎", label: "NAMER", bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200" },
+  EMEA:  { emoji: "🌍", label: "EMEA",  bg: "bg-red-50",  text: "text-red-700",  border: "border-red-200" },
+  AAPJ:  { emoji: "🌏", label: "AAPJ",  bg: "bg-yellow-50", text: "text-yellow-700", border: "border-yellow-300" },
+};
+
+function TimezonePill({ timezone }: { timezone: string | null }) {
+  if (!timezone) return null;
+  const tz = TIMEZONE_PILL[timezone];
+  if (!tz) return null;
+  return (
+    <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full ${tz.bg} border ${tz.border} ${tz.text} text-[10px] font-medium whitespace-nowrap`}>
+      <span>{tz.emoji}</span>
+      <span>{tz.label}</span>
+    </span>
+  );
+}
+
 const PACING_LABEL: Record<string, { label: string; color: string }> = {
   summit_bound: { label: "🧗🏻‍♂️ Summit Bound", color: "text-green-600" },
   off_the_trail: { label: "🧭 Off the Trail", color: "text-amber-600" },
@@ -280,12 +318,16 @@ function CampersSection({ learners, totalClips }: { learners: any[]; totalClips:
                   </span>
                 </div>
                 <p className="text-[11px] text-gray-500 truncate">{l.email}</p>
-                {l.managerName && l.managerName !== "n/a" && (
-                  <span className="inline-flex items-center gap-0.5 mt-0.5 px-1.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-100 text-[10px] font-medium text-indigo-700 whitespace-nowrap">
-                    <span>💼</span>
-                    <span>{l.managerName}</span>
-                  </span>
-                )}
+                <div className="flex flex-wrap items-center gap-1 mt-0.5">
+                  <RolePill role={l.role} />
+                  {l.managerName && l.managerName !== "n/a" && (
+                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-100 text-[10px] font-medium text-indigo-700 whitespace-nowrap">
+                      <span>💼</span>
+                      <span>{l.managerName}</span>
+                    </span>
+                  )}
+                  <TimezonePill timezone={l.timezone} />
+                </div>
               </div>
 
               {/* XP Earned */}
@@ -495,10 +537,11 @@ function LeaderboardSection({ leaderboard }: { leaderboard: any[] }) {
   return (
     <div className="space-y-1 pt-4">
       {/* Header */}
-      <div className="grid grid-cols-[40px_1fr_80px_60px_60px_60px] gap-2 text-[10px] font-semibold text-gray-500 uppercase tracking-wider px-3">
+      <div className="grid grid-cols-[40px_1fr_80px_70px_60px_60px_60px] gap-2 text-[10px] font-semibold text-gray-500 uppercase tracking-wider px-3">
         <span className="text-center">#</span>
         <span>Name</span>
         <span className="text-center">Role</span>
+        <span className="text-center">Timezone</span>
         <span className="text-center">XP</span>
         <span className="text-center">Clips</span>
         <span className="text-center">Badges</span>
@@ -508,12 +551,11 @@ function LeaderboardSection({ leaderboard }: { leaderboard: any[] }) {
         const isTop3 = l.rank <= 3;
         const medalEmoji = l.rank === 1 ? "🥇" : l.rank === 2 ? "🥈" : l.rank === 3 ? "🥉" : "";
         return (
-          <div key={l.viewerId} className={`grid grid-cols-[40px_1fr_80px_60px_60px_60px] gap-2 items-center px-3 py-2 rounded-md border ${isTop3 ? "border-[#4F46E5]/20" : "border-gray-100"}`} style={{ backgroundColor: isTop3 ? "#f5f3ff" : "#ffffff" }}>
+          <div key={l.viewerId} className={`grid grid-cols-[40px_1fr_80px_70px_60px_60px_60px] gap-2 items-center px-3 py-2 rounded-md border ${isTop3 ? "border-[#4F46E5]/20" : "border-gray-100"}`} style={{ backgroundColor: isTop3 ? "#f5f3ff" : "#ffffff" }}>
             <div className="text-center text-sm font-bold text-gray-700">{medalEmoji || l.rank}</div>
             <div className="text-sm font-medium text-gray-900 truncate">{l.name}</div>
-            <div className="text-center">
-              <Badge variant="outline" className="text-[10px]">{l.role}</Badge>
-            </div>
+            <div className="text-center"><RolePill role={l.role} /></div>
+            <div className="text-center"><TimezonePill timezone={l.timezone} /></div>
             <div className="text-center text-sm font-bold text-[#4F46E5]">{l.totalXp}</div>
             <div className="text-center text-sm text-gray-700">{l.clipsCompleted}</div>
             <div className="text-center text-sm text-gray-700">{l.badgesEarned}</div>
