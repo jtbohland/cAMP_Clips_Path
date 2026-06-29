@@ -14,6 +14,7 @@ type ViewerContextType = {
   setViewer: (viewer: Viewer) => void;
   logout: () => void;
   isLoading: boolean;
+  lookupError: boolean;
 };
 
 const ViewerContext = createContext<ViewerContextType | undefined>(undefined);
@@ -23,6 +24,7 @@ const STORAGE_KEY = "cliptracker_viewer";
 export function ViewerProvider({ children }: { children: ReactNode }) {
   const [viewer, setViewerState] = useState<Viewer | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [lookupError, setLookupError] = useState(false);
 
   // On mount: try auto-lookup using Superblocks session email (ctx.user.email)
   // Falls back to localStorage if auto-lookup returns null
@@ -30,6 +32,8 @@ export function ViewerProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
 
     async function autoRecognize() {
+      let apiErrored = false;
+
       try {
         // First, try server-side auto-lookup using the Superblocks JWT email
         // Timeout after 5s to prevent infinite loading on deep links
@@ -47,11 +51,13 @@ export function ViewerProvider({ children }: { children: ReactNode }) {
           };
           setViewerState(v);
           localStorage.setItem(STORAGE_KEY, JSON.stringify(v));
+          setLookupError(false);
           setIsLoading(false);
           return;
         }
       } catch (e) {
-        // Auto-lookup failed (e.g., API not available yet) — fall through to localStorage
+        // Auto-lookup failed (DB down, network error, etc.) — track the error
+        apiErrored = true;
       }
 
       // Fallback: check localStorage
@@ -78,9 +84,21 @@ export function ViewerProvider({ children }: { children: ReactNode }) {
                 }
               })
               .catch(() => { /* ignore — stale local data is fine */ });
+            setLookupError(false);
+            setIsLoading(false);
+            return;
           }
         } catch (e) {
           // ignore parse errors
+        }
+
+        // No localStorage fallback available
+        if (apiErrored) {
+          // DB was unreachable AND no cache — don't show registration
+          setLookupError(true);
+        } else {
+          // API succeeded with no match — genuinely new user
+          setLookupError(false);
         }
         setIsLoading(false);
       }
@@ -101,7 +119,7 @@ export function ViewerProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <ViewerContext.Provider value={{ viewer, setViewer, logout, isLoading }}>
+    <ViewerContext.Provider value={{ viewer, setViewer, logout, isLoading, lookupError }}>
       {children}
     </ViewerContext.Provider>
   );

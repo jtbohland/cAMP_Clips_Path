@@ -6,6 +6,7 @@ import { useViewer } from "@/components/ViewerContext";
 import ClipLibraryCard from "@/components/ClipLibraryCard";
 import PairedClipCard from "@/components/PairedClipCard";
 import RegistrationForm from "@/components/RegistrationForm";
+import MaintenancePage from "@/components/MaintenancePage";
 import XpProgressBar from "@/components/XpProgressBar";
 import WelcomeModal from "@/components/WelcomeModal";
 import SummitModal from "@/components/SummitModal";
@@ -42,7 +43,7 @@ function LoadingSkeleton() {
 export default function LibraryPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { viewer, isLoading: viewerLoading } = useViewer();
+  const { viewer, isLoading: viewerLoading, lookupError } = useViewer();
   const [showSummit, setShowSummit] = useState(false);
   const [tierUnlock, setTierUnlock] = useState<number | null>(null);
   const [showPacing, setShowPacing] = useState(false);
@@ -373,12 +374,17 @@ export default function LibraryPage() {
     return <LoadingSkeleton />;
   }
 
-  // 2. No viewer → registration (this is the ONLY path to RegistrationForm for real users)
+  // 2. No viewer + API error → maintenance page (DB unreachable, don't show registration)
+  if (!viewer && lookupError) {
+    return <MaintenancePage />;
+  }
+
+  // 3. No viewer + no error → genuinely new user → registration
   if (!viewer) {
     return <RegistrationForm />;
   }
 
-  // 3. Data still loading → skeleton (prevents ANY modal from rendering prematurely)
+  // 4. Data still loading → skeleton (prevents ANY modal from rendering prematurely)
   if (!dataReady) {
     return <LoadingSkeleton />;
   }
