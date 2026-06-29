@@ -25,6 +25,12 @@ type ClipLibraryCardProps = {
   onZoomClipReview?: () => void;
   zoomClipWatched?: boolean;
   onPodcasts?: () => void;
+  onBonusClip1Watch?: () => void;
+  onBonusClip1Review?: () => void;
+  bonusClip1Watched?: boolean;
+  onBonusClip2Watch?: () => void;
+  onBonusClip2Review?: () => void;
+  bonusClip2Watched?: boolean;
 };
 
 function getWeekLabel(weekNumber: number | null, sortOrder: number): string {
@@ -80,6 +86,9 @@ const WHEEL_AND_DEAL_SORT_ORDERS = new Set([3, 6, 9, 12, 15]);
 // Sort order 4 has an additional Zoom clip (Reachdesk) — shows extra button
 const REACHDESK_SORT_ORDER = 4;
 
+// Sort order 15 (Deal Desk & CPQ) has two bonus Wistia clips
+const DEAL_DESK_SORT_ORDER = 15;
+
 export default function ClipLibraryCard({
   clip,
   isLocked,
@@ -95,6 +104,12 @@ export default function ClipLibraryCard({
   onZoomClipReview,
   zoomClipWatched,
   onPodcasts,
+  onBonusClip1Watch,
+  onBonusClip1Review,
+  bonusClip1Watched,
+  onBonusClip2Watch,
+  onBonusClip2Review,
+  bonusClip2Watched,
 }: ClipLibraryCardProps) {
   const buttonState = getButtonState(isLocked, isCompleted, pausedElapsedSeconds);
 
@@ -200,6 +215,61 @@ export default function ClipLibraryCard({
                 className="w-full py-2.5 rounded-lg text-sm font-semibold bg-green-600 hover:bg-green-700 text-white transition-colors"
               >
                 🚣🏼‍♂️ Watch Clip
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Deal Desk Bonus Clips — sort order 15 only, unlocked when main clip is completed */}
+        {clip.sortOrder === DEAL_DESK_SORT_ORDER && buttonState === "report" && onBonusClip1Watch && (
+          <div className="border-t border-gray-100 pt-3 mt-1">
+            <p className="text-xs text-gray-500 flex items-center gap-1.5 flex-wrap mb-2">
+              <span>⏱️ 2m</span>
+              <span className="text-gray-300">·</span>
+              <span>🪧 0 Trail Markers</span>
+              <span className="text-gray-300">·</span>
+              <span>👀 View tracked in Wistia</span>
+            </p>
+            {bonusClip1Watched ? (
+              <button
+                onClick={(e) => { e.stopPropagation(); onBonusClip1Review ? onBonusClip1Review() : onBonusClip1Watch(); }}
+                className="w-full py-2.5 rounded-lg text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition-colors"
+              >
+                🗺️ Review Clip — How to Create a Support Case
+              </button>
+            ) : (
+              <button
+                onClick={(e) => { e.stopPropagation(); onBonusClip1Watch(); }}
+                className="w-full py-2.5 rounded-lg text-sm font-semibold bg-green-600 hover:bg-green-700 text-white transition-colors"
+              >
+                🚣🏼‍♂️ Watch Clip — How to Create a Support Case
+              </button>
+            )}
+          </div>
+        )}
+
+        {clip.sortOrder === DEAL_DESK_SORT_ORDER && buttonState === "report" && onBonusClip2Watch && (
+          <div className="border-t border-gray-100 pt-3 mt-1">
+            <p className="text-xs text-gray-500 flex items-center gap-1.5 flex-wrap mb-2">
+              <span>⏱️ 5m</span>
+              <span className="text-gray-300">·</span>
+              <span>🪧 0 Trail Markers</span>
+              <span className="text-gray-300">·</span>
+              <span>👀 View tracked in Wistia</span>
+            </p>
+            {bonusClip2Watched ? (
+              <button
+                onClick={(e) => { e.stopPropagation(); onBonusClip2Review ? onBonusClip2Review() : onBonusClip2Watch(); }}
+                className="w-full py-2.5 rounded-lg text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition-colors"
+              >
+                🗺️ Review Clip — Sales Stage 6.5
+              </button>
+            ) : (
+              <button
+                onClick={(e) => { e.stopPropagation(); onBonusClip2Watch(); }}
+                className="w-full py-2.5 rounded-lg text-sm font-semibold bg-green-600 hover:bg-green-700 text-white transition-colors"
+              >
+                🚣🏼‍♂️ Watch Clip — Sales Stage 6.5
               </button>
             )}
           </div>
