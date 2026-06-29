@@ -185,7 +185,7 @@ export default function TopicGearPage() {
           {/* Learning Objectives */}
           <div className="rounded-xl bg-white border border-gray-200 shadow-[0_1px_3px_rgba(0,0,0,0.08)] p-5">
             <h2 className="text-base font-bold text-gray-900 flex items-center gap-2 mb-3">
-              🎯 Learning Objectives
+              🏹 Learning Objectives
             </h2>
             <ol className="space-y-2">
               {config.learningObjectives.map((obj, i) => (
@@ -202,7 +202,7 @@ export default function TopicGearPage() {
           {/* SMEs */}
           <div className="rounded-xl bg-white border border-gray-200 shadow-[0_1px_3px_rgba(0,0,0,0.08)] p-5">
             <h2 className="text-base font-bold text-gray-900 flex items-center gap-2 mb-3">
-              🧑‍🏫 Subject Matter Experts
+              🧢 Subject Matter Experts
             </h2>
             <div className="space-y-2">
               {config.smes.map((sme) => (
