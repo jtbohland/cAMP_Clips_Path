@@ -1,52 +1,63 @@
 /**
  * Shared pacing logic for cAMP Ascent.
  *
- * Schedule: 15 weekdays → 17 clips. Each weekday = 1 topic-day from the
- * learner's ascent_day_1. Weekends (Sat / Sun) are skipped.
- * Days 5 and 9 are content-review days (no video clips).
+ * Schedule: 20 weekdays total = 5 weekdays (Week 1 "The Approach") + 15 weekdays ("The Ascent").
+ * Week 1 (weekdays 1–5): onboarding modules, no video clips.
+ * The Ascent (weekdays 6–20): 17 clips across 15 weekdays.
+ * Weekends (Sat / Sun) are skipped.
+ * Days 10 and 14 (Ascent days 5 & 9) are content-review days (no video clips).
  *
- * Topic-day mapping (sort_orders updated after Day 5/Day 9 topic day insertion):
- *   Weekday 1  → Day 1   (sort 1)         1 clip
- *   Weekday 2  → Day 2   (sort 2)         1 clip
- *   Weekday 3  → Day 3   (sort 3)         1 clip
- *   Weekday 4  → Day 4   (sort 4)         1 clip
- *   Weekday 5  → Day 5   (sort 5, TOPIC)  0 clips — resource review day
- *   Weekday 6  → Day 6   (sort 6)         1 clip
- *   Weekday 7  → Day 7   (sorts 7-8)      2 clips (a/b)
- *   Weekday 8  → Day 8   (sorts 9-10)     2 clips (a/b)
- *   Weekday 9  → Day 9   (sort 11, TOPIC) 0 clips — resource review day
- *   Weekday 10 → Day 10  (sort 12)        1 clip
- *   Weekday 11 → Day 11  (sorts 13-14)    2 clips (a/b)
- *   Weekday 12 → Day 12  (sort 15)        1 clip
- *   Weekday 13 → Day 13  (sort 16)        1 clip
- *   Weekday 14 → Day 14  (sort 17)        1 clip
- *   Weekday 15 → Day 15  (sorts 18-19)    2 clips (a/b)
+ * Week 1 pacing (The Approach — modules, not clips):
+ *   Weekday 1–5  → Complete MEDDPICC, cAMP 101, Challenger, Wheel & Deal
+ *
+ * Ascent pacing (weekdays 6–20, mapped to Ascent days 1–15):
+ *   Weekday 6   → Day 1   (sort 1)         1 clip
+ *   Weekday 7   → Day 2   (sort 2)         1 clip
+ *   Weekday 8   → Day 3   (sort 3)         1 clip
+ *   Weekday 9   → Day 4   (sort 4)         1 clip
+ *   Weekday 10  → Day 5   (sort 5, TOPIC)  0 clips — resource review day
+ *   Weekday 11  → Day 6   (sort 6)         1 clip
+ *   Weekday 12  → Day 7   (sorts 7-8)      2 clips (a/b)
+ *   Weekday 13  → Day 8   (sorts 9-10)     2 clips (a/b)
+ *   Weekday 14  → Day 9   (sort 11, TOPIC) 0 clips — resource review day
+ *   Weekday 15  → Day 10  (sort 12)        1 clip
+ *   Weekday 16  → Day 11  (sorts 13-14)    2 clips (a/b)
+ *   Weekday 17  → Day 12  (sort 15)        1 clip
+ *   Weekday 18  → Day 13  (sort 16)        1 clip
+ *   Weekday 19  → Day 14  (sort 17)        1 clip
+ *   Weekday 20  → Day 15  (sorts 18-19)    2 clips (a/b)
  */
 
-// Cumulative sessions (clips + topic days) expected after each weekday.
-// Since sort_orders are consecutive 1–19, this also equals the max sort_order
-// a learner should have completed through by that weekday.
+// Week 1 (The Approach) has no clip sessions — it's module-based.
+// The Ascent starts at weekday 6 and maps to the old weekday 1–15 clip schedule.
+// Cumulative clip sessions expected after each weekday (indices 0–20).
 const EXPECTED_SESSIONS_BY_WEEKDAY = [
   0,   // 0 weekdays elapsed
-  1,   // weekday 1  → Day 1   (sort 1)
-  2,   // weekday 2  → Day 2   (sort 2)
-  3,   // weekday 3  → Day 3   (sort 3)
-  4,   // weekday 4  → Day 4   (sort 4)
-  5,   // weekday 5  → Day 5   (sort 5, topic day)
-  6,   // weekday 6  → Day 6   (sort 6)
-  8,   // weekday 7  → Day 7   (sorts 7-8, a/b)
-  10,  // weekday 8  → Day 8   (sorts 9-10, a/b)
-  11,  // weekday 9  → Day 9   (sort 11, topic day)
-  12,  // weekday 10 → Day 10  (sort 12)
-  14,  // weekday 11 → Day 11  (sorts 13-14, a/b)
-  15,  // weekday 12 → Day 12  (sort 15)
-  16,  // weekday 13 → Day 13  (sort 16)
-  17,  // weekday 14 → Day 14  (sort 17)
-  19,  // weekday 15 → Day 15  (sorts 18-19, a/b — all done)
+  0,   // weekday 1  → Week 1 (Approach)
+  0,   // weekday 2  → Week 1 (Approach)
+  0,   // weekday 3  → Week 1 (Approach)
+  0,   // weekday 4  → Week 1 (Approach)
+  0,   // weekday 5  → Week 1 (Approach)
+  1,   // weekday 6  → Ascent Day 1  (sort 1)
+  2,   // weekday 7  → Ascent Day 2  (sort 2)
+  3,   // weekday 8  → Ascent Day 3  (sort 3)
+  4,   // weekday 9  → Ascent Day 4  (sort 4)
+  5,   // weekday 10 → Ascent Day 5  (sort 5, topic day)
+  6,   // weekday 11 → Ascent Day 6  (sort 6)
+  8,   // weekday 12 → Ascent Day 7  (sorts 7-8, a/b)
+  10,  // weekday 13 → Ascent Day 8  (sorts 9-10, a/b)
+  11,  // weekday 14 → Ascent Day 9  (sort 11, topic day)
+  12,  // weekday 15 → Ascent Day 10 (sort 12)
+  14,  // weekday 16 → Ascent Day 11 (sorts 13-14, a/b)
+  15,  // weekday 17 → Ascent Day 12 (sort 15)
+  16,  // weekday 18 → Ascent Day 13 (sort 16)
+  17,  // weekday 19 → Ascent Day 14 (sort 17)
+  19,  // weekday 20 → Ascent Day 15 (sorts 18-19, a/b — all done)
 ];
 
-const TOTAL_WEEKDAYS = 15;
+const TOTAL_WEEKDAYS = 20;
 const TOTAL_SESSIONS = 19;
+const WEEK1_WEEKDAYS = 5;
 
 // Legacy alias — some consumers still reference TOTAL_CLIPS
 const TOTAL_CLIPS = TOTAL_SESSIONS;
@@ -324,4 +335,35 @@ export function isDayBeforeSummitDay(summitDay: Date): boolean {
   return todayNorm.getTime() === prevWeekday.getTime();
 }
 
-export { TOTAL_CLIPS, TOTAL_SESSIONS, TOTAL_WEEKDAYS, EXPECTED_SESSIONS_BY_WEEKDAY };
+// --- Week 1 (The Approach) pacing ---
+
+export type Week1PacingStatus = 'on_track' | 'behind' | 'complete';
+
+/**
+ * Week 1 expected completion count by weekday:
+ *   Day 1: 2 items (MEDDPICC + 1 academy course)
+ *   Day 2: 4 items
+ *   Day 3: 5 items
+ *   Day 4: 6 items
+ *   Day 5: 7 items (all done — 3 modules + W&D = 4 sign-offs, but we track 7 granular items)
+ */
+const WEEK1_EXPECTED_BY_DAY = [0, 2, 4, 5, 6, 7];
+const WEEK1_TOTAL_ITEMS = 7; // 3 module signoffs + 4 academy screenshots... but W&D also needed
+
+/**
+ * Get Week 1 progress status.
+ * completedItems = number of completed items (module signoffs + academy screenshots + W&D)
+ * Max = 8 (3 modules + 4 academy + 1 W&D)
+ */
+export function getWeek1PacingStatus(
+  completedItems: number,
+  weekdaysElapsed: number,
+): Week1PacingStatus {
+  if (completedItems >= 8) return 'complete';
+  if (weekdaysElapsed <= 0) return 'on_track';
+  const day = Math.min(weekdaysElapsed, 5);
+  const expected = WEEK1_EXPECTED_BY_DAY[day] ?? 7;
+  return completedItems >= expected ? 'on_track' : 'behind';
+}
+
+export { TOTAL_CLIPS, TOTAL_SESSIONS, TOTAL_WEEKDAYS, WEEK1_WEEKDAYS, EXPECTED_SESSIONS_BY_WEEKDAY };

@@ -12,6 +12,7 @@ import EndSession from './v2/end-session.js';
 import GetAdminClips from './v2/get-admin-clips.js';
 import GetAnalyticsV2 from './v2/get-analytics.js';
 import GetAnalyticsV3 from './v2/get-analytics-v3.js';
+import GetWeek1Analytics from './v2/get-week1-analytics.js';
 import MigrateClipLabels from './v2/migrate-clip-labels.js';
 import GetClipForWatching from './v2/get-clip-for-watching.js';
 import GetClipLibrary from './v2/get-clip-library.js';
@@ -65,6 +66,12 @@ import SetupTopicDays from './v2/setup-topic-days.js';
 import TrackResourceClick from './v2/track-resource-click.js';
 import GetResourceProgress from './v2/get-resource-progress.js';
 import MigrateTimezoneDayLabels from './v2/migrate-timezone-daylabels.js';
+import SetupWeek1Schema from './v2/setup-week1-schema.js';
+import GetWeek1Progress from './v2/get-week1-progress.js';
+import SubmitModuleSignoff from './v2/submit-module-signoff.js';
+import SubmitAcademyScreenshot from './v2/submit-academy-screenshot.js';
+import SubmitWdVerification from './v2/submit-wd-verification.js';
+import UnlockAscent from './v2/unlock-ascent.js';
 
 
 const apis = {
@@ -132,6 +139,13 @@ ResetJTSessions,
   TrackResourceClick,
   GetResourceProgress,
   MigrateTimezoneDayLabels,
+  SetupWeek1Schema,
+  GetWeek1Progress,
+  SubmitModuleSignoff,
+  SubmitAcademyScreenshot,
+  SubmitWdVerification,
+  UnlockAscent,
+  GetWeek1Analytics,
 } as const;
 
 export default apis;

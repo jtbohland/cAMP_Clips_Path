@@ -15,6 +15,7 @@ import PacingModal from "@/components/PacingModal";
 import AnchorFailureModal from "@/components/AnchorFailureModal";
 import LightAnchorModal from "@/components/LightAnchorModal";
 import TrailManifesto from "@/components/TrailManifesto";
+import Week1Page from "@/components/week1/Week1Page";
 import {
   countWeekdays,
   getTopicDaysBehind,
@@ -52,6 +53,12 @@ export default function LibraryPage() {
   const [showAnchorEscalated, setShowAnchorEscalated] = useState(false);
   const pacingShownRef = useRef(false);
   const anchorCheckedRef = useRef(false);
+
+  // Tab state: "approach" (Week 1) vs "ascent" (existing clips)
+  const [activeTab, setActiveTab] = useState<"approach" | "ascent">("approach");
+
+  // Admin "Test as New Learner" toggle for The Ascent tab
+  const [ascentTestMode, setAscentTestMode] = useState(false);
 
   const { run: logClick } = useApi("LogPitchClick");
   const WHEEL_AND_DEAL_URL = "https://app.superblocks.com/code-mode/applications/fef97ebe-4fb9-401f-b97c-c52c1693b31b/";
@@ -173,7 +180,19 @@ export default function LibraryPage() {
     { enabled: !!viewer?.id }
   );
 
-  const clips = useMemo(() => data?.clips ?? [], [data]);
+  const rawClips = useMemo(() => data?.clips ?? [], [data]);
+
+  // In ascent test mode, reset all clips to fresh state (only clip 1 unlocked, none completed)
+  const clips = useMemo(() => {
+    if (!ascentTestMode) return rawClips;
+    return rawClips.map((c: any, i: number) => ({
+      ...c,
+      unlocked: i === 0,
+      completed: false,
+      xpEarned: 0,
+      pausedElapsedSeconds: 0,
+    }));
+  }, [rawClips, ascentTestMode]);
   const allCompleted = clips.length >= TOTAL_SESSIONS && clips.every((c: any) => c.completed);
 
   // A/B pair sort orders — updated after Day 5 + Day 9 topic day insertion
@@ -569,9 +588,69 @@ export default function LibraryPage() {
         </div>
       </div>
 
+      {/* Tab Bar */}
+      <div className="border-b border-green-900/20 bg-[#2D6A4F]">
+        <div className="flex max-w-4xl mx-auto w-full">
+          <button
+            onClick={() => setActiveTab("approach")}
+            className={`flex-1 py-2.5 text-sm font-semibold text-center transition-colors ${
+              activeTab === "approach"
+                ? "text-white border-b-2 border-white bg-white/10"
+                : "text-green-200/70 hover:text-white hover:bg-white/5"
+            }`}
+          >
+            🚡 The Approach
+          </button>
+          <button
+            onClick={() => setActiveTab("ascent")}
+            className={`flex-1 py-2.5 text-sm font-semibold text-center transition-colors ${
+              activeTab === "ascent"
+                ? "text-white border-b-2 border-white bg-white/10"
+                : "text-green-200/70 hover:text-white hover:bg-white/5"
+            }`}
+          >
+            🧗 The Ascent
+          </button>
+        </div>
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === "approach" ? (
+        <div className="flex-1 overflow-auto">
+          <Week1Page
+            viewerId={viewer.id}
+            viewerName={viewer.name}
+            isAdmin={viewer.isAdmin}
+            onBeginAscent={() => setActiveTab("ascent")}
+          />
+        </div>
+      ) : (
       <div className="flex flex-col gap-4 p-6 max-w-4xl mx-auto w-full flex-1 overflow-auto">
+        {/* Admin test mode toggle */}
+        {viewer.isAdmin && (
+          <div className="rounded-xl border border-purple-200 bg-purple-50 px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-sm">🔧</span>
+              <span className="text-sm font-semibold text-purple-900">Admin View</span>
+              <span className="text-xs text-purple-600">
+                {ascentTestMode ? "Showing fresh learner view" : "Showing your real progress"}
+              </span>
+            </div>
+            <button
+              onClick={() => setAscentTestMode((prev) => !prev)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                ascentTestMode
+                  ? "bg-purple-600 text-white hover:bg-purple-700"
+                  : "bg-white text-purple-700 border border-purple-300 hover:bg-purple-100"
+              }`}
+            >
+              {ascentTestMode ? "👁️ Show My Progress" : "🧪 Test as New Learner"}
+            </button>
+          </div>
+        )}
+
         {/* XP Progress Bar */}
-        <XpProgressBar />
+        {!ascentTestMode && <XpProgressBar />}
 
         {/* Welcome to the Trail — Weeks 2-4 manifesto */}
         <TrailManifesto viewerId={viewer.id} />
@@ -755,6 +834,7 @@ export default function LibraryPage() {
           </div>
         )}
       </div>
+      )}
     </div>
     </>
   );

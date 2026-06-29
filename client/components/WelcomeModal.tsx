@@ -164,7 +164,7 @@ export default function WelcomeModal({ viewerId, onDismiss }: WelcomeModalProps)
             onClick={handleBeginAscent}
             className="w-full py-3.5 rounded-lg text-sm font-bold bg-indigo-600 hover:bg-indigo-700 text-white transition-colors shadow-md"
           >
-            🌄 Begin Your Ascent
+            🚡 Start Your Journey
           </button>
         </div>
       </div>

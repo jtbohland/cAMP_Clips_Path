@@ -42,7 +42,7 @@ export default function TrailManifesto({ viewerId }: TrailManifestoProps) {
         className="w-full py-3 rounded-xl text-sm font-bold text-white transition-all shadow-[0_1px_3px_rgba(0,0,0,0.08)] hover:shadow-md hover:brightness-125"
         style={{ backgroundColor: "#1B4332" }}
       >
-        🔦 Welcome to the Trail — Weeks 2 through 4
+        🔦 Welcome to the Ascent — Weeks 2 through 4
       </button>
     );
   }
@@ -55,7 +55,7 @@ export default function TrailManifesto({ viewerId }: TrailManifestoProps) {
         style={{ backgroundColor: "#1B4332" }}
       >
         <h2 className="text-lg font-bold text-white">
-          🔦 Welcome to the Trail — Weeks 2 through 4
+          🔦 Welcome to the Ascent — Weeks 2 through 4
         </h2>
         <p className="text-sm text-emerald-200 mt-1">
           You made it through Week 1. The gear is packed, the map is in hand, and now it's time to hit the trail. 🥾
