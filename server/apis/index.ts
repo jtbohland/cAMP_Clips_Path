@@ -60,6 +60,9 @@ import AwardPodcastXp from './v2/award-podcast-xp.js';
 import FixGabiDate from './v2/fix-gabi-date.js';
 import AddBelayBuddyColumn from './v2/add-belay-buddy-column.js';
 import RemoveDealDeskZoomClips from './v2/remove-deal-desk-zoom-clips.js';
+import SetupTopicDays from './v2/setup-topic-days.js';
+import TrackResourceClick from './v2/track-resource-click.js';
+import GetResourceProgress from './v2/get-resource-progress.js';
 
 
 const apis = {
@@ -122,6 +125,9 @@ ResetJTSessions,
   FixGabiDate,
   AddBelayBuddyColumn,
   RemoveDealDeskZoomClips,
+  SetupTopicDays,
+  TrackResourceClick,
+  GetResourceProgress,
 } as const;
 
 export default apis;

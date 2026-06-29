@@ -33,12 +33,12 @@ export default api({
            )
          )
        )
-       WHERE sort_order = 15`,
+       WHERE sort_order = 17`,
       undefined,
       { label: "Remove bonus Zoom clips from Deal Desk resources" }
     );
 
-    ctx.log.info("Removed bonus Zoom clips from Deal Desk (sort_order 15) resources");
+    ctx.log.info("Removed bonus Zoom clips from Deal Desk (sort_order 17) resources");
     return { success: true, removedCount: 2 };
   },
 });
