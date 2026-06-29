@@ -45,8 +45,73 @@ const MANAGERS = [
 
 function getTodayString(): string {
   const d = new Date();
-  return d.toISOString().split("T")[0]; // YYYY-MM-DD
+  return d.toISOString().split("T")[0];
 }
+
+/* ─── Welcome Memo Tiles (Left Column) ─── */
+
+function WelcomeMemoTile1() {
+  return (
+    <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+      {/* Header */}
+      <div className="px-5 py-3 flex items-center gap-2" style={{ backgroundColor: "#1B4332" }}>
+        <span className="text-lg">🏕️</span>
+        <h3 className="text-sm font-bold text-white">A Welcome From Your Enablement Manager</h3>
+      </div>
+      {/* Body */}
+      <div className="px-5 py-4 bg-white text-sm text-gray-700 space-y-3 leading-relaxed">
+        <p>
+          Hello fellow Ampliteer 👋🏻! I'm <strong>JT Bohland</strong> (Chicago) — Sr. Global Enablement
+          Program Manager for Sales at Amplitude. I support SDRs, AEs, and PSMs worldwide through
+          onboarding and everboarding.
+        </p>
+        <p>
+          <strong>cAMP Ascent: Sales</strong> is your role-specific onboarding path designed to ramp
+          you as an SDR, AE, or PSM on how we sell, operate, and win at Amplitude.
+        </p>
+        <div>
+          <p className="font-semibold text-gray-800 mb-1">Your journey:</p>
+          <ol className="list-decimal list-inside space-y-1 text-gray-600">
+            <li><strong style={{ color: "#6366F1" }}>Base cAMP + Pathfinder</strong> — learn Amplitude, products, core GTM</li>
+            <li><strong style={{ color: "#6366F1" }}>cAMP Ascent</strong> — 4 weeks of SDR/AE/PSM skills, tools &amp; process (this guide)</li>
+            <li><strong style={{ color: "#6366F1" }}>cAMP 101: Product Training</strong> — deepen product &amp; technical fluency</li>
+            <li><strong style={{ color: "#6366F1" }}>cAMP 201 in San Francisco</strong> — in-person capstone</li>
+          </ol>
+        </div>
+        <p>
+          Ascent is <strong style={{ color: "#DC2626" }}>~32 hours over 4–5 weeks</strong> (~1h 15m/day). Block calendar time to
+          stay on pace.
+        </p>
+        <p className="text-gray-500 italic">Questions? Slack me anytime.</p>
+      </div>
+    </div>
+  );
+}
+
+function WelcomeMemoTile2() {
+  return (
+    <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+      {/* Header */}
+      <div className="px-5 py-3 flex items-center gap-2" style={{ backgroundColor: "#1B4332" }}>
+        <span className="text-lg">🪢</span>
+        <h3 className="text-sm font-bold text-white">Meet Your Belay Buddy</h3>
+      </div>
+      {/* Body */}
+      <div className="px-5 py-4 bg-white text-sm text-gray-700 space-y-3 leading-relaxed">
+        <p>
+          Your <strong>Belay Buddy</strong> is your go-to mentor through onboarding — you'll meet
+          with them regularly. Take advantage of their experience as an Ampliteer and as an SDR, AE, or
+          PSM.
+        </p>
+        <p style={{ color: "#DC2626" }} className="font-semibold">
+          If you haven't been assigned a Belay Buddy yet, ask your manager.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Main Registration Form Component ─── */
 
 export default function RegistrationForm() {
   const { setViewer } = useViewer();
@@ -55,6 +120,7 @@ export default function RegistrationForm() {
   const [role, setRole] = useState("");
   const [managerName, setManagerName] = useState("");
   const [managerEmail, setManagerEmail] = useState("");
+  const [belayBuddy, setBelayBuddy] = useState("");
   const [ascentDay1, setAscentDay1] = useState(getTodayString());
   const { run: registerViewer, loading } = useApi("RegisterViewer");
   const [showWelcome, setShowWelcome] = useState(false);
@@ -63,7 +129,15 @@ export default function RegistrationForm() {
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
-      if (!name.trim() || !email.trim() || !role || !managerName.trim() || !managerEmail.trim() || !ascentDay1) {
+      if (
+        !name.trim() ||
+        !email.trim() ||
+        !role ||
+        !managerName.trim() ||
+        !managerEmail.trim() ||
+        !belayBuddy.trim() ||
+        !ascentDay1
+      ) {
         toast.error("Please fill in all fields");
         return;
       }
@@ -74,12 +148,12 @@ export default function RegistrationForm() {
           role,
           managerName: managerName.trim(),
           managerEmail: managerEmail.trim().toLowerCase(),
+          belayBuddy: belayBuddy.trim(),
           ascentDay1,
         });
         if (result?.viewer) {
           setViewer(result.viewer);
           if (result.isNew) {
-            // New registration — show welcome modal
             setRegisteredViewerId(result.viewer.id);
             setShowWelcome(true);
           } else {
@@ -94,7 +168,7 @@ export default function RegistrationForm() {
         toast.error("Registration failed: " + message);
       }
     },
-    [name, email, role, managerName, managerEmail, ascentDay1, registerViewer, setViewer]
+    [name, email, role, managerName, managerEmail, belayBuddy, ascentDay1, registerViewer, setViewer]
   );
 
   // After registration, show welcome modal
@@ -107,130 +181,172 @@ export default function RegistrationForm() {
     );
   }
 
+  const selectClasses =
+    "w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 appearance-none bg-white bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%236B7280%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M6%209l6%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[length:16px] bg-[right_10px_center] bg-no-repeat";
+
+  const inputClasses =
+    "w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20";
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-md mx-4 rounded-2xl bg-white p-8 shadow-2xl">
-        {/* Header */}
-        <div className="mb-6 text-center">
-          <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-amber-100">
-            <span className="text-4xl">🏕️</span>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm overflow-y-auto py-6">
+      <div className="w-full max-w-5xl mx-4 grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6 items-start">
+        {/* ─── LEFT COLUMN: Welcome Memos ─── */}
+        <div className="space-y-4">
+          {/* Callout banner */}
+          <div className="flex items-center gap-2 rounded-lg bg-amber-50 border border-amber-200 px-4 py-2.5">
+            <span className="text-base">📌</span>
+            <span className="text-sm font-bold text-amber-800">
+              Please Read BEFORE Registering
+            </span>
           </div>
-          <h2 className="text-2xl font-bold text-gray-900">Welcome to cAMP Ascent</h2>
-          <p className="mt-2 text-sm text-gray-500">
-            Enter your info to begin your training journey through the trails.
-          </p>
+
+          <WelcomeMemoTile1 />
+          <WelcomeMemoTile2 />
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Full Name */}
-          <div className="space-y-1.5">
-            <label htmlFor="reg-name" className="block text-sm font-medium text-gray-700">
-              Full Name
-            </label>
-            <input
-              id="reg-name"
-              type="text"
-              placeholder="Jane Smith"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-            />
-          </div>
-
-          {/* Email */}
-          <div className="space-y-1.5">
-            <label htmlFor="reg-email" className="block text-sm font-medium text-gray-700">
-              Email
-            </label>
-            <input
-              id="reg-email"
-              type="email"
-              placeholder="jane@amplitude.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-            />
-          </div>
-
-          {/* Role — native <select> */}
-          <div className="space-y-1.5">
-            <label htmlFor="reg-role" className="block text-sm font-medium text-gray-700">
-              Role
-            </label>
-            <select
-              id="reg-role"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              required
-              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 appearance-none bg-white bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%236B7280%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M6%209l6%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[length:16px] bg-[right_10px_center] bg-no-repeat"
-            >
-              <option value="" disabled>
-                Select your role
-              </option>
-              {ROLES.map((r) => (
-                <option key={r} value={r}>
-                  {r}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Manager */}
-          <div className="space-y-1.5">
-            <label htmlFor="reg-manager" className="block text-sm font-medium text-gray-700">
-              Manager
-            </label>
-            <select
-              id="reg-manager"
-              value={managerName}
-              onChange={(e) => {
-                const selected = MANAGERS.find((m) => m.name === e.target.value);
-                setManagerName(selected?.name ?? "");
-                setManagerEmail(selected?.email ?? "");
-              }}
-              required
-              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 appearance-none bg-white bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%236B7280%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M6%209l6%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[length:16px] bg-[right_10px_center] bg-no-repeat"
-            >
-              <option value="" disabled>
-                Select your manager
-              </option>
-              {MANAGERS.map((m) => (
-                <option key={m.email} value={m.name}>
-                  {m.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Day 1 of Ascent */}
-          <div className="space-y-1.5">
-            <label htmlFor="reg-day1" className="block text-sm font-medium text-gray-700">
-              Day 1 of Ascent
-            </label>
-            <input
-              id="reg-day1"
-              type="date"
-              value={ascentDay1}
-              readOnly
-              tabIndex={-1}
-              className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-600 cursor-not-allowed"
-            />
-            <p className="text-xs text-amber-600 font-medium">
-              ⚠️ Defaults to today. Do not click "Start the Ascent" if you are not ready to begin!
+        {/* ─── RIGHT COLUMN: Registration Form ─── */}
+        <div className="rounded-2xl bg-white p-6 shadow-2xl">
+          {/* Header */}
+          <div className="mb-5 text-center">
+            <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-full bg-amber-100">
+              <span className="text-3xl">🏕️</span>
+            </div>
+            <h2 className="text-xl font-bold text-gray-900">Welcome to cAMP Ascent</h2>
+            <p className="mt-1 text-xs text-gray-500">
+              Enter your info to begin your training journey.
             </p>
           </div>
 
-          {/* Submit CTA */}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 rounded-lg text-sm font-bold bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white transition-colors shadow-md"
-          >
-            {loading ? "Hitting the trail..." : "🥾 Start the Ascent"}
-          </button>
-        </form>
+          <form onSubmit={handleSubmit} className="space-y-3.5">
+            {/* Full Name */}
+            <div className="space-y-1">
+              <label htmlFor="reg-name" className="block text-sm font-medium text-gray-700">
+                Full Name
+              </label>
+              <input
+                id="reg-name"
+                type="text"
+                placeholder="Jane Smith"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                className={inputClasses}
+              />
+            </div>
+
+            {/* Email */}
+            <div className="space-y-1">
+              <label htmlFor="reg-email" className="block text-sm font-medium text-gray-700">
+                Email
+              </label>
+              <input
+                id="reg-email"
+                type="email"
+                placeholder="jane@amplitude.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className={inputClasses}
+              />
+            </div>
+
+            {/* Role */}
+            <div className="space-y-1">
+              <label htmlFor="reg-role" className="block text-sm font-medium text-gray-700">
+                Role
+              </label>
+              <select
+                id="reg-role"
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                required
+                className={selectClasses}
+              >
+                <option value="" disabled>
+                  Select your role
+                </option>
+                {ROLES.map((r) => (
+                  <option key={r} value={r}>
+                    {r}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Manager */}
+            <div className="space-y-1">
+              <label htmlFor="reg-manager" className="block text-sm font-medium text-gray-700">
+                Manager
+              </label>
+              <select
+                id="reg-manager"
+                value={managerName}
+                onChange={(e) => {
+                  const selected = MANAGERS.find((m) => m.name === e.target.value);
+                  setManagerName(selected?.name ?? "");
+                  setManagerEmail(selected?.email ?? "");
+                }}
+                required
+                className={selectClasses}
+              >
+                <option value="" disabled>
+                  Select your manager
+                </option>
+                {MANAGERS.map((m) => (
+                  <option key={m.email} value={m.name}>
+                    {m.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Belay Buddy */}
+            <div className="space-y-1">
+              <label htmlFor="reg-belay" className="block text-sm font-medium text-gray-700">
+                Belay Buddy
+              </label>
+              <input
+                id="reg-belay"
+                type="text"
+                placeholder="First and last name"
+                value={belayBuddy}
+                onChange={(e) => setBelayBuddy(e.target.value)}
+                required
+                className={inputClasses}
+              />
+              <p className="text-xs text-gray-500">
+                If your manager has decided to be your mentor, type their name in.
+              </p>
+            </div>
+
+            {/* Day 1 of Ascent */}
+            <div className="space-y-1">
+              <label htmlFor="reg-day1" className="block text-sm font-medium text-gray-700">
+                Day 1 of Ascent
+              </label>
+              <input
+                id="reg-day1"
+                type="date"
+                value={ascentDay1}
+                readOnly
+                tabIndex={-1}
+                className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-600 cursor-not-allowed"
+              />
+              <p className="text-xs text-amber-600 font-medium">
+                ⚠️ Defaults to today. Do not click "Start the Ascent" if you are not ready to begin!
+              </p>
+            </div>
+
+            {/* Submit CTA */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 rounded-lg text-sm font-bold bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white transition-colors shadow-md mt-1"
+            >
+              {loading ? "Hitting the trail..." : "🥾 Start the Ascent"}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );
