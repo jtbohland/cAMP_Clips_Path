@@ -4,6 +4,12 @@ import { useViewer } from "@/components/ViewerContext";
 import { toast } from "sonner";
 import WelcomeModal from "@/components/WelcomeModal";
 
+const TIMEZONES = [
+  { value: "NAMER", label: "NAMER (Americas)" },
+  { value: "EMEA", label: "EMEA (Europe, Middle East & Africa)" },
+  { value: "AAPJ", label: "AAPJ (Asia, Australia, Pacific & Japan)" },
+] as const;
+
 const ROLES = [
   "SDR",
   "Velocity AE",
@@ -117,6 +123,7 @@ export default function RegistrationForm() {
   const { setViewer } = useViewer();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [timezone, setTimezone] = useState("");
   const [role, setRole] = useState("");
   const [managerName, setManagerName] = useState("");
   const [managerEmail, setManagerEmail] = useState("");
@@ -132,6 +139,7 @@ export default function RegistrationForm() {
       if (
         !name.trim() ||
         !email.trim() ||
+        !timezone ||
         !role ||
         !managerName.trim() ||
         !managerEmail.trim() ||
@@ -146,6 +154,7 @@ export default function RegistrationForm() {
           email: email.trim().toLowerCase(),
           name: name.trim(),
           role,
+          timezone,
           managerName: managerName.trim(),
           managerEmail: managerEmail.trim().toLowerCase(),
           belayBuddy: belayBuddy.trim(),
@@ -168,7 +177,7 @@ export default function RegistrationForm() {
         toast.error("Registration failed: " + message);
       }
     },
-    [name, email, role, managerName, managerEmail, belayBuddy, ascentDay1, registerViewer, setViewer]
+    [name, email, timezone, role, managerName, managerEmail, belayBuddy, ascentDay1, registerViewer, setViewer]
   );
 
   // After registration, show welcome modal
@@ -248,6 +257,29 @@ export default function RegistrationForm() {
                 required
                 className={inputClasses}
               />
+            </div>
+
+            {/* Timezone */}
+            <div className="space-y-1">
+              <label htmlFor="reg-timezone" className="block text-sm font-medium text-gray-700">
+                Timezone Region
+              </label>
+              <select
+                id="reg-timezone"
+                value={timezone}
+                onChange={(e) => setTimezone(e.target.value)}
+                required
+                className={selectClasses}
+              >
+                <option value="" disabled>
+                  Select your timezone region
+                </option>
+                {TIMEZONES.map((tz) => (
+                  <option key={tz.value} value={tz.value}>
+                    {tz.label}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* Role */}

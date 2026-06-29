@@ -41,9 +41,9 @@ type PairedClipCardProps = {
 };
 
 // Clips that show the cAMP Quiz button
-const CAMP_QUIZ_SORT_ORDERS = new Set([1, 2, 3, 4, 5, 7, 9, 10, 12, 13, 14, 15, 17]);
+const CAMP_QUIZ_SORT_ORDERS = new Set([1, 2, 3, 4, 5, 6, 8, 10, 11, 12, 14, 15, 16, 17, 19]);
 // Clips that show the Wheel & Deal practice button
-const WHEEL_AND_DEAL_SORT_ORDERS = new Set([3, 6, 9, 12, 15]);
+const WHEEL_AND_DEAL_SORT_ORDERS = new Set([3, 7, 10, 14, 17]);
 
 type ButtonState = "watch" | "resume" | "report" | "locked";
 
@@ -72,10 +72,10 @@ function getDayLabel(dayLabel: string | null, sortOrder: number): string {
 
 /** For paired cards, map sort orders to the clean day number (no A/B suffix) */
 const PAIRED_DAY_MAP: Record<number, number> = {
-  6: 7, 7: 7,
-  8: 8, 9: 8,
-  11: 11, 12: 11,
-  16: 15, 17: 15,
+  7: 7, 8: 7,
+  9: 8, 10: 8,
+  13: 11, 14: 11,
+  18: 15, 19: 15,
 };
 
 function getPairedDayLabel(sortOrder: number): string {

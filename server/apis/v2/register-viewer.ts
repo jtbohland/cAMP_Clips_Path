@@ -29,6 +29,7 @@ export default api({
     managerName: z.string().min(1),
     managerEmail: z.string().email(),
     belayBuddy: z.string().min(1),
+    timezone: z.string().min(1),
   }),
 
   output: z.object({
@@ -36,7 +37,7 @@ export default api({
     isNew: z.boolean(),
   }),
 
-  async run(ctx, { email, name, role, ascentDay1, managerName, managerEmail, belayBuddy }) {
+  async run(ctx, { email, name, role, ascentDay1, managerName, managerEmail, belayBuddy, timezone }) {
     // Check if viewer already exists
     const existing = await ctx.integrations.db.query(
       "SELECT id, email, name, role, ascent_day_1::text as \"ascentDay1\", COALESCE(is_admin, false) as \"isAdmin\" FROM cliptracker_v2_viewers WHERE email = $1",
@@ -56,11 +57,11 @@ export default api({
 
     // Create new viewer
     const created = await ctx.integrations.db.query(
-      `INSERT INTO cliptracker_v2_viewers (email, name, role, ascent_day_1, manager_name, manager_email, belay_buddy)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO cliptracker_v2_viewers (email, name, role, ascent_day_1, manager_name, manager_email, belay_buddy, timezone)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING id, email, name, role, ascent_day_1::text as "ascentDay1", COALESCE(is_admin, false) as "isAdmin"`,
       ViewerSchema,
-      [email, name, role, ascentDay1, managerName, managerEmail, belayBuddy],
+      [email, name, role, ascentDay1, managerName, managerEmail, belayBuddy, timezone],
       { label: "Register new viewer" }
     );
 

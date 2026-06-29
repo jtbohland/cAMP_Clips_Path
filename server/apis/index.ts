@@ -63,6 +63,7 @@ import RemoveDealDeskZoomClips from './v2/remove-deal-desk-zoom-clips.js';
 import SetupTopicDays from './v2/setup-topic-days.js';
 import TrackResourceClick from './v2/track-resource-click.js';
 import GetResourceProgress from './v2/get-resource-progress.js';
+import MigrateTimezoneDayLabels from './v2/migrate-timezone-daylabels.js';
 
 
 const apis = {
@@ -128,6 +129,7 @@ ResetJTSessions,
   SetupTopicDays,
   TrackResourceClick,
   GetResourceProgress,
+  MigrateTimezoneDayLabels,
 } as const;
 
 export default apis;

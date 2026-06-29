@@ -60,7 +60,7 @@ export const TOPIC_DAYS: Record<string, TopicDayConfig> = {
         label: "Sales Operating Cadence & Manager Playbook (2026)",
         url: "https://docs.google.com/presentation/d/1CQLqFWy3M6JiprYlgNh8FelgJorPT-eZ_uvpg3F0IFE/edit?slide=id.ge0112cd95c_5_4#slide=id.ge0112cd95c_5_4",
         type: "slides",
-        emoji: "🐙",
+        emoji: "💻",
         note: "Renewals: pages 10, 21, 27, 32, 33, 40",
       },
       {
@@ -71,16 +71,16 @@ export const TOPIC_DAYS: Record<string, TopicDayConfig> = {
         note: "Renewals: pages 6, 7, 9, 22",
       },
       {
-        label: "Customer Engagement Model (CEM) – Renewal Motion",
-        url: "https://docs.google.com/document/d/1VxMWNbIWWEtJwuhNibKHUCsbOsCQqVFcin8vrZkeKZw/edit?tab=t.0#heading=h.k0bsvsa98x07",
-        type: "gdrive",
-        emoji: "📓",
-      },
-      {
         label: "2026 Sales Finance & PPL Enablement Deck",
         url: "https://app.spekit.co/app/wiki/asset/101068d2-21c1-4d12-9f66-ab1f7fda4e8b?type=asset&expanded=true",
         type: "spekit",
-        emoji: "📓",
+        emoji: "🐙",
+      },
+      {
+        label: "Customer Engagement Model (CEM) – Renewal Motion",
+        url: "https://docs.google.com/document/d/1VxMWNbIWWEtJwuhNibKHUCsbOsCQqVFcin8vrZkeKZw/edit?tab=t.0#heading=h.k0bsvsa98x07",
+        type: "gdrive",
+        emoji: "📑",
       },
       {
         label: "Renewal Readiness Dashboard (SFDC)",
@@ -117,22 +117,22 @@ export const TOPIC_DAYS: Record<string, TopicDayConfig> = {
         emoji: "🧠",
       },
       {
-        label: "2026 Sales Finance & PPL Enablement Deck",
-        url: "https://app.spekit.co/app/wiki/asset/101068d2-21c1-4d12-9f66-ab1f7fda4e8b?type=asset&expanded=true",
-        type: "spekit",
-        emoji: "📓",
-      },
-      {
         label: "2026 Proposal Template",
         url: "https://docs.google.com/presentation/d/1jhDGkH9jdm1mYj1b179mAn6pkphmCiStresnsAvKtQs/edit?slide=id.g3ca72f6abd4_1_2017#slide=id.g3ca72f6abd4_1_2017",
         type: "slides",
-        emoji: "📓",
+        emoji: "💻",
       },
       {
         label: "Pricing Scenario Exercise (for AEs & Partners)",
         url: "https://docs.google.com/presentation/d/1U44Rs5ZGuNiORIzteK-W1n0EN3HPDvnXXEHMOLbemUc/edit?slide=id.g342929c60aa_0_229#slide=id.g342929c60aa_0_229",
         type: "slides",
         emoji: "💻",
+      },
+      {
+        label: "2026 Sales Finance & PPL Enablement Deck",
+        url: "https://app.spekit.co/app/wiki/asset/101068d2-21c1-4d12-9f66-ab1f7fda4e8b?type=asset&expanded=true",
+        type: "spekit",
+        emoji: "🐙",
       },
     ],
     dealDeskNote: "For pricing/quoting help on 2026 PPL, open a case with Deal Desk from the associated opportunity in Salesforce.",
