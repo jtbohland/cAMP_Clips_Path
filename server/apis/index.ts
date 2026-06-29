@@ -59,6 +59,7 @@ import GetPodcastProgress from './v2/get-podcast-progress.js';
 import AwardPodcastXp from './v2/award-podcast-xp.js';
 import FixGabiDate from './v2/fix-gabi-date.js';
 import AddBelayBuddyColumn from './v2/add-belay-buddy-column.js';
+import RemoveDealDeskZoomClips from './v2/remove-deal-desk-zoom-clips.js';
 
 
 const apis = {
@@ -120,6 +121,7 @@ ResetJTSessions,
   AwardPodcastXp,
   FixGabiDate,
   AddBelayBuddyColumn,
+  RemoveDealDeskZoomClips,
 } as const;
 
 export default apis;

@@ -32,6 +32,13 @@ export const router = createBrowserRouter([
           })),
       },
       {
+        path: "/bonus-watch/:clipKey",
+        lazy: () =>
+          import("./pages/BonusWatch/index.js").then((mod) => ({
+            Component: mod.default,
+          })),
+      },
+      {
         path: "/clip/:clipId",
         lazy: () =>
           import("./pages/DeepLink/index.js").then((mod) => ({

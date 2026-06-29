@@ -85,6 +85,40 @@ export default function LibraryPage() {
     navigate("/report/reachdesk");
   }, [viewer?.id, logClick, reachdeskStorageKey, navigate]);
 
+  // Deal Desk bonus clips (sort order 15) — tracked via localStorage
+  const bonus1StorageKey = viewer?.id ? `deal_desk_bonus1_watched_${viewer.id}` : null;
+  const bonus2StorageKey = viewer?.id ? `deal_desk_bonus2_watched_${viewer.id}` : null;
+  const [bonus1Watched, setBonus1Watched] = useState(() => {
+    if (!bonus1StorageKey) return false;
+    return localStorage.getItem(bonus1StorageKey) === "true";
+  });
+  const [bonus2Watched, setBonus2Watched] = useState(() => {
+    if (!bonus2StorageKey) return false;
+    return localStorage.getItem(bonus2StorageKey) === "true";
+  });
+  const handleBonusClip1Watch = useCallback(() => {
+    navigate("/bonus-watch/support-case");
+  }, [navigate]);
+  const handleBonusClip1Review = useCallback(() => {
+    navigate("/bonus-watch/support-case");
+  }, [navigate]);
+  const handleBonusClip2Watch = useCallback(() => {
+    navigate("/bonus-watch/stage-65");
+  }, [navigate]);
+  const handleBonusClip2Review = useCallback(() => {
+    navigate("/bonus-watch/stage-65");
+  }, [navigate]);
+
+  // Sync bonus clip watched state when viewer changes (e.g. coming back from BonusWatch page)
+  useEffect(() => {
+    if (bonus1StorageKey && localStorage.getItem(bonus1StorageKey) === "true") {
+      setBonus1Watched(true);
+    }
+    if (bonus2StorageKey && localStorage.getItem(bonus2StorageKey) === "true") {
+      setBonus2Watched(true);
+    }
+  }, [bonus1StorageKey, bonus2StorageKey]);
+
   // Preview params — only honored on in-editor navigation, NOT on initial page load.
   // On first load, strip test params from URL so "view deployed app" can never carry them.
   const isInitialLoad = useRef(true);
@@ -686,6 +720,12 @@ export default function LibraryPage() {
                           onZoomClipReview={clip.sortOrder === 4 ? () => navigate(`/report/reachdesk`) : undefined}
                           zoomClipWatched={clip.sortOrder === 4 ? reachdeskWatched : undefined}
                           onPodcasts={clip.sortOrder === 13 ? () => navigate("/podcasts") : undefined}
+                          onBonusClip1Watch={clip.sortOrder === 15 ? handleBonusClip1Watch : undefined}
+                          onBonusClip1Review={clip.sortOrder === 15 ? handleBonusClip1Review : undefined}
+                          bonusClip1Watched={clip.sortOrder === 15 ? bonus1Watched : undefined}
+                          onBonusClip2Watch={clip.sortOrder === 15 ? handleBonusClip2Watch : undefined}
+                          onBonusClip2Review={clip.sortOrder === 15 ? handleBonusClip2Review : undefined}
+                          bonusClip2Watched={clip.sortOrder === 15 ? bonus2Watched : undefined}
                         />
                       );
                     });
