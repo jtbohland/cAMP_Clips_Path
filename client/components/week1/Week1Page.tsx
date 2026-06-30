@@ -273,7 +273,7 @@ export default function Week1Page({ viewerId, viewerName, isAdmin, onBeginAscent
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-colors"
               >
-                <span>🐙</span> Spekit <span className="ml-1 text-[10px] opacity-70">⛺ cAMP Gear</span>
+                <span>🐙</span> Spekit ↗ <span className="ml-1 text-[10px] opacity-70">⛺ cAMP Gear</span>
               </a>
             </div>
           </div>

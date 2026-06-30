@@ -70,7 +70,7 @@ export default function WheelDealCard({ isVerified, verificationData, isLegacy, 
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 text-sm font-medium hover:bg-emerald-100 transition-colors"
           >
-            🎡 Open Wheel & Deal
+            🎡 Open Wheel & Deal ↗
           </a>
         </div>
 
