@@ -72,6 +72,20 @@ import SubmitModuleSignoff from './v2/submit-module-signoff.js';
 import SubmitAcademyScreenshot from './v2/submit-academy-screenshot.js';
 import SubmitWdVerification from './v2/submit-wd-verification.js';
 import UnlockAscent from './v2/unlock-ascent.js';
+import SetupCheckinSchema from './v2/setup-checkin-schema.js';
+import GetCheckinStatus from './v2/get-checkin-status.js';
+import MarkCheckinSent from './v2/mark-checkin-sent.js';
+import GetCheckinEmailData from './v2/get-checkin-email-data.js';
+import MarkFirstAchievement from './v2/mark-first-achievement.js';
+import SubmitTopicReflection from './v2/submit-topic-reflection.js';
+import GetTopicReflections from './v2/get-topic-reflections.js';
+import SubmitManagerFeedback from './v2/submit-manager-feedback.js';
+import GetManagerFeedback from './v2/get-manager-feedback.js';
+import GetSherpaSurveys from './v2/get-sherpa-surveys.js';
+import GetLearnerReflections from './v2/get-learner-reflections.js';
+import SetupCheckinColumn from './v2/setup-checkin-column.js';
+import SetupLoginTracking from './v2/setup-login-tracking.js';
+import TrackLogin from './v2/track-login.js';
 
 
 const apis = {
@@ -146,6 +160,20 @@ ResetJTSessions,
   SubmitWdVerification,
   UnlockAscent,
   GetWeek1Analytics,
+  SetupCheckinSchema,
+  GetCheckinStatus,
+  MarkCheckinSent,
+  GetCheckinEmailData,
+  MarkFirstAchievement,
+  SubmitTopicReflection,
+  GetTopicReflections,
+  SubmitManagerFeedback,
+  GetManagerFeedback,
+  GetSherpaSurveys,
+  GetLearnerReflections,
+  SetupCheckinColumn,
+  SetupLoginTracking,
+  TrackLogin,
 } as const;
 
 export default apis;

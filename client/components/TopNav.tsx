@@ -19,7 +19,7 @@ export default function TopNav() {
 
   // Sub-pages (XP, Analytics, Admin) now render their own PageHeader.
   // Watch has its own custom header. Only Library shows the tab bar.
-  const isSubPage = ["/xp", "/analytics", "/admin"].includes(location.pathname)
+  const isSubPage = ["/xp", "/analytics", "/admin", "/modal-museum"].includes(location.pathname)
     || location.pathname.startsWith("/report/");
   const isWatchPage = location.pathname.startsWith("/watch/");
   const showTabs = !isSubPage && !isWatchPage;

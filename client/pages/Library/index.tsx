@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import { useNavigate, useSearchParams } from "react-router";
 import { useApiData } from "@/hooks/useApiData.js";
 import { useApi } from "@/hooks/useApi.js";
@@ -9,12 +10,14 @@ import RegistrationForm from "@/components/RegistrationForm";
 import MaintenancePage from "@/components/MaintenancePage";
 import XpProgressBar from "@/components/XpProgressBar";
 import WelcomeModal from "@/components/WelcomeModal";
-import SummitModal from "@/components/SummitModal";
+
 import TierUnlockModal from "@/components/TierUnlockModal";
 import PacingModal from "@/components/PacingModal";
 import AnchorFailureModal from "@/components/AnchorFailureModal";
 import LightAnchorModal from "@/components/LightAnchorModal";
 import TrailManifesto from "@/components/TrailManifesto";
+import FirstAchievementModal from "@/components/FirstAchievementModal";
+import LearnerCheckinModal from "@/components/LearnerCheckinModal";
 import Week1Page from "@/components/week1/Week1Page";
 import {
   countWeekdays,
@@ -51,16 +54,32 @@ export default function LibraryPage() {
   const [showAnchorFailure, setShowAnchorFailure] = useState(false);
   const [showLightAnchor, setShowLightAnchor] = useState(false);
   const [showAnchorEscalated, setShowAnchorEscalated] = useState(false);
+  const [showFirstAchievement, setShowFirstAchievement] = useState(false);
+  const [firstAchievementData, setFirstAchievementData] = useState<{ earnedXp: number; earnedBadge: boolean }>({ earnedXp: 0, earnedBadge: false });
+  const [showCheckin, setShowCheckin] = useState(false);
+  const [checkinType, setCheckinType] = useState<"approach" | "week2" | "week3" | "summit">("approach");
+  const checkinTriggeredRef = useRef(false);
   const pacingShownRef = useRef(false);
   const anchorCheckedRef = useRef(false);
 
   // Tab state: "approach" (Week 1) vs "ascent" (existing clips)
-  const [activeTab, setActiveTab] = useState<"approach" | "ascent">("approach");
+  const initialTab = searchParams.get("tab") === "ascent" ? "ascent" : "approach";
+  const [activeTab, setActiveTab] = useState<"approach" | "ascent">(initialTab);
 
   // Admin "Test as New Learner" toggle for The Ascent tab
   const [ascentTestMode, setAscentTestMode] = useState(false);
 
   const { run: logClick } = useApi("LogPitchClick");
+  const { run: trackLogin } = useApi("TrackLogin");
+
+  // Track login — update last_login_at once per session
+  useEffect(() => {
+    if (!viewer?.id) return;
+    const key = `login_tracked_${viewer.id}_${new Date().toLocaleDateString()}`;
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, "1");
+    trackLogin({ viewerId: viewer.id }).catch(() => {});
+  }, [viewer?.id, trackLogin]);
   const WHEEL_AND_DEAL_URL = "https://app.superblocks.com/code-mode/applications/fef97ebe-4fb9-401f-b97c-c52c1693b31b/";
   const handleWheelAndDeal = useCallback(() => {
     if (viewer?.id) logClick({ viewerId: viewer.id, pitchName: "Wheel & Deal" });
@@ -376,13 +395,18 @@ export default function LibraryPage() {
       .sort(([a], [b]) => a - b)
       .map(([weekNum, weekClips]) => {
         const meta = WEEK_META[weekNum];
+        const allLocked = weekClips.every((c: any) => !c.unlocked);
+        const completedCount = weekClips.filter((c: any) => c.completed).length;
         return {
+          weekNum,
           label: weekNum > 0 ? `Week ${weekNum}` : "Other",
           emoji: meta?.emoji ?? "📦",
           title: meta?.title ?? null,
           time: meta?.time ?? null,
           note: meta?.note ?? null,
           clips: weekClips,
+          allLocked,
+          completedCount,
         };
       });
   }, [clips]);
@@ -433,16 +457,13 @@ export default function LibraryPage() {
 
   // ──────────────────── MODALS (only when dataReady) ────────────────────
 
-  // Summit modal (higher priority than tier)
+  // Summit celebration — opens merged LearnerCheckinModal with celebrate step
   if (showSummit && previewMode !== "tier") {
     return (
-      <SummitModal
-        learnerName={viewer.name}
-        totalXp={progressData!.totalXp}
-        tierName={progressData!.tier.name}
-        tierEmoji={progressData!.tier.emoji}
-        managerName={progressData!.managerName ?? null}
-        onDismiss={() => {
+      <LearnerCheckinModal
+        viewerId={viewer.id}
+        checkinType="summit"
+        onClose={() => {
           setShowSummit(false);
           if (previewMode !== "summit") {
             localStorage.setItem(`summit_dismissed_${viewer.id}`, "true");
@@ -476,9 +497,83 @@ export default function LibraryPage() {
     );
   }
 
+  // First Achievement modal — Approach → Ascent transition
+  if (showFirstAchievement) {
+    return (
+      <FirstAchievementModal
+        viewerId={viewer.id}
+        earnedXp={firstAchievementData.earnedXp}
+        earnedBadge={firstAchievementData.earnedBadge}
+        onDismiss={() => {
+          setShowFirstAchievement(false);
+          // After dismissing First Achievement, trigger Approach check-in if not yet sent
+          if (progressData && !progressData.approachCheckinSentAt) {
+            setCheckinType("approach");
+            setShowCheckin(true);
+          }
+        }}
+      />
+    );
+  }
+
+  // ── Auto-trigger Week 2 / Week 3 check-ins based on clip milestones ──
+  useEffect(() => {
+    if (!dataReady || !progressData || checkinTriggeredRef.current) return;
+    if (showSummit || showFirstAchievement || tierUnlock !== null || showCheckin) return;
+
+    const completed = progressData.clipsCompleted;
+
+    // Week 2 check-in: after 5+ clips completed, approach already sent, week2 not yet sent
+    if (
+      completed >= 5 &&
+      progressData.approachCheckinSentAt &&
+      !progressData.week2CheckinSentAt
+    ) {
+      // Only show once per session
+      const sessionKey = `checkin_week2_prompted_${viewer!.id}`;
+      if (!sessionStorage.getItem(sessionKey)) {
+        sessionStorage.setItem(sessionKey, "true");
+        checkinTriggeredRef.current = true;
+        setCheckinType("week2");
+        setShowCheckin(true);
+      }
+      return;
+    }
+
+    // Week 3 check-in: after 10+ clips completed, week2 already sent, week3 not yet sent
+    if (
+      completed >= 10 &&
+      progressData.week2CheckinSentAt &&
+      !progressData.week3CheckinSentAt
+    ) {
+      const sessionKey = `checkin_week3_prompted_${viewer!.id}`;
+      if (!sessionStorage.getItem(sessionKey)) {
+        sessionStorage.setItem(sessionKey, "true");
+        checkinTriggeredRef.current = true;
+        setCheckinType("week3");
+        setShowCheckin(true);
+      }
+      return;
+    }
+  }, [dataReady, progressData, showSummit, showFirstAchievement, tierUnlock, showCheckin, viewer]);
+
   // ──────────────────── MAIN LIBRARY VIEW ────────────────────
   return (
     <>
+    {/* Learner Check-In Modal — overlay on top of library */}
+    {showCheckin && (
+      <div className="fixed inset-0 z-50">
+        <LearnerCheckinModal
+          viewerId={viewer!.id}
+          checkinType={checkinType}
+          onClose={() => setShowCheckin(false)}
+          onSent={() => {
+            setShowCheckin(false);
+            toast.success("Check-in email marked as sent!");
+          }}
+        />
+      </div>
+    )}
     {showPacing && pacingInfo && (
       <PacingModal
         tier={pacingInfo.tier}
@@ -621,7 +716,17 @@ export default function LibraryPage() {
             viewerId={viewer.id}
             viewerName={viewer.name}
             isAdmin={viewer.isAdmin}
-            onBeginAscent={() => setActiveTab("ascent")}
+            onBeginAscent={(unlockResult) => {
+              setActiveTab("ascent");
+              // Show First Achievement modal if they earned XP/badge
+              if (unlockResult && !unlockResult.alreadyUnlocked) {
+                setFirstAchievementData({
+                  earnedXp: unlockResult.earnedXp ?? 0,
+                  earnedBadge: unlockResult.earnedBadge ?? false,
+                });
+                setShowFirstAchievement(true);
+              }
+            }}
           />
         </div>
       ) : (
@@ -636,16 +741,41 @@ export default function LibraryPage() {
                 {ascentTestMode ? "Showing fresh learner view" : "Showing your real progress"}
               </span>
             </div>
-            <button
-              onClick={() => setAscentTestMode((prev) => !prev)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                ascentTestMode
-                  ? "bg-purple-600 text-white hover:bg-purple-700"
-                  : "bg-white text-purple-700 border border-purple-300 hover:bg-purple-100"
-              }`}
-            >
-              {ascentTestMode ? "👁️ Show My Progress" : "🧪 Test as New Learner"}
-            </button>
+            <div className="flex items-center gap-2 flex-wrap">
+              <select
+                onChange={(e) => {
+                  if (e.target.value) {
+                    setCheckinType(e.target.value as "approach" | "week2" | "week3" | "summit");
+                    setShowCheckin(true);
+                    e.target.value = "";
+                  }
+                }}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-300 cursor-pointer"
+                defaultValue=""
+              >
+                <option value="" disabled>📧 Test Check-In…</option>
+                <option value="approach">🚡 Approach</option>
+                <option value="week2">🏕️ Week 2</option>
+                <option value="week3">🧗 Week 3</option>
+                <option value="summit">🏔️ Summit</option>
+              </select>
+              <button
+                onClick={() => navigate("/modal-museum")}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-purple-700 border border-purple-300 hover:bg-purple-100 transition-colors"
+              >
+                🖼️ Modal Museum
+              </button>
+              <button
+                onClick={() => setAscentTestMode((prev) => !prev)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                  ascentTestMode
+                    ? "bg-purple-600 text-white hover:bg-purple-700"
+                    : "bg-white text-purple-700 border border-purple-300 hover:bg-purple-100"
+                }`}
+              >
+                {ascentTestMode ? "👁️ Show My Progress" : "🧪 Test as New Learner"}
+              </button>
+            </div>
           </div>
         )}
 
@@ -720,22 +850,40 @@ export default function LibraryPage() {
           {weekGroups.map((week) =>
             week.clips.length > 0 ? (
               <section key={week.label}>
-                <div className="flex flex-col items-center rounded-xl px-5 py-4 shadow-[0_1px_3px_rgba(0,0,0,0.08)] mb-4 text-center" style={{ backgroundColor: "#1B4332" }}>
+                <div
+                  className={`flex flex-col items-center rounded-xl px-5 py-4 shadow-[0_1px_3px_rgba(0,0,0,0.08)] mb-4 text-center ${
+                    week.allLocked ? "opacity-60" : ""
+                  }`}
+                  style={{ backgroundColor: "#1B4332" }}
+                >
                   <div className="flex items-center gap-2">
-                    <span className="text-2xl">{week.emoji}</span>
+                    <span className="text-2xl">{week.allLocked ? "🔒" : week.emoji}</span>
                     <h2 className="text-lg font-bold text-white">{week.label}</h2>
+                    {!week.allLocked && week.completedCount > 0 && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-500/30 text-[10px] font-semibold text-emerald-200">
+                        {week.completedCount}/{week.clips.length} done
+                      </span>
+                    )}
                   </div>
                   {week.title && (
                     <p className="text-sm font-semibold text-emerald-200 mt-1">{week.title}</p>
                   )}
-                  {week.time && (
-                    <p className="text-xs text-white mt-1">{week.time}</p>
-                  )}
-                  {week.note && (
-                    <p className="text-[10px] text-gray-300 mt-1.5 max-w-xl leading-snug">{week.note}</p>
+                  {week.allLocked ? (
+                    <p className="text-xs text-amber-300 mt-1">Complete the previous week to unlock</p>
+                  ) : (
+                    <>
+                      {week.time && (
+                        <p className="text-xs text-white mt-1">{week.time}</p>
+                      )}
+                      {week.note && (
+                        <p className="text-[10px] text-gray-300 mt-1.5 max-w-xl leading-snug">{week.note}</p>
+                      )}
+                    </>
                   )}
                 </div>
 
+                {/* Hide clip list when entire week is locked */}
+                {!week.allLocked && (
                 <div className="flex flex-col gap-3">
                   {(() => {
                     const rendered = new Set<string>();
@@ -822,6 +970,7 @@ export default function LibraryPage() {
                     });
                   })()}
                 </div>
+                )}
               </section>
             ) : null
           )}

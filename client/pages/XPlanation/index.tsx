@@ -7,7 +7,7 @@ const TIERS = [
   { tier: 1, name: "Base Camper", emoji: "🏕️", xpMin: 0, xpMax: 149, description: "Just getting started on the trail" },
   { tier: 2, name: "Trailblazer", emoji: "🥾", xpMin: 150, xpMax: 324, description: "Building momentum and finding your footing" },
   { tier: 3, name: "Summit Seeker", emoji: "🧗🏼", xpMin: 325, xpMax: 499, description: "Pushing toward mastery" },
-  { tier: 4, name: "Pinnacle Achiever", emoji: "🏔️✨", xpMin: 500, xpMax: null, description: "You've conquered the Ascent" },
+  { tier: 4, name: "Pinnacle Achiever", emoji: "🧗🏼✨", xpMin: 500, xpMax: null, description: "You've conquered the Ascent" },
 ];
 
 const BASE_XP = [
@@ -36,6 +36,7 @@ const STREAK_BONUSES = [
 
 const MILESTONE_BONUSES = [
   { badge: "First Step", xp: 5, emoji: "🎬", condition: "Complete Clip 1" },
+  { badge: "Swiss Army", xp: 35, emoji: "🪓", condition: "Finish The Approach in 5 days or less — all tools, all terrain, ready for anything" },
   { badge: "Halfway Up", xp: 15, emoji: "🏔️", condition: "Complete Clip 9" },
   { badge: "Into the Summit Push", xp: 10, emoji: "🪢", condition: "Unlock Week 4 (complete Clip 9)" },
   { badge: "Summit Reached", xp: 25, emoji: "🏔️✨", condition: "Complete all 17 clips" },

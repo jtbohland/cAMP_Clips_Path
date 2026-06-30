@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { TOPIC_DAYS } from "@/config/topicDays";
 import type { TopicDayConfig } from "@/config/topicDays";
 import TopicResourceList from "@/components/TopicResourceList";
+import TopicReflectionSection from "@/components/TopicReflectionSection";
 
 /**
  * Topic Gear page — shows summary, learning objectives, SMEs, and resources
@@ -97,7 +98,7 @@ export default function TopicGearPage() {
   }, [viewer?.id, clipId, config, trackClick, refetchProgress]);
 
   if (!viewer) {
-    navigate("/", { replace: true });
+    navigate("/?tab=ascent", { replace: true });
     return null;
   }
 
@@ -108,7 +109,7 @@ export default function TopicGearPage() {
           <span className="text-4xl block mb-3">🏕️</span>
           <p className="text-sm text-gray-500">Topic day not found.</p>
           <button
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/?tab=ascent")}
             className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-indigo-600 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors"
           >
             🎞️ Back to Clips
@@ -133,7 +134,7 @@ export default function TopicGearPage() {
             </div>
           </div>
           <button
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/?tab=ascent")}
             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-indigo-600 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors shadow-sm"
           >
             🎞️ Back to Clips
@@ -257,10 +258,19 @@ export default function TopicGearPage() {
             typeLabels={TYPE_LABELS}
           />
 
+          {/* Topic Reflection (Day 5 & Day 9 only) */}
+          {config.reflectionQuestions && config.reflectionQuestions.length >= 2 && viewer?.id && topicKey && (
+            <TopicReflectionSection
+              viewerId={viewer.id}
+              topicDay={topicKey}
+              questions={config.reflectionQuestions}
+            />
+          )}
+
           {/* Bottom back button */}
           <div className="flex justify-center pb-6">
             <button
-              onClick={() => navigate("/")}
+              onClick={() => navigate("/?tab=ascent")}
               className="inline-flex items-center gap-1.5 px-6 py-2.5 rounded-lg bg-indigo-600 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors shadow-sm"
             >
               🎞️ Back to Clips

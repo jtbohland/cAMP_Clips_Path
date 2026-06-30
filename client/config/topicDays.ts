@@ -22,6 +22,11 @@ export interface SlackChannel {
   url: string;
 }
 
+export interface ReflectionQuestion {
+  id: string;
+  prompt: string;
+}
+
 export interface TopicDayConfig {
   dayLabel: string;
   title: string;
@@ -32,6 +37,7 @@ export interface TopicDayConfig {
   slackChannels: SlackChannel[];
   resources: TopicResource[];
   dealDeskNote?: string;
+  reflectionQuestions?: ReflectionQuestion[];
 }
 
 export const TOPIC_DAYS: Record<string, TopicDayConfig> = {
@@ -89,6 +95,10 @@ export const TOPIC_DAYS: Record<string, TopicDayConfig> = {
         emoji: "☁️",
       },
     ],
+    reflectionQuestions: [
+      { id: "day5_q1", prompt: "What's one thing about the renewal process that you didn't know before today?" },
+      { id: "day5_q2", prompt: "How would you explain the renewal timeline and your role in it to a customer?" },
+    ],
   },
 
   // Day 9 — sort_order 11 after migration
@@ -136,5 +146,9 @@ export const TOPIC_DAYS: Record<string, TopicDayConfig> = {
       },
     ],
     dealDeskNote: "For pricing/quoting help on 2026 PPL, open a case with Deal Desk from the associated opportunity in Salesforce.",
+    reflectionQuestions: [
+      { id: "day9_q1", prompt: "How would you explain Amplitude's pricing model to a prospect in 2 sentences?" },
+      { id: "day9_q2", prompt: "What's a common pricing objection you expect, and how would you handle it?" },
+    ],
   },
 };

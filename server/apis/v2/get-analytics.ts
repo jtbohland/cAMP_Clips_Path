@@ -20,6 +20,9 @@ const ViewerStatSchema = z.object({
   clips_completed: z.coerce.number(),
   avg_score: z.string().nullable(),
   last_activity: z.string().nullable(),
+  approach_checkin_sent_at: z.string().nullable(),
+  week2_checkin_sent_at: z.string().nullable(),
+  week3_checkin_sent_at: z.string().nullable(),
 });
 
 const RoleStatSchema = z.object({
@@ -58,6 +61,9 @@ export default api({
       clipsCompleted: z.number(),
       avgScore: z.number().nullable(),
       lastActivity: z.string().nullable(),
+      approachCheckinSentAt: z.string().nullable(),
+      week2CheckinSentAt: z.string().nullable(),
+      week3CheckinSentAt: z.string().nullable(),
     })),
     roleStats: z.array(z.object({
       role: z.string(),
@@ -94,7 +100,10 @@ export default api({
         v.id as viewer_id, v.name, v.email, v.role,
         COUNT(DISTINCT s.clip_id) FILTER (WHERE s.completed = true AND s.engagement_score >= 80)::int as clips_completed,
         ROUND(AVG(s.engagement_score) FILTER (WHERE s.completed = true), 1)::text as avg_score,
-        MAX(s.ended_at)::text as last_activity
+        COALESCE(v.last_login_at, MAX(s.ended_at))::text as last_activity,
+        v.approach_checkin_sent_at::text as approach_checkin_sent_at,
+        v.week2_checkin_sent_at::text as week2_checkin_sent_at,
+        v.week3_checkin_sent_at::text as week3_checkin_sent_at
        FROM cliptracker_v2_viewers v
        LEFT JOIN cliptracker_v2_sessions s ON s.viewer_id = v.id
        WHERE v.is_admin = false
@@ -145,6 +154,9 @@ export default api({
         clipsCompleted: v.clips_completed,
         avgScore: v.avg_score ? parseFloat(v.avg_score) : null,
         lastActivity: v.last_activity,
+        approachCheckinSentAt: v.approach_checkin_sent_at,
+        week2CheckinSentAt: v.week2_checkin_sent_at,
+        week3CheckinSentAt: v.week3_checkin_sent_at,
       })),
       roleStats: roleStats.map(r => ({
         role: r.role,

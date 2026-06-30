@@ -104,7 +104,7 @@ export default api({
     let earnedXp = 0;
 
     if (withinDeadline) {
-      // Award approach_complete badge
+      // Award approach_complete badge (on-time only)
       await ctx.integrations.db.execute(
         `INSERT INTO cliptracker_v2_badges (viewer_id, badge_id, clip_id)
          VALUES ($1, 'approach_complete', $1)
@@ -114,15 +114,25 @@ export default api({
       );
       earnedBadge = true;
 
-      // Award 35 XP
+      // Award 35 XP (on-time: 5 per module × 3 + 5 for W&D + 15 speed bonus)
       await ctx.integrations.db.execute(
         `INSERT INTO cliptracker_v2_xp_events (viewer_id, clip_id, event_type, source_id, xp_amount)
          VALUES ($1, $1, 'milestone', 'approach_complete', 35)
          ON CONFLICT (viewer_id, source_id, clip_id) DO NOTHING`,
         [viewerId],
-        { label: "Award approach XP" }
+        { label: "Award approach XP (on-time)" }
       );
       earnedXp = 35;
+    } else {
+      // Late approach: 17 XP (5 per module × 3 + 2 for W&D), no badge
+      await ctx.integrations.db.execute(
+        `INSERT INTO cliptracker_v2_xp_events (viewer_id, clip_id, event_type, source_id, xp_amount)
+         VALUES ($1, $1, 'milestone', 'approach_complete_late', 17)
+         ON CONFLICT (viewer_id, source_id, clip_id) DO NOTHING`,
+        [viewerId],
+        { label: "Award approach XP (late)" }
+      );
+      earnedXp = 17;
     }
 
     ctx.log.info("Ascent unlocked", { viewerId, earnedBadge, earnedXp });

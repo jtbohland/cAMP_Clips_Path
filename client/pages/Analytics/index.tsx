@@ -8,6 +8,8 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Week1AnalyticsSection from "@/components/analytics/Week1AnalyticsSection";
+import SherpaSurveysSection from "@/components/analytics/SherpaSurveysSection";
+import LearnerReflectionsSection from "@/components/analytics/LearnerReflectionsSection";
 
 /** Badge ID → display info */
 const BADGE_MAP: Record<string, { name: string; emoji: string }> = {
@@ -193,6 +195,16 @@ function AnalyticsContent() {
         <Section title="cAMP Gear Clicks" subtitle="Elevator pitches · cAMP Gear resources · Wheel & Deal" emoji="🎒" defaultOpen={false}>
           <PitchClicksSection />
         </Section>
+
+        {/* 7. Sherpa Surveys */}
+        <Section title="Sherpa Surveys" subtitle="Topic day & module reflections from learners" emoji="🚩" defaultOpen={false}>
+          <SherpaSurveysSection />
+        </Section>
+
+        {/* 8. Learner Reflections */}
+        <Section title="Learner Reflections" subtitle="Reflections written during check-in emails" emoji="💭" defaultOpen={false}>
+          <LearnerReflectionsSection />
+        </Section>
       </div>
     </div>
   );
@@ -295,7 +307,7 @@ function CampersSection({ learners, totalClips }: { learners: any[]; totalClips:
       </div>
 
       {/* Table header */}
-      <div className="grid grid-cols-[1.4fr_70px_70px_70px_80px_60px_60px_90px_80px_1fr] gap-2 text-[10px] font-semibold text-gray-500 uppercase tracking-wider px-3">
+      <div className="grid grid-cols-[1.4fr_70px_70px_70px_80px_60px_60px_90px_80px_80px_1fr] gap-2 text-[10px] font-semibold text-gray-500 uppercase tracking-wider px-3">
         <span>cAMPer</span>
         <span className="text-center">XP Earned</span>
         <span className="text-center">Clip Score</span>
@@ -305,6 +317,7 @@ function CampersSection({ learners, totalClips }: { learners: any[]; totalClips:
         <span className="text-center">🎒 Gear</span>
         <span className="text-center">Progress</span>
         <span className="text-center">On Track?</span>
+        <span className="text-center">Last Active</span>
         <span>Merit Badges</span>
       </div>
 
@@ -314,7 +327,7 @@ function CampersSection({ learners, totalClips }: { learners: any[]; totalClips:
           const progressPct = totalClips > 0 ? Math.round((l.clipsCompleted / totalClips) * 100) : 0;
 
           return (
-            <div key={l.viewerId} className="grid grid-cols-[1.4fr_70px_70px_70px_80px_60px_60px_90px_80px_1fr] gap-2 items-center px-3 py-2.5 rounded-md border border-gray-100 bg-white">
+            <div key={l.viewerId} className="grid grid-cols-[1.4fr_70px_70px_70px_80px_60px_60px_90px_80px_80px_1fr] gap-2 items-center px-3 py-2.5 rounded-md border border-gray-100 bg-white">
               {/* cAMPer name + tier */}
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
@@ -334,6 +347,42 @@ function CampersSection({ learners, totalClips }: { learners: any[]; totalClips:
                     </span>
                   )}
                   <TimezonePill timezone={l.timezone} />
+                  {/* Last Activity pill */}
+                  {l.lastActivity && (
+                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-gray-50 border border-gray-200 text-[10px] font-medium text-gray-500 whitespace-nowrap" title="Last activity">
+                      🕓 {new Date(l.lastActivity).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                    </span>
+                  )}
+                  {/* Check-in email status */}
+                  {(l.approachCheckinSentAt || l.week2CheckinSentAt || l.week3CheckinSentAt) && (
+                    <div className="relative group/checkin inline-flex">
+                      <span
+                        className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-[10px] font-medium text-emerald-700 whitespace-nowrap cursor-default"
+                        title="Check-in emails sent by learner"
+                      >
+                        📧 {[l.approachCheckinSentAt, l.week2CheckinSentAt, l.week3CheckinSentAt].filter(Boolean).length}/4
+                      </span>
+                      <div className="absolute left-0 top-full mt-1 hidden group-hover/checkin:flex flex-col bg-white border border-gray-200 rounded-lg shadow-lg z-10 py-1 min-w-[180px]">
+                        {([
+                          { label: "🚡 Approach", ts: l.approachCheckinSentAt },
+                          { label: "🏕️ Week 2", ts: l.week2CheckinSentAt },
+                          { label: "🧗 Week 3", ts: l.week3CheckinSentAt },
+                          { label: "🏔️ Summit", ts: null },
+                        ] as const).map((item) => (
+                          <div key={item.label} className="flex items-center justify-between px-3 py-1.5 text-xs">
+                            <span className="text-gray-700">{item.label}</span>
+                            {item.ts ? (
+                              <span className="text-emerald-600 font-medium">
+                                ✓ {new Date(item.ts).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                              </span>
+                            ) : (
+                              <span className="text-gray-400">—</span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -389,6 +438,17 @@ function CampersSection({ learners, totalClips }: { learners: any[]; totalClips:
                 )}
               </div>
 
+              {/* Last Active */}
+              <div className="text-center">
+                {l.lastActivity ? (
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-gray-100 border border-gray-200 text-[10px] font-medium text-gray-700 whitespace-nowrap">
+                    {new Date(l.lastActivity).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                  </span>
+                ) : (
+                  <span className="text-[10px] text-gray-400">—</span>
+                )}
+              </div>
+
               {/* Merit Badges — consolidated with ×N for duplicates */}
               <div className="flex flex-wrap gap-1 min-w-0">
                 {l.badges.length > 0 ? (() => {
@@ -427,6 +487,7 @@ function CampersSection({ learners, totalClips }: { learners: any[]; totalClips:
       {filtered.length === 0 && (
         <p className="text-sm text-gray-500 text-center py-6">No cAMPers found</p>
       )}
+
     </div>
   );
 }
