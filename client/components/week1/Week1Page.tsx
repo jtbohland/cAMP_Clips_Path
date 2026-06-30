@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo } from "react";
+import { useNavigate } from "react-router";
 import { useApiData } from "@/hooks/useApiData.js";
 import { useApi } from "@/hooks/useApi.js";
 import { toast } from "sonner";
@@ -36,14 +37,21 @@ const ACADEMY_COURSES = [
   { key: "guides_surveys", label: "Guides & Surveys", url: "https://academy.amplitude.com/engage-your-users-with-guides-and-surveys" },
 ];
 
+type UnlockResult = {
+  alreadyUnlocked: boolean;
+  earnedBadge: boolean;
+  earnedXp: number;
+};
+
 type Week1PageProps = {
   viewerId: string;
   viewerName: string;
   isAdmin?: boolean;
-  onBeginAscent: () => void;
+  onBeginAscent: (unlockResult?: UnlockResult) => void;
 };
 
 export default function Week1Page({ viewerId, viewerName, isAdmin, onBeginAscent }: Week1PageProps) {
+  const navigate = useNavigate();
   // Admin "Test as New Learner" toggle — resets view to fresh state
   const [testMode, setTestMode] = useState(false);
 
@@ -162,14 +170,15 @@ export default function Week1Page({ viewerId, viewerName, isAdmin, onBeginAscent
         toast.error(result.error);
         return;
       }
-      if (result?.earnedBadge) {
-        toast.success(`🚡 The Approach complete! +${result.earnedXp} XP & badge earned!`);
-      } else if (result?.alreadyUnlocked) {
+      if (result?.alreadyUnlocked) {
         toast.info("Already unlocked!");
-      } else {
-        toast.success("🧗 The Ascent is now unlocked!");
       }
-      onBeginAscent();
+      // Pass unlock result to parent — First Achievement modal handles celebration
+      onBeginAscent({
+        alreadyUnlocked: result?.alreadyUnlocked ?? false,
+        earnedBadge: result?.earnedBadge ?? false,
+        earnedXp: result?.earnedXp ?? 0,
+      });
     } catch (err: any) {
       toast.error(err?.message || "Failed to unlock The Ascent");
     }
@@ -202,16 +211,24 @@ export default function Week1Page({ viewerId, viewerName, isAdmin, onBeginAscent
               {testMode ? "Showing fresh learner view" : "Showing your real progress"}
             </span>
           </div>
-          <button
-            onClick={() => setTestMode((prev) => !prev)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-              testMode
-                ? "bg-purple-600 text-white hover:bg-purple-700"
-                : "bg-white text-purple-700 border border-purple-300 hover:bg-purple-100"
-            }`}
-          >
-            {testMode ? "👁️ Show My Progress" : "🧪 Test as New Learner"}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => navigate("/modal-museum")}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-purple-700 border border-purple-300 hover:bg-purple-100 transition-colors"
+            >
+              🖼️ Modal Museum
+            </button>
+            <button
+              onClick={() => setTestMode((prev) => !prev)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                testMode
+                  ? "bg-purple-600 text-white hover:bg-purple-700"
+                  : "bg-white text-purple-700 border border-purple-300 hover:bg-purple-100"
+              }`}
+            >
+              {testMode ? "👁️ Show My Progress" : "🧪 Test as New Learner"}
+            </button>
+          </div>
         </div>
       )}
 

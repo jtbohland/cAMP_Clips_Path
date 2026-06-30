@@ -5,8 +5,8 @@ const APPS_DB = "c6e32cf4-ca66-42ae-aeb3-58c84ffae574";
 const TIERS = [
   { tier: 1, name: "Base Camper", emoji: "🏕️", xpMin: 0, xpMax: 149 },
   { tier: 2, name: "Trailblazer", emoji: "🥾", xpMin: 150, xpMax: 324 },
-  { tier: 3, name: "Summit Seeker", emoji: "🏔️", xpMin: 325, xpMax: 499 },
-  { tier: 4, name: "Pinnacle Achiever", emoji: "🏔️✨", xpMin: 500, xpMax: null },
+  { tier: 3, name: "Summit Seeker", emoji: "🧗🏼", xpMin: 325, xpMax: 499 },
+  { tier: 4, name: "Pinnacle Achiever", emoji: "🧗🏼✨", xpMin: 500, xpMax: null },
 ];
 
 const BadgeSchema = z.object({
@@ -54,6 +54,9 @@ export default api({
     ascentDay1: z.string().nullable(),
     managerName: z.string().nullable(),
     leaderboardRank: z.number(),
+    approachCheckinSentAt: z.string().nullable(),
+    week2CheckinSentAt: z.string().nullable(),
+    week3CheckinSentAt: z.string().nullable(),
   }),
 
   async run(ctx, { viewerId }) {
@@ -111,12 +114,20 @@ export default api({
     const clipsCompleted = completedResult[0]?.count ?? 0;
 
     // Get ascent_day_1
-    const ViewerDateSchema = z.object({ ascent_day_1: z.string().nullable(), manager_name: z.string().nullable() });
+    const ViewerDateSchema = z.object({
+      ascent_day_1: z.string().nullable(),
+      manager_name: z.string().nullable(),
+      approach_checkin_sent_at: z.string().nullable(),
+      week2_checkin_sent_at: z.string().nullable(),
+      week3_checkin_sent_at: z.string().nullable(),
+    });
     const viewerDate = await ctx.integrations.db.query(
-      `SELECT ascent_day_1::text, manager_name FROM cliptracker_v2_viewers WHERE id = $1`,
+      `SELECT ascent_day_1::text, manager_name,
+              approach_checkin_sent_at::text, week2_checkin_sent_at::text, week3_checkin_sent_at::text
+       FROM cliptracker_v2_viewers WHERE id = $1`,
       ViewerDateSchema,
       [viewerId],
-      { label: "Get ascent day 1" }
+      { label: "Get ascent day 1 + checkin timestamps" }
     );
 
     // Leaderboard rank — count non-admin viewers with higher XP + 1
@@ -164,6 +175,9 @@ export default api({
       ascentDay1: viewerDate[0]?.ascent_day_1 ?? null,
       managerName: viewerDate[0]?.manager_name ?? null,
       leaderboardRank,
+      approachCheckinSentAt: viewerDate[0]?.approach_checkin_sent_at ?? null,
+      week2CheckinSentAt: viewerDate[0]?.week2_checkin_sent_at ?? null,
+      week3CheckinSentAt: viewerDate[0]?.week3_checkin_sent_at ?? null,
     };
   },
 });

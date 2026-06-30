@@ -88,6 +88,20 @@ export const router = createBrowserRouter([
           })),
       },
       {
+        path: "/feedback",
+        lazy: () =>
+          import("./pages/ManagerFeedback/index.js").then((mod) => ({
+            Component: mod.default,
+          })),
+      },
+      {
+        path: "/modal-museum",
+        lazy: () =>
+          import("./pages/ModalMuseum/index.js").then((mod) => ({
+            Component: mod.default,
+          })),
+      },
+      {
         path: "*",
         Component: () => (
           <PageNotFound

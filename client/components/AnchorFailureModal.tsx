@@ -33,6 +33,8 @@ interface AnchorFailureModalProps {
   isEscalated?: boolean;
   /** Called when dismissed */
   onDismiss: () => void;
+  /** Pre-select a reason (for museum/demo previews) */
+  defaultReason?: string;
 }
 
 function formatDate(d: Date): string {
@@ -49,18 +51,26 @@ export default function AnchorFailureModal({
   missedClips,
   isEscalated = false,
   onDismiss,
+  defaultReason,
 }: AnchorFailureModalProps) {
   const config = PACING_TIERS.anchor_failure;
-  const [selectedReason, setSelectedReason] = useState<string | null>(null);
+  const [selectedReason, setSelectedReason] = useState<string | null>(defaultReason ?? null);
   const [copied, setCopied] = useState(false);
 
   const reasonObj = ANCHOR_REASONS.find(r => r.value === selectedReason);
 
-  // Build Slack message
+  // Extract first name only from manager name
+  const managerFirst = managerName
+    ? (managerName.includes("@")
+        ? managerName.split("@")[0].split(".")[0].charAt(0).toUpperCase() + managerName.split("@")[0].split(".")[0].slice(1)
+        : managerName.split(" ")[0])
+    : "[Manager]";
+
+  // Build Slack message — addressed to manager + JT, emojis, bold dates
   const slackMessage = selectedReason
     ? isEscalated
-      ? `Hi ${managerName ?? "[Manager]"} and @JT — I started Ascent on ${formatDate(startDate)} and have now missed both my original summit deadline of ${formatDate(summitDay)} and my adjusted deadline of ${formatDate(adjustmentDay)}. Reason: ${reasonObj?.label ?? selectedReason}. I still have ${sessionsBehind} session${sessionsBehind !== 1 ? "s" : ""} remaining. I'm sending JT a meeting invite to discuss next steps and create a plan to finish. I'll get that scheduled today.`
-      : `Hi ${managerName ?? "[Manager]"} — I started Ascent on ${formatDate(startDate)} and missed my summit deadline of ${formatDate(summitDay)}. Reason: ${reasonObj?.label ?? selectedReason}. I still have ${sessionsBehind} session${sessionsBehind !== 1 ? "s" : ""} remaining. My Ascent Adjustment date is ${formatDate(adjustmentDay)} — I'll have everything done by then.`
+      ? `Hi ${managerFirst} & @JT 👋 — I started Ascent on *${formatDate(startDate)}* and have now missed both my original summit deadline of *${formatDate(summitDay)}* and my adjusted deadline of *${formatDate(adjustmentDay)}*. ⚠️\n\nReason: ${reasonObj?.label ?? selectedReason}\n\n📊 I still have ${sessionsBehind} session${sessionsBehind !== 1 ? "s" : ""} remaining. I'm sending JT a meeting invite to discuss next steps and create a plan to finish. I'll get that scheduled today. 📅`
+      : `Hi ${managerFirst} & @JT 👋 — I started Ascent on *${formatDate(startDate)}* and missed my summit deadline of *${formatDate(summitDay)}*. ⚠️\n\nReason: ${reasonObj?.label ?? selectedReason}\n\n📊 I still have ${sessionsBehind} session${sessionsBehind !== 1 ? "s" : ""} remaining. My Ascent Adjustment date is *${formatDate(adjustmentDay)}* — I'll have everything done by then. 💪`
     : "";
 
   const handleCopy = useCallback(() => {
@@ -162,7 +172,7 @@ export default function AnchorFailureModal({
           {selectedReason && (
             <div className="mb-4">
               <p className="text-sm font-bold mb-2">
-                Send this to your manager{isEscalated ? " and @JT" : ""} on Slack:
+                Send this to your manager & JT on Slack:
               </p>
               <div className="rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-800 leading-relaxed">
                 {slackMessage}
