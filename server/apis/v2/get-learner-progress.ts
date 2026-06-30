@@ -6,7 +6,7 @@ const TIERS = [
   { tier: 1, name: "Base Camper", emoji: "🏕️", xpMin: 0, xpMax: 149 },
   { tier: 2, name: "Trailblazer", emoji: "🥾", xpMin: 150, xpMax: 324 },
   { tier: 3, name: "Summit Seeker", emoji: "🧗🏼", xpMin: 325, xpMax: 499 },
-  { tier: 4, name: "Pinnacle Achiever", emoji: "🧗🏼✨", xpMin: 500, xpMax: null },
+  { tier: 4, name: "Pinnacle Achiever", emoji: "✨🏔️✨", xpMin: 500, xpMax: null },
 ];
 
 const BadgeSchema = z.object({

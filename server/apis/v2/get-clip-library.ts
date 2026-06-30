@@ -140,11 +140,20 @@ export default api({
     );
     const topicCompletedSet = new Set(topicCompleted.map(t => t.clip_id));
 
+    // Pre-compute completion status for each clip so the unlock check
+    // for clip N+1 uses the correct "isCompleted" (topic days use
+    // swiss_army_knife XP, not raw session count).
+    const completionStatus = clips.map((clip) => {
+      const isTopicDay = clip.video_url === null && clip.duration_seconds === null;
+      return isTopicDay ? topicCompletedSet.has(clip.id) : clip.completed > 0;
+    });
+
     const result = clips.map((clip, index) => {
       const bestScore = clip.best_score ? parseFloat(clip.best_score) : null;
       const isTopicDay = clip.video_url === null && clip.duration_seconds === null;
       const resourceCount = clip.resource_count;
-      const isCompleted = isTopicDay ? topicCompletedSet.has(clip.id) : clip.completed > 0;
+      const isCompleted = completionStatus[index];
+      const hasExistingSession = clip.attempts !== null && parseInt(clip.attempts) > 0;
 
       // Admins get all clips unlocked
       let isLocked = true;
@@ -154,9 +163,14 @@ export default api({
         isLocked = false;
       } else if (overrideSet.has(clip.id)) {
         isLocked = false;
+      } else if (hasExistingSession) {
+        // Learner already started this clip — keep it unlocked
+        // (handles cases where prior topic-day requirements were deployed
+        //  after the learner had already moved past them)
+        isLocked = false;
       } else {
-        const prevClip = clips[index - 1];
-        isLocked = !(prevClip.completed > 0);
+        // Use computed completion (topic days + video clips) for prev clip
+        isLocked = !completionStatus[index - 1];
       }
 
       return {

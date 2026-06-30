@@ -453,7 +453,7 @@ export default api({
       { tier: 1, name: "Base Camper", emoji: "🏕️" },
       { tier: 2, name: "Trailblazer", emoji: "🥾" },
       { tier: 3, name: "Summit Seeker", emoji: "🧗🏼" },
-      { tier: 4, name: "Pinnacle Achiever", emoji: "🧗🏼✨" },
+      { tier: 4, name: "Pinnacle Achiever", emoji: "✨🏔️✨" },
     ];
     const TIER_THRESHOLDS = [0, 150, 325, 500];
     const prevXp = totalXp - totalAwarded;

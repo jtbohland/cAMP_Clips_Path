@@ -185,7 +185,7 @@ export default function AnchorFailureModal({
                     : "bg-gray-900 hover:bg-gray-800 text-white"
                 }`}
               >
-                {copied ? "✅ Copied to Clipboard" : "📋 Copy to Clipboard"}
+                {copied ? "✅ Copied Slack Message" : "📋 Copy Slack Message"}
               </button>
             </div>
           )}

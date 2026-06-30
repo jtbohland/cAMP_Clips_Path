@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router";
 import { useViewer } from "@/components/ViewerContext";
 import { useApiData } from "@/hooks/useApiData.js";
 import { useApi } from "@/hooks/useApi.js";
+import { getLibraryPath } from "@/lib/libraryNav";
 
 import PageHeader from "@/components/PageHeader";
 import ScoreTiles from "@/components/report/ScoreTiles";
@@ -87,7 +88,7 @@ export default function ReportPage() {
   const handleCloseRewatch = useCallback(() => setShowRewatch(false), []);
 
   if (!viewer) {
-    navigate("/library", { replace: true });
+    navigate(getLibraryPath(), { replace: true });
     return null;
   }
 
@@ -232,7 +233,7 @@ export default function ReportPage() {
               🌱 Rewatch Clip
             </button>
             <button
-              onClick={() => navigate("/library")}
+              onClick={() => navigate(getLibraryPath())}
               className="flex-1 py-3 rounded-xl text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition-colors"
             >
               🎞️ Back to cAMP Clips

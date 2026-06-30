@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from "react";
 import { useNavigate, useParams } from "react-router";
 import { useViewer } from "@/components/ViewerContext";
+import { getLibraryPath } from "@/lib/libraryNav";
 
 const BONUS_CLIPS: Record<string, { title: string; wistiaId: string; duration: string; storageKeySuffix: string }> = {
   "support-case": {
@@ -55,7 +56,7 @@ export default function BonusWatchPage() {
       <div className="flex flex-col items-center justify-center min-h-screen p-6">
         <p className="text-gray-600 text-lg">Clip not found.</p>
         <button
-          onClick={() => navigate("/library")}
+          onClick={() => navigate(getLibraryPath())}
           className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-colors"
         >
           ← Back to Library
@@ -76,7 +77,7 @@ export default function BonusWatchPage() {
             </p>
           </div>
           <button
-            onClick={() => navigate("/library")}
+            onClick={() => navigate(getLibraryPath())}
             className="text-sm font-semibold px-4 py-1.5 rounded-lg bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition-colors"
           >
             🎞️ Back to Clips

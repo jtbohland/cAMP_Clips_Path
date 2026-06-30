@@ -12,6 +12,8 @@ interface LearnerCheckinModalProps {
   onClose: () => void;
   /** Called after "Mark as Sent" succeeds — parent can unlock next content */
   onSent?: () => void;
+  /** When true, always show the X close button (admin/test mode) */
+  allowClose?: boolean;
 }
 
 /* ── Emojis match Library WEEK_META headers ── */
@@ -113,7 +115,7 @@ const MANAGER_KEY = `
 /* ════════════════════════════════════════════════════════════════════════
    MAIN COMPONENT
    ════════════════════════════════════════════════════════════════════════ */
-function LearnerCheckinModalInner({ viewerId, checkinType, onClose, onSent }: LearnerCheckinModalProps) {
+function LearnerCheckinModalInner({ viewerId, checkinType, onClose, onSent, allowClose }: LearnerCheckinModalProps) {
   const label = CHECKIN_LABELS[checkinType];
   const isSummit = checkinType === "summit";
 
@@ -125,6 +127,9 @@ function LearnerCheckinModalInner({ viewerId, checkinType, onClose, onSent }: Le
   const [reflection, setReflection] = useState("");
   const [gmailOpened, setGmailOpened] = useState(false);
   const [sent, setSent] = useState(false);
+
+  // Generate feedback token once, so it can be included in the Gmail URL
+  const feedbackToken = useMemo(() => crypto.randomUUID(), []);
 
   const { data, loading, isError, error } = useApiData(
     "GetCheckinEmailData",
@@ -194,20 +199,22 @@ function LearnerCheckinModalInner({ viewerId, checkinType, onClose, onSent }: Le
       body += `  • XP: ${v.totalXp}\n`;
       body += `  • Tier: ${v.tier}\n`;
       if (qs.totalAttempts > 0) {
-        body += `\n📝 cAMP Quiz:\n`;
+        body += `\n🧠 cAMP Quiz Stats:\n`;
         body += `  • Passed: ${qs.quizzesPassed}/${qs.totalQuizzes}\n`;
         body += `  • Avg Score: ${qs.avgScorePct}%\n`;
         body += `  • 1st Pass Rate: ${qs.quizzesPassed > 0 ? Math.round((qs.firstPassCount / qs.quizzesPassed) * 100) : 0}%\n`;
         body += `  • Retakes: ${qs.retakes}\n`;
       }
       if (data.moduleReflections?.length > 0) {
-        body += `\n📘 Module Reflections:\n`;
+        body += `\n✍🏽 Module Reflections:\n`;
         data.moduleReflections.forEach((r: any) => {
-          body += `  • ${r.moduleKey}: "${r.reflectionResponse}"\n`;
+          const me = r.moduleKey === "meddpicc" ? "🧱" : r.moduleKey === "camp101" ? "📦" : r.moduleKey === "challenger" ? "⚔️" : r.moduleKey === "wheel_deal" ? "🎡" : "📝";
+          body += `  ${me} ${r.reflectionPrompt}\n`;
+          body += `     “${r.reflectionResponse}”\n`;
         });
       }
       if (data.wdVerification) {
-        body += `\n🎯 Wheel & Deal:\n`;
+        body += `\n🎡 Wheel & Deal:\n`;
         body += `  • Product: ${data.wdVerification.product}\n`;
         body += `  • Scenario: ${data.wdVerification.scenario}\n`;
         body += `  • Score: ${data.wdVerification.score}%\n`;
@@ -218,20 +225,20 @@ function LearnerCheckinModalInner({ viewerId, checkinType, onClose, onSent }: Le
       body += `I completed all 17 cAMP Clips and reached the Summit! 🏔️✨\n\n`;
 
       body += `--- Overall Summit Summary ---\n\n`;
-      body += `🎬 Clips:\n`;
+      body += `🎞️ Clips:\n`;
       body += `  • Completed: ${data.clipStats.completedSessions}/${data.clipStats.totalSessions}\n`;
       body += `  • Avg Clip Score: ${data.clipStats.avgScore}%\n`;
       body += `\n📊 Final Stats:\n`;
       body += `  • XP: ${v.totalXp}\n`;
       body += `  • Tier: ${v.tier}\n`;
       body += `  • 🏆 Leaderboard: #${data.leaderboard.rank} of ${data.leaderboard.totalLearners} cAMPers (cumulative XP, all cohorts)\n`;
-      body += `\n🔥 Engagement:\n`;
+      body += `\n👀 Engagement:\n`;
       body += `  • 🥾 Trail Markers: ${data.engagement.avgQuestionScore}%\n`;
       body += `  • 👀 Focus: ${data.engagement.avgFocusScore}%\n`;
       body += `  • ⏱️ Watch Time: ${data.engagement.avgTimeScore}%\n`;
       body += `  • 🎯 Overall: ${data.engagement.overallEngagement}%\n`;
       if (qs.totalAttempts > 0) {
-        body += `\n📝 cAMP Quiz (All 15 Days):\n`;
+        body += `\n🧠 cAMP Quiz Stats (All 15 Days):\n`;
         body += `  • Passed: ${qs.quizzesPassed}/${qs.totalQuizzes}\n`;
         body += `  • Avg Score: ${qs.avgScorePct}%\n`;
         body += `  • 1st Pass Rate: ${qs.quizzesPassed > 0 ? Math.round((qs.firstPassCount / qs.quizzesPassed) * 100) : 0}%\n`;
@@ -247,20 +254,20 @@ function LearnerCheckinModalInner({ viewerId, checkinType, onClose, onSent }: Le
     } else {
       const weekLabel = checkinType === "week2" ? "Week 2" : "Week 3";
       body += `Here's my ${weekLabel} cAMP Ascent update:\n\n`;
-      body += `🎬 Clips:\n`;
+      body += `🎞️ Clips:\n`;
       body += `  • Completed: ${data.clipStats.completedSessions}/${data.clipStats.totalSessions}\n`;
       body += `  • Avg Clip Score: ${data.clipStats.avgScore}%\n`;
       body += `\n📊 Stats:\n`;
       body += `  • XP: ${v.totalXp}\n`;
       body += `  • Tier: ${v.tier}\n`;
       body += `  • 🏆 Leaderboard: #${data.leaderboard.rank} of ${data.leaderboard.totalLearners} cAMPers (cumulative XP, all cohorts)\n`;
-      body += `\n🔥 Engagement:\n`;
+      body += `\n👀 Engagement:\n`;
       body += `  • 🥾 Trail Markers: ${data.engagement.avgQuestionScore}%\n`;
       body += `  • 👀 Focus: ${data.engagement.avgFocusScore}%\n`;
       body += `  • ⏱️ Watch Time: ${data.engagement.avgTimeScore}%\n`;
       body += `  • 🎯 Overall: ${data.engagement.overallEngagement}%\n`;
       if (qs.totalAttempts > 0) {
-        body += `\n📝 cAMP Quiz:\n`;
+        body += `\n🧠 cAMP Quiz Stats:\n`;
         body += `  • Quizzes Completed: ${qs.quizzesPassed}/${qs.totalQuizzes}\n`;
         body += `  • Avg Score: ${qs.avgScorePct}%\n`;
         body += `  • 1st Pass Rate: ${qs.quizzesPassed > 0 ? Math.round((qs.firstPassCount / qs.quizzesPassed) * 100) : 0}%\n`;
@@ -282,9 +289,10 @@ function LearnerCheckinModalInner({ viewerId, checkinType, onClose, onSent }: Le
     // ── MANAGER KEY ──
     body += MANAGER_KEY;
 
-    // ── FEEDBACK SURVEY LINK — uses token generated at send time ──
+    // ── FEEDBACK SURVEY LINK ──
+    const feedbackUrl = `${window.location.origin}/manager-feedback?token=${feedbackToken}`;
     body += `\n📋 Manager Feedback Survey (Required — only JT sees responses):\n`;
-    body += `[Feedback link will be included when email is sent]\n`;
+    body += `${feedbackUrl}\n`;
 
     body += `\nThanks!\n${fn}`;
 
@@ -299,7 +307,7 @@ function LearnerCheckinModalInner({ viewerId, checkinType, onClose, onSent }: Le
     });
 
     return `https://mail.google.com/mail/?view=cm&${params.toString()}`;
-  }, [data, checkinType, reflection]);
+  }, [data, checkinType, reflection, feedbackToken]);
 
   const handleOpenGmail = useCallback(() => {
     if (gmailUrl) {
@@ -311,7 +319,6 @@ function LearnerCheckinModalInner({ viewerId, checkinType, onClose, onSent }: Le
   const handleMarkSent = useCallback(async () => {
     if (!data?.viewer) return;
 
-    const feedbackToken = crypto.randomUUID();
     try {
       const result = await markSent({
         viewerId,
@@ -351,7 +358,13 @@ function LearnerCheckinModalInner({ viewerId, checkinType, onClose, onSent }: Le
   if (isSummit && step === "celebrate") {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-        <div className="w-full max-w-2xl mx-4 max-h-[90vh] rounded-2xl bg-white shadow-2xl overflow-hidden flex flex-col">
+        <div className="w-full max-w-2xl mx-4 max-h-[90vh] rounded-2xl bg-white shadow-2xl overflow-hidden flex flex-col relative">
+          {/* Admin X close button */}
+          {allowClose && (
+            <button onClick={onClose} className="absolute top-3 right-3 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-black/20 hover:bg-black/40 text-white text-lg leading-none transition-colors">
+              &#10005;
+            </button>
+          )}
           {/* Full-bleed celebration — no gradient check-in header */}
           <div className="flex-1 overflow-auto">
             {loading && (
@@ -394,7 +407,7 @@ function LearnerCheckinModalInner({ viewerId, checkinType, onClose, onSent }: Le
             <p className="text-lg font-bold text-white flex items-center gap-2">
               <span>{label.emoji}</span> {label.title}
             </p>
-            {sent && (
+            {(sent || allowClose) && (
               <button onClick={onClose} className="text-white/80 hover:text-white text-xl leading-none px-2">
                 &#10005;
               </button>
@@ -477,18 +490,18 @@ function LearnerCheckinModalInner({ viewerId, checkinType, onClose, onSent }: Le
               {step === "stats" && (
                 <button
                   onClick={() => setStep("reflect")}
-                  className="px-5 py-2 rounded-lg text-sm font-semibold bg-gray-900 text-white hover:bg-gray-800 transition-colors"
+                  className="px-5 py-2 rounded-lg text-sm font-semibold bg-orange-500 text-white hover:bg-orange-600 transition-colors"
                 >
-                  Next: Reflection →
+                  ✏️ Next: Add Reflection →
                 </button>
               )}
               {step === "reflect" && (
                 <button
                   onClick={() => setStep("email")}
                   disabled={!reflection.trim()}
-                  className="px-5 py-2 rounded-lg text-sm font-semibold bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="px-5 py-2 rounded-lg text-sm font-semibold bg-yellow-500 text-white hover:bg-yellow-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
-                  Next: Email Preview →
+                  📧 Next: Email Preview →
                 </button>
               )}
             </div>
@@ -518,69 +531,75 @@ function SummitCelebrateView({ data, jtQuote }: { data: any; jtQuote: string }) 
   const v = data.viewer;
 
   return (
-    <div className="space-y-4">
-      {/* Hero */}
-      <div className="text-center">
-        <div className="text-5xl mb-3">🏔️ ✨</div>
-        <h2 className="text-2xl font-bold text-gray-900">Summit Reached — Ascent Complete!</h2>
-        <p className="mt-3 text-sm text-gray-500 leading-relaxed max-w-lg mx-auto">
+    <div className="space-y-0">
+      {/* Gradient header — matches summit check-in (amber-500 → yellow-500) */}
+      <div className="bg-gradient-to-r from-amber-500 to-yellow-500 px-8 pt-8 pb-6 text-center">
+        {/* Frosted circle with emoji */}
+        <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm mb-4 text-4xl">
+          🚩
+        </div>
+        <h2 className="text-2xl font-bold text-white">Summit Reached — Ascent Complete!</h2>
+        <p className="mt-2 text-sm text-white/80 leading-relaxed max-w-lg mx-auto">
           You've completed all 17 cAMP Clips and conquered your Ascent. The trail behind you is proof — you showed up, engaged, and earned it.
         </p>
       </div>
 
-      {/* XP + Tier card */}
-      <div className="rounded-xl bg-amber-50 border border-amber-200 px-5 py-4 flex items-center justify-between">
+      {/* Content body */}
+      <div className="space-y-4 p-6">
+        {/* XP + Tier card */}
+        <div className="rounded-xl bg-amber-50 border border-amber-200 px-5 py-4 flex items-center justify-between">
+          <div>
+            <p className="text-lg font-bold text-amber-700">{v.tier}</p>
+            <p className="text-xs text-amber-500 mt-0.5">Your final tier</p>
+          </div>
+          <div className="text-right">
+            <p className="text-2xl font-bold text-amber-700">{Number(v.totalXp).toLocaleString()} XP</p>
+            <p className="text-xs text-amber-500 mt-0.5">total earned</p>
+          </div>
+        </div>
+
+        {/* What's next */}
         <div>
-          <p className="text-lg font-bold text-amber-700">{v.tier}</p>
-          <p className="text-xs text-amber-500 mt-0.5">Your final tier</p>
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">What's next on your journey</h3>
+          <div className="space-y-2">
+            <div className="rounded-xl bg-gray-50 border border-gray-200 px-5 py-4">
+              <div className="flex items-start gap-3">
+                <span className="text-2xl mt-0.5">🧠</span>
+                <div>
+                  <p className="text-sm font-bold text-gray-900">Complete your final cAMP Quiz</p>
+                  <p className="text-xs text-gray-500 mt-1">Your last content check is waiting — head to cAMP Quizzes to finish strong before cAMP 201.</p>
+                </div>
+              </div>
+            </div>
+            <div className="rounded-xl bg-gray-50 border border-gray-200 px-5 py-4">
+              <div className="flex items-start gap-3">
+                <span className="text-2xl mt-0.5">🎡</span>
+                <div>
+                  <p className="text-sm font-bold text-gray-900">Keep spinning — Wheel & Deal</p>
+                  <p className="text-xs text-gray-500 mt-1">cAMP 201 will ask you to pitch live. The reps you put in on Wheel & Deal are what make the difference.</p>
+                </div>
+              </div>
+            </div>
+            <div className="rounded-xl bg-gray-50 border border-gray-200 px-5 py-4">
+              <div className="flex items-start gap-3">
+                <span className="text-2xl mt-0.5">🛫</span>
+                <div>
+                  <p className="text-sm font-bold text-gray-900">See you at cAMP 201 in San Francisco!</p>
+                  <p className="text-xs text-gray-500 mt-1">Your in-person capstone — pods, live pitches, real deals, execs, and cross-functional partners.</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="text-right">
-          <p className="text-2xl font-bold text-amber-700">{Number(v.totalXp).toLocaleString()} XP</p>
-          <p className="text-xs text-amber-500 mt-0.5">total earned</p>
-        </div>
-      </div>
 
-      {/* What's next */}
-      <div>
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">What's next on your journey</h3>
-        <div className="space-y-2">
-          <div className="rounded-xl bg-gray-50 border border-gray-200 px-5 py-4">
-            <div className="flex items-start gap-3">
-              <span className="text-2xl mt-0.5">🧠</span>
-              <div>
-                <p className="text-sm font-bold text-gray-900">Complete your final cAMP Quiz</p>
-                <p className="text-xs text-gray-500 mt-1">Your last content check is waiting — head to cAMP Quizzes to finish strong before cAMP 201.</p>
-              </div>
-            </div>
+        {/* JT closing quote */}
+        {jtQuote && (
+          <div className="rounded-xl border-l-4 border-indigo-400 bg-indigo-50/50 px-5 py-4">
+            <p className="text-sm text-gray-600 italic leading-relaxed">{jtQuote}</p>
+            <p className="text-xs text-gray-400 mt-2">— JT Bohland, Sr. Global Enablement Program Manager</p>
           </div>
-          <div className="rounded-xl bg-gray-50 border border-gray-200 px-5 py-4">
-            <div className="flex items-start gap-3">
-              <span className="text-2xl mt-0.5">🎡</span>
-              <div>
-                <p className="text-sm font-bold text-gray-900">Keep spinning — Wheel & Deal</p>
-                <p className="text-xs text-gray-500 mt-1">cAMP 201 will ask you to pitch live. The reps you put in on Wheel & Deal are what make the difference.</p>
-              </div>
-            </div>
-          </div>
-          <div className="rounded-xl bg-gray-50 border border-gray-200 px-5 py-4">
-            <div className="flex items-start gap-3">
-              <span className="text-2xl mt-0.5">🛫</span>
-              <div>
-                <p className="text-sm font-bold text-gray-900">See you at cAMP 201 in San Francisco!</p>
-                <p className="text-xs text-gray-500 mt-1">Your in-person capstone — pods, live pitches, real deals, execs, and cross-functional partners.</p>
-              </div>
-            </div>
-          </div>
-        </div>
+        )}
       </div>
-
-      {/* JT closing quote */}
-      {jtQuote && (
-        <div className="rounded-xl border-l-4 border-indigo-400 bg-indigo-50/50 px-5 py-4">
-          <p className="text-sm text-gray-600 italic leading-relaxed">{jtQuote}</p>
-          <p className="text-xs text-gray-400 mt-2">— JT Bohland, Sr. Global Enablement Program Manager</p>
-        </div>
-      )}
     </div>
   );
 }
@@ -589,51 +608,56 @@ function SummitCelebrateView({ data, jtQuote }: { data: any; jtQuote: string }) 
    STATS VIEW (Step 1 for regular, Step 2 for summit)
    ════════════════════════════════════════════════════════════════════════ */
 function StatsView({ data, checkinType }: { data: any; checkinType: CheckinType }) {
+  const label = CHECKIN_LABELS[checkinType];
+
   return (
     <div className="space-y-4">
-      {/* Viewer info */}
-      <div className="rounded-lg bg-gray-50 border border-gray-200 p-4">
-        <div className="grid grid-cols-2 gap-3 text-sm">
-          <div>
-            <span className="text-gray-500">Your XP:</span>{" "}
-            <span className="font-bold text-indigo-600">{data.viewer.totalXp}</span>
+      {/* Hero stats card — gradient accent strip on top */}
+      <div className="rounded-xl overflow-hidden shadow-sm border border-gray-200">
+        <div className={`bg-gradient-to-r ${label.gradient} h-1.5`} />
+        <div className="p-4 bg-gradient-to-b from-gray-50 to-white">
+          <div className={`grid ${checkinType !== "approach" ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-2"} gap-4`}>
+            <div className="text-center">
+              <p className="text-xl font-bold text-indigo-600">{data.viewer.totalXp}</p>
+              <p className="text-xs text-gray-500 mt-0.5">Total XP</p>
+            </div>
+            <div className="text-center">
+              <p className="text-xl font-bold text-gray-900">{data.viewer.tier}</p>
+              <p className="text-xs text-gray-500 mt-0.5">Tier</p>
+            </div>
+            {checkinType !== "approach" && (
+              <>
+                <div className="text-center">
+                  <p className="text-xl font-bold text-amber-600">#{data.leaderboard.rank}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">of {data.leaderboard.totalLearners} cAMPers</p>
+                </div>
+                <div className="text-center truncate">
+                  <p className="text-sm font-semibold text-gray-700 truncate">{data.viewer.managerEmail ?? "—"}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Manager</p>
+                </div>
+              </>
+            )}
           </div>
-          <div>
-            <span className="text-gray-500">Tier:</span>{" "}
-            <span className="font-semibold text-gray-900">{data.viewer.tier}</span>
-          </div>
-          {checkinType !== "approach" && (
-            <>
-              <div>
-                <span className="text-gray-500">Leaderboard:</span>{" "}
-                <span className="font-bold text-amber-600">#{data.leaderboard.rank}/{data.leaderboard.totalLearners}</span>
-              </div>
-              <div>
-                <span className="text-gray-500">Manager:</span>{" "}
-                <span className="font-medium text-gray-700">{data.viewer.managerEmail ?? "—"}</span>
-              </div>
-            </>
-          )}
         </div>
       </div>
 
       {/* Clip Progress (non-approach) */}
       {checkinType !== "approach" && (
-        <div className="rounded-lg border border-gray-200 p-4">
-          <h3 className="text-sm font-bold text-gray-900 mb-3">🎬 Clip Progress</h3>
+        <div className="rounded-xl border border-green-200 bg-green-50/60 p-4 shadow-sm">
+          <h3 className="text-sm font-bold text-green-900 mb-3 flex items-center gap-1.5"><span className="w-1 h-4 rounded-full bg-green-500 inline-block" />🎞️ Clip Progress</h3>
           <div className="grid grid-cols-3 gap-4 text-center">
-            <div>
-              <p className="text-2xl font-bold text-indigo-600">
+            <div className="rounded-lg bg-white/70 py-2">
+              <p className="text-xl font-bold text-green-700">
                 {data.clipStats.completedSessions}/{data.clipStats.totalSessions}
               </p>
               <p className="text-xs text-gray-500">Clips Done</p>
             </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900">{data.clipStats.avgScore}%</p>
+            <div className="rounded-lg bg-white/70 py-2">
+              <p className="text-xl font-bold text-green-700">{data.clipStats.avgScore}%</p>
               <p className="text-xs text-gray-500">Avg Score</p>
             </div>
-            <div>
-              <p className="text-2xl font-bold text-amber-600">
+            <div className="rounded-lg bg-white/70 py-2">
+              <p className="text-xl font-bold text-green-700">
                 #{data.leaderboard.rank}/{data.leaderboard.totalLearners}
               </p>
               <p className="text-xs text-gray-500">Leaderboard</p>
@@ -642,31 +666,23 @@ function StatsView({ data, checkinType }: { data: any; checkinType: CheckinType 
         </div>
       )}
 
-      {/* cAMP Quiz Stats */}
-      {data.quizStats.totalAttempts > 0 && (
-        <div className="rounded-lg border border-gray-200 p-4">
-          <h3 className="text-sm font-bold text-gray-900 mb-3">📝 cAMP Quiz</h3>
-          <div className="grid grid-cols-4 gap-3 text-center">
-            <div>
-              <p className="text-xl font-bold text-indigo-600">
+      {/* cAMP Quiz Stats (not shown in approach — no quizzes in week 1) */}
+      {checkinType !== "approach" && data.quizStats.totalAttempts > 0 && (
+        <div className="rounded-xl border border-orange-200 bg-orange-50/60 p-4 shadow-sm">
+          <h3 className="text-sm font-bold text-orange-900 mb-3 flex items-center gap-1.5"><span className="w-1 h-4 rounded-full bg-orange-500 inline-block" />🧠 cAMP Quiz Stats</h3>
+          <div className="grid grid-cols-3 gap-3 text-center">
+            <div className="rounded-lg bg-white/70 py-2">
+              <p className="text-xl font-bold text-orange-700">
                 {data.quizStats.quizzesPassed}/{data.quizStats.totalQuizzes}
               </p>
               <p className="text-xs text-gray-500">Passed</p>
             </div>
-            <div>
-              <p className="text-xl font-bold text-gray-900">{data.quizStats.avgScorePct}%</p>
+            <div className="rounded-lg bg-white/70 py-2">
+              <p className="text-xl font-bold text-orange-700">{data.quizStats.avgScorePct}%</p>
               <p className="text-xs text-gray-500">Avg Score</p>
             </div>
-            <div>
-              <p className="text-xl font-bold text-emerald-600">
-                {data.quizStats.quizzesPassed > 0
-                  ? `${Math.round((data.quizStats.firstPassCount / data.quizStats.quizzesPassed) * 100)}%`
-                  : "—"}
-              </p>
-              <p className="text-xs text-gray-500">1st Pass %</p>
-            </div>
-            <div>
-              <p className="text-xl font-bold text-amber-600">{data.quizStats.retakes}</p>
+            <div className="rounded-lg bg-white/70 py-2">
+              <p className="text-xl font-bold text-orange-700">{data.quizStats.retakes}</p>
               <p className="text-xs text-gray-500">Retakes</p>
             </div>
           </div>
@@ -675,25 +691,31 @@ function StatsView({ data, checkinType }: { data: any; checkinType: CheckinType 
 
       {/* Approach-specific: Module reflections */}
       {checkinType === "approach" && data.moduleReflections.length > 0 && (
-        <div className="rounded-lg border border-gray-200 p-4">
-          <h3 className="text-sm font-bold text-gray-900 mb-3">📘 Module Reflections</h3>
+        <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-4 shadow-sm">
+          <h3 className="text-sm font-bold text-amber-900 mb-3 flex items-center gap-1.5"><span className="w-1 h-4 rounded-full bg-amber-500 inline-block" />✍🏽 Module Reflections</h3>
           <div className="space-y-3">
-            {data.moduleReflections.map((r: any, i: number) => (
-              <div key={i} className="text-sm">
-                <p className="font-medium text-gray-700">{r.reflectionPrompt}</p>
-                <p className="text-gray-600 mt-1 bg-amber-50 rounded px-3 py-2 border border-amber-100">
-                  {r.reflectionResponse}
-                </p>
-              </div>
-            ))}
+            {data.moduleReflections.map((r: any, i: number) => {
+              const moduleEmoji = r.moduleKey === "meddpicc" ? "🧱" : r.moduleKey === "camp101" ? "📦" : r.moduleKey === "challenger" ? "⚔️" : r.moduleKey === "wheel_deal" ? "🎡" : "📝";
+              const moduleLabel = r.moduleKey === "meddpicc" ? "MEDDPICC" : r.moduleKey === "camp101" ? "cAMP 101" : r.moduleKey === "challenger" ? "Challenger" : r.moduleKey === "wheel_deal" ? "Wheel & Deal" : r.moduleKey;
+              return (
+                <div key={i} className="bg-white/70 rounded-lg px-3 py-3 border border-amber-100">
+                  <p className="text-xs font-semibold text-amber-700 mb-1">{moduleEmoji} {moduleLabel}</p>
+                  <p className="text-sm text-gray-600 mb-2">{r.reflectionPrompt}</p>
+                  <div className="border-t border-amber-100 pt-2">
+                    <p className="text-xs font-semibold text-gray-500 mb-0.5">Their Reflection:</p>
+                    <p className="text-sm text-gray-700 italic">"{r.reflectionResponse}"</p>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
 
-      {/* Approach-specific: W&D */}
+      {/* Approach-specific: Wheel & Deal */}
       {checkinType === "approach" && data.wdVerification && (
-        <div className="rounded-lg border border-gray-200 p-4">
-          <h3 className="text-sm font-bold text-gray-900 mb-2">🎯 Wheel & Deal</h3>
+        <div className="rounded-xl border border-purple-200 bg-purple-50/60 p-4 shadow-sm">
+          <h3 className="text-sm font-bold text-purple-900 mb-2 flex items-center gap-1.5"><span className="w-1 h-4 rounded-full bg-purple-500 inline-block" />🎡 Wheel & Deal</h3>
           <div className="text-sm text-gray-700">
             <span className="font-medium">{data.wdVerification.product}</span>
             {" — "}
@@ -706,23 +728,23 @@ function StatsView({ data, checkinType }: { data: any; checkinType: CheckinType 
 
       {/* Engagement (non-approach) */}
       {checkinType !== "approach" && (
-        <div className="rounded-lg border border-gray-200 p-4">
-          <h3 className="text-sm font-bold text-gray-900 mb-3">🔥 Engagement</h3>
-          <div className="grid grid-cols-4 gap-3 text-center text-sm">
-            <div>
-              <p className="font-bold text-gray-900">{data.engagement.avgQuestionScore}%</p>
+        <div className="rounded-xl border border-red-200 bg-red-50/60 p-4 shadow-sm">
+          <h3 className="text-sm font-bold text-red-900 mb-3 flex items-center gap-1.5"><span className="w-1 h-4 rounded-full bg-red-500 inline-block" />👀 Engagement</h3>
+          <div className="grid grid-cols-4 gap-3 text-center">
+            <div className="rounded-lg bg-white/70 py-2">
+              <p className="text-xl font-bold text-red-700">{data.engagement.avgQuestionScore}%</p>
               <p className="text-xs text-gray-500">Trail Markers</p>
             </div>
-            <div>
-              <p className="font-bold text-gray-900">{data.engagement.avgFocusScore}%</p>
+            <div className="rounded-lg bg-white/70 py-2">
+              <p className="text-xl font-bold text-red-700">{data.engagement.avgFocusScore}%</p>
               <p className="text-xs text-gray-500">Focus</p>
             </div>
-            <div>
-              <p className="font-bold text-gray-900">{data.engagement.avgTimeScore}%</p>
+            <div className="rounded-lg bg-white/70 py-2">
+              <p className="text-xl font-bold text-red-700">{data.engagement.avgTimeScore}%</p>
               <p className="text-xs text-gray-500">Time</p>
             </div>
-            <div>
-              <p className="font-bold text-indigo-600">{data.engagement.overallEngagement}%</p>
+            <div className="rounded-lg bg-white/70 py-2">
+              <p className="text-xl font-bold text-red-700">{data.engagement.overallEngagement}%</p>
               <p className="text-xs text-gray-500">Overall</p>
             </div>
           </div>
@@ -792,20 +814,22 @@ function EmailView({
         ? `${v.name} — Week 2 Check-In`
         : `${v.name} — Week 3 Check-In`;
 
+  const label = CHECKIN_LABELS[checkinType];
+
   return (
-    <div className="space-y-4">
-      <p className="text-sm text-gray-500">
+    <div className="space-y-3">
+      <p className="text-xs text-gray-500">
         Here's what your manager will receive. Click "Send via Gmail" to open a pre-filled draft.
       </p>
 
       {/* Email preview card */}
-      <div className="rounded-lg border border-gray-200 overflow-hidden">
-        <div className="bg-gray-50 px-4 py-2 border-b border-gray-200">
-          <div className="text-xs text-gray-500 space-y-1">
-            <div><span className="font-semibold text-gray-600">To:</span> {toDisplay || "—"}</div>
-            <div><span className="font-semibold text-gray-600">CC:</span> {JT_EMAIL}</div>
+      <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+        <div className={`bg-gradient-to-r ${label.gradient} px-4 py-2.5`}>
+          <div className="text-xs text-white/90 space-y-1">
+            <div><span className="font-semibold text-white">To:</span> {toDisplay || "—"}</div>
+            <div><span className="font-semibold text-white">CC:</span> {JT_EMAIL}</div>
             <div>
-              <span className="font-semibold text-gray-600">Subject:</span>{" "}
+              <span className="font-semibold text-white">Subject:</span>{" "}
               {subjectEmoji} {subjectText}
             </div>
           </div>
@@ -821,12 +845,22 @@ function EmailView({
                 <p>• XP: {v.totalXp}</p>
                 <p>• Tier: {v.tier}</p>
               </div>
-              {qs.totalAttempts > 0 && (
+              {data.moduleReflections.length > 0 && (
                 <div className="pl-3 border-l-2 border-gray-200 space-y-1">
-                  <p className="font-semibold text-gray-800">📝 cAMP Quiz:</p>
-                  <p>• Passed: {qs.quizzesPassed}/{qs.totalQuizzes}</p>
-                  <p>• Avg Score: {qs.avgScorePct}%</p>
-                  <p>• 1st Pass Rate: {qs.quizzesPassed > 0 ? Math.round((qs.firstPassCount / qs.quizzesPassed) * 100) : 0}%</p>
+                  <p className="font-semibold text-gray-800">✍🏽 Module Reflections:</p>
+                  {data.moduleReflections.map((r: any, i: number) => {
+                    const emoji = r.moduleKey === "meddpicc" ? "🧱" : r.moduleKey === "camp101" ? "📦" : r.moduleKey === "challenger" ? "⚔️" : r.moduleKey === "wheel_deal" ? "🎡" : "📝";
+                    const label = r.moduleKey === "meddpicc" ? "MEDDPICC" : r.moduleKey === "camp101" ? "cAMP 101" : r.moduleKey === "challenger" ? "Challenger" : r.moduleKey === "wheel_deal" ? "Wheel & Deal" : r.moduleKey;
+                    return (
+                      <p key={i}>• {emoji} {label} — "{r.reflectionResponse}"</p>
+                    );
+                  })}
+                </div>
+              )}
+              {data.wdVerification && (
+                <div className="pl-3 border-l-2 border-gray-200 space-y-1">
+                  <p className="font-semibold text-gray-800">🎡 Wheel & Deal:</p>
+                  <p>• {data.wdVerification.product} · {data.wdVerification.scenario} · Self-Eval: {data.wdVerification.score}%</p>
                 </div>
               )}
             </>
@@ -840,7 +874,7 @@ function EmailView({
                 <p>• 🏆 Leaderboard: #{data.leaderboard.rank} of {data.leaderboard.totalLearners} cAMPers</p>
               </div>
               <div className="pl-3 border-l-2 border-gray-200 space-y-1">
-                <p className="font-semibold text-gray-800">🔥 Engagement:</p>
+                <p className="font-semibold text-gray-800">👀 Engagement:</p>
                 <p>• 🥾 Trail Markers: {data.engagement.avgQuestionScore}%</p>
                 <p>• 👀 Focus: {data.engagement.avgFocusScore}%</p>
                 <p>• ⏱️ Watch Time: {data.engagement.avgTimeScore}%</p>
@@ -848,7 +882,7 @@ function EmailView({
               </div>
               {qs.totalAttempts > 0 && (
                 <div className="pl-3 border-l-2 border-gray-200 space-y-1">
-                  <p className="font-semibold text-gray-800">📝 cAMP Quiz (All 15 Days):</p>
+                  <p className="font-semibold text-gray-800">🧠 cAMP Quiz Stats (All 15 Days):</p>
                   <p>• Passed: {qs.quizzesPassed}/{qs.totalQuizzes} · Avg: {qs.avgScorePct}%</p>
                   <p>• 1st Pass Rate: {qs.quizzesPassed > 0 ? Math.round((qs.firstPassCount / qs.quizzesPassed) * 100) : 0}%</p>
                 </div>
@@ -863,7 +897,7 @@ function EmailView({
             <>
               <p>Here's my {checkinType === "week2" ? "Week 2" : "Week 3"} cAMP Ascent update:</p>
               <div className="pl-3 border-l-2 border-gray-200 space-y-1">
-                <p className="font-semibold text-gray-800">🎬 Clips:</p>
+                <p className="font-semibold text-gray-800">🎞️ Clips:</p>
                 <p>• {data.clipStats.completedSessions}/{data.clipStats.totalSessions} completed · Avg Score: {data.clipStats.avgScore}%</p>
               </div>
               <div className="pl-3 border-l-2 border-gray-200 space-y-1">
@@ -872,7 +906,7 @@ function EmailView({
                 <p>• 🏆 Leaderboard: #{data.leaderboard.rank} of {data.leaderboard.totalLearners} cAMPers</p>
               </div>
               <div className="pl-3 border-l-2 border-gray-200 space-y-1">
-                <p className="font-semibold text-gray-800">🔥 Engagement:</p>
+                <p className="font-semibold text-gray-800">👀 Engagement:</p>
                 <p>• 🥾 Trail Markers: {data.engagement.avgQuestionScore}%</p>
                 <p>• 👀 Focus: {data.engagement.avgFocusScore}%</p>
                 <p>• ⏱️ Watch Time: {data.engagement.avgTimeScore}%</p>
@@ -880,7 +914,7 @@ function EmailView({
               </div>
               {qs.totalAttempts > 0 && (
                 <div className="pl-3 border-l-2 border-gray-200 space-y-1">
-                  <p className="font-semibold text-gray-800">📝 cAMP Quiz:</p>
+                  <p className="font-semibold text-gray-800">🧠 cAMP Quiz Stats:</p>
                   <p>• Passed: {qs.quizzesPassed}/{qs.totalQuizzes} · Avg: {qs.avgScorePct}%</p>
                   <p>• 1st Pass Rate: {qs.quizzesPassed > 0 ? Math.round((qs.firstPassCount / qs.quizzesPassed) * 100) : 0}%</p>
                 </div>
@@ -913,17 +947,17 @@ function EmailView({
             className={`w-full py-3 rounded-lg text-sm font-bold transition-colors ${
               gmailOpened
                 ? "bg-emerald-100 text-emerald-700 border border-emerald-300"
-                : "bg-indigo-600 text-white hover:bg-indigo-700"
+                : "bg-emerald-600 text-white hover:bg-emerald-700"
             }`}
           >
-            {gmailOpened ? "✅ Gmail opened — send the email, then come back" : "✉️ Send via Gmail"}
+            {gmailOpened ? "✅ Gmail Opened — send the email, then come back" : "📨 Send via Gmail"}
           </button>
 
           {gmailOpened && (
             <button
               onClick={onMarkSent}
               disabled={marking}
-              className="w-full py-3 rounded-lg text-sm font-bold bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-full py-3 rounded-lg text-sm font-bold bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {marking ? (
                 <span className="flex items-center justify-center gap-2">
@@ -931,7 +965,7 @@ function EmailView({
                   Marking…
                 </span>
               ) : (
-                "✅ I sent it — Mark as Sent"
+                "📬 I Sent It — Mark as Sent"
               )}
             </button>
           )}

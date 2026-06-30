@@ -70,9 +70,12 @@ export default function FirstAchievementModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
       <div className="w-full max-w-md mx-4 rounded-2xl bg-white shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-300">
         {/* Header */}
-        <div className={`px-8 py-5 text-center ${earnedBadge ? 'bg-gradient-to-r from-green-600 to-emerald-600' : 'bg-gradient-to-r from-amber-500 to-yellow-500'}`}>
+        <div className={`px-8 pt-6 pb-5 text-center ${earnedBadge ? 'bg-gradient-to-r from-green-600 to-emerald-600' : 'bg-gradient-to-r from-amber-500 to-yellow-500'}`}>
+          <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
+            <span className="text-4xl">🚡</span>
+          </div>
           <p className="text-2xl font-bold uppercase tracking-widest text-white">
-            🚡 The Approach is Complete!
+            The Approach is Complete!
           </p>
         </div>
 

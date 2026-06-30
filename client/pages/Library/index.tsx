@@ -58,6 +58,7 @@ export default function LibraryPage() {
   const [firstAchievementData, setFirstAchievementData] = useState<{ earnedXp: number; earnedBadge: boolean }>({ earnedXp: 0, earnedBadge: false });
   const [showCheckin, setShowCheckin] = useState(false);
   const [checkinType, setCheckinType] = useState<"approach" | "week2" | "week3" | "summit">("approach");
+  const [checkinAdminTest, setCheckinAdminTest] = useState(false);
   const checkinTriggeredRef = useRef(false);
   const pacingShownRef = useRef(false);
   const anchorCheckedRef = useRef(false);
@@ -65,6 +66,11 @@ export default function LibraryPage() {
   // Tab state: "approach" (Week 1) vs "ascent" (existing clips)
   const initialTab = searchParams.get("tab") === "ascent" ? "ascent" : "approach";
   const [activeTab, setActiveTab] = useState<"approach" | "ascent">(initialTab);
+
+  // Persist active tab so "Back to clips" returns to the correct tab
+  useEffect(() => {
+    sessionStorage.setItem("library_active_tab", activeTab);
+  }, [activeTab]);
 
   // Admin "Test as New Learner" toggle for The Ascent tab
   const [ascentTestMode, setAscentTestMode] = useState(false);
@@ -418,27 +424,11 @@ export default function LibraryPage() {
 
     const completed = progressData.clipsCompleted;
 
-    // Week 2 check-in: after 5+ clips completed, approach already sent, week2 not yet sent
-    if (
-      completed >= 5 &&
-      progressData.approachCheckinSentAt &&
-      !progressData.week2CheckinSentAt
-    ) {
-      // Only show once per session
-      const sessionKey = `checkin_week2_prompted_${viewer!.id}`;
-      if (!sessionStorage.getItem(sessionKey)) {
-        sessionStorage.setItem(sessionKey, "true");
-        checkinTriggeredRef.current = true;
-        setCheckinType("week2");
-        setShowCheckin(true);
-      }
-      return;
-    }
-
-    // Week 3 check-in: after 10+ clips completed, week2 already sent, week3 not yet sent
+    // Week 3 check-in: 10+ clips, week3 not sent yet.
+    // Bypasses week 2 check-in — learners already in week 2/3 when check-in
+    // feature launched skip week 2 and start sending at end of Week 3.
     if (
       completed >= 10 &&
-      progressData.week2CheckinSentAt &&
       !progressData.week3CheckinSentAt
     ) {
       const sessionKey = `checkin_week3_prompted_${viewer!.id}`;
@@ -446,6 +436,24 @@ export default function LibraryPage() {
         sessionStorage.setItem(sessionKey, "true");
         checkinTriggeredRef.current = true;
         setCheckinType("week3");
+        setShowCheckin(true);
+      }
+      return;
+    }
+
+    // Week 2 check-in: 5+ clips, approach sent, week2 not sent, AND less than 10 clips
+    // (once they hit 10 clips, week 3 takes priority above)
+    if (
+      completed >= 5 &&
+      completed < 10 &&
+      progressData.approachCheckinSentAt &&
+      !progressData.week2CheckinSentAt
+    ) {
+      const sessionKey = `checkin_week2_prompted_${viewer!.id}`;
+      if (!sessionStorage.getItem(sessionKey)) {
+        sessionStorage.setItem(sessionKey, "true");
+        checkinTriggeredRef.current = true;
+        setCheckinType("week2");
         setShowCheckin(true);
       }
       return;
@@ -566,11 +574,13 @@ export default function LibraryPage() {
         <LearnerCheckinModal
           viewerId={viewer!.id}
           checkinType={checkinType}
-          onClose={() => setShowCheckin(false)}
+          onClose={() => { setShowCheckin(false); setCheckinAdminTest(false); }}
           onSent={() => {
             setShowCheckin(false);
+            setCheckinAdminTest(false);
             toast.success("Check-in email marked as sent!");
           }}
+          allowClose={checkinAdminTest}
         />
       </div>
     )}
@@ -746,6 +756,7 @@ export default function LibraryPage() {
                 onChange={(e) => {
                   if (e.target.value) {
                     setCheckinType(e.target.value as "approach" | "week2" | "week3" | "summit");
+                    setCheckinAdminTest(true);
                     setShowCheckin(true);
                     e.target.value = "";
                   }
