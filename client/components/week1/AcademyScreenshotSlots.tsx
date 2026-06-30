@@ -95,16 +95,17 @@ export default function AcademyScreenshotSlots({ slots, isLegacy, onUpload }: Ac
               }`}
             >
               <div className="flex items-center justify-between mb-1.5">
-                <a
-                  href={slot.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs font-medium text-emerald-700 hover:underline truncate"
-                >
-                  {slot.label}
-                </a>
+                <span className="text-xs font-semibold text-gray-900">{slot.label}</span>
                 {isUploaded && <span className="text-green-600 text-xs">✅</span>}
               </div>
+              <a
+                href={slot.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 mb-2 px-2 py-1 rounded text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors"
+              >
+                🎓 Go to Academy Course ↗
+              </a>
 
               {isUploaded ? (
                 <p className="text-[10px] text-green-700">Screenshot uploaded</p>
