@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import { useNavigate } from "react-router";
 import { useApi } from "@/hooks/useApi.js";
 import { useViewer } from "@/components/ViewerContext";
+import { getLibraryPath } from "@/lib/libraryNav";
 import PageHeader from "@/components/PageHeader";
 import CampGearSection from "@/components/report/CampGearSection";
 
@@ -124,7 +125,7 @@ export default function ReachdeskReport() {
               🌱 Rewatch Clip
             </button>
             <button
-              onClick={() => navigate("/library")}
+              onClick={() => navigate(getLibraryPath())}
               className="flex-1 py-3 rounded-xl text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition-colors"
             >
               🎞️ Back to cAMP Clips

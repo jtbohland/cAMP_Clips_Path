@@ -307,7 +307,7 @@ function CampersSection({ learners, totalClips }: { learners: any[]; totalClips:
       </div>
 
       {/* Table header */}
-      <div className="grid grid-cols-[1.4fr_70px_70px_70px_80px_60px_60px_90px_80px_80px_1fr] gap-2 text-[10px] font-semibold text-gray-500 uppercase tracking-wider px-3">
+      <div className="grid grid-cols-[1.4fr_70px_70px_70px_80px_60px_60px_90px_80px_1fr] gap-2 text-[10px] font-semibold text-gray-500 uppercase tracking-wider px-3">
         <span>cAMPer</span>
         <span className="text-center">XP Earned</span>
         <span className="text-center">Clip Score</span>
@@ -317,7 +317,6 @@ function CampersSection({ learners, totalClips }: { learners: any[]; totalClips:
         <span className="text-center">🎒 Gear</span>
         <span className="text-center">Progress</span>
         <span className="text-center">On Track?</span>
-        <span className="text-center">Last Active</span>
         <span>Merit Badges</span>
       </div>
 
@@ -327,7 +326,7 @@ function CampersSection({ learners, totalClips }: { learners: any[]; totalClips:
           const progressPct = totalClips > 0 ? Math.round((l.clipsCompleted / totalClips) * 100) : 0;
 
           return (
-            <div key={l.viewerId} className="grid grid-cols-[1.4fr_70px_70px_70px_80px_60px_60px_90px_80px_80px_1fr] gap-2 items-center px-3 py-2.5 rounded-md border border-gray-100 bg-white">
+            <div key={l.viewerId} className="grid grid-cols-[1.4fr_70px_70px_70px_80px_60px_60px_90px_80px_1fr] gap-2 items-center px-3 py-2.5 rounded-md border border-gray-100 bg-white">
               {/* cAMPer name + tier */}
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
@@ -347,10 +346,10 @@ function CampersSection({ learners, totalClips }: { learners: any[]; totalClips:
                     </span>
                   )}
                   <TimezonePill timezone={l.timezone} />
-                  {/* Last Activity pill */}
-                  {l.lastActivity && (
-                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-gray-50 border border-gray-200 text-[10px] font-medium text-gray-500 whitespace-nowrap" title="Last activity">
-                      🕓 {new Date(l.lastActivity).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                  {/* Last Login pill */}
+                  {l.lastLogin && (
+                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-sky-50 border border-sky-200 text-[10px] font-medium text-sky-700 whitespace-nowrap" title="Last login">
+                      🔑 {new Date(l.lastLogin).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                     </span>
                   )}
                   {/* Check-in email status */}
@@ -435,17 +434,6 @@ function CampersSection({ learners, totalClips }: { learners: any[]; totalClips:
                   <div className="text-[9px] text-red-500 mt-0.5">
                     🌄 {new Date(l.ascentAdjustmentDay + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                   </div>
-                )}
-              </div>
-
-              {/* Last Active */}
-              <div className="text-center">
-                {l.lastActivity ? (
-                  <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-gray-100 border border-gray-200 text-[10px] font-medium text-gray-700 whitespace-nowrap">
-                    {new Date(l.lastActivity).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                  </span>
-                ) : (
-                  <span className="text-[10px] text-gray-400">—</span>
                 )}
               </div>
 

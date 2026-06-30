@@ -12,6 +12,7 @@ import SearchRescuePassPopup from "@/components/SearchRescuePassPopup";
 import ResumePrompt from "@/components/ResumePrompt";
 import AscentGuidePanel from "@/components/AscentGuidePanel.js";
 import { getGuideEntryForClip } from "@/config/ascentGuide.js";
+import { getLibraryPath } from "@/lib/libraryNav";
 
 import { WistiaPlayer } from "@wistia/wistia-player-react";
 import { toast } from "sonner";
@@ -346,7 +347,7 @@ export default function WatchPage() {
         console.error("Pause save failed:", e);
       }
     }
-    navigate("/library");
+    navigate(getLibraryPath());
   }, [sessionId, phase, pauseSession, elapsedSeconds, focusSeconds, blurSeconds, watchedSeconds, answeredQuestions, correctCount, navigate]);
 
   // 30-second autosave
@@ -732,7 +733,7 @@ export default function WatchPage() {
         toast.success(`+${awardRes.xpAwarded} XP — persistence pays off!`);
       }
     }
-    navigate("/library");
+    navigate(getLibraryPath());
   }, [navigate, viewer, clipId, sessionId, clipData, watchedSeconds, correctCount, trailMarkers, searchRescueScore, recoveryQuestions, awardXP, completeClipPath]);
 
   // Load Wistia transcript web component script
@@ -923,7 +924,7 @@ export default function WatchPage() {
           correctAnswers={correctCount}
           score={score}
           needsRecovery={score < 80 && recoveryQuestions.length > 0}
-          onBackToClips={() => navigate("/library")}
+          onBackToClips={() => navigate(getLibraryPath())}
           onContinueToNext={clipData?.nextClipId ? () => navigate(`/watch/${clipData.nextClipId}`) : undefined}
           onSearchRescue={() => setPhase("search_rescue")}
           incorrectQuestions={incorrectQuestions}
@@ -958,7 +959,7 @@ export default function WatchPage() {
           srScore={searchRescueScore ?? 0}
           newEngagementScore={newEngagementScore}
           xpData={xpData ?? undefined}
-          onBackToClips={() => navigate("/library")}
+          onBackToClips={() => navigate(getLibraryPath())}
           onContinueToNext={
             clipData?.nextClipId
               ? () => navigate(`/watch/${clipData.nextClipId}`)

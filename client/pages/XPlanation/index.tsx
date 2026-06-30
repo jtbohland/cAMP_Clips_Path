@@ -7,7 +7,7 @@ const TIERS = [
   { tier: 1, name: "Base Camper", emoji: "🏕️", xpMin: 0, xpMax: 149, description: "Just getting started on the trail" },
   { tier: 2, name: "Trailblazer", emoji: "🥾", xpMin: 150, xpMax: 324, description: "Building momentum and finding your footing" },
   { tier: 3, name: "Summit Seeker", emoji: "🧗🏼", xpMin: 325, xpMax: 499, description: "Pushing toward mastery" },
-  { tier: 4, name: "Pinnacle Achiever", emoji: "🧗🏼✨", xpMin: 500, xpMax: null, description: "You've conquered the Ascent" },
+  { tier: 4, name: "Pinnacle Achiever", emoji: "✨🏔️✨", xpMin: 500, xpMax: null, description: "You've conquered the Ascent" },
 ];
 
 const BASE_XP = [

@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router";
+import { getLibraryPath } from "@/lib/libraryNav";
 
 type PageHeaderProps = {
   emoji: string;
@@ -33,7 +34,7 @@ export default function PageHeader({ emoji, title, subtitle, showBackButton = tr
         {/* Right — back button */}
         {showBackButton && (
           <button
-            onClick={() => navigate("/library")}
+            onClick={() => navigate(getLibraryPath())}
             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-green-200/30 bg-white/15 text-sm font-medium text-white hover:bg-white/25 transition-colors shadow-sm"
           >
             🎞️ Back to cAMP Clips

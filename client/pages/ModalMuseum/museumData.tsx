@@ -194,7 +194,7 @@ const tierExhibits: MuseumExhibit[] = [
         totalXp={340}
         leaderboardRank={2}
         nextTierName="Pinnacle Achiever"
-        nextTierEmoji="🧗🏼✨"
+        nextTierEmoji="✨🏔️✨"
         xpToNextTier={160}
       />
     ),
@@ -206,7 +206,7 @@ const tierExhibits: MuseumExhibit[] = [
     render: () => (
       <TierUnlockMockup
         tierName="Pinnacle Achiever"
-        tierEmoji="🧗🏼✨"
+        tierEmoji="✨🏔️✨"
         totalXp={515}
         leaderboardRank={1}
         nextTierName={null}
@@ -389,9 +389,12 @@ function FirstAchievementMockup({ earnedXp, earnedBadge }: { earnedXp: number; e
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
       <div className="w-full max-w-md mx-4 rounded-2xl bg-white shadow-2xl overflow-hidden">
-        <div className={`px-8 py-5 text-center ${earnedBadge ? 'bg-gradient-to-r from-green-600 to-emerald-600' : 'bg-gradient-to-r from-amber-500 to-yellow-500'}`}>
+        <div className={`px-8 pt-6 pb-5 text-center ${earnedBadge ? 'bg-gradient-to-r from-green-600 to-emerald-600' : 'bg-gradient-to-r from-amber-500 to-yellow-500'}`}>
+          <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
+            <span className="text-4xl">🚡</span>
+          </div>
           <p className="text-2xl font-bold uppercase tracking-widest text-white">
-            🚡 The Approach is Complete!
+            The Approach is Complete!
           </p>
         </div>
         <div className="px-8 py-6 text-center space-y-4">
@@ -499,70 +502,76 @@ function SummitGrandFinaleMockup() {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
       <div className="w-full max-w-2xl mx-4 max-h-[90vh] rounded-2xl bg-white shadow-2xl overflow-hidden flex flex-col">
-        {/* Full-bleed celebration — NO gradient header, NO step indicator */}
-        <div className="flex-1 overflow-auto p-8">
-          <div className="space-y-4">
-            {/* Hero */}
-            <div className="text-center">
-              <div className="text-5xl mb-3">🏔️ ✨</div>
-              <h2 className="text-2xl font-bold text-gray-900">Summit Reached — Ascent Complete!</h2>
-              <p className="mt-3 text-sm text-gray-500 leading-relaxed max-w-lg mx-auto">
+        {/* Full-bleed celebration with gradient header */}
+        <div className="flex-1 overflow-auto">
+          <div className="space-y-0">
+            {/* Gradient header — matches summit check-in (amber-500 → yellow-500) */}
+            <div className="bg-gradient-to-r from-amber-500 to-yellow-500 px-8 pt-8 pb-6 text-center">
+              {/* Frosted circle with emoji */}
+              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm mb-4 text-4xl">
+                🚩
+              </div>
+              <h2 className="text-2xl font-bold text-white">Summit Reached — Ascent Complete!</h2>
+              <p className="mt-2 text-sm text-white/80 leading-relaxed max-w-lg mx-auto">
                 You've completed all 17 cAMP Clips and conquered your Ascent. The trail behind you is proof — you showed up, engaged, and earned it.
               </p>
             </div>
 
-            {/* XP + Tier card */}
-            <div className="rounded-xl bg-amber-50 border border-amber-200 px-5 py-4 flex items-center justify-between">
+            {/* Content body */}
+            <div className="space-y-4 p-6">
+              {/* XP + Tier card */}
+              <div className="rounded-xl bg-amber-50 border border-amber-200 px-5 py-4 flex items-center justify-between">
+                <div>
+                  <p className="text-lg font-bold text-amber-700">✨🏔️✨ Pinnacle Achiever</p>
+                  <p className="text-xs text-amber-500 mt-0.5">Your final tier</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-2xl font-bold text-amber-700">485 XP</p>
+                  <p className="text-xs text-amber-500 mt-0.5">total earned</p>
+                </div>
+              </div>
+
+              {/* What's next */}
               <div>
-                <p className="text-lg font-bold text-amber-700">🧗🏼✨ Pinnacle Achiever</p>
-                <p className="text-xs text-amber-500 mt-0.5">Your final tier</p>
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">What's next on your journey</h3>
+                <div className="space-y-2">
+                  <div className="rounded-xl bg-gray-50 border border-gray-200 px-5 py-4">
+                    <div className="flex items-start gap-3">
+                      <span className="text-2xl mt-0.5">🧠</span>
+                      <div>
+                        <p className="text-sm font-bold text-gray-900">Complete your final cAMP Quiz</p>
+                        <p className="text-xs text-gray-500 mt-1">Your last content check is waiting — head to cAMP Quizzes to finish strong before cAMP 201.</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="rounded-xl bg-gray-50 border border-gray-200 px-5 py-4">
+                    <div className="flex items-start gap-3">
+                      <span className="text-2xl mt-0.5">🎡</span>
+                      <div>
+                        <p className="text-sm font-bold text-gray-900">Keep spinning — Wheel & Deal</p>
+                        <p className="text-xs text-gray-500 mt-1">cAMP 201 will ask you to pitch live. The reps you put in on Wheel & Deal are what make the difference.</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="rounded-xl bg-gray-50 border border-gray-200 px-5 py-4">
+                    <div className="flex items-start gap-3">
+                      <span className="text-2xl mt-0.5">🛫</span>
+                      <div>
+                        <p className="text-sm font-bold text-gray-900">See you at cAMP 201 in San Francisco!</p>
+                        <p className="text-xs text-gray-500 mt-1">Your in-person capstone — pods, live pitches, real deals, execs, and cross-functional partners.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="text-2xl font-bold text-amber-700">485 XP</p>
-                <p className="text-xs text-amber-500 mt-0.5">total earned</p>
-              </div>
-            </div>
 
-            {/* What's next */}
-            <div>
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">What's next on your journey</h3>
-              <div className="space-y-2">
-                <div className="rounded-xl bg-gray-50 border border-gray-200 px-5 py-4">
-                  <div className="flex items-start gap-3">
-                    <span className="text-2xl mt-0.5">🧠</span>
-                    <div>
-                      <p className="text-sm font-bold text-gray-900">Complete your final cAMP Quiz</p>
-                      <p className="text-xs text-gray-500 mt-1">Your last content check is waiting — head to cAMP Quizzes to finish strong before cAMP 201.</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="rounded-xl bg-gray-50 border border-gray-200 px-5 py-4">
-                  <div className="flex items-start gap-3">
-                    <span className="text-2xl mt-0.5">🎡</span>
-                    <div>
-                      <p className="text-sm font-bold text-gray-900">Keep spinning — Wheel & Deal</p>
-                      <p className="text-xs text-gray-500 mt-1">cAMP 201 will ask you to pitch live. The reps you put in on Wheel & Deal are what make the difference.</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="rounded-xl bg-gray-50 border border-gray-200 px-5 py-4">
-                  <div className="flex items-start gap-3">
-                    <span className="text-2xl mt-0.5">🛫</span>
-                    <div>
-                      <p className="text-sm font-bold text-gray-900">See you at cAMP 201 in San Francisco!</p>
-                      <p className="text-xs text-gray-500 mt-1">Your in-person capstone — pods, live pitches, real deals, execs, and cross-functional partners.</p>
-                    </div>
-                  </div>
-                </div>
+              {/* JT closing quote */}
+              <div className="rounded-xl border-l-4 border-indigo-400 bg-indigo-50/50 px-5 py-4">
+                <p className="text-sm text-gray-600 italic leading-relaxed">
+                  Alex, you didn't just climb Ascent — you crushed the whole mountain. 🏔️🔥 Now take that trail-tested confidence into the field, and get ready to reach even higher at cAMP 201.
+                </p>
+                <p className="text-xs text-gray-400 mt-2">— JT Bohland, Sr. Global Enablement Program Manager</p>
               </div>
-            </div>
-
-            {/* JT closing quote */}
-            <div className="rounded-xl border-l-4 border-indigo-400 bg-indigo-50/50 px-5 py-4">
-              <p className="text-sm text-gray-600 italic leading-relaxed">
-                Alex, you didn't just climb Ascent — you crushed the whole mountain. 🏔️🔥 Now take that trail-tested confidence into the field, and get ready to reach even higher at cAMP 201.
-              </p>
-              <p className="text-xs text-gray-400 mt-2">— JT Bohland, Sr. Global Enablement Program Manager</p>
             </div>
           </div>
         </div>
@@ -635,77 +644,98 @@ function CheckinMockup({ type }: { type: "approach" | "week2" | "week3" | "summi
         <div className="flex-1 overflow-auto p-6 space-y-4">
           {step === "stats" && (
             <>
+              {/* Hero stats card — gradient accent strip */}
+              <div className="rounded-xl overflow-hidden shadow-sm border border-gray-200">
+                <div className={`bg-gradient-to-r ${label.gradient} h-1.5`} />
+                <div className="p-4 bg-gradient-to-b from-gray-50 to-white">
+                  <div className={`grid ${type !== "approach" ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-2"} gap-4`}>
+                    <div className="text-center">
+                      <p className="text-xl font-bold text-indigo-600">{type === "summit" ? "485" : type === "week3" ? "340" : type === "week2" ? "210" : "95"}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">Total XP</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-xl font-bold text-gray-900">{type === "summit" ? "✨🏔️✨ Pinnacle" : type === "week3" ? "🧗🏼 Seeker" : type === "week2" ? "🥾 Trailblazer" : "🏕️ Base Camper"}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">Tier</p>
+                    </div>
+                    {type !== "approach" && (
+                      <>
+                        <div className="text-center">
+                          <p className="text-xl font-bold text-amber-600">#3</p>
+                          <p className="text-xs text-gray-500 mt-0.5">of 12 cAMPers</p>
+                        </div>
+                        <div className="text-center truncate">
+                          <p className="text-sm font-semibold text-gray-700 truncate">jordan.chen@amplitude.com</p>
+                          <p className="text-xs text-gray-500 mt-0.5">Manager</p>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+
               {/* Clip stats */}
               {type !== "approach" && (
-                <div className="rounded-lg border border-gray-200 p-4">
-                  <h3 className="text-sm font-bold text-gray-900 mb-3">🎬 Clip Progress</h3>
+                <div className="rounded-xl border border-green-200 bg-green-50/60 p-4 shadow-sm">
+                  <h3 className="text-sm font-bold text-green-900 mb-3 flex items-center gap-1.5"><span className="w-1 h-4 rounded-full bg-green-500 inline-block" />🎞️ Clip Progress</h3>
                   <div className="grid grid-cols-3 gap-4 text-center">
-                    <div>
-                      <p className="text-2xl font-bold text-indigo-600">{mockClipCount}/17</p>
+                    <div className="rounded-lg bg-white/70 py-2">
+                      <p className="text-xl font-bold text-green-700">{mockClipCount}/17</p>
                       <p className="text-xs text-gray-500">Clips Done</p>
                     </div>
-                    <div>
-                      <p className="text-2xl font-bold text-gray-900">87%</p>
+                    <div className="rounded-lg bg-white/70 py-2">
+                      <p className="text-xl font-bold text-green-700">87%</p>
                       <p className="text-xs text-gray-500">Avg Score</p>
                     </div>
-                    <div>
-                      <p className="text-2xl font-bold text-amber-600">#3/12</p>
+                    <div className="rounded-lg bg-white/70 py-2">
+                      <p className="text-xl font-bold text-green-700">#3/12</p>
                       <p className="text-xs text-gray-500">Leaderboard</p>
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* XP / Tier */}
-              <div className="rounded-lg bg-gray-50 border border-gray-200 p-4">
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div><span className="text-gray-500">Your XP:</span> <span className="font-bold text-indigo-600">{type === "summit" ? "485" : type === "week3" ? "340" : type === "week2" ? "210" : "95"}</span></div>
-                  <div><span className="text-gray-500">Tier:</span> <span className="font-semibold text-gray-900">{type === "summit" ? "🧗🏼✨ Pinnacle Achiever" : type === "week3" ? "🧗🏼 Summit Seeker" : type === "week2" ? "🥾 Trailblazer" : "🏕️ Base Camper"}</span></div>
-                </div>
-              </div>
-
               {/* Quiz stats */}
-              <div className="rounded-lg border border-gray-200 p-4">
-                <h3 className="text-sm font-bold text-gray-900 mb-3">📝 cAMP Quiz Stats</h3>
+              <div className="rounded-xl border border-orange-200 bg-orange-50/60 p-4 shadow-sm">
+                <h3 className="text-sm font-bold text-orange-900 mb-3 flex items-center gap-1.5"><span className="w-1 h-4 rounded-full bg-orange-500 inline-block" />🧠 cAMP Quiz Stats</h3>
                 <div className="grid grid-cols-3 gap-4 text-center">
-                  <div><p className="text-xl font-bold text-emerald-600">{type === "approach" ? "4/4" : type === "week2" ? "8/9" : "14/15"}</p><p className="text-xs text-gray-500">Passed</p></div>
-                  <div><p className="text-xl font-bold text-gray-900">82%</p><p className="text-xs text-gray-500">Avg Score</p></div>
-                  <div><p className="text-xl font-bold text-amber-600">2</p><p className="text-xs text-gray-500">Retakes</p></div>
+                  <div className="rounded-lg bg-white/70 py-2"><p className="text-xl font-bold text-orange-700">{type === "approach" ? "4/4" : type === "week2" ? "8/9" : "14/15"}</p><p className="text-xs text-gray-500">Passed</p></div>
+                  <div className="rounded-lg bg-white/70 py-2"><p className="text-xl font-bold text-orange-700">82%</p><p className="text-xs text-gray-500">Avg Score</p></div>
+                  <div className="rounded-lg bg-white/70 py-2"><p className="text-xl font-bold text-orange-700">2</p><p className="text-xs text-gray-500">Retakes</p></div>
                 </div>
               </div>
 
               {/* Engagement (non-approach) */}
               {type !== "approach" && (
-                <div className="rounded-lg border border-gray-200 p-4">
-                  <h3 className="text-sm font-bold text-gray-900 mb-3">🔥 Engagement</h3>
-                  <div className="grid grid-cols-4 gap-3 text-center text-sm">
-                    <div><p className="font-bold text-gray-900">82%</p><p className="text-xs text-gray-500">Questions</p></div>
-                    <div><p className="font-bold text-gray-900">91%</p><p className="text-xs text-gray-500">Focus</p></div>
-                    <div><p className="font-bold text-gray-900">78%</p><p className="text-xs text-gray-500">Time</p></div>
-                    <div><p className="font-bold text-indigo-600">84%</p><p className="text-xs text-gray-500">Overall</p></div>
+                <div className="rounded-xl border border-red-200 bg-red-50/60 p-4 shadow-sm">
+                  <h3 className="text-sm font-bold text-red-900 mb-3 flex items-center gap-1.5"><span className="w-1 h-4 rounded-full bg-red-500 inline-block" />👀 Engagement</h3>
+                  <div className="grid grid-cols-4 gap-3 text-center">
+                    <div className="rounded-lg bg-white/70 py-2"><p className="text-xl font-bold text-red-700">82%</p><p className="text-xs text-gray-500">Trail Markers</p></div>
+                    <div className="rounded-lg bg-white/70 py-2"><p className="text-xl font-bold text-red-700">91%</p><p className="text-xs text-gray-500">Focus</p></div>
+                    <div className="rounded-lg bg-white/70 py-2"><p className="text-xl font-bold text-red-700">78%</p><p className="text-xs text-gray-500">Time</p></div>
+                    <div className="rounded-lg bg-white/70 py-2"><p className="text-xl font-bold text-red-700">84%</p><p className="text-xs text-gray-500">Overall</p></div>
                   </div>
                 </div>
               )}
 
               {/* Approach-specific: Module reflections from Week 1 */}
               {type === "approach" && (
-                <div className="rounded-lg border border-gray-200 p-4">
-                  <h3 className="text-sm font-bold text-gray-900 mb-3">📚 Module Reflections (from Week 1)</h3>
+                <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-4 shadow-sm">
+                  <h3 className="text-sm font-bold text-amber-900 mb-3 flex items-center gap-1.5"><span className="w-1 h-4 rounded-full bg-amber-500 inline-block" />✍🏽 Module Reflections</h3>
                   <div className="space-y-2 text-sm">
-                    <div className="bg-amber-50 rounded px-3 py-2 border border-amber-100">
-                      <p className="font-medium text-gray-700">📘 MEDDPICC:</p>
+                    <div className="bg-white/70 rounded-lg px-3 py-2 border border-amber-100">
+                      <p className="font-medium text-gray-700">🧱 MEDDPICC:</p>
                       <p className="text-gray-600">Identifying the economic buyer early is critical.</p>
                     </div>
-                    <div className="bg-amber-50 rounded px-3 py-2 border border-amber-100">
-                      <p className="font-medium text-gray-700">🏕️ cAMP 101:</p>
+                    <div className="bg-white/70 rounded-lg px-3 py-2 border border-amber-100">
+                      <p className="font-medium text-gray-700">📦 cAMP 101:</p>
                       <p className="text-gray-600">Map every deal to the cAMP framework before discovery.</p>
                     </div>
-                    <div className="bg-amber-50 rounded px-3 py-2 border border-amber-100">
+                    <div className="bg-white/70 rounded-lg px-3 py-2 border border-amber-100">
                       <p className="font-medium text-gray-700">⚔️ Challenger:</p>
                       <p className="text-gray-600">Lead with insights rather than questions.</p>
                     </div>
-                    <div className="bg-amber-50 rounded px-3 py-2 border border-amber-100">
-                      <p className="font-medium text-gray-700">🎯 W&D:</p>
+                    <div className="bg-white/70 rounded-lg px-3 py-2 border border-amber-100">
+                      <p className="font-medium text-gray-700">🎡 Wheel & Deal:</p>
                       <p className="text-gray-600">Analytics · Mid-Market Expansion · Score: 92%</p>
                     </div>
                   </div>
@@ -734,13 +764,13 @@ function CheckinMockup({ type }: { type: "approach" | "week2" | "week3" | "summi
           {step === "email" && (
             <>
               <p className="text-sm text-gray-500">Here's what your manager will receive. Click "Send via Gmail" to open a pre-filled draft.</p>
-              <div className="rounded-lg border border-gray-200 overflow-hidden">
-                <div className="bg-gray-50 px-4 py-2 border-b border-gray-200">
-                  <div className="text-xs text-gray-500 space-y-1">
-                    <div><span className="font-semibold text-gray-600">To:</span> {mockManager}</div>
-                    <div><span className="font-semibold text-gray-600">CC:</span> jt.bohland@amplitude.com</div>
+              <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+                <div className={`bg-gradient-to-r ${label.gradient} px-4 py-2.5`}>
+                  <div className="text-xs text-white/90 space-y-1">
+                    <div><span className="font-semibold text-white">To:</span> {mockManager}</div>
+                    <div><span className="font-semibold text-white">CC:</span> jt.bohland@amplitude.com</div>
                     <div>
-                      <span className="font-semibold text-gray-600">Subject:</span>{" "}
+                      <span className="font-semibold text-white">Subject:</span>{" "}
                       {type === "summit" ? `🧗🏻‍♂️ ${mockName} — Summit Reached!` : type === "approach" ? `🚡 ${mockName} — Approach Check-In` : type === "week2" ? `🥾 ${mockName} — Week 2 Check-In` : `🏞️ ${mockName} — Week 3 Check-In`}
                     </div>
                   </div>
@@ -755,7 +785,7 @@ function CheckinMockup({ type }: { type: "approach" | "week2" | "week3" | "summi
                         <p>• XP: 95 · Tier: 🏕️ Base Camper</p>
                       </div>
                       <div className="pl-3 border-l-2 border-gray-200 space-y-1">
-                        <p className="font-semibold text-gray-800">📝 cAMP Quiz:</p>
+                        <p className="font-semibold text-gray-800">🧠 cAMP Quiz:</p>
                         <p>• Passed: 4/4 · Avg: 82% · 1st Pass: 75%</p>
                       </div>
                     </>
@@ -765,27 +795,27 @@ function CheckinMockup({ type }: { type: "approach" | "week2" | "week3" | "summi
                       <div className="pl-3 border-l-2 border-amber-200 space-y-1 bg-amber-50/50 rounded py-1">
                         <p className="font-semibold text-gray-800">🏔️ Overall Summit Summary:</p>
                         <p>• Clips: 17/17 completed</p>
-                        <p>• XP: 485 · Tier: 🧗🏼✨ Pinnacle Achiever</p>
+                        <p>• XP: 485 · Tier: ✨🏔️✨ Pinnacle Achiever</p>
                         <p>• 🏆 Leaderboard: #3 of 12 cAMPers</p>
                       </div>
                       <div className="pl-3 border-l-2 border-gray-200 space-y-1">
-                        <p className="font-semibold text-gray-800">🔥 Engagement:</p>
+                        <p className="font-semibold text-gray-800">👀 Engagement:</p>
                         <p>• 🥾 Trail Markers: 82% · 👀 Focus: 91% · ⏱️ Time: 78% · 🎯 Overall: 84%</p>
                       </div>
                       <div className="pl-3 border-l-2 border-gray-200 space-y-1">
-                        <p className="font-semibold text-gray-800">📝 cAMP Quiz (All 15 Days):</p>
+                        <p className="font-semibold text-gray-800">🧠 cAMP Quiz (All 15 Days):</p>
                         <p>• Passed: 14/15 · Avg: 82% · 1st Pass: 79%</p>
                       </div>
                       <div className="pl-3 border-l-2 border-gray-200 space-y-1">
                         <p className="font-semibold text-gray-800">🗓️ Week 4 Performance:</p>
-                        <p>• Final Tier: 🧗🏼✨ Pinnacle Achiever · Total XP: 485</p>
+                        <p>• Final Tier: ✨🏔️✨ Pinnacle Achiever · Total XP: 485</p>
                       </div>
                     </>
                   ) : (
                     <>
                       <p>Here's my {type === "week2" ? "Week 2" : "Week 3"} cAMP Ascent update:</p>
                       <div className="pl-3 border-l-2 border-gray-200 space-y-1">
-                        <p className="font-semibold text-gray-800">🎬 Clips:</p>
+                        <p className="font-semibold text-gray-800">🎞️ Clips:</p>
                         <p>• {type === "week2" ? "8" : "14"}/17 completed · Avg Score: 87%</p>
                       </div>
                       <div className="pl-3 border-l-2 border-gray-200 space-y-1">
@@ -794,11 +824,11 @@ function CheckinMockup({ type }: { type: "approach" | "week2" | "week3" | "summi
                         <p>• 🏆 Leaderboard: #3 of 12 cAMPers</p>
                       </div>
                       <div className="pl-3 border-l-2 border-gray-200 space-y-1">
-                        <p className="font-semibold text-gray-800">🔥 Engagement:</p>
+                        <p className="font-semibold text-gray-800">👀 Engagement:</p>
                         <p>• 🥾 Trail Markers: 82% · 👀 Focus: 91% · ⏱️ Time: 78% · 🎯 Overall: 84%</p>
                       </div>
                       <div className="pl-3 border-l-2 border-gray-200 space-y-1">
-                        <p className="font-semibold text-gray-800">📝 cAMP Quiz:</p>
+                        <p className="font-semibold text-gray-800">🧠 cAMP Quiz:</p>
                         <p>• Passed: {type === "week2" ? "8/9" : "14/15"} · Avg: 82% · 1st Pass: 79%</p>
                       </div>
                     </>
@@ -816,8 +846,8 @@ function CheckinMockup({ type }: { type: "approach" | "week2" | "week3" | "summi
                   <p className="text-gray-500 text-xs mt-2">📋 Manager Feedback Survey link included (Required — only JT sees responses)</p>
                 </div>
               </div>
-              <span className="block w-full py-3 rounded-lg text-sm font-bold bg-indigo-600 text-white text-center cursor-pointer hover:bg-indigo-700 transition-colors">
-                ✉️ Send via Gmail
+              <span className="block w-full py-3 rounded-lg text-sm font-bold bg-emerald-600 text-white text-center cursor-pointer hover:bg-emerald-700 transition-colors">
+                📨 Send via Gmail
               </span>
               <p className="text-xs text-center text-gray-400">This opens Gmail with your email pre-filled. After sending, come back to mark it as sent.</p>
             </>
@@ -844,18 +874,18 @@ function CheckinMockup({ type }: { type: "approach" | "week2" | "week3" | "summi
               {step === "stats" && (
                 <button
                   onClick={() => setStep("reflect")}
-                  className={`px-5 py-2 rounded-lg text-sm font-semibold bg-gray-900 text-white hover:bg-gray-800 transition-colors`}
+                  className={`px-5 py-2 rounded-lg text-sm font-semibold bg-orange-500 text-white hover:bg-orange-600 transition-colors`}
                 >
-                  Next: Add Reflection →
+                  ✏️ Next: Add Reflection →
                 </button>
               )}
               {step === "reflect" && (
                 <button
                   onClick={() => setStep("email")}
                   disabled={!reflection.trim()}
-                  className="px-5 py-2 rounded-lg text-sm font-semibold bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="px-5 py-2 rounded-lg text-sm font-semibold bg-yellow-500 text-white hover:bg-yellow-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
-                  Next: Email Preview →
+                  📧 Next: Email Preview →
                 </button>
               )}
             </div>

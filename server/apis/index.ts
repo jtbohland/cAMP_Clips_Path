@@ -86,6 +86,7 @@ import GetLearnerReflections from './v2/get-learner-reflections.js';
 import SetupCheckinColumn from './v2/setup-checkin-column.js';
 import SetupLoginTracking from './v2/setup-login-tracking.js';
 import TrackLogin from './v2/track-login.js';
+import BackfillLastLogin from './v2/backfill-last-login.js';
 
 
 const apis = {
@@ -174,6 +175,7 @@ ResetJTSessions,
   SetupCheckinColumn,
   SetupLoginTracking,
   TrackLogin,
+  BackfillLastLogin,
 } as const;
 
 export default apis;

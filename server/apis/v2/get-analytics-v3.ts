@@ -6,7 +6,7 @@ const TIERS = [
   { tier: 1, name: "Base Camper", emoji: "🏕️", xpMin: 0, xpMax: 149 },
   { tier: 2, name: "Trailblazer", emoji: "🥾", xpMin: 150, xpMax: 324 },
   { tier: 3, name: "Summit Seeker", emoji: "🧗🏼", xpMin: 325, xpMax: 499 },
-  { tier: 4, name: "Pinnacle Achiever", emoji: "🧗🏼✨", xpMin: 500, xpMax: null },
+  { tier: 4, name: "Pinnacle Achiever", emoji: "✨🏔️✨", xpMin: 500, xpMax: null },
 ];
 
 // --- Row schemas ---
@@ -35,6 +35,7 @@ const LearnerRow = z.object({
   wts_count: z.coerce.number(),
   sr_count: z.coerce.number(),
   last_active: z.string().nullable(),
+  last_login_at: z.string().nullable(),
 });
 
 const LearnerBadgeRow = z.object({
@@ -133,6 +134,7 @@ export default api({
       summitDay: z.string().nullable(),
       isAnchorFailure: z.boolean(),
       ascentAdjustmentDay: z.string().nullable(),
+      lastLogin: z.string().nullable(),
     })),
     clipBreakdown: z.array(z.object({
       clipId: z.string(),
@@ -204,11 +206,12 @@ export default api({
         ROUND(AVG(s.engagement_score) FILTER (WHERE s.completed = true AND s.is_recovery_attempt = true), 1)::text AS recovery_avg,
         COUNT(*) FILTER (WHERE s.attempt_number >= 3)::int AS wts_count,
         COUNT(*) FILTER (WHERE s.is_recovery_attempt = true)::int AS sr_count,
-        MAX(s.ended_at)::text AS last_active
+        MAX(s.ended_at)::text AS last_active,
+        v.last_login_at::text AS last_login_at
        FROM cliptracker_v2_viewers v
        LEFT JOIN cliptracker_v2_sessions s ON s.viewer_id = v.id
        WHERE v.is_admin = false
-       GROUP BY v.id, v.name, v.email, v.role, v.timezone, v.manager_name, v.ascent_day_1
+       GROUP BY v.id, v.name, v.email, v.role, v.timezone, v.manager_name, v.ascent_day_1, v.last_login_at
        ORDER BY v.name ASC
        LIMIT 500`,
       LearnerRow,
@@ -410,6 +413,7 @@ export default api({
         summitDay: summitDayStr,
         isAnchorFailure,
         ascentAdjustmentDay: ascentAdjustmentDayStr,
+        lastLogin: l.last_login_at,
       };
     });
 
