@@ -143,7 +143,7 @@ export default function ModuleCard({
                 }`}
               >
                 <span>{r.emoji}</span>
-                {r.label}
+                {r.label} ↗
                 {r.isCampGear && <span className="ml-1 text-[10px] opacity-70">⛺ cAMP Gear</span>}
               </a>
             ))}

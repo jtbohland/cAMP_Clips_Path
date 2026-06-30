@@ -98,15 +98,15 @@ export default function ChallengerCard({
           <div className="flex flex-wrap gap-2">
             <a href="https://deeplinks.mindtickle.com/ZSbb3886zTb" target="_blank" rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 transition-colors">
-              <span>🧠</span> MindTickle Course
+              <span>🧠</span> MindTickle Course ↗
             </a>
             <a href="https://app.glean.com/chat/agents/ccf97264426040a7841092997a113889?qe=https%3A%2F%2Famplitude-be.glean.com" target="_blank" rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-colors">
-              <span>🔍</span> Glean Agent 1 <span className="ml-1 text-[10px] opacity-70">⛺ cAMP Gear</span>
+              <span>🔍</span> Glean Agent 1 ↗ <span className="ml-1 text-[10px] opacity-70">⛺ cAMP Gear</span>
             </a>
             <a href="https://app.glean.com/chat/agents/77ad9ce8bbbf424fa3ec467f3f477b5c?qe=https%3A%2F%2Famplitude-be.glean.com" target="_blank" rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-colors">
-              <span>🔍</span> Glean Agent 2 <span className="ml-1 text-[10px] opacity-70">⛺ cAMP Gear</span>
+              <span>🔍</span> Glean Agent 2 ↗ <span className="ml-1 text-[10px] opacity-70">⛺ cAMP Gear</span>
             </a>
           </div>
         </div>

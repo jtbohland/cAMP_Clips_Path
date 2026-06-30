@@ -259,29 +259,6 @@ export default function RegistrationForm() {
               />
             </div>
 
-            {/* Timezone */}
-            <div className="space-y-1">
-              <label htmlFor="reg-timezone" className="block text-sm font-medium text-gray-700">
-                Timezone Region
-              </label>
-              <select
-                id="reg-timezone"
-                value={timezone}
-                onChange={(e) => setTimezone(e.target.value)}
-                required
-                className={selectClasses}
-              >
-                <option value="" disabled>
-                  Select your timezone region
-                </option>
-                {TIMEZONES.map((tz) => (
-                  <option key={tz.value} value={tz.value}>
-                    {tz.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
             {/* Role */}
             <div className="space-y-1">
               <label htmlFor="reg-role" className="block text-sm font-medium text-gray-700">
@@ -349,6 +326,29 @@ export default function RegistrationForm() {
               <p className="text-xs text-gray-500">
                 If your manager has decided to be your mentor, type their name in.
               </p>
+            </div>
+
+            {/* Timezone */}
+            <div className="space-y-1">
+              <label htmlFor="reg-timezone" className="block text-sm font-medium text-gray-700">
+                Timezone Region
+              </label>
+              <select
+                id="reg-timezone"
+                value={timezone}
+                onChange={(e) => setTimezone(e.target.value)}
+                required
+                className={selectClasses}
+              >
+                <option value="" disabled>
+                  Select your timezone region
+                </option>
+                {TIMEZONES.map((tz) => (
+                  <option key={tz.value} value={tz.value}>
+                    {tz.label}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* Day 1 of Ascent */}
