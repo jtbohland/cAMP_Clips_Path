@@ -650,7 +650,7 @@ function CheckinMockup({ type }: { type: "approach" | "week2" | "week3" | "summi
                 <div className="p-4 bg-gradient-to-b from-gray-50 to-white">
                   <div className={`grid ${type !== "approach" ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-2"} gap-4`}>
                     <div className="text-center">
-                      <p className="text-xl font-bold text-indigo-600">{type === "summit" ? "485" : type === "week3" ? "340" : type === "week2" ? "210" : "95"}</p>
+                      <p className="text-xl font-bold text-indigo-600">{type === "summit" ? "485" : type === "week3" ? "340" : type === "week2" ? "210" : "35"}</p>
                       <p className="text-xs text-gray-500 mt-0.5">Total XP</p>
                     </div>
                     <div className="text-center">
@@ -694,15 +694,17 @@ function CheckinMockup({ type }: { type: "approach" | "week2" | "week3" | "summi
                 </div>
               )}
 
-              {/* Quiz stats */}
-              <div className="rounded-xl border border-orange-200 bg-orange-50/60 p-4 shadow-sm">
-                <h3 className="text-sm font-bold text-orange-900 mb-3 flex items-center gap-1.5"><span className="w-1 h-4 rounded-full bg-orange-500 inline-block" />🧠 cAMP Quiz Stats</h3>
-                <div className="grid grid-cols-3 gap-4 text-center">
-                  <div className="rounded-lg bg-white/70 py-2"><p className="text-xl font-bold text-orange-700">{type === "approach" ? "4/4" : type === "week2" ? "8/9" : "14/15"}</p><p className="text-xs text-gray-500">Passed</p></div>
-                  <div className="rounded-lg bg-white/70 py-2"><p className="text-xl font-bold text-orange-700">82%</p><p className="text-xs text-gray-500">Avg Score</p></div>
-                  <div className="rounded-lg bg-white/70 py-2"><p className="text-xl font-bold text-orange-700">2</p><p className="text-xs text-gray-500">Retakes</p></div>
+              {/* Quiz stats (not shown in approach — no quizzes in week 1) */}
+              {type !== "approach" && (
+                <div className="rounded-xl border border-orange-200 bg-orange-50/60 p-4 shadow-sm">
+                  <h3 className="text-sm font-bold text-orange-900 mb-3 flex items-center gap-1.5"><span className="w-1 h-4 rounded-full bg-orange-500 inline-block" />🧠 cAMP Quiz Stats</h3>
+                  <div className="grid grid-cols-3 gap-4 text-center">
+                    <div className="rounded-lg bg-white/70 py-2"><p className="text-xl font-bold text-orange-700">{type === "week2" ? "8/9" : "14/15"}</p><p className="text-xs text-gray-500">Passed</p></div>
+                    <div className="rounded-lg bg-white/70 py-2"><p className="text-xl font-bold text-orange-700">82%</p><p className="text-xs text-gray-500">Avg Score</p></div>
+                    <div className="rounded-lg bg-white/70 py-2"><p className="text-xl font-bold text-orange-700">2</p><p className="text-xs text-gray-500">Retakes</p></div>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Engagement (non-approach) */}
               {type !== "approach" && (
@@ -721,22 +723,30 @@ function CheckinMockup({ type }: { type: "approach" | "week2" | "week3" | "summi
               {type === "approach" && (
                 <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-4 shadow-sm">
                   <h3 className="text-sm font-bold text-amber-900 mb-3 flex items-center gap-1.5"><span className="w-1 h-4 rounded-full bg-amber-500 inline-block" />✍🏽 Module Reflections</h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="bg-white/70 rounded-lg px-3 py-2 border border-amber-100">
-                      <p className="font-medium text-gray-700">🧱 MEDDPICC:</p>
-                      <p className="text-gray-600">Identifying the economic buyer early is critical.</p>
+                  <div className="space-y-3">
+                    <div className="bg-white/70 rounded-lg px-3 py-3 border border-amber-100">
+                      <p className="text-xs font-semibold text-amber-700 mb-1">🧱 MEDDPICC</p>
+                      <p className="text-sm text-gray-600 mb-2">What's one MEDDPICC element you've underutilized in past deals?</p>
+                      <div className="border-t border-amber-100 pt-2">
+                        <p className="text-xs font-semibold text-gray-500 mb-0.5">Their Reflection:</p>
+                        <p className="text-sm text-gray-700 italic">"Identifying the economic buyer early is critical — I've been going too deep with champions without validating EB access."</p>
+                      </div>
                     </div>
-                    <div className="bg-white/70 rounded-lg px-3 py-2 border border-amber-100">
-                      <p className="font-medium text-gray-700">📦 cAMP 101:</p>
-                      <p className="text-gray-600">Map every deal to the cAMP framework before discovery.</p>
+                    <div className="bg-white/70 rounded-lg px-3 py-3 border border-amber-100">
+                      <p className="text-xs font-semibold text-amber-700 mb-1">📦 cAMP 101</p>
+                      <p className="text-sm text-gray-600 mb-2">How will you apply the cAMP framework in your next discovery call?</p>
+                      <div className="border-t border-amber-100 pt-2">
+                        <p className="text-xs font-semibold text-gray-500 mb-0.5">Their Reflection:</p>
+                        <p className="text-sm text-gray-700 italic">"Map every deal to the cAMP framework before discovery so I'm not winging it."</p>
+                      </div>
                     </div>
-                    <div className="bg-white/70 rounded-lg px-3 py-2 border border-amber-100">
-                      <p className="font-medium text-gray-700">⚔️ Challenger:</p>
-                      <p className="text-gray-600">Lead with insights rather than questions.</p>
-                    </div>
-                    <div className="bg-white/70 rounded-lg px-3 py-2 border border-amber-100">
-                      <p className="font-medium text-gray-700">🎡 Wheel & Deal:</p>
-                      <p className="text-gray-600">Analytics · Mid-Market Expansion · Score: 92%</p>
+                    <div className="bg-white/70 rounded-lg px-3 py-3 border border-amber-100">
+                      <p className="text-xs font-semibold text-amber-700 mb-1">⚔️ Challenger</p>
+                      <p className="text-sm text-gray-600 mb-2">What's a commercial insight you could teach a prospect?</p>
+                      <div className="border-t border-amber-100 pt-2">
+                        <p className="text-xs font-semibold text-gray-500 mb-0.5">Their Reflection:</p>
+                        <p className="text-sm text-gray-700 italic">"Lead with insights rather than questions — our usage data tells a compelling story most competitors can't match."</p>
+                      </div>
                     </div>
                   </div>
                 </div>
