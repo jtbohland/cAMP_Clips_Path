@@ -411,6 +411,47 @@ export default function LibraryPage() {
       });
   }, [clips]);
 
+  // ── Auto-trigger Week 2 / Week 3 check-ins based on clip milestones ──
+  useEffect(() => {
+    if (!dataReady || !progressData || checkinTriggeredRef.current) return;
+    if (showSummit || showFirstAchievement || tierUnlock !== null || showCheckin) return;
+
+    const completed = progressData.clipsCompleted;
+
+    // Week 2 check-in: after 5+ clips completed, approach already sent, week2 not yet sent
+    if (
+      completed >= 5 &&
+      progressData.approachCheckinSentAt &&
+      !progressData.week2CheckinSentAt
+    ) {
+      // Only show once per session
+      const sessionKey = `checkin_week2_prompted_${viewer!.id}`;
+      if (!sessionStorage.getItem(sessionKey)) {
+        sessionStorage.setItem(sessionKey, "true");
+        checkinTriggeredRef.current = true;
+        setCheckinType("week2");
+        setShowCheckin(true);
+      }
+      return;
+    }
+
+    // Week 3 check-in: after 10+ clips completed, week2 already sent, week3 not yet sent
+    if (
+      completed >= 10 &&
+      progressData.week2CheckinSentAt &&
+      !progressData.week3CheckinSentAt
+    ) {
+      const sessionKey = `checkin_week3_prompted_${viewer!.id}`;
+      if (!sessionStorage.getItem(sessionKey)) {
+        sessionStorage.setItem(sessionKey, "true");
+        checkinTriggeredRef.current = true;
+        setCheckinType("week3");
+        setShowCheckin(true);
+      }
+      return;
+    }
+  }, [dataReady, progressData, showSummit, showFirstAchievement, tierUnlock, showCheckin, viewer]);
+
   // ──────────────────── RENDER GATES ────────────────────
   // 1. Viewer still loading → skeleton
   if (viewerLoading) {
@@ -515,47 +556,6 @@ export default function LibraryPage() {
       />
     );
   }
-
-  // ── Auto-trigger Week 2 / Week 3 check-ins based on clip milestones ──
-  useEffect(() => {
-    if (!dataReady || !progressData || checkinTriggeredRef.current) return;
-    if (showSummit || showFirstAchievement || tierUnlock !== null || showCheckin) return;
-
-    const completed = progressData.clipsCompleted;
-
-    // Week 2 check-in: after 5+ clips completed, approach already sent, week2 not yet sent
-    if (
-      completed >= 5 &&
-      progressData.approachCheckinSentAt &&
-      !progressData.week2CheckinSentAt
-    ) {
-      // Only show once per session
-      const sessionKey = `checkin_week2_prompted_${viewer!.id}`;
-      if (!sessionStorage.getItem(sessionKey)) {
-        sessionStorage.setItem(sessionKey, "true");
-        checkinTriggeredRef.current = true;
-        setCheckinType("week2");
-        setShowCheckin(true);
-      }
-      return;
-    }
-
-    // Week 3 check-in: after 10+ clips completed, week2 already sent, week3 not yet sent
-    if (
-      completed >= 10 &&
-      progressData.week2CheckinSentAt &&
-      !progressData.week3CheckinSentAt
-    ) {
-      const sessionKey = `checkin_week3_prompted_${viewer!.id}`;
-      if (!sessionStorage.getItem(sessionKey)) {
-        sessionStorage.setItem(sessionKey, "true");
-        checkinTriggeredRef.current = true;
-        setCheckinType("week3");
-        setShowCheckin(true);
-      }
-      return;
-    }
-  }, [dataReady, progressData, showSummit, showFirstAchievement, tierUnlock, showCheckin, viewer]);
 
   // ──────────────────── MAIN LIBRARY VIEW ────────────────────
   return (
