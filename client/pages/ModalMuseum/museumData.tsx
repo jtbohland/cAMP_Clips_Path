@@ -751,6 +751,27 @@ function CheckinMockup({ type }: { type: "approach" | "week2" | "week3" | "summi
                   </div>
                 </div>
               )}
+
+              {/* Approach-specific: Wheel & Deal */}
+              {type === "approach" && (
+                <div className="rounded-xl border border-purple-200 bg-purple-50/60 p-4 shadow-sm">
+                  <h3 className="text-sm font-bold text-purple-900 mb-2 flex items-center gap-1.5"><span className="w-1 h-4 rounded-full bg-purple-500 inline-block" />🎡 Wheel & Deal</h3>
+                  <div className="grid grid-cols-3 gap-4 text-center">
+                    <div className="rounded-lg bg-white/70 py-2">
+                      <p className="text-sm font-bold text-purple-700">Amplitude Analytics</p>
+                      <p className="text-xs text-gray-500">Product</p>
+                    </div>
+                    <div className="rounded-lg bg-white/70 py-2">
+                      <p className="text-sm font-bold text-purple-700">Enterprise Upsell</p>
+                      <p className="text-xs text-gray-500">Scenario</p>
+                    </div>
+                    <div className="rounded-lg bg-white/70 py-2">
+                      <p className="text-xl font-bold text-indigo-600">88%</p>
+                      <p className="text-xs text-gray-500">Self-Eval</p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </>
           )}
 
@@ -792,11 +813,17 @@ function CheckinMockup({ type }: { type: "approach" | "week2" | "week3" | "summi
                       <p>I just completed The Approach — the first phase of cAMP Ascent!</p>
                       <div className="pl-3 border-l-2 border-gray-200 space-y-1">
                         <p className="font-semibold text-gray-800">📊 Stats:</p>
-                        <p>• XP: 95 · Tier: 🏕️ Base Camper</p>
+                        <p>• XP: 35 · Tier: 🏕️ Base Camper</p>
                       </div>
                       <div className="pl-3 border-l-2 border-gray-200 space-y-1">
-                        <p className="font-semibold text-gray-800">🧠 cAMP Quiz:</p>
-                        <p>• Passed: 4/4 · Avg: 82% · 1st Pass: 75%</p>
+                        <p className="font-semibold text-gray-800">✍🏽 Module Reflections:</p>
+                        <p>• 🧱 MEDDPICC — "Identifying the economic buyer early is critical..."</p>
+                        <p>• 📦 cAMP 101 — "Map every deal to the cAMP framework before discovery..."</p>
+                        <p>• ⚔️ Challenger — "Lead with insights rather than questions..."</p>
+                      </div>
+                      <div className="pl-3 border-l-2 border-gray-200 space-y-1">
+                        <p className="font-semibold text-gray-800">🎡 Wheel & Deal:</p>
+                        <p>• Amplitude Analytics · Enterprise Upsell · Self-Eval: 88%</p>
                       </div>
                     </>
                   ) : type === "summit" ? (

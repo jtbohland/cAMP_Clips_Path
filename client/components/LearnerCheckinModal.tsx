@@ -845,12 +845,22 @@ function EmailView({
                 <p>• XP: {v.totalXp}</p>
                 <p>• Tier: {v.tier}</p>
               </div>
-              {qs.totalAttempts > 0 && (
+              {data.moduleReflections.length > 0 && (
                 <div className="pl-3 border-l-2 border-gray-200 space-y-1">
-                  <p className="font-semibold text-gray-800">🧠 cAMP Quiz Stats:</p>
-                  <p>• Passed: {qs.quizzesPassed}/{qs.totalQuizzes}</p>
-                  <p>• Avg Score: {qs.avgScorePct}%</p>
-                  <p>• 1st Pass Rate: {qs.quizzesPassed > 0 ? Math.round((qs.firstPassCount / qs.quizzesPassed) * 100) : 0}%</p>
+                  <p className="font-semibold text-gray-800">✍🏽 Module Reflections:</p>
+                  {data.moduleReflections.map((r: any, i: number) => {
+                    const emoji = r.moduleKey === "meddpicc" ? "🧱" : r.moduleKey === "camp101" ? "📦" : r.moduleKey === "challenger" ? "⚔️" : r.moduleKey === "wheel_deal" ? "🎡" : "📝";
+                    const label = r.moduleKey === "meddpicc" ? "MEDDPICC" : r.moduleKey === "camp101" ? "cAMP 101" : r.moduleKey === "challenger" ? "Challenger" : r.moduleKey === "wheel_deal" ? "Wheel & Deal" : r.moduleKey;
+                    return (
+                      <p key={i}>• {emoji} {label} — "{r.reflectionResponse}"</p>
+                    );
+                  })}
+                </div>
+              )}
+              {data.wdVerification && (
+                <div className="pl-3 border-l-2 border-gray-200 space-y-1">
+                  <p className="font-semibold text-gray-800">🎡 Wheel & Deal:</p>
+                  <p>• {data.wdVerification.product} · {data.wdVerification.scenario} · Self-Eval: {data.wdVerification.score}%</p>
                 </div>
               )}
             </>
