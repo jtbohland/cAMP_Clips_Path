@@ -31,7 +31,7 @@ export default api({
     viewerId: z.string().uuid(),
     product: z.string().min(1),
     scenario: z.string().min(1),
-    score: z.number().int().min(4).max(12),
+    score: z.number().int(),
   }),
 
   output: z.object({
@@ -46,7 +46,7 @@ export default api({
       return {
         success: false,
         alreadySubmitted: false,
-        validationError: `Invalid product: "${product}". Valid options: ${VALID_PRODUCTS.join(', ')}`,
+        validationError: `"${product}" is not a valid Wheel & Deal product. Double-check the product from your spin and try again.`,
       };
     }
 
@@ -55,11 +55,20 @@ export default api({
       return {
         success: false,
         alreadySubmitted: false,
-        validationError: `Invalid scenario: "${scenario}". Valid options: ${VALID_SCENARIOS.join(', ')}`,
+        validationError: `"${scenario}" is not a valid challenge type. Select the correct option from the dropdown.`,
       };
     }
 
     const CountSchema = z.object({ count: z.coerce.number() });
+
+    // Validate score range
+    if (score < 4 || score > 12) {
+      return {
+        success: false,
+        alreadySubmitted: false,
+        validationError: `That score doesn't look right. Complete a Wheel & Deal spin with your manager and enter the score from the app.`,
+      };
+    }
 
     // Check if already submitted
     const existingCheck = await ctx.integrations.db.query(

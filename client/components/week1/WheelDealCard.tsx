@@ -1,16 +1,6 @@
 import { useState, useCallback } from "react";
 import { toast } from "sonner";
 
-const VALID_PRODUCTS = [
-  'Analytics',
-  'Experimentation',
-  'Guides & Surveys',
-  'Activation',
-  'AI Feedback',
-  'AI Assistant',
-  'Session Replay & Heat Maps',
-];
-
 const VALID_SCENARIOS = [
   'Tell Me About It',
   'Handle the Objection',
@@ -38,16 +28,12 @@ export default function WheelDealCard({ isVerified, verificationData, isLegacy, 
       toast.error("Please enter the product from your spin");
       return;
     }
-    if (!VALID_PRODUCTS.includes(product.trim())) {
-      toast.error(`Invalid product. Valid options: ${VALID_PRODUCTS.join(", ")}`);
-      return;
-    }
     if (!scenario) {
       toast.error("Please select a challenge type");
       return;
     }
-    if (score === "" || score < 4 || score > 12) {
-      toast.error("Score must be between 4 and 12");
+    if (score === "") {
+      toast.error("Please enter your score");
       return;
     }
 
@@ -124,12 +110,9 @@ export default function WheelDealCard({ isVerified, verificationData, isLegacy, 
               <input
                 value={product}
                 onChange={(e) => setProduct(e.target.value)}
-                placeholder="Type the exact product from your spin"
+                placeholder="Which product did you spin?"
                 className="w-full text-sm rounded-lg border border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               />
-              <p className="text-[10px] text-gray-400 mt-1">
-                {VALID_PRODUCTS.join(" · ")}
-              </p>
             </div>
 
             {/* Challenge Type — dropdown */}
@@ -152,22 +135,20 @@ export default function WheelDealCard({ isVerified, verificationData, isLegacy, 
             {/* Score */}
             <div>
               <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1">
-                Score (4-12)
+                Score
               </label>
               <input
                 type="number"
-                min={4}
-                max={12}
                 value={score}
                 onChange={(e) => setScore(e.target.value === "" ? "" : Number(e.target.value))}
-                placeholder="Enter your score"
+                placeholder="What was your score?"
                 className="w-full text-sm rounded-lg border border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               />
             </div>
 
             <button
               onClick={handleSubmit}
-              disabled={submitting || !product.trim() || !scenario || score === "" || score < 4 || score > 12}
+              disabled={submitting || !product.trim() || !scenario || score === ""}
               className="w-full py-2.5 rounded-lg bg-[#1B4332] text-white text-sm font-semibold hover:bg-[#2D6A4F] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {submitting ? "Submitting..." : "🎡 Submit Result"}
