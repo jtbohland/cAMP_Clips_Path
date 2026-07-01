@@ -25,7 +25,7 @@ const PERFORMANCE_BONUSES = [
   { badge: "Search & Rescue Hero", xp: 8, emoji: "🚁", condition: "Perfect score on Search & Rescue questions" },
   { badge: "Storm Chaser", xp: 3, emoji: "⛈️", condition: "Hit Weather Storm on previous clip, then pass the next clip first try" },
   { badge: "Double Summit", xp: 5, emoji: "⛰️", condition: "Complete 2 clips in one calendar day" },
-  { badge: "Swiss Army Knife", xp: 10, emoji: "🪓", condition: "All tools. All terrain. You're ready for anything. (Review all resources on a topic day — ×2 available: Day 5, Day 9)" },
+  { badge: "Swiss Army Knife", xp: 10, emoji: "🪓", condition: "All tools. All terrain. You're ready for anything. (Review all resources + submit reflection on a topic day — ×2 available: Day 5, Day 9)" },
 ];
 
 const STREAK_BONUSES = [

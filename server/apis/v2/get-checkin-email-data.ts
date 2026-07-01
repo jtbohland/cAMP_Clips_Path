@@ -212,8 +212,8 @@ export default api({
     });
     const clipStatsRows = await ctx.integrations.db.query(
       `SELECT
-        (SELECT COUNT(*)::int FROM cliptracker_v2_clips) AS total_clips,
-        COUNT(DISTINCT CASE WHEN s.completed = true THEN s.clip_id END)::int AS completed_clips,
+        (SELECT COUNT(DISTINCT c2.id)::int FROM cliptracker_v2_clips c2 WHERE EXISTS (SELECT 1 FROM cliptracker_v2_questions q WHERE q.clip_id = c2.id)) AS total_clips,
+        COUNT(DISTINCT CASE WHEN s.completed = true AND EXISTS (SELECT 1 FROM cliptracker_v2_questions q2 WHERE q2.clip_id = s.clip_id) THEN s.clip_id END)::int AS completed_clips,
         COALESCE(AVG(CASE WHEN s.completed = true AND s.is_recovery_attempt = false THEN s.engagement_score END)::int, 0) AS avg_score
        FROM cliptracker_v2_sessions s
        WHERE s.viewer_id = $1`,
@@ -222,7 +222,7 @@ export default api({
       { label: "Get clip stats (distinct clips)" }
     );
 
-    const clipStats = clipStatsRows[0] ?? { total_clips: 19, completed_clips: 0, avg_score: 0 };
+    const clipStats = clipStatsRows[0] ?? { total_clips: 17, completed_clips: 0, avg_score: 0 };
 
     // Get topic-level progress for pacing context (item #8)
     const TopicProgressRow = z.object({
@@ -238,7 +238,7 @@ export default api({
         c.day_label,
         MIN(c.title) AS title,
         COUNT(c.id)::int AS total_clips,
-        COUNT(DISTINCT CASE WHEN s.completed = true THEN s.clip_id END)::int AS completed_clips,
+        COUNT(DISTINCT CASE WHEN s.completed = true AND EXISTS (SELECT 1 FROM cliptracker_v2_questions q3 WHERE q3.clip_id = s.clip_id) THEN s.clip_id END)::int AS completed_clips,
         (c.day_label IN ('Day 5', 'Day 9')) AS is_resource_day
        FROM cliptracker_v2_clips c
        LEFT JOIN cliptracker_v2_sessions s ON s.clip_id = c.id AND s.viewer_id = $1

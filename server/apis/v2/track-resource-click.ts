@@ -5,7 +5,8 @@ const APPS_DB = "c6e32cf4-ca66-42ae-aeb3-58c84ffae574";
 /**
  * Records a resource click for a topic day.
  * When all resources are clicked, automatically inserts an unlock override
- * for the next clip (sort_order + 1) and awards Swiss Army Knife XP.
+ * for the next clip (sort_order + 1) and records the Swiss Army Knife badge.
+ * XP is awarded later when the learner submits their reflection.
  */
 export default api({
   name: "TrackResourceClick",
@@ -78,15 +79,14 @@ export default api({
       const isAdmin = adminCheck[0]?.is_admin ?? false;
 
       if (!isAdmin) {
-        // Award Swiss Army Knife XP (+10)
+        // Record Swiss Army Knife badge (XP awarded on reflection submission)
         await ctx.integrations.db.execute(
           `INSERT INTO cliptracker_v2_xp_events (viewer_id, clip_id, event_type, xp_amount, badge_id)
-           VALUES ($1, $2, 'swiss_army_knife', 10, 'swiss_army_knife')
+           VALUES ($1, $2, 'swiss_army_knife', 0, 'swiss_army_knife')
            ON CONFLICT DO NOTHING`,
           [viewerId, clipId],
-          { label: "Award Swiss Army Knife XP" }
+          { label: "Record Swiss Army Knife badge (no XP yet)" }
         );
-        xpAwarded = 10;
       }
 
       // Unlock next clip (sort_order + 1)

@@ -183,7 +183,7 @@ export default api({
           COUNT(*) FILTER (WHERE s.completed = true)::numeric * 100.0 /
           NULLIF(COUNT(*), 0), 1
         )::text AS completion_rate,
-        (SELECT COUNT(*)::int FROM cliptracker_v2_clips WHERE status = 'live') AS total_clips
+        (SELECT COUNT(DISTINCT c2.id)::int FROM cliptracker_v2_clips c2 WHERE c2.status = 'live' AND EXISTS (SELECT 1 FROM cliptracker_v2_questions q WHERE q.clip_id = c2.id)) AS total_clips
        FROM cliptracker_v2_sessions s
        JOIN cliptracker_v2_viewers v ON v.id = s.viewer_id
        WHERE v.is_admin = false`,

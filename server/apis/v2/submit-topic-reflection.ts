@@ -24,6 +24,7 @@ export default api({
   output: z.object({
     success: z.boolean(),
     alreadySubmitted: z.boolean(),
+    xpAwarded: z.number(),
   }),
 
   async run(ctx, { viewerId, topicDay, question1, answer1, question2, answer2 }) {
@@ -39,7 +40,7 @@ export default api({
     );
 
     if (existing[0].count > 0) {
-      return { success: true, alreadySubmitted: true };
+      return { success: true, alreadySubmitted: true, xpAwarded: 0 };
     }
 
     // Insert reflection
@@ -52,7 +53,70 @@ export default api({
       { label: "Insert topic reflection" }
     );
 
-    ctx.log.info("Topic reflection submitted", { viewerId, topicDay });
-    return { success: true, alreadySubmitted: false };
+    // Award +10 XP for completing the reflection (the Swiss Army Knife badge
+    // was already recorded when all resources were clicked — now add the XP)
+    let xpAwarded = 0;
+
+    const AdminCheck = z.object({ is_admin: z.boolean() });
+    const adminCheck = await ctx.integrations.db.query(
+      "SELECT COALESCE(is_admin, false) as is_admin FROM cliptracker_v2_viewers WHERE id = $1",
+      AdminCheck,
+      [viewerId],
+      { label: "Check if viewer is admin" }
+    );
+    const isAdmin = adminCheck[0]?.is_admin ?? false;
+
+    if (!isAdmin) {
+      // Find the clip_id for this topic day to link the XP event
+      const DayMap: Record<string, string> = { day5: "Day 5", day9: "Day 9" };
+      const dayLabel = DayMap[topicDay];
+      const ClipIdSchema = z.object({ id: z.string() });
+      const clipRows = await ctx.integrations.db.query(
+        "SELECT id FROM cliptracker_v2_clips WHERE day_label = $1 LIMIT 1",
+        ClipIdSchema,
+        [dayLabel],
+        { label: "Find clip for topic day" }
+      );
+
+      if (clipRows.length > 0) {
+        // Update the existing swiss_army_knife badge event to add XP,
+        // or insert if it doesn't exist yet
+        const updated = await ctx.integrations.db.query(
+          `UPDATE cliptracker_v2_xp_events
+           SET xp_amount = 10
+           WHERE viewer_id = $1 AND clip_id = $2 AND event_type = 'swiss_army_knife' AND xp_amount = 0
+           RETURNING id`,
+          z.object({ id: z.string() }),
+          [viewerId, clipRows[0].id],
+          { label: "Update Swiss Army Knife XP to +10" }
+        );
+
+        if (updated.length > 0) {
+          xpAwarded = 10;
+        } else {
+          // Badge event doesn't exist or already has XP — insert as fallback
+          const ExistCheck = z.object({ cnt: z.coerce.number() });
+          const existCheck = await ctx.integrations.db.query(
+            `SELECT COUNT(*)::int as cnt FROM cliptracker_v2_xp_events
+             WHERE viewer_id = $1 AND clip_id = $2 AND event_type = 'swiss_army_knife'`,
+            ExistCheck,
+            [viewerId, clipRows[0].id],
+            { label: "Check if Swiss Army Knife XP exists" }
+          );
+          if (existCheck[0].cnt === 0) {
+            await ctx.integrations.db.execute(
+              `INSERT INTO cliptracker_v2_xp_events (viewer_id, clip_id, event_type, xp_amount, badge_id)
+               VALUES ($1, $2, 'swiss_army_knife', 10, 'swiss_army_knife')`,
+              [viewerId, clipRows[0].id],
+              { label: "Insert Swiss Army Knife XP event" }
+            );
+            xpAwarded = 10;
+          }
+        }
+      }
+    }
+
+    ctx.log.info("Topic reflection submitted", { viewerId, topicDay, xpAwarded });
+    return { success: true, alreadySubmitted: false, xpAwarded };
   },
 });
