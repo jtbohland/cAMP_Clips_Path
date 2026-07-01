@@ -726,14 +726,18 @@ function CheckinMockup({ type }: { type: "approach" | "week2" | "week3" | "summi
               {type !== "approach" && (
                 <div className="rounded-xl border border-green-200 bg-green-50/60 p-4 shadow-sm">
                   <h3 className="text-sm font-bold text-green-900 mb-3 flex items-center gap-1.5"><span className="w-1 h-4 rounded-full bg-green-500 inline-block" />🎞️ {type === "summit" ? "All Clips" : "Clip Progress"}</h3>
-                  <div className="grid grid-cols-3 gap-4 text-center">
+                  <div className="grid grid-cols-4 gap-3 text-center">
                     <div className="rounded-lg bg-white/70 py-2">
                       <p className="text-xl font-bold text-green-700">{mockClipCount}/17</p>
                       <p className="text-xs text-gray-500">Clips Done</p>
                     </div>
                     <div className="rounded-lg bg-white/70 py-2">
-                      <p className="text-xl font-bold text-green-700">87%</p>
-                      <p className="text-xs text-gray-500">Avg Score</p>
+                      <p className="text-xl font-bold text-red-600">{type === "week2" ? 1 : type === "week3" ? 2 : 3}</p>
+                      <p className="text-xs text-gray-500">🔦 S&R</p>
+                    </div>
+                    <div className="rounded-lg bg-white/70 py-2">
+                      <p className="text-xl font-bold text-amber-600">{type === "week2" ? 0 : 1}</p>
+                      <p className="text-xs text-gray-500">⛈️ WtS</p>
                     </div>
                     <div className="rounded-lg bg-white/70 py-2">
                       <p className="text-xl font-bold text-green-700">#3/12</p>
@@ -891,7 +895,7 @@ function CheckinMockup({ type }: { type: "approach" | "week2" | "week3" | "summi
                       <div className="pl-3 border-l-2 border-amber-200 space-y-1 bg-amber-50/50 rounded py-1">
                         <p className="font-semibold text-gray-800">🏔️ Overall Journey</p>
                         <p>• 📊 XP: 485 · Tier: ✨🏔️✨ Pinnacle · 🏆 #3 of 12</p>
-                        <p>• 🎞️ Clips: 17/17 · Avg: 87%</p>
+                        <p>• 🎞️ Clips: 17/17 · 🔦 S&R: 3 · ⛈️ WtS: 1</p>
                       </div>
                       <div className="pl-3 border-l-2 border-gray-200 space-y-1">
                         <p className="font-semibold text-gray-800">👀 Engagement:</p>
@@ -907,7 +911,7 @@ function CheckinMockup({ type }: { type: "approach" | "week2" | "week3" | "summi
                       <p>Here's my {type === "week2" ? "Week 2" : "Week 3"} cAMP Ascent update:</p>
                       <div className="pl-3 border-l-2 border-gray-200 space-y-1">
                         <p className="font-semibold text-gray-800">🎞️ Clips:</p>
-                        <p>• {type === "week2" ? "8" : "14"}/17 completed · Avg Score: 87%</p>
+                        <p>• {type === "week2" ? "8" : "14"}/17 completed · 🔦 S&R: {type === "week2" ? 1 : 2} · ⛈️ WtS: {type === "week2" ? 0 : 1}</p>
                       </div>
                       <div className="pl-3 border-l-2 border-gray-200 space-y-1">
                         <p className="font-semibold text-gray-800">📊 Stats:</p>

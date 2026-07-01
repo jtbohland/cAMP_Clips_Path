@@ -252,7 +252,8 @@ function LearnerCheckinModalInner({ viewerId, checkinType, onClose, onSent, allo
       body += `  • 🏆 Rank: #${data.leaderboard.rank} of ${data.leaderboard.totalLearners} cAMPers\n`;
       body += `\n🎞️ All Clips:\n`;
       body += `  • Completed: ${data.clipStats.completedSessions}/${data.clipStats.totalSessions}\n`;
-      body += `  • Avg Clip Score: ${data.clipStats.avgScore}%\n`;
+      body += `  • 🔦 S&R Triggered: ${data.srCount}\n`;
+      body += `  • ⛈️ WtS Triggered: ${data.wtsCount}\n`;
       body += `\n👀 Engagement:\n`;
       body += `  • 🥾 Trail Markers: ${data.engagement.avgQuestionScore}%\n`;
       body += `  • 👀 Focus: ${data.engagement.avgFocusScore}%\n`;
@@ -272,7 +273,8 @@ function LearnerCheckinModalInner({ viewerId, checkinType, onClose, onSent, allo
       body += `Here's my ${weekLabel} cAMP Ascent update:\n\n`;
       body += `🎞️ Clips:\n`;
       body += `  • Completed: ${data.clipStats.completedSessions}/${data.clipStats.totalSessions}\n`;
-      body += `  • Avg Clip Score: ${data.clipStats.avgScore}%\n`;
+      body += `  • 🔦 S&R Triggered: ${data.srCount}\n`;
+      body += `  • ⛈️ WtS Triggered: ${data.wtsCount}\n`;
       body += `\n📊 Stats:\n`;
       body += `  • XP: ${v.totalXp}\n`;
       body += `  • Tier: ${v.tier}\n`;
@@ -741,7 +743,7 @@ function StatsView({ data, checkinType }: { data: any; checkinType: CheckinType 
       {checkinType !== "approach" && (
         <div className="rounded-xl border border-green-200 bg-green-50/60 p-4 shadow-sm">
           <h3 className="text-sm font-bold text-green-900 mb-3 flex items-center gap-1.5"><span className="w-1 h-4 rounded-full bg-green-500 inline-block" />🎞️ {isSummit ? "All Clips" : "Clip Progress"}</h3>
-          <div className="grid grid-cols-3 gap-4 text-center">
+          <div className="grid grid-cols-4 gap-3 text-center">
             <div className="rounded-lg bg-white/70 py-2">
               <p className="text-xl font-bold text-green-700">
                 {data.clipStats.completedSessions}/{data.clipStats.totalSessions}
@@ -749,8 +751,12 @@ function StatsView({ data, checkinType }: { data: any; checkinType: CheckinType 
               <p className="text-xs text-gray-500">Clips Done</p>
             </div>
             <div className="rounded-lg bg-white/70 py-2">
-              <p className="text-xl font-bold text-green-700">{data.clipStats.avgScore}%</p>
-              <p className="text-xs text-gray-500">Avg Score</p>
+              <p className="text-xl font-bold text-red-600">{data.srCount}</p>
+              <p className="text-xs text-gray-500">🔦 S&R</p>
+            </div>
+            <div className="rounded-lg bg-white/70 py-2">
+              <p className="text-xl font-bold text-amber-600">{data.wtsCount}</p>
+              <p className="text-xs text-gray-500">⛈️ WtS</p>
             </div>
             <div className="rounded-lg bg-white/70 py-2">
               <p className="text-xl font-bold text-green-700">
@@ -993,7 +999,7 @@ function EmailView({
               <div className="pl-3 border-l-2 border-amber-200 space-y-1 bg-amber-50/50 rounded py-1">
                 <p className="font-semibold text-gray-800">🏔️ Overall Journey</p>
                 <p>• 📊 XP: {v.totalXp} · Tier: {v.tier} · 🏆 #{data.leaderboard.rank} of {data.leaderboard.totalLearners}</p>
-                <p>• 🎞️ Clips: {data.clipStats.completedSessions}/{data.clipStats.totalSessions} · Avg: {data.clipStats.avgScore}%</p>
+                <p>• 🎞️ Clips: {data.clipStats.completedSessions}/{data.clipStats.totalSessions} · 🔦 S&R: {data.srCount} · ⛈️ WtS: {data.wtsCount}</p>
               </div>
               <div className="pl-3 border-l-2 border-gray-200 space-y-1">
                 <p className="font-semibold text-gray-800">👀 Engagement:</p>
@@ -1015,7 +1021,7 @@ function EmailView({
               <p>Here's my {checkinType === "week2" ? "Week 2" : "Week 3"} cAMP Ascent update:</p>
               <div className="pl-3 border-l-2 border-gray-200 space-y-1">
                 <p className="font-semibold text-gray-800">🎞️ Clips:</p>
-                <p>• {data.clipStats.completedSessions}/{data.clipStats.totalSessions} completed · Avg Score: {data.clipStats.avgScore}%</p>
+                <p>• {data.clipStats.completedSessions}/{data.clipStats.totalSessions} completed · 🔦 S&R: {data.srCount} · ⛈️ WtS: {data.wtsCount}</p>
               </div>
               <div className="pl-3 border-l-2 border-gray-200 space-y-1">
                 <p className="font-semibold text-gray-800">📊 Stats:</p>
