@@ -686,8 +686,8 @@ function StatsView({ data, checkinType }: { data: any; checkinType: CheckinType 
         </div>
       </div>
 
-      {/* Pacing Banner (non-approach) */}
-      {checkinType !== "approach" && data.viewer.ascentDay1 && (() => {
+      {/* Pacing Banner — shown for all check-in types when Ascent has started */}
+      {data.viewer.ascentDay1 && (() => {
         const startDate = new Date(data.viewer.ascentDay1);
         const today = new Date();
         const weekdaysElapsed = countWeekdays(startDate, today);

@@ -816,7 +816,14 @@ export default function LibraryPage() {
                 setShowFirstAchievement(true);
               }
             }}
-            onSwitchToAscent={() => setActiveTab("ascent")}
+            onSwitchToAscent={() => {
+              setActiveTab("ascent");
+              // Day 8+ Oh Deer auto-unlock — trigger Approach check-in if not yet sent
+              if (progressData && !progressData.approachCheckinSentAt) {
+                setCheckinType("approach");
+                setShowCheckin(true);
+              }
+            }}
           />
         </div>
       ) : (
