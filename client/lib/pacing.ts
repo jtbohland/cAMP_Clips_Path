@@ -235,9 +235,13 @@ export function getPacingTier(
   sessionsCompleted: number,
   weekdaysElapsed: number,
   hasStarted: boolean,
+  afterSummitDay?: boolean,
 ): PacingTier {
   if (!hasStarted) return "not_started";
   if (sessionsCompleted >= TOTAL_SESSIONS) return "completed";
+
+  // Past summit day and still incomplete → anchor failure (no recovery)
+  if (afterSummitDay) return "anchor_failure";
 
   const daysBehind = getTopicDaysBehind(sessionsCompleted, weekdaysElapsed);
 
