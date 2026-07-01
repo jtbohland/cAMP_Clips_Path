@@ -269,10 +269,18 @@ export default api({
     const totalLiveClips = overviewRows[0]?.total_clips ?? 0;
     const now = new Date();
 
-    // Weekday-based pacing schedule: 15 weekdays → 17 clips
-    // Days 5 and 9 are content-review days (no new clips expected)
-    const EXPECTED_CLIPS = [0, 1, 2, 3, 4, 4, 5, 7, 9, 9, 10, 12, 13, 14, 15, 17];
-    const TOTAL_WEEKDAYS = 15;
+    // Weekday-based pacing schedule: 20 weekdays total
+    // Weekdays 1–5 = Approach (no clips expected)
+    // Weekdays 6–20 = Ascent (17 clips across 15 weekdays)
+    // Ascent days 5 & 9 are content-review days (no new clips expected)
+    const EXPECTED_CLIPS = [
+      0,                      // 0 weekdays elapsed
+      0, 0, 0, 0, 0,          // weekdays 1–5: Approach (no clips)
+      1, 2, 3, 4, 4,          // weekdays 6–10: Ascent days 1–5 (day 5 = topic day)
+      5, 7, 9, 9, 10,         // weekdays 11–15: Ascent days 6–10 (day 9 = topic day)
+      12, 13, 14, 15, 17,     // weekdays 16–20: Ascent days 11–15
+    ];
+    const TOTAL_WEEKDAYS = 20;
     const TOTAL_CLIPS_SCHEDULE = 17;
 
     function getSummitDay(startDate: Date): Date {
