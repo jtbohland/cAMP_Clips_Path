@@ -26,6 +26,7 @@ const ViewerWeek1Row = z.object({
   week1_unlocked_at: z.string().nullable(),
   week1_unlock_type: z.string().nullable(),
   clips_completed: z.coerce.number(),
+  created_at: z.string(),
 });
 
 export default api({
@@ -61,6 +62,7 @@ export default api({
     week1UnlockedAt: z.string().nullable(),
     week1UnlockType: z.string().nullable(),
     isLegacyLearner: z.boolean(),
+    createdAt: z.string().nullable(),
   }),
 
   async run(ctx, { viewerId }) {
@@ -70,7 +72,8 @@ export default api({
         week1_unlocked_at::text,
         week1_unlock_type,
         (SELECT COUNT(*)::int FROM cliptracker_v2_sessions
-         WHERE viewer_id = $1 AND completed = true) AS clips_completed
+         WHERE viewer_id = $1 AND completed = true) AS clips_completed,
+        created_at::text
        FROM cliptracker_v2_viewers
        WHERE id = $1`,
       ViewerWeek1Row,
@@ -140,6 +143,7 @@ export default api({
       week1UnlockedAt: viewer?.week1_unlocked_at ?? null,
       week1UnlockType: viewer?.week1_unlock_type ?? null,
       isLegacyLearner,
+      createdAt: viewer?.created_at ?? null,
     };
   },
 });

@@ -2,6 +2,10 @@ import { useState, type ReactNode } from "react";
 import PacingModal from "@/components/PacingModal";
 import AnchorFailureModal from "@/components/AnchorFailureModal";
 import LightAnchorModal from "@/components/LightAnchorModal";
+import ApproachPacingModal from "@/components/ApproachPacingModal";
+import ApproachDeadlineModal from "@/components/ApproachDeadlineModal";
+import OhDeerModal from "@/components/OhDeerModal";
+import SummitInSightModal from "@/components/SummitInSightModal";
 import type { PacingTier, MissedClip } from "@/lib/pacing";
 
 // ─── Shared mock data ───────────────────────────────────────────────
@@ -37,6 +41,15 @@ export interface MuseumSectionData {
 
 // ─── Section 1: The Approach ────────────────────────────────────────
 
+const MOCK_APPROACH_PARTIAL_KEYS = new Set(["module:meddpicc", "academy:analytics", "academy:experiment"]);
+const MOCK_APPROACH_INCOMPLETE_MODULES = [
+  { emoji: "🎓", label: "Academy: Session Replay", done: false },
+  { emoji: "🎓", label: "Academy: Guides & Surveys", done: false },
+  { emoji: "✍🏽", label: "cAMP 101 sign-off", done: false },
+  { emoji: "✍🏽", label: "Challenger sign-off", done: false },
+  { emoji: "🎡", label: "Wheel & Deal", done: false },
+];
+
 const approachExhibits: MuseumExhibit[] = [
   {
     id: "welcome",
@@ -56,6 +69,107 @@ const approachExhibits: MuseumExhibit[] = [
     trigger: "Begin Ascent click — Approach took longer than 5 weekdays",
     render: () => <FirstAchievementMockup earnedXp={17} earnedBadge={false} />,
   },
+  {
+    id: "approach-pacing-summit-bound",
+    title: "Approach Pacing — Summit Bound (Day 2)",
+    trigger: "Day 2 of Approach, on pace",
+    render: () => (
+      <ApproachPacingModal
+        tier="summit_bound"
+        approachDay={2}
+        completedItems={2}
+        completedKeys={MOCK_APPROACH_PARTIAL_KEYS}
+        itemsBehind={0}
+        summitDay={MOCK_SUMMIT_DAY}
+        onDismiss={noop}
+      />
+    ),
+  },
+  {
+    id: "approach-pacing-off-trail",
+    title: "Approach Pacing — Off the Trail (Day 3)",
+    trigger: "Day 3, 1 item behind",
+    render: () => (
+      <ApproachPacingModal
+        tier="off_the_trail"
+        approachDay={3}
+        completedItems={3}
+        completedKeys={MOCK_APPROACH_PARTIAL_KEYS}
+        itemsBehind={1}
+        summitDay={MOCK_SUMMIT_DAY}
+        onDismiss={noop}
+      />
+    ),
+  },
+  {
+    id: "approach-pacing-day4",
+    title: "Approach Pacing — Day 4 (⚠️ Due Tomorrow)",
+    trigger: "Day 4, with Due Tomorrow banner",
+    render: () => (
+      <ApproachPacingModal
+        tier="lost_in_the_woods"
+        approachDay={4}
+        completedItems={3}
+        completedKeys={MOCK_APPROACH_PARTIAL_KEYS}
+        itemsBehind={3}
+        summitDay={MOCK_SUMMIT_DAY}
+        onDismiss={noop}
+      />
+    ),
+  },
+  {
+    id: "approach-pacing-day5",
+    title: "Approach Pacing — Day 5 (⏰ Due Today)",
+    trigger: "Day 5, with Due Today banner",
+    render: () => (
+      <ApproachPacingModal
+        tier="rockslide"
+        approachDay={5}
+        completedItems={3}
+        completedKeys={MOCK_APPROACH_PARTIAL_KEYS}
+        itemsBehind={4}
+        summitDay={MOCK_SUMMIT_DAY}
+        onDismiss={noop}
+      />
+    ),
+  },
+  {
+    id: "approach-deadline-day6",
+    title: "Approach Deadline — Day 6",
+    trigger: "Day 6 — missed 5-day deadline",
+    render: () => (
+      <ApproachDeadlineModal
+        variant="day6"
+        completedItems={5}
+        incompleteModules={MOCK_APPROACH_INCOMPLETE_MODULES.slice(0, 3)}
+        onDismiss={noop}
+      />
+    ),
+  },
+  {
+    id: "approach-deadline-day7",
+    title: "Approach Deadline — Day 7",
+    trigger: "Day 7 — final chance before auto-unlock",
+    render: () => (
+      <ApproachDeadlineModal
+        variant="day7"
+        completedItems={5}
+        incompleteModules={MOCK_APPROACH_INCOMPLETE_MODULES.slice(0, 3)}
+        onDismiss={noop}
+      />
+    ),
+  },
+  {
+    id: "oh-deer",
+    title: "🦌 Oh Deer — Day 8+ Auto-Unlock",
+    trigger: "Day 8+ — Approach deadline passed, Ascent auto-unlocked",
+    render: () => (
+      <OhDeerModal
+        completedItems={4}
+        onDismiss={noop}
+      />
+    ),
+  },
 ];
 
 // ─── Section 2: Daily Pacing ────────────────────────────────────────
@@ -70,24 +184,97 @@ const PACING_TIERS: { tier: PacingTier; title: string; trigger: string; daysBehi
   { tier: "completed", title: "Completed", trigger: "All 17 clips finished", daysBehind: 0, clips: 17 },
 ];
 
-const pacingExhibits: MuseumExhibit[] = PACING_TIERS.map((p) => ({
-  id: `pacing-${p.tier}`,
-  title: p.title,
-  trigger: p.trigger,
-  render: () => (
-    <PacingModal
-      tier={p.tier}
-      daysBehind={p.daysBehind}
-      clipsCompleted={p.clips}
-      totalClips={17}
-      weekdaysElapsed={10}
-      missedClips={p.daysBehind > 0 ? MOCK_MISSED_CLIPS.slice(0, Math.min(p.daysBehind, 3)) : []}
-      summitDay={MOCK_SUMMIT_DAY}
-      isDayBeforeSummit={p.tier === "avalanche_warning"}
-      onDismiss={noop}
-    />
-  ),
-}));
+const MOCK_APPROACH_CATCH_UP: { emoji: string; label: string }[] = [
+  { emoji: "✍🏽", label: "Challenger sign-off" },
+  { emoji: "🎡", label: "Wheel & Deal" },
+];
+
+const pacingExhibits: MuseumExhibit[] = [
+  ...PACING_TIERS.map((p) => ({
+    id: `pacing-${p.tier}`,
+    title: p.title,
+    trigger: p.trigger,
+    render: () => (
+      <PacingModal
+        tier={p.tier}
+        daysBehind={p.daysBehind}
+        clipsCompleted={p.clips}
+        totalClips={17}
+        weekdaysElapsed={10}
+        missedClips={p.daysBehind > 0 ? MOCK_MISSED_CLIPS.slice(0, Math.min(p.daysBehind, 3)) : []}
+        summitDay={MOCK_SUMMIT_DAY}
+        isDayBeforeSummit={false}
+        isSummitDay={false}
+        approachComplete={true}
+        approachCatchUpItems={[]}
+        onDismiss={noop}
+      />
+    ),
+  })),
+  {
+    id: "pacing-tomorrow-summit",
+    title: "Tomorrow is Summit Day (On Pace)",
+    trigger: "Any tier — day before Summit Day",
+    render: () => (
+      <PacingModal
+        tier="summit_bound"
+        daysBehind={0}
+        clipsCompleted={14}
+        totalClips={17}
+        weekdaysElapsed={19}
+        missedClips={[]}
+        summitDay={MOCK_SUMMIT_DAY}
+        isDayBeforeSummit={true}
+        isSummitDay={false}
+        approachComplete={true}
+        approachCatchUpItems={[]}
+        onDismiss={noop}
+      />
+    ),
+  },
+  {
+    id: "pacing-summit-day",
+    title: "Today is Summit Day",
+    trigger: "Any tier — Summit Day is today",
+    render: () => (
+      <PacingModal
+        tier="off_the_trail"
+        daysBehind={1}
+        clipsCompleted={14}
+        totalClips={17}
+        weekdaysElapsed={20}
+        missedClips={MOCK_MISSED_CLIPS.slice(0, 1)}
+        summitDay={MOCK_SUMMIT_DAY}
+        isDayBeforeSummit={false}
+        isSummitDay={true}
+        approachComplete={true}
+        approachCatchUpItems={[]}
+        onDismiss={noop}
+      />
+    ),
+  },
+  {
+    id: "pacing-approach-incomplete",
+    title: "Approach Incomplete (catch-up items)",
+    trigger: "Approach not finished — modules in catch-up list",
+    render: () => (
+      <PacingModal
+        tier="lost_in_the_woods"
+        daysBehind={3}
+        clipsCompleted={5}
+        totalClips={17}
+        weekdaysElapsed={12}
+        missedClips={MOCK_MISSED_CLIPS}
+        summitDay={MOCK_SUMMIT_DAY}
+        isDayBeforeSummit={false}
+        isSummitDay={false}
+        approachComplete={false}
+        approachCatchUpItems={MOCK_APPROACH_CATCH_UP}
+        onDismiss={noop}
+      />
+    ),
+  },
+];
 
 // ─── Section 3: Anchor System ───────────────────────────────────────
 
@@ -106,6 +293,8 @@ const anchorExhibits: MuseumExhibit[] = [
         sessionsBehind={5}
         missedClips={MOCK_MISSED_CLIPS}
         isEscalated={false}
+        approachComplete={false}
+        approachCatchUpItems={MOCK_APPROACH_CATCH_UP}
         onDismiss={noop}
         defaultReason="workload"
       />
@@ -125,6 +314,8 @@ const anchorExhibits: MuseumExhibit[] = [
         sessionsBehind={5}
         missedClips={MOCK_MISSED_CLIPS}
         isEscalated={true}
+        approachComplete={false}
+        approachCatchUpItems={MOCK_APPROACH_CATCH_UP}
         onDismiss={noop}
         defaultReason="workload"
       />
@@ -142,6 +333,8 @@ const anchorExhibits: MuseumExhibit[] = [
         clipsCompleted={12}
         totalClips={17}
         missedClips={MOCK_MISSED_CLIPS}
+        approachComplete={false}
+        approachCatchUpItems={MOCK_APPROACH_CATCH_UP}
         onDismiss={noop}
       />
     ),
@@ -158,6 +351,8 @@ const anchorExhibits: MuseumExhibit[] = [
         clipsCompleted={12}
         totalClips={17}
         missedClips={MOCK_MISSED_CLIPS}
+        approachComplete={false}
+        approachCatchUpItems={MOCK_APPROACH_CATCH_UP}
         onDismiss={noop}
       />
     ),
@@ -249,6 +444,19 @@ const checkinExhibits: MuseumExhibit[] = [
 // ─── Section 6: Summit ──────────────────────────────────────────────
 
 const summitExhibits: MuseumExhibit[] = [
+  {
+    id: "summit-in-sight",
+    title: "🌤️ Summit in Sight",
+    trigger: "All 15 Ascent clip-days done, but Approach items still incomplete",
+    render: () => (
+      <SummitInSightModal
+        catchUpItems={MOCK_APPROACH_CATCH_UP}
+        summitDay={MOCK_SUMMIT_DAY}
+        onGoToApproach={noop}
+        onDismiss={noop}
+      />
+    ),
+  },
   {
     id: "summit-grand-finale",
     title: "Grand Finale",
@@ -408,8 +616,8 @@ function FirstAchievementMockup({ earnedXp, earnedBadge }: { earnedXp: number; e
           <div className="flex items-center justify-center gap-3">
             {earnedBadge && (
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-50 border border-amber-200">
-                <span className="text-lg">🪓</span>
-                <span className="text-sm font-bold text-amber-700">Swiss Army Badge</span>
+                <span className="text-lg">🚡</span>
+                <span className="text-sm font-bold text-amber-700">Peak Lift Badge</span>
               </div>
             )}
             {earnedXp > 0 && (

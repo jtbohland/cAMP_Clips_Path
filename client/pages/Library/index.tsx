@@ -18,6 +18,7 @@ import LightAnchorModal from "@/components/LightAnchorModal";
 import TrailManifesto from "@/components/TrailManifesto";
 import FirstAchievementModal from "@/components/FirstAchievementModal";
 import LearnerCheckinModal from "@/components/LearnerCheckinModal";
+import SummitInSightModal from "@/components/SummitInSightModal";
 import Week1Page from "@/components/week1/Week1Page";
 import {
   countWeekdays,
@@ -29,8 +30,10 @@ import {
   getAscentAdjustmentDay,
   isAfterDate,
   isDayBeforeSummitDay,
+  isSameDay,
   TOTAL_SESSIONS,
 } from "@/lib/pacing";
+import type { ApproachCatchUpItem } from "@/components/PacingModal";
 
 function LoadingSkeleton() {
   return (
@@ -58,6 +61,7 @@ export default function LibraryPage() {
   const [showFirstAchievement, setShowFirstAchievement] = useState(false);
   const [firstAchievementData, setFirstAchievementData] = useState<{ earnedXp: number; earnedBadge: boolean }>({ earnedXp: 0, earnedBadge: false });
   const [showCheckin, setShowCheckin] = useState(false);
+  const [showSummitInSight, setShowSummitInSight] = useState(false);
   const [checkinType, setCheckinType] = useState<"approach" | "week2" | "week3" | "summit">("approach");
   const [checkinAdminTest, setCheckinAdminTest] = useState(false);
   const checkinTriggeredRef = useRef(false);
@@ -205,6 +209,13 @@ export default function LibraryPage() {
     { enabled: !!viewer?.id }
   );
 
+  // Week 1 progress — needed for Approach completion indicator on Ascent pacing modals
+  const { data: week1Data } = useApiData(
+    "GetWeek1Progress",
+    { viewerId: viewer?.id ?? "" },
+    { enabled: !!viewer?.id }
+  );
+
   const rawClips = useMemo(() => data?.clips ?? [], [data]);
 
   // In ascent test mode, reset all clips to fresh state (only clip 1 unlocked, none completed)
@@ -218,7 +229,7 @@ export default function LibraryPage() {
       pausedElapsedSeconds: 0,
     }));
   }, [rawClips, ascentTestMode]);
-  const allCompleted = clips.length >= TOTAL_SESSIONS && clips.every((c: any) => c.completed);
+  const ascentComplete = clips.length >= TOTAL_SESSIONS && clips.every((c: any) => c.completed);
 
   // A/B pair sort orders — updated after Day 5 + Day 9 topic day insertion
   // Old: [6,7],[8,9],[11,12],[16,17] → New: [7,8],[9,10],[13,14],[18,19]
@@ -253,12 +264,46 @@ export default function LibraryPage() {
     const adjustmentDay = getAscentAdjustmentDay(summitDay, incompleteSessions);
     const afterAdjustmentDay = isAfterDate(adjustmentDay);
     const dayBeforeSummit = isDayBeforeSummitDay(summitDay);
+    const summitDayIsToday = isSameDay(summitDay);
     return {
       tier, daysBehind, clipsCompleted: sessionsCompleted, weekdaysElapsed, missedClips, summitDay,
       startDate, adjustmentDay, afterSummitDay, afterAdjustmentDay, dayBeforeSummit,
-      incompleteSessions,
+      summitDayIsToday, incompleteSessions,
     };
   }, [progressData, clips]);
+
+  // --- Approach completion status for Ascent pacing modals ---
+  const approachStatus = useMemo(() => {
+    // Legacy learners: approach is automatically complete (they skipped it)
+    if (week1Data?.isLegacyLearner) return { complete: true, catchUpItems: [] as ApproachCatchUpItem[] };
+    if (!week1Data) return null;
+
+    const { moduleSignoffs, academyScreenshots, wdVerification } = week1Data;
+    const signoffs = new Set(moduleSignoffs.map((s) => s.moduleKey));
+    const screenshots = new Set(academyScreenshots.map((s) => s.courseKey));
+    const wdDone = !!wdVerification;
+
+    const allDone = signoffs.has("meddpicc") && signoffs.has("camp101") && signoffs.has("challenger")
+      && screenshots.has("analytics") && screenshots.has("experiment") && screenshots.has("session_replay") && screenshots.has("guides_surveys")
+      && wdDone;
+
+    if (allDone) return { complete: true, catchUpItems: [] as ApproachCatchUpItem[] };
+
+    // Build incomplete items list
+    const items: ApproachCatchUpItem[] = [];
+    if (!signoffs.has("meddpicc")) items.push({ emoji: "✍🏽", label: "MEDDPICC sign-off" });
+    if (!screenshots.has("analytics")) items.push({ emoji: "🎓", label: "Academy: Analytics" });
+    if (!screenshots.has("experiment")) items.push({ emoji: "🎓", label: "Academy: Experiment" });
+    if (!screenshots.has("session_replay")) items.push({ emoji: "🎓", label: "Academy: Session Replay" });
+    if (!screenshots.has("guides_surveys")) items.push({ emoji: "🎓", label: "Academy: Guides & Surveys" });
+    if (!signoffs.has("camp101")) items.push({ emoji: "✍🏽", label: "cAMP 101 sign-off" });
+    if (!signoffs.has("challenger")) items.push({ emoji: "✍🏽", label: "Challenger sign-off" });
+    if (!wdDone) items.push({ emoji: "🎡", label: "Wheel & Deal" });
+    return { complete: false, catchUpItems: items };
+  }, [week1Data]);
+
+  // Summit Reached requires ALL Ascent clips AND ALL Approach items complete
+  const allCompleted = ascentComplete && approachStatus?.complete === true;
 
   // Gate: ALL data must be loaded before any modal logic runs
   const dataReady = !!viewer && !!data && !!progressData;
@@ -308,9 +353,10 @@ export default function LibraryPage() {
     }
   }, []);
 
-  // Auto-trigger Pacing / Anchor — once per calendar day
+  // Auto-trigger Pacing / Anchor / Summit in Sight — once per calendar day
   // The pacing ladder is one system: summit_bound → … → avalanche_warning → anchor_failure.
   // When tier is anchor_failure, we dispatch the appropriate anchor modal instead of PacingModal.
+  // When all Ascent clips are done but Approach is incomplete → Summit in Sight modal.
   useEffect(() => {
     if (!dataReady || !pacingInfo || previewMode === "pacing") return;
     if (pacingShownRef.current) return;
@@ -324,13 +370,16 @@ export default function LibraryPage() {
       pacingShownRef.current = true;
       localStorage.setItem(storageKey, todayStr);
 
-      if (pacingInfo.tier === "anchor_failure") {
+      // Ascent done but Approach incomplete → Summit in Sight
+      if (ascentComplete && approachStatus?.complete === false) {
+        setShowSummitInSight(true);
+      } else if (pacingInfo.tier === "anchor_failure") {
         showAnchorModal(viewer, pacingInfo);
       } else {
         setShowPacing(true);
       }
     }
-  }, [dataReady, pacingInfo, showSummit, tierUnlock, previewMode, viewer, showAnchorModal]);
+  }, [dataReady, pacingInfo, showSummit, tierUnlock, previewMode, viewer, showAnchorModal, ascentComplete, approachStatus]);
 
   // visibilitychange — re-trigger pacing/anchor modal for stale tabs (new day)
   useEffect(() => {
@@ -344,7 +393,9 @@ export default function LibraryPage() {
       if (lastShown !== todayStr && pacingInfo && !showSummit && tierUnlock === null) {
         localStorage.setItem(storageKey, todayStr);
 
-        if (pacingInfo.tier === "anchor_failure") {
+        if (ascentComplete && approachStatus?.complete === false) {
+          setShowSummitInSight(true);
+        } else if (pacingInfo.tier === "anchor_failure") {
           showAnchorModal(viewer, pacingInfo);
         } else {
           setShowPacing(true);
@@ -505,6 +556,9 @@ export default function LibraryPage() {
           missedClips={pacingInfo.missedClips}
           summitDay={pacingInfo.summitDay}
           isDayBeforeSummit={pacingInfo.dayBeforeSummit}
+          isSummitDay={pacingInfo.summitDayIsToday}
+          approachComplete={approachStatus?.complete}
+          approachCatchUpItems={approachStatus?.catchUpItems}
           onDismiss={() => setShowPacing(false)}
         />
       </div>
@@ -601,7 +655,19 @@ export default function LibraryPage() {
         missedClips={pacingInfo.missedClips}
         summitDay={pacingInfo.summitDay}
         isDayBeforeSummit={pacingInfo.dayBeforeSummit}
+        isSummitDay={pacingInfo.summitDayIsToday}
+        approachComplete={approachStatus?.complete}
+        approachCatchUpItems={approachStatus?.catchUpItems}
         onDismiss={() => setShowPacing(false)}
+      />
+    )}
+    {/* Summit in Sight — Ascent done, Approach incomplete */}
+    {showSummitInSight && approachStatus && (
+      <SummitInSightModal
+        catchUpItems={approachStatus.catchUpItems}
+        summitDay={pacingInfo?.summitDay}
+        onGoToApproach={() => setActiveTab("approach")}
+        onDismiss={() => setShowSummitInSight(false)}
       />
     )}
     {/* Anchor Failure #1 — first time past Summit Day */}
@@ -614,6 +680,8 @@ export default function LibraryPage() {
         adjustmentDay={pacingInfo.adjustmentDay}
         sessionsBehind={pacingInfo.incompleteSessions}
         missedClips={pacingInfo.missedClips}
+        approachComplete={approachStatus?.complete}
+        approachCatchUpItems={approachStatus?.catchUpItems}
         onDismiss={() => {
           localStorage.setItem(`anchor_failure_slack_sent_${viewer.id}`, "true");
           if (!localStorage.getItem(`anchor_adjustment_deadline_${viewer.id}`)) {
@@ -637,6 +705,8 @@ export default function LibraryPage() {
         sessionsBehind={pacingInfo.incompleteSessions}
         missedClips={pacingInfo.missedClips}
         isEscalated
+        approachComplete={approachStatus?.complete}
+        approachCatchUpItems={approachStatus?.catchUpItems}
         onDismiss={() => {
           localStorage.setItem(`anchor_adjustment_slack_sent_${viewer.id}`, "true");
           setShowAnchorEscalated(false);
@@ -658,6 +728,8 @@ export default function LibraryPage() {
         clipsCompleted={pacingInfo.clipsCompleted}
         totalClips={TOTAL_SESSIONS}
         missedClips={pacingInfo.missedClips}
+        approachComplete={approachStatus?.complete}
+        approachCatchUpItems={approachStatus?.catchUpItems}
         onDismiss={() => setShowLightAnchor(false)}
       />
     )}
@@ -744,6 +816,7 @@ export default function LibraryPage() {
                 setShowFirstAchievement(true);
               }
             }}
+            onSwitchToAscent={() => setActiveTab("ascent")}
           />
         </div>
       ) : (

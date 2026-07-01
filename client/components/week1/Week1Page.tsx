@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
 import { useApiData } from "@/hooks/useApiData.js";
 import { useApi } from "@/hooks/useApi.js";
@@ -9,6 +9,14 @@ import Camp101Signoff from "./Camp101Signoff";
 import ChallengerCard from "./ChallengerCard";
 import WheelDealCard from "./WheelDealCard";
 import ApproachManifesto from "./ApproachManifesto";
+import ApproachPacingModal from "@/components/ApproachPacingModal";
+import ApproachDeadlineModal from "@/components/ApproachDeadlineModal";
+import OhDeerModal from "@/components/OhDeerModal";
+import {
+  countWeekdays,
+  getApproachPacingTier,
+  getApproachItemsBehind,
+} from "@/lib/pacing";
 
 // Reflection prompts
 const MEDDPICC_REFLECTION = "Which letter of MEDDPICC is the biggest gap in how you've sold before, and what will you do differently here?";
@@ -48,9 +56,11 @@ type Week1PageProps = {
   viewerName: string;
   isAdmin?: boolean;
   onBeginAscent: (unlockResult?: UnlockResult) => void;
+  /** Switch to Ascent tab (used by Oh Deer auto-unlock) */
+  onSwitchToAscent?: () => void;
 };
 
-export default function Week1Page({ viewerId, viewerName, isAdmin, onBeginAscent }: Week1PageProps) {
+export default function Week1Page({ viewerId, viewerName, isAdmin, onBeginAscent, onSwitchToAscent }: Week1PageProps) {
   const navigate = useNavigate();
   // Admin "Test as New Learner" toggle — resets view to fresh state
   const [testMode, setTestMode] = useState(false);
@@ -106,6 +116,102 @@ export default function Week1Page({ viewerId, viewerName, isAdmin, onBeginAscent
   const allModulesSigned = !!signoffMap.meddpicc && !!signoffMap.camp101 && !!signoffMap.challenger;
   const wdVerified = !!data?.wdVerification;
   const allComplete = allModulesSigned && wdVerified;
+
+  // --- Approach Pacing ---
+  const [showApproachPacing, setShowApproachPacing] = useState(false);
+  const [showDeadline, setShowDeadline] = useState<"day6" | "day7" | null>(null);
+  const [showOhDeer, setShowOhDeer] = useState(false);
+  const approachPacingShownRef = useRef(false);
+
+  // Count completed items (MEDDPICC + 4 academies + Challenger + W&D = 7)
+  // cAMP 101 sign-off is NOT a separate trackable item
+  const completedItemCount = useMemo(() => {
+    let count = 0;
+    if (signoffMap.meddpicc) count++;
+    if (signoffMap.challenger) count++;
+    count += Object.keys(screenshotMap).length; // 4 academy screenshots
+    if (wdVerified) count++;
+    return count;
+  }, [signoffMap, screenshotMap, wdVerified]);
+
+  // Set of completed trackable keys for ApproachPacingModal
+  const completedKeys = useMemo(() => {
+    const keys = new Set<string>();
+    if (signoffMap.meddpicc) keys.add("module:meddpicc");
+    if (signoffMap.challenger) keys.add("module:challenger");
+    if (screenshotMap.analytics) keys.add("academy:analytics");
+    if (screenshotMap.experiment) keys.add("academy:experiment");
+    if (screenshotMap.session_replay) keys.add("academy:session_replay");
+    if (screenshotMap.guides_surveys) keys.add("academy:guides_surveys");
+    if (wdVerified) keys.add("wd");
+    return keys;
+  }, [signoffMap, screenshotMap, wdVerified]);
+
+  // Approach pacing calculation
+  const approachPacing = useMemo(() => {
+    if (!data?.createdAt || isLegacy || isUnlocked) return null;
+    const startDate = new Date(data.createdAt);
+    const today = new Date();
+    const weekdaysElapsed = countWeekdays(startDate, today);
+    const tier = getApproachPacingTier(completedItemCount, weekdaysElapsed);
+    const itemsBehind = getApproachItemsBehind(completedItemCount, weekdaysElapsed);
+    // Projected summit day = createdAt + 25 weekdays (5 approach + 20 ascent)
+    const projectedSummitDay = (() => {
+      const cursor = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+      let wd = 0;
+      while (wd < 25) { cursor.setDate(cursor.getDate() + 1); const d = cursor.getDay(); if (d !== 0 && d !== 6) wd++; }
+      return cursor;
+    })();
+    return { weekdaysElapsed, tier, itemsBehind, projectedSummitDay };
+  }, [data?.createdAt, isLegacy, isUnlocked, completedItemCount]);
+
+  // Incomplete modules for deadline modals
+  const incompleteModules = useMemo(() => {
+    const items: Array<{ emoji: string; label: string; done: boolean }> = [];
+    items.push({ emoji: "✍🏽", label: "MEDDPICC sign-off", done: !!signoffMap.meddpicc });
+    items.push({ emoji: "🎓", label: "Academy: Analytics", done: !!screenshotMap.analytics });
+    items.push({ emoji: "🎓", label: "Academy: Experiment", done: !!screenshotMap.experiment });
+    items.push({ emoji: "🎓", label: "Academy: Session Replay", done: !!screenshotMap.session_replay });
+    items.push({ emoji: "🎓", label: "Academy: Guides & Surveys", done: !!screenshotMap.guides_surveys });
+    items.push({ emoji: "✍🏽", label: "Challenger sign-off", done: !!signoffMap.challenger });
+    items.push({ emoji: "🎡", label: "Wheel & Deal", done: wdVerified });
+    return items.filter((m) => !m.done);
+  }, [signoffMap, screenshotMap, wdVerified]);
+
+  // Auto-trigger Approach pacing modal — once per calendar day, skip legacy/unlocked
+  useEffect(() => {
+    if (!data || isLegacy || isUnlocked || !approachPacing) return;
+    if (approachPacingShownRef.current) return;
+    if (testMode) return; // don't fire during admin test mode
+
+    const storageKey = `approach_pacing_shown_${viewerId}`;
+    const todayStr = new Date().toLocaleDateString();
+    const lastShown = localStorage.getItem(storageKey);
+    if (lastShown === todayStr) return;
+
+    const { weekdaysElapsed } = approachPacing;
+
+    // Day 1: no modal
+    if (weekdaysElapsed <= 1) return;
+
+    approachPacingShownRef.current = true;
+    localStorage.setItem(storageKey, todayStr);
+
+    // Day 8+: Oh Deer auto-unlock
+    if (weekdaysElapsed >= 8) {
+      setShowOhDeer(true);
+      return;
+    }
+
+    // Day 6-7: missed deadline
+    if (weekdaysElapsed >= 6) {
+      setShowDeadline(weekdaysElapsed === 7 ? "day7" : "day6");
+      return;
+    }
+
+    // Day 2-5: regular pacing modal
+    setShowApproachPacing(true);
+  }, [data, isLegacy, isUnlocked, approachPacing, viewerId, testMode]);
 
   // Handlers
   const handleModuleSignoff = useCallback(async (moduleKey: string, signoffData: {
@@ -200,6 +306,37 @@ export default function Week1Page({ viewerId, viewerName, isAdmin, onBeginAscent
     : CHALLENGER_REFLECTION_INTRO;
 
   return (
+    <>
+      {/* Approach Pacing Modals */}
+      {showApproachPacing && approachPacing && (
+        <ApproachPacingModal
+          tier={approachPacing.tier}
+          approachDay={Math.min(approachPacing.weekdaysElapsed, 5)}
+          completedItems={completedItemCount}
+          completedKeys={completedKeys}
+          itemsBehind={approachPacing.itemsBehind}
+          summitDay={approachPacing.projectedSummitDay}
+          onDismiss={() => setShowApproachPacing(false)}
+        />
+      )}
+      {showDeadline && (
+        <ApproachDeadlineModal
+          variant={showDeadline}
+          completedItems={completedItemCount}
+          incompleteModules={incompleteModules}
+          onDismiss={() => setShowDeadline(null)}
+        />
+      )}
+      {showOhDeer && (
+        <OhDeerModal
+          completedItems={completedItemCount}
+          onDismiss={() => {
+            setShowOhDeer(false);
+            onSwitchToAscent?.();
+          }}
+        />
+      )}
+
     <div className="flex flex-col gap-4 p-6 max-w-4xl mx-auto w-full">
       {/* Admin test mode toggle */}
       {isAdmin && (
@@ -381,5 +518,6 @@ export default function Week1Page({ viewerId, viewerName, isAdmin, onBeginAscent
         </div>
       )}
     </div>
+    </>
   );
 }

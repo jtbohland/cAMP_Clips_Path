@@ -35,7 +35,7 @@ const STREAK_BONUSES = [
 
 const MILESTONE_BONUSES = [
   { badge: "First Step", xp: 5, emoji: "🎬", condition: "Complete Clip 1" },
-  { badge: "Swiss Army", xp: 35, emoji: "🪓", condition: "Finish The Approach in 5 days or less — all tools, all terrain, ready for anything" },
+  { badge: "Peak Lift", xp: 35, emoji: "🚡", condition: "Finish The Approach in 5 days or less — you rode the gondola and you're ready to climb" },
   { badge: "Halfway Up", xp: 15, emoji: "🏔️", condition: "Complete Clip 9" },
   { badge: "Into the Summit Push", xp: 10, emoji: "🪢", condition: "Unlock Week 4 (complete Clip 9)" },
   { badge: "Summit Reached", xp: 25, emoji: "🏔️✨", condition: "Complete all 17 clips" },

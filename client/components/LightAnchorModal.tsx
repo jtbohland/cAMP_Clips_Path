@@ -1,5 +1,6 @@
 import { useCallback } from "react";
 import { PACING_TIERS, type MissedClip } from "@/lib/pacing";
+import type { ApproachCatchUpItem } from "@/components/PacingModal";
 
 /**
  * Light Anchor Failure Modal — shown daily after the initial Anchor Failure
@@ -18,6 +19,10 @@ interface LightAnchorModalProps {
   totalClips: number;
   /** Missed clip list */
   missedClips: MissedClip[];
+  /** Approach completion status */
+  approachComplete?: boolean;
+  /** Missed approach modules */
+  approachCatchUpItems?: ApproachCatchUpItem[];
   /** Called when dismissed */
   onDismiss: () => void;
 }
@@ -33,6 +38,8 @@ export default function LightAnchorModal({
   clipsCompleted,
   totalClips,
   missedClips,
+  approachComplete,
+  approachCatchUpItems,
   onDismiss,
 }: LightAnchorModalProps) {
   const config = PACING_TIERS.anchor_failure;
@@ -121,6 +128,26 @@ export default function LightAnchorModal({
                   <p key={i} className="text-sm">
                     <span className="font-semibold">Week {clip.weekNumber} {clip.dayLabel}:</span>{" "}
                     {clip.title}
+                  </p>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Approach completion indicator */}
+          {approachComplete === true && (
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-100 border border-green-300 mb-4">
+              <span className="text-sm">✅</span>
+              <span className="text-xs font-bold text-green-800">Approach Complete</span>
+            </div>
+          )}
+          {approachComplete === false && approachCatchUpItems && approachCatchUpItems.length > 0 && (
+            <div className="mb-4">
+              <p className="text-sm font-bold mb-2">🚡 Modules Missed</p>
+              <div className="rounded-lg px-4 py-3 space-y-1.5" style={{ backgroundColor: "#1C191710" }}>
+                {approachCatchUpItems.map((item, i) => (
+                  <p key={i} className="text-sm">
+                    {item.label} {item.emoji}
                   </p>
                 ))}
               </div>
