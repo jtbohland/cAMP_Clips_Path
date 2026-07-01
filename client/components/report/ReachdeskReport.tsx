@@ -34,6 +34,7 @@ export default function ReachdeskReport() {
       <PageHeader
         emoji="📋"
         title="Ranger Report Review"
+        subtitle=""
         showBackButton={false}
       />
 

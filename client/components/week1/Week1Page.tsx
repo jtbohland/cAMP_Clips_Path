@@ -87,7 +87,7 @@ export default function Week1Page({ viewerId, viewerName, isAdmin, onBeginAscent
 
   // Sign-off lookups
   const signoffMap = useMemo(() => {
-    const map: Record<string, typeof data extends { moduleSignoffs: infer T } ? T extends Array<infer U> ? U : never : never> = {};
+    const map: Record<string, { moduleKey: string; reflectionResponse: string; signature: string; completedAt: string }> = {};
     for (const s of data?.moduleSignoffs ?? []) {
       map[s.moduleKey] = s;
     }

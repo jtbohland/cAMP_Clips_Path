@@ -40,7 +40,7 @@ function TopicReflectionSectionInner({ viewerId, topicDay, questions }: TopicRef
     try {
       await submitReflection({
         viewerId,
-        topicDay,
+        topicDay: topicDay as any,
         question1: questions[0].prompt,
         answer1: answer1.trim(),
         question2: questions[1].prompt,

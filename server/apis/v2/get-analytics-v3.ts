@@ -265,15 +265,62 @@ export default api({
       badgeMap.get(b.viewer_id)!.push(b.badge_id);
     }
 
+    // 2e. Topics completed per learner (for topic-based pacing).
+    // A topic = a day_label. Complete = ALL clips with that day_label have a completed session.
+    const TopicsCompletedRow = z.object({ viewer_id: z.string(), topics_completed: z.coerce.number() });
+    const topicsRows = await ctx.integrations.db.query(
+      `WITH clip_days AS (
+        SELECT id, day_label FROM cliptracker_v2_clips WHERE status = 'live'
+      ),
+      learner_completions AS (
+        SELECT s.viewer_id, s.clip_id
+        FROM cliptracker_v2_sessions s
+        WHERE s.completed = true
+        GROUP BY s.viewer_id, s.clip_id
+      ),
+      day_totals AS (
+        SELECT day_label, COUNT(*) AS total FROM clip_days GROUP BY day_label
+      ),
+      learner_day_completions AS (
+        SELECT lc.viewer_id, cd.day_label, COUNT(*) AS completed
+        FROM learner_completions lc
+        JOIN clip_days cd ON cd.id = lc.clip_id
+        GROUP BY lc.viewer_id, cd.day_label
+      )
+      SELECT ldc.viewer_id, COUNT(*)::int AS topics_completed
+      FROM learner_day_completions ldc
+      JOIN day_totals dt ON dt.day_label = ldc.day_label
+      WHERE ldc.completed >= dt.total
+      GROUP BY ldc.viewer_id
+      LIMIT 500`,
+      TopicsCompletedRow,
+      undefined,
+      { label: "Topics completed per learner (topic-based pacing)" }
+    );
+
+    // Build topics map: viewer_id -> topics_completed
+    const topicsMap = new Map<string, number>();
+    for (const t of topicsRows) {
+      topicsMap.set(t.viewer_id, t.topics_completed);
+    }
+
     // Calculate pacing + tier for each learner
     const totalLiveClips = overviewRows[0]?.total_clips ?? 0;
     const now = new Date();
 
-    // Weekday-based pacing schedule: 15 weekdays → 17 clips
-    // Days 5 and 9 are content-review days (no new clips expected)
-    const EXPECTED_CLIPS = [0, 1, 2, 3, 4, 4, 5, 7, 9, 9, 10, 12, 13, 14, 15, 17];
-    const TOTAL_WEEKDAYS = 15;
-    const TOTAL_CLIPS_SCHEDULE = 17;
+    // Pacing schedule — must match client/lib/pacing.ts exactly.
+    // 20 weekdays: 5 Approach (no clips) + 15 Ascent (15 topic-days).
+    // Pacing counts TOPICS (completed days), not individual clips.
+    // A topic-day is complete when ALL clips for that day_label are done.
+    const EXPECTED_SESSIONS = [
+      0,                        // 0 weekdays elapsed
+      0, 0, 0, 0, 0,            // weekdays 1–5: Approach
+      1, 2, 3, 4, 5,            // weekdays 6–10: Ascent days 1–5
+      6, 7, 8, 9, 10,           // weekdays 11–15: Ascent days 6–10
+      11, 12, 13, 14, 15,       // weekdays 16–20: Ascent days 11–15
+    ];
+    const TOTAL_WEEKDAYS = 20;
+    const TOTAL_SESSIONS_SCHEDULE = 15;
 
     function getSummitDay(startDate: Date): Date {
       const cursor = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
@@ -318,10 +365,10 @@ export default api({
     }
 
     function getTopicDaysBehind(completed: number, weekdaysElapsed: number): number {
-      if (completed >= TOTAL_CLIPS_SCHEDULE) return 0;
+      if (completed >= TOTAL_SESSIONS_SCHEDULE) return 0;
       let learnerWeekday = 0;
-      for (let i = 1; i < EXPECTED_CLIPS.length; i++) {
-        if (completed >= EXPECTED_CLIPS[i]) learnerWeekday = i;
+      for (let i = 1; i < EXPECTED_SESSIONS.length; i++) {
+        if (completed >= EXPECTED_SESSIONS[i]) learnerWeekday = i;
         else break;
       }
       return Math.max(0, Math.min(weekdaysElapsed, TOTAL_WEEKDAYS) - learnerWeekday);
@@ -340,28 +387,17 @@ export default api({
       if (l.ascent_day_1) {
         const start = new Date(l.ascent_day_1);
         const weekdaysElapsed = countWeekdays(start, now);
-        const daysBehind = getTopicDaysBehind(l.clips_completed, weekdaysElapsed);
+        // Use topic-based completion for pacing (not raw clip count)
+        const topicsCompleted = topicsMap.get(l.viewer_id) ?? 0;
+        const daysBehind = getTopicDaysBehind(topicsCompleted, weekdaysElapsed);
         const summit = getSummitDay(start);
         summitDayStr = summit.toISOString().split("T")[0];
         const pastSummit = isAfterDate(summit);
 
-        if (l.clips_completed >= TOTAL_CLIPS_SCHEDULE) {
+        if (topicsCompleted >= TOTAL_SESSIONS_SCHEDULE) {
           pacingStatus = "completed";
-          // Check if they finished on time (before or on summit day)
-          if (!pastSummit || l.clips_completed >= TOTAL_CLIPS_SCHEDULE) {
-            // They completed — check if summit was in the future when they finished
-            // Simple heuristic: if completed and not past summit OR completed at all
-            // We track as on-time if they finished (completed) — more accurate would need completion date
-            // For now: completed + not currently past summit = on time; completed + past summit = anchor
-            // But actually once completed, they're done. Let's check: did they finish before summit?
-            // Best heuristic without completion timestamp: if completed, count as on-time if weekdays <= 15
-            if (weekdaysElapsed <= TOTAL_WEEKDAYS) {
-              onTimeFinishers++;
-            } else {
-              // They finished but it took longer than 15 weekdays
-              onTimeFinishers++; // Still count as on-time since they completed
-            }
-          }
+          // Count as on-time finisher (all topics done)
+          onTimeFinishers++;
         } else if (daysBehind <= 0) {
           pacingStatus = "summit_bound";
         } else if (daysBehind <= 2) {
@@ -374,13 +410,13 @@ export default api({
           pacingStatus = "avalanche_warning";
         }
 
-        // Anchor failure: past summit day and not completed
-        if (pastSummit && l.clips_completed < TOTAL_CLIPS_SCHEDULE) {
+        // Anchor failure: past summit day and not all topics completed
+        if (pastSummit && topicsCompleted < TOTAL_SESSIONS_SCHEDULE) {
           isAnchorFailure = true;
           pacingStatus = "anchor_failure";
           anchorFailureCount++;
-          const incompleteSessions = TOTAL_CLIPS_SCHEDULE - l.clips_completed;
-          const adjDay = getAscentAdjustmentDay(summit, incompleteSessions);
+          const incompleteTopics = TOTAL_SESSIONS_SCHEDULE - topicsCompleted;
+          const adjDay = getAscentAdjustmentDay(summit, incompleteTopics);
           ascentAdjustmentDayStr = adjDay.toISOString().split("T")[0];
         }
       }

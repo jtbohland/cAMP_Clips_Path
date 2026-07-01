@@ -88,14 +88,14 @@ export default api({
       session: {
         id: row.id,
         elapsedSeconds: row.paused_elapsed_seconds,
-        watchedSeconds: row.paused_watched_seconds,
+        watchedSeconds: row.paused_watched_seconds ?? 0,
         focusSeconds: row.paused_focus_seconds,
         blurSeconds: row.paused_blur_seconds,
         answeredQuestionIds: answeredIds,
         correctCount: row.paused_correct_count,
         phase: row.paused_phase,
         pausedAt: row.paused_at,
-        lowVolumeSeconds: row.low_volume_seconds,
+        lowVolumeSeconds: row.low_volume_seconds ?? 0,
       },
     };
   },

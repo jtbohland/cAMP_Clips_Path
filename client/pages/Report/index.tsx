@@ -136,6 +136,7 @@ export default function ReportPage() {
       <PageHeader
         emoji="📋"
         title="Ranger Report Review"
+        subtitle=""
         showBackButton={false}
       />
 

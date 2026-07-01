@@ -65,7 +65,7 @@ export default function PodcastsPage() {
         // If this video just completed, refetch progress and check for achievement
         if (result?.completed) {
           const refreshed = await refetch();
-          if (refreshed?.data?.allCompleted && !achievementShownRef.current) {
+          if ((refreshed as any)?.data?.allCompleted && !achievementShownRef.current) {
             achievementShownRef.current = true;
             try {
               const xpResult = await awardXp({ viewerId });
