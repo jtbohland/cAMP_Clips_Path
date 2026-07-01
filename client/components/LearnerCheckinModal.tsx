@@ -3,6 +3,7 @@ import { useApiData } from "@/hooks/useApiData.js";
 import { useApi } from "@/hooks/useApi.js";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
+import { countWeekdays, getPacingTier, getSummitDay, PACING_TIERS, type PacingTier } from "@/lib/pacing.js";
 
 type CheckinType = "approach" | "week2" | "week3" | "summit";
 
@@ -19,19 +20,19 @@ interface LearnerCheckinModalProps {
 /* ── Emojis match Library WEEK_META headers ── */
 const CHECKIN_LABELS: Record<CheckinType, { title: string; emoji: string; description: string; gradient: string }> = {
   approach: {
-    title: "The Approach Check-In",
+    title: "The Approach: Anchor Point",
     emoji: "🚡",
     description: "Week 1 wrap-up — share your progress with your manager",
     gradient: "from-amber-600 to-orange-600",
   },
   week2: {
-    title: "Week 2 Check-In",
+    title: "Week 2: Anchor Point",
     emoji: "🥾",
     description: "Mid-Ascent update — let your manager know how you're doing",
     gradient: "from-indigo-600 to-purple-600",
   },
   week3: {
-    title: "Week 3 Check-In",
+    title: "Week 3: Anchor Point",
     emoji: "🏞️",
     description: "Summit push — you're almost there!",
     gradient: "from-emerald-600 to-teal-600",
@@ -110,6 +111,8 @@ const MANAGER_KEY = `
 • 🔦 Search & Rescue — a second chance when engagement drops below 80%
 • ⛈️ Weather the Storm — a mandatory study break when engagement is critically low
 • 🧗 Pacing — tracks whether they're on schedule to finish by Summit Day
+  - Summit Bound = on pace · Off the Trail = 1-2 days behind · Lost in the Woods = 3-5 days behind
+  - Rockslide = 6-9 days behind · Avalanche Warning = 10+ days behind · Anchor Failure = past Summit Day
 `;
 
 /* ════════════════════════════════════════════════════════════════════════
@@ -180,10 +183,10 @@ function LearnerCheckinModalInner({ viewerId, checkinType, onClose, onSent, allo
     const subject = checkinType === "summit"
       ? `🧗🏻‍♂️ ${v.name} — Summit Reached!`
       : checkinType === "approach"
-        ? `🚡 ${v.name} — Approach Check-In`
+        ? `🚡 ${v.name} — Approach Anchor Point`
         : checkinType === "week2"
-          ? `🥾 ${v.name} — Week 2 Check-In`
-          : `🏞️ ${v.name} — Week 3 Check-In`;
+          ? `🥾 ${v.name} — Week 2 Anchor Point`
+          : `🏞️ ${v.name} — Week 3 Anchor Point`;
 
     // Greeting — "Hi Jordan & Alex" (first names only)
     const greeting = buddyFirst
@@ -192,19 +195,25 @@ function LearnerCheckinModalInner({ viewerId, checkinType, onClose, onSent, allo
 
     let body = `${greeting}\n\n`;
 
+    // ── PACING LINE (all check-in types) ──
+    if (v.ascentDay1) {
+      const startDate = new Date(v.ascentDay1);
+      const today = new Date();
+      const weekdaysElapsed = countWeekdays(startDate, today);
+      const hasStarted = data.clipStats.completedSessions > 0;
+      const pacingKey = getPacingTier(data.clipStats.completedSessions, weekdaysElapsed, hasStarted);
+      const pacingConfig = PACING_TIERS[pacingKey];
+      const summitDay = getSummitDay(startDate);
+      const fmtDate = (d: Date) => d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      body += `🧗 Ascent Date: ${fmtDate(startDate)} · Pacing: ${pacingConfig.emoji} ${pacingConfig.label} · Summit Day: ${fmtDate(summitDay)}\n\n`;
+    }
+
     // ── APPROACH ──
     if (checkinType === "approach") {
       body += `I just completed The Approach — the first phase of cAMP Ascent! Here's my summary:\n\n`;
       body += `📊 Stats:\n`;
       body += `  • XP: ${v.totalXp}\n`;
       body += `  • Tier: ${v.tier}\n`;
-      if (qs.totalAttempts > 0) {
-        body += `\n🧠 cAMP Quiz Stats:\n`;
-        body += `  • Passed: ${qs.quizzesPassed}/${qs.totalQuizzes}\n`;
-        body += `  • Avg Score: ${qs.avgScorePct}%\n`;
-        body += `  • 1st Pass Rate: ${qs.quizzesPassed > 0 ? Math.round((qs.firstPassCount / qs.quizzesPassed) * 100) : 0}%\n`;
-        body += `  • Retakes: ${qs.retakes}\n`;
-      }
       if (data.moduleReflections?.length > 0) {
         body += `\n✍🏽 Module Reflections:\n`;
         data.moduleReflections.forEach((r: any) => {
@@ -224,31 +233,39 @@ function LearnerCheckinModalInner({ viewerId, checkinType, onClose, onSent, allo
     } else if (checkinType === "summit") {
       body += `I completed all 17 cAMP Clips and reached the Summit! 🏔️✨\n\n`;
 
-      body += `--- Overall Summit Summary ---\n\n`;
-      body += `🎞️ Clips:\n`;
-      body += `  • Completed: ${data.clipStats.completedSessions}/${data.clipStats.totalSessions}\n`;
-      body += `  • Avg Clip Score: ${data.clipStats.avgScore}%\n`;
-      body += `\n📊 Final Stats:\n`;
+      // Week 4 first
+      if (data.week4) {
+        body += `--- ⛰️ Week 4 Performance ---\n\n`;
+        body += `🎞️ Week 4 Clips:\n`;
+        body += `  • Completed: ${data.week4.clipsCompleted}/${data.week4.totalClips}\n`;
+        body += `  • Avg Engagement: ${data.week4.avgEngagement}%\n`;
+        body += `\n🧠 Week 4 Quizzes:\n`;
+        body += `  • Passed: ${data.week4.quizzesPassed}/${data.week4.totalQuizzes}\n`;
+        body += `  • Avg Score: ${data.week4.avgQuizScore}%\n`;
+      }
+
+      // Overall Journey second
+      body += `\n--- 🏔️ Overall Journey ---\n\n`;
+      body += `📊 Final Stats:\n`;
       body += `  • XP: ${v.totalXp}\n`;
       body += `  • Tier: ${v.tier}\n`;
-      body += `  • 🏆 Leaderboard: #${data.leaderboard.rank} of ${data.leaderboard.totalLearners} cAMPers (cumulative XP, all cohorts)\n`;
+      body += `  • 🏆 Rank: #${data.leaderboard.rank} of ${data.leaderboard.totalLearners} cAMPers\n`;
+      body += `\n🎞️ All Clips:\n`;
+      body += `  • Completed: ${data.clipStats.completedSessions}/${data.clipStats.totalSessions}\n`;
+      body += `  • 🔦 S&R Triggered: ${data.srCount}\n`;
+      body += `  • ⛈️ WtS Triggered: ${data.wtsCount}\n`;
       body += `\n👀 Engagement:\n`;
       body += `  • 🥾 Trail Markers: ${data.engagement.avgQuestionScore}%\n`;
       body += `  • 👀 Focus: ${data.engagement.avgFocusScore}%\n`;
       body += `  • ⏱️ Watch Time: ${data.engagement.avgTimeScore}%\n`;
       body += `  • 🎯 Overall: ${data.engagement.overallEngagement}%\n`;
       if (qs.totalAttempts > 0) {
-        body += `\n🧠 cAMP Quiz Stats (All 15 Days):\n`;
+        body += `\n🧠 All Quizzes (15 Days):\n`;
         body += `  • Passed: ${qs.quizzesPassed}/${qs.totalQuizzes}\n`;
         body += `  • Avg Score: ${qs.avgScorePct}%\n`;
         body += `  • 1st Pass Rate: ${qs.quizzesPassed > 0 ? Math.round((qs.firstPassCount / qs.quizzesPassed) * 100) : 0}%\n`;
         body += `  • Retakes: ${qs.retakes}\n`;
       }
-
-      body += `\n--- Week 4 Performance ---\n\n`;
-      body += `I pushed through the final stretch of Ascent, completing the remaining clips and reaching the Summit.\n`;
-      body += `  • Final Tier: ${v.tier}\n`;
-      body += `  • Total XP Earned: ${v.totalXp}\n`;
 
     // ── WEEK 2 / WEEK 3 ──
     } else {
@@ -256,7 +273,8 @@ function LearnerCheckinModalInner({ viewerId, checkinType, onClose, onSent, allo
       body += `Here's my ${weekLabel} cAMP Ascent update:\n\n`;
       body += `🎞️ Clips:\n`;
       body += `  • Completed: ${data.clipStats.completedSessions}/${data.clipStats.totalSessions}\n`;
-      body += `  • Avg Clip Score: ${data.clipStats.avgScore}%\n`;
+      body += `  • 🔦 S&R Triggered: ${data.srCount}\n`;
+      body += `  • ⛈️ WtS Triggered: ${data.wtsCount}\n`;
       body += `\n📊 Stats:\n`;
       body += `  • XP: ${v.totalXp}\n`;
       body += `  • Tier: ${v.tier}\n`;
@@ -290,7 +308,7 @@ function LearnerCheckinModalInner({ viewerId, checkinType, onClose, onSent, allo
     body += MANAGER_KEY;
 
     // ── FEEDBACK SURVEY LINK ──
-    const feedbackUrl = `${window.location.origin}/manager-feedback?token=${feedbackToken}`;
+    const feedbackUrl = `${window.location.origin}/feedback?token=${feedbackToken}`;
     body += `\n📋 Manager Feedback Survey (Required — only JT sees responses):\n`;
     body += `${feedbackUrl}\n`;
 
@@ -349,10 +367,10 @@ function LearnerCheckinModalInner({ viewerId, checkinType, onClose, onSent, allo
   // Step calculations — summit celebrate is its own full-screen view (not numbered)
   const checkinStepIndex = step === "stats" ? 0 : step === "reflect" ? 1 : 2;
   const checkinStepLabel = step === "stats"
-    ? "Step 1 of 3 — Review your stats"
+    ? "🪝 Step 1 of 3 — Review your stats"
     : step === "reflect"
-      ? "Step 2 of 3 — Share a reflection"
-      : "Step 3 of 3 — Send to your manager";
+      ? "🪝 Step 2 of 3 — Share a reflection"
+      : "🪝 Step 3 of 3 — Send to your manager";
 
   /* ── SUMMIT GRAND FINALE — its own standalone view, no check-in framing ── */
   if (isSummit && step === "celebrate") {
@@ -641,11 +659,91 @@ function StatsView({ data, checkinType }: { data: any; checkinType: CheckinType 
         </div>
       </div>
 
+      {/* Pacing Banner (non-approach) */}
+      {checkinType !== "approach" && data.viewer.ascentDay1 && (() => {
+        const startDate = new Date(data.viewer.ascentDay1);
+        const today = new Date();
+        const weekdaysElapsed = countWeekdays(startDate, today);
+        const hasStarted = data.clipStats.completedSessions > 0;
+        const pacingKey = getPacingTier(data.clipStats.completedSessions, weekdaysElapsed, hasStarted);
+        const pacingConfig = PACING_TIERS[pacingKey];
+        const summitDay = getSummitDay(startDate);
+        const fmtDate = (d: Date) => d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+
+        return (
+          <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-4 shadow-sm">
+            <h3 className="text-sm font-bold text-blue-900 mb-3 flex items-center gap-1.5">
+              <span className="w-1 h-4 rounded-full bg-blue-500 inline-block" />🧗 Pacing
+            </h3>
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <div className="rounded-lg bg-white/70 py-2">
+                <p className="text-lg font-bold text-blue-700">{fmtDate(startDate)}</p>
+                <p className="text-xs text-gray-500">Ascent Date</p>
+              </div>
+              <div className="rounded-lg bg-white/70 py-2">
+                <p className="text-lg font-bold text-blue-700">{pacingConfig.emoji} {pacingConfig.label}</p>
+                <p className="text-xs text-gray-500">Pacing Status</p>
+              </div>
+              <div className="rounded-lg bg-white/70 py-2">
+                <p className="text-lg font-bold text-blue-700">{fmtDate(summitDay)}</p>
+                <p className="text-xs text-gray-500">Summit Day</p>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* ── SUMMIT: Week 4 Performance ── */}
+      {isSummit && data.week4 && (
+        <>
+          <div className="mt-1 mb-0">
+            <h2 className="text-sm font-bold text-gray-800 flex items-center gap-1.5">⛰️ Week 4 Performance</h2>
+          </div>
+          <div className="rounded-xl border border-green-200 bg-green-50/60 p-4 shadow-sm">
+            <h3 className="text-sm font-bold text-green-900 mb-3 flex items-center gap-1.5"><span className="w-1 h-4 rounded-full bg-green-500 inline-block" />🎞️ Week 4 Clips</h3>
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div className="rounded-lg bg-white/70 py-2">
+                <p className="text-xl font-bold text-green-700">{data.week4.clipsCompleted}/{data.week4.totalClips}</p>
+                <p className="text-xs text-gray-500">Clips Done</p>
+              </div>
+              <div className="rounded-lg bg-white/70 py-2">
+                <p className="text-xl font-bold text-green-700">{data.week4.avgEngagement}%</p>
+                <p className="text-xs text-gray-500">Avg Engagement</p>
+              </div>
+              <div className="rounded-lg bg-white/70 py-2">
+                <p className="text-xl font-bold text-green-700">#{data.leaderboard.rank}/{data.leaderboard.totalLearners}</p>
+                <p className="text-xs text-gray-500">Leaderboard</p>
+              </div>
+            </div>
+          </div>
+          <div className="rounded-xl border border-orange-200 bg-orange-50/60 p-4 shadow-sm">
+            <h3 className="text-sm font-bold text-orange-900 mb-3 flex items-center gap-1.5"><span className="w-1 h-4 rounded-full bg-orange-500 inline-block" />🧠 Week 4 Quizzes</h3>
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <div className="rounded-lg bg-white/70 py-2">
+                <p className="text-xl font-bold text-orange-700">{data.week4.quizzesPassed}/{data.week4.totalQuizzes}</p>
+                <p className="text-xs text-gray-500">Passed</p>
+              </div>
+              <div className="rounded-lg bg-white/70 py-2">
+                <p className="text-xl font-bold text-orange-700">{data.week4.avgQuizScore}%</p>
+                <p className="text-xs text-gray-500">Avg Score</p>
+              </div>
+              <div className="rounded-lg bg-white/70 py-2">
+                <p className="text-xl font-bold text-orange-700">{data.week4.avgEngagement}%</p>
+                <p className="text-xs text-gray-500">Engagement</p>
+              </div>
+            </div>
+          </div>
+          <div className="mt-2 mb-0">
+            <h2 className="text-sm font-bold text-gray-800 flex items-center gap-1.5">🏔️ Overall Journey</h2>
+          </div>
+        </>
+      )}
+
       {/* Clip Progress (non-approach) */}
       {checkinType !== "approach" && (
         <div className="rounded-xl border border-green-200 bg-green-50/60 p-4 shadow-sm">
-          <h3 className="text-sm font-bold text-green-900 mb-3 flex items-center gap-1.5"><span className="w-1 h-4 rounded-full bg-green-500 inline-block" />🎞️ Clip Progress</h3>
-          <div className="grid grid-cols-3 gap-4 text-center">
+          <h3 className="text-sm font-bold text-green-900 mb-3 flex items-center gap-1.5"><span className="w-1 h-4 rounded-full bg-green-500 inline-block" />🎞️ {isSummit ? "All Clips" : "Clip Progress"}</h3>
+          <div className="grid grid-cols-4 gap-3 text-center">
             <div className="rounded-lg bg-white/70 py-2">
               <p className="text-xl font-bold text-green-700">
                 {data.clipStats.completedSessions}/{data.clipStats.totalSessions}
@@ -653,8 +751,12 @@ function StatsView({ data, checkinType }: { data: any; checkinType: CheckinType 
               <p className="text-xs text-gray-500">Clips Done</p>
             </div>
             <div className="rounded-lg bg-white/70 py-2">
-              <p className="text-xl font-bold text-green-700">{data.clipStats.avgScore}%</p>
-              <p className="text-xs text-gray-500">Avg Score</p>
+              <p className="text-xl font-bold text-red-600">{data.srCount}</p>
+              <p className="text-xs text-gray-500">🔦 S&R</p>
+            </div>
+            <div className="rounded-lg bg-white/70 py-2">
+              <p className="text-xl font-bold text-amber-600">{data.wtsCount}</p>
+              <p className="text-xs text-gray-500">⛈️ WtS</p>
             </div>
             <div className="rounded-lg bg-white/70 py-2">
               <p className="text-xl font-bold text-green-700">
@@ -669,7 +771,7 @@ function StatsView({ data, checkinType }: { data: any; checkinType: CheckinType 
       {/* cAMP Quiz Stats (not shown in approach — no quizzes in week 1) */}
       {checkinType !== "approach" && data.quizStats.totalAttempts > 0 && (
         <div className="rounded-xl border border-orange-200 bg-orange-50/60 p-4 shadow-sm">
-          <h3 className="text-sm font-bold text-orange-900 mb-3 flex items-center gap-1.5"><span className="w-1 h-4 rounded-full bg-orange-500 inline-block" />🧠 cAMP Quiz Stats</h3>
+          <h3 className="text-sm font-bold text-orange-900 mb-3 flex items-center gap-1.5"><span className="w-1 h-4 rounded-full bg-orange-500 inline-block" />🧠 {isSummit ? "All Quizzes" : "cAMP Quiz Stats"}</h3>
           <div className="grid grid-cols-3 gap-3 text-center">
             <div className="rounded-lg bg-white/70 py-2">
               <p className="text-xl font-bold text-orange-700">
@@ -809,10 +911,10 @@ function EmailView({
   const subjectText = checkinType === "summit"
     ? `${v.name} — Summit Reached!`
     : checkinType === "approach"
-      ? `${v.name} — Approach Check-In`
+      ? `${v.name} — Approach Anchor Point`
       : checkinType === "week2"
-        ? `${v.name} — Week 2 Check-In`
-        : `${v.name} — Week 3 Check-In`;
+        ? `${v.name} — Week 2 Anchor Point`
+        : `${v.name} — Week 3 Anchor Point`;
 
   const label = CHECKIN_LABELS[checkinType];
 
@@ -836,6 +938,24 @@ function EmailView({
         </div>
         <div className="px-4 py-3 text-sm text-gray-700 space-y-2 max-h-64 overflow-y-auto">
           <p>Hi {buddyFirst ? `${managerFirst} & ${buddyFirst}` : managerFirst},</p>
+
+          {/* Pacing line */}
+          {v.ascentDay1 && (() => {
+            const startDate = new Date(v.ascentDay1);
+            const today = new Date();
+            const weekdaysElapsed = countWeekdays(startDate, today);
+            const hasStarted = data.clipStats.completedSessions > 0;
+            const pacingKey = getPacingTier(data.clipStats.completedSessions, weekdaysElapsed, hasStarted);
+            const pacingConfig = PACING_TIERS[pacingKey];
+            const summitDay = getSummitDay(startDate);
+            const fmtDate = (d: Date) => d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+            return (
+              <div className="pl-3 border-l-2 border-blue-300 bg-blue-50/50 rounded py-1 space-y-0.5">
+                <p className="font-semibold text-blue-800 text-xs">🧗 Pacing</p>
+                <p className="text-xs">Ascent Date: {fmtDate(startDate)} · {pacingConfig.emoji} {pacingConfig.label} · Summit Day: {fmtDate(summitDay)}</p>
+              </div>
+            );
+          })()}
 
           {checkinType === "approach" ? (
             <>
@@ -867,11 +987,19 @@ function EmailView({
           ) : checkinType === "summit" ? (
             <>
               <p>I completed all 17 cAMP Clips and reached the Summit! 🏔️✨</p>
+              {data.week4 && (
+                <>
+                  <div className="pl-3 border-l-2 border-green-300 bg-green-50/50 rounded py-1 space-y-1">
+                    <p className="font-semibold text-gray-800">⛰️ Week 4 Performance</p>
+                    <p>• 🎞️ Clips: {data.week4.clipsCompleted}/{data.week4.totalClips} · Avg Engagement: {data.week4.avgEngagement}%</p>
+                    <p>• 🧠 Quizzes: {data.week4.quizzesPassed}/{data.week4.totalQuizzes} · Avg Score: {data.week4.avgQuizScore}%</p>
+                  </div>
+                </>
+              )}
               <div className="pl-3 border-l-2 border-amber-200 space-y-1 bg-amber-50/50 rounded py-1">
-                <p className="font-semibold text-gray-800">🏔️ Overall Summit Summary:</p>
-                <p>• Clips: {data.clipStats.completedSessions}/{data.clipStats.totalSessions} completed</p>
-                <p>• XP: {v.totalXp} · Tier: {v.tier}</p>
-                <p>• 🏆 Leaderboard: #{data.leaderboard.rank} of {data.leaderboard.totalLearners} cAMPers</p>
+                <p className="font-semibold text-gray-800">🏔️ Overall Journey</p>
+                <p>• 📊 XP: {v.totalXp} · Tier: {v.tier} · 🏆 #{data.leaderboard.rank} of {data.leaderboard.totalLearners}</p>
+                <p>• 🎞️ Clips: {data.clipStats.completedSessions}/{data.clipStats.totalSessions} · 🔦 S&R: {data.srCount} · ⛈️ WtS: {data.wtsCount}</p>
               </div>
               <div className="pl-3 border-l-2 border-gray-200 space-y-1">
                 <p className="font-semibold text-gray-800">👀 Engagement:</p>
@@ -882,23 +1010,18 @@ function EmailView({
               </div>
               {qs.totalAttempts > 0 && (
                 <div className="pl-3 border-l-2 border-gray-200 space-y-1">
-                  <p className="font-semibold text-gray-800">🧠 cAMP Quiz Stats (All 15 Days):</p>
+                  <p className="font-semibold text-gray-800">🧠 All Quizzes (15 Days):</p>
                   <p>• Passed: {qs.quizzesPassed}/{qs.totalQuizzes} · Avg: {qs.avgScorePct}%</p>
                   <p>• 1st Pass Rate: {qs.quizzesPassed > 0 ? Math.round((qs.firstPassCount / qs.quizzesPassed) * 100) : 0}%</p>
                 </div>
               )}
-              <div className="pl-3 border-l-2 border-gray-200 space-y-1">
-                <p className="font-semibold text-gray-800">🗓️ Week 4 Performance:</p>
-                <p>• Final Tier: {v.tier}</p>
-                <p>• Total XP: {v.totalXp}</p>
-              </div>
             </>
           ) : (
             <>
               <p>Here's my {checkinType === "week2" ? "Week 2" : "Week 3"} cAMP Ascent update:</p>
               <div className="pl-3 border-l-2 border-gray-200 space-y-1">
                 <p className="font-semibold text-gray-800">🎞️ Clips:</p>
-                <p>• {data.clipStats.completedSessions}/{data.clipStats.totalSessions} completed · Avg Score: {data.clipStats.avgScore}%</p>
+                <p>• {data.clipStats.completedSessions}/{data.clipStats.totalSessions} completed · 🔦 S&R: {data.srCount} · ⛈️ WtS: {data.wtsCount}</p>
               </div>
               <div className="pl-3 border-l-2 border-gray-200 space-y-1">
                 <p className="font-semibold text-gray-800">📊 Stats:</p>
