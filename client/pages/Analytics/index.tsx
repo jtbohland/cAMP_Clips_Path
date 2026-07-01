@@ -140,7 +140,7 @@ function AnalyticsContent() {
       <div className="flex flex-col h-full" style={{ backgroundColor: "#ECFDF5" }}>
         <PageHeader emoji="📊" title="Analytics" subtitle="Performance data across all learners and clips" />
         <div className="p-6 text-center">
-          <p className="text-red-600">Failed to load analytics: {error?.message ?? "Unknown error"}</p>
+          <p className="text-red-600">Failed to load analytics: {(error as any)?.message ?? "Unknown error"}</p>
         </div>
       </div>
     );
@@ -427,9 +427,19 @@ function CampersSection({ learners, totalClips }: { learners: any[]; totalClips:
                 <Progress value={progressPct} className="h-1.5 w-full" />
               </div>
 
-              {/* Pacing */}
-              <div className="text-center">
+              {/* Pacing — ascent date, status, summit date */}
+              <div className="text-center space-y-0.5">
+                {l.ascentDay1 && (
+                  <div className="text-[10px] text-gray-500">
+                    🧗 {new Date(l.ascentDay1 + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                  </div>
+                )}
                 <div className={`text-[11px] font-semibold ${pacing.color}`}>{pacing.label}</div>
+                {l.summitDay && (
+                  <div className="text-[10px] text-gray-500">
+                    🏔️ {new Date(l.summitDay + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                  </div>
+                )}
                 {l.isAnchorFailure && l.ascentAdjustmentDay && (
                   <div className="text-[9px] text-red-500 mt-0.5">
                     🌄 {new Date(l.ascentAdjustmentDay + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}

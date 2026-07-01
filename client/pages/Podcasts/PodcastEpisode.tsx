@@ -160,8 +160,8 @@ export default function PodcastEpisode({
               ref={playerRef}
               mediaId={mediaId}
               playerColor="#1B4332"
-              fullscreenButton={false}
-              autoPlay={false}
+              fullscreenControl={false}
+              autoplay={false}
               volumeControl={false}
               onPlay={handlePlay}
               onPause={handlePause}

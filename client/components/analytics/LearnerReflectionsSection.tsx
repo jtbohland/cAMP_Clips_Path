@@ -28,7 +28,7 @@ function LearnerReflectionsSection() {
     return <div className="py-4 space-y-3">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-16" />)}</div>;
   }
   if (isError) {
-    return <p className="text-sm text-red-600 py-3">Failed to load: {error?.message ?? "Unknown error"}</p>;
+    return <p className="text-sm text-red-600 py-3">Failed to load: {(error as any)?.message ?? "Unknown error"}</p>;
   }
 
   if (reflections.length === 0) {

@@ -315,7 +315,7 @@ export default function WatchPage() {
     setWatchedSeconds(0);
     lastWatchedTimeRef.current = 0;
     // Use ResetSession to wipe responses + reset existing session row (not create a new one)
-    resetSession({ clipId, viewerId: viewer.id })
+    resetSession({ clipId, viewerId: viewer.id, adminForce: false })
       .then((res: any) => {
         if (res?.alreadyPassed) {
           // Clip is done — shouldn't be able to Fresh Start a passed clip
@@ -858,11 +858,11 @@ export default function WatchPage() {
                 ref={playerRef}
                 mediaId={wistiaVideoId}
                 playerColor="ff5733"
-                fullscreenButton={false}
-                autoPlay={false}
-                silentAutoPlay={false}
+                fullscreenControl={false}
+                autoplay={false}
+                silentAutoplay={false}
                 resumable={false}
-                time={resumeFromSecondsRef.current ?? undefined}
+                currentTime={resumeFromSecondsRef.current ?? undefined}
                 onPlay={handleWistiaPlay}
                 onPause={handleWistiaPause}
                 onEnded={handleWistiaEnded}
@@ -910,7 +910,7 @@ export default function WatchPage() {
       {/* Trail Marker Overlay */}
       {phase === "trail_marker" && trailMarkers[currentQuestionIdx] && (
         <QuizOverlayV2
-          question={trailMarkers[currentQuestionIdx]}
+          question={trailMarkers[currentQuestionIdx] as any}
           onAnswer={handleTrailMarkerAnswer}
           onContinue={handleTrailMarkerContinue}
         />
@@ -943,7 +943,7 @@ export default function WatchPage() {
       {/* Search & Rescue */}
       {phase === "search_rescue" && (
         <SearchRescue
-          questions={recoveryQuestions}
+          questions={recoveryQuestions as any}
           sessionId={sessionId ?? ""}
           submitAnswer={submitAnswer}
           onComplete={handleSearchRescueComplete}

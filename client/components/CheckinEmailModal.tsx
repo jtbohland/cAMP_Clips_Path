@@ -64,6 +64,7 @@ function CheckinEmailModalInner({ viewerId, viewerName, checkinType, onClose }: 
         managerEmail: data.viewer.managerEmail,
         belayBuddyEmail: data.viewer.belayBuddyEmail,
         feedbackToken,
+        learnerReflection: null,
       });
 
       if (result?.alreadySent) {
@@ -110,7 +111,7 @@ function CheckinEmailModalInner({ viewerId, viewerName, checkinType, onClose }: 
 
           {isError && (
             <div className="text-center py-6">
-              <p className="text-sm text-red-600">Failed to load data: {error?.message ?? "Unknown error"}</p>
+              <p className="text-sm text-red-600">Failed to load data: {(error as any)?.message ?? "Unknown error"}</p>
             </div>
           )}
 

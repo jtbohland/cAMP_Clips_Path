@@ -153,7 +153,7 @@ export default function RegistrationForm() {
         const result = await registerViewer({
           email: email.trim().toLowerCase(),
           name: name.trim(),
-          role,
+          role: role as any,
           timezone,
           managerName: managerName.trim(),
           managerEmail: managerEmail.trim().toLowerCase(),

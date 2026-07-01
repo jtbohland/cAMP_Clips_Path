@@ -173,7 +173,7 @@ function LearnerCheckinModalInner({ viewerId, checkinType, onClose, onSent, allo
   // Build the Gmail compose URL
   const gmailUrl = useMemo(() => {
     if (!data?.viewer) return "";
-    const v = data.viewer;
+    const v = data.viewer as any;
     const qs = data.quizStats;
     const fn = firstName(v.name);
     const managerFirst = firstName(v.managerName ?? v.managerEmail);
@@ -300,7 +300,7 @@ function LearnerCheckinModalInner({ viewerId, checkinType, onClose, onSent, allo
 
     // ── LAST ACTIVITY ──
     if (v.lastLoginAt || v.lastActivityAt) {
-      const dateStr = new Date(v.lastLoginAt ?? v.lastActivityAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+      const dateStr = new Date((v.lastLoginAt ?? v.lastActivityAt) as string).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
       body += `\n📅 Last Activity: ${dateStr}\n`;
     }
 
@@ -450,7 +450,7 @@ function LearnerCheckinModalInner({ viewerId, checkinType, onClose, onSent, allo
 
           {isError && (
             <div className="text-center py-6">
-              <p className="text-sm text-red-600">Failed to load data: {error?.message ?? "Unknown error"}</p>
+              <p className="text-sm text-red-600">Failed to load data: {(error as any)?.message ?? "Unknown error"}</p>
             </div>
           )}
 
