@@ -626,6 +626,7 @@ function SummitCelebrateView({ data, jtQuote }: { data: any; jtQuote: string }) 
    STATS VIEW (Step 1 for regular, Step 2 for summit)
    ════════════════════════════════════════════════════════════════════════ */
 function StatsView({ data, checkinType }: { data: any; checkinType: CheckinType }) {
+  const isSummit = checkinType === "summit";
   const label = CHECKIN_LABELS[checkinType];
 
   return (
