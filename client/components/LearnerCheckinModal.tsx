@@ -1115,7 +1115,13 @@ function EmailView({
                   Marking…
                 </span>
               ) : (
-                "📬 I Sent It — Mark as Sent"
+                checkinType === "approach"
+                  ? "🔓 I Sent It — Unlock Week 2"
+                  : checkinType === "week2"
+                    ? "🔓 I Sent It — Unlock Week 3"
+                    : checkinType === "week3"
+                      ? "🔓 I Sent It — Unlock Week 4"
+                      : "📬 I Sent It — Mark as Sent"
               )}
             </button>
           )}
