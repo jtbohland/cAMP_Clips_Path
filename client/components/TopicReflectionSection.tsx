@@ -38,7 +38,7 @@ function TopicReflectionSectionInner({ viewerId, topicDay, questions }: TopicRef
     }
 
     try {
-      await submitReflection({
+      const result = await submitReflection({
         viewerId,
         topicDay: topicDay as any,
         question1: questions[0].prompt,
@@ -46,10 +46,17 @@ function TopicReflectionSectionInner({ viewerId, topicDay, questions }: TopicRef
         question2: questions[1].prompt,
         answer2: answer2.trim(),
       });
-      toast.success("Reflection submitted! Nice work thinking it through.", {
-        style: { backgroundColor: "#dcfce7", color: "#166534", border: "1px solid #bbf7d0" },
-        duration: 3000,
-      });
+      if (result?.xpAwarded && result.xpAwarded > 0) {
+        toast.success(`Reflection submitted! +${result.xpAwarded} XP earned 🪓`, {
+          style: { backgroundColor: "#dcfce7", color: "#166534", border: "1px solid #bbf7d0" },
+          duration: 4000,
+        });
+      } else {
+        toast.success("Reflection submitted! Nice work thinking it through.", {
+          style: { backgroundColor: "#dcfce7", color: "#166534", border: "1px solid #bbf7d0" },
+          duration: 3000,
+        });
+      }
       await refetch();
     } catch (error) {
       const message = error && typeof error === "object" && "message" in error

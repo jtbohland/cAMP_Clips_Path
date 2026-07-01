@@ -83,9 +83,9 @@ export default function TopicGearPage() {
         await refetchProgress();
 
         if (result?.justCompleted) {
-          toast.success("🪓 Swiss Army Knife badge earned! +10 XP", {
+          toast.success("🪓 Swiss Army Knife badge earned! Complete the reflection below for +10 XP.", {
             style: { backgroundColor: "#dcfce7", color: "#166534", border: "1px solid #bbf7d0" },
-            duration: 4000,
+            duration: 5000,
           });
         }
       } catch (error) {
@@ -151,7 +151,7 @@ export default function TopicGearPage() {
               <span className="text-2xl">🪓</span>
               <div>
                 <p className="text-sm font-bold text-green-800">All resources reviewed — Swiss Army Knife earned!</p>
-                <p className="text-xs text-green-600 mt-0.5">All tools. All terrain. You're ready for anything. +10 XP</p>
+                <p className="text-xs text-green-600 mt-0.5">All tools. All terrain. You're ready for anything. Submit the reflection below for +10 XP!</p>
               </div>
             </div>
           )}
@@ -258,13 +258,24 @@ export default function TopicGearPage() {
             typeLabels={TYPE_LABELS}
           />
 
-          {/* Topic Reflection (Day 5 & Day 9 only) */}
+          {/* Topic Reflection (Day 5 & Day 9 only) — locked until all resources clicked */}
           {config.reflectionQuestions && config.reflectionQuestions.length >= 2 && viewer?.id && topicKey && (
-            <TopicReflectionSection
-              viewerId={viewer.id}
-              topicDay={topicKey}
-              questions={config.reflectionQuestions}
-            />
+            allClicked ? (
+              <TopicReflectionSection
+                viewerId={viewer.id}
+                topicDay={topicKey}
+                questions={config.reflectionQuestions}
+              />
+            ) : (
+              <div className="rounded-xl bg-gray-50 border border-gray-200 shadow-[0_1px_3px_rgba(0,0,0,0.08)] p-5 opacity-60">
+                <h2 className="text-base font-bold text-gray-400 flex items-center gap-2 mb-1">
+                  🔒 Trail Reflection
+                </h2>
+                <p className="text-xs text-gray-400">
+                  Review all resources above to unlock the reflection and earn +10 XP.
+                </p>
+              </div>
+            )
           )}
 
           {/* Bottom back button */}
