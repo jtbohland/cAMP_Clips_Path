@@ -38,8 +38,8 @@
     "@radix-ui/react-toggle-group": "^1.1.11",
     "@radix-ui/react-tooltip": "^1.2.8",
     "@radix-ui/react-use-controllable-state": "^1.2.2",
-    "@superblocksteam/library": "2.0.137",
-    "@superblocksteam/sdk-api": "2.0.137",
+    "@superblocksteam/library": "2.0.138",
+    "@superblocksteam/sdk-api": "2.0.138",
     "@tailwindcss/vite": "^4.1.17",
     "@wistia/wistia-player-react": "^0.7.8",
     "ai": "6.0.97",
@@ -82,7 +82,8 @@
     "vite": "6.4.1"
   },
   "overrides": {
-    "esbuild": "^0.27.0"
+    "esbuild": "^0.27.0",
+    "zod": "3.25.76"
   },
   "onlyBuiltDependencies": [
     "@swc/core",
