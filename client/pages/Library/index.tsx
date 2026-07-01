@@ -21,6 +21,7 @@ import LearnerCheckinModal from "@/components/LearnerCheckinModal";
 import Week1Page from "@/components/week1/Week1Page";
 import {
   countWeekdays,
+  countCompletedTopics,
   getTopicDaysBehind,
   getPacingTier,
   getMissedClips,
@@ -230,8 +231,10 @@ export default function LibraryPage() {
     const startDate = new Date(progressData.ascentDay1 + "T00:00:00");
     const today = new Date();
     const weekdaysElapsed = countWeekdays(startDate, today);
-    // Count ALL completed rows (video clips + topic days) for pacing
-    const sessionsCompleted = clips.filter((c: any) => c.completed).length;
+    // Count completed TOPICS (days where ALL clips are done) for pacing
+    const sessionsCompleted = countCompletedTopics(
+      clips.map((c: any) => ({ dayLabel: c.dayLabel, completed: c.completed }))
+    );
     const summitDay = getSummitDay(startDate);
     const afterSummitDay = isAfterDate(summitDay);
     const tier = getPacingTier(sessionsCompleted, weekdaysElapsed, true, afterSummitDay);

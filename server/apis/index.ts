@@ -61,6 +61,7 @@ import GetPodcastProgress from './v2/get-podcast-progress.js';
 import AwardPodcastXp from './v2/award-podcast-xp.js';
 import FixGabiDate from './v2/fix-gabi-date.js';
 import FixKabirDate from './v2/fix-kabir-date.js';
+import FixBenChrisDates from './v2/fix-ben-chris-dates.js';
 import AddBelayBuddyColumn from './v2/add-belay-buddy-column.js';
 import RemoveDealDeskZoomClips from './v2/remove-deal-desk-zoom-clips.js';
 import SetupTopicDays from './v2/setup-topic-days.js';
@@ -150,6 +151,7 @@ ResetJTSessions,
   AwardPodcastXp,
   FixGabiDate,
   FixKabirDate,
+  FixBenChrisDates,
   AddBelayBuddyColumn,
   RemoveDealDeskZoomClips,
   SetupTopicDays,
