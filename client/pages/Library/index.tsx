@@ -61,7 +61,6 @@ export default function LibraryPage() {
   const [checkinAdminTest, setCheckinAdminTest] = useState(false);
   const checkinTriggeredRef = useRef(false);
   const pacingShownRef = useRef(false);
-  const anchorCheckedRef = useRef(false);
 
   // Tab state: "approach" (Week 1) vs "ascent" (existing clips)
   const initialTab = searchParams.get("tab") === "ascent" ? "ascent" : "approach";
@@ -233,7 +232,9 @@ export default function LibraryPage() {
     const weekdaysElapsed = countWeekdays(startDate, today);
     // Count ALL completed rows (video clips + topic days) for pacing
     const sessionsCompleted = clips.filter((c: any) => c.completed).length;
-    const tier = getPacingTier(sessionsCompleted, weekdaysElapsed, true);
+    const summitDay = getSummitDay(startDate);
+    const afterSummitDay = isAfterDate(summitDay);
+    const tier = getPacingTier(sessionsCompleted, weekdaysElapsed, true, afterSummitDay);
     const daysBehind = getTopicDaysBehind(sessionsCompleted, weekdaysElapsed);
     const missedClips = getMissedClips(
       clips.map((c: any) => ({
@@ -245,10 +246,8 @@ export default function LibraryPage() {
       })),
       weekdaysElapsed
     );
-    const summitDay = getSummitDay(startDate);
     const incompleteSessions = TOTAL_SESSIONS - sessionsCompleted;
     const adjustmentDay = getAscentAdjustmentDay(summitDay, incompleteSessions);
-    const afterSummitDay = isAfterDate(summitDay);
     const afterAdjustmentDay = isAfterDate(adjustmentDay);
     const dayBeforeSummit = isDayBeforeSummitDay(summitDay);
     return {
@@ -278,7 +277,37 @@ export default function LibraryPage() {
     }
   }, [dataReady, previewMode, progressData, viewer, tierUnlock]);
 
-  // Auto-trigger Pacing Modal — once per calendar day
+  // ── Determine which anchor modal to show (when tier is anchor_failure) ──
+  const showAnchorModal = useCallback((vi: typeof viewer, pi: NonNullable<typeof pacingInfo>) => {
+    const anchorSlackKey = `anchor_failure_slack_sent_${vi!.id}`;
+    const adjustmentDeadlineKey = `anchor_adjustment_deadline_${vi!.id}`;
+    const adjustmentSlackKey = `anchor_adjustment_slack_sent_${vi!.id}`;
+
+    const anchorSlackSent = localStorage.getItem(anchorSlackKey) === "true";
+    const adjustmentSlackSent = localStorage.getItem(adjustmentSlackKey) === "true";
+
+    // Freeze the adjustment deadline the first time anchor failure triggers
+    if (!localStorage.getItem(adjustmentDeadlineKey) && pi.adjustmentDay) {
+      localStorage.setItem(adjustmentDeadlineKey, pi.adjustmentDay.toISOString());
+    }
+
+    // Read stored adjustment day (frozen from first trigger)
+    const storedAdjStr = localStorage.getItem(adjustmentDeadlineKey);
+    const storedAdjDay = storedAdjStr ? new Date(storedAdjStr) : pi.adjustmentDay;
+    const afterAdj = storedAdjDay ? isAfterDate(storedAdjDay) : false;
+
+    if (!anchorSlackSent) {
+      setShowAnchorFailure(true);           // #1 — first time, requires Slack
+    } else if (afterAdj && !adjustmentSlackSent) {
+      setShowAnchorEscalated(true);         // #2 — escalated, missed adjustment deadline
+    } else {
+      setShowLightAnchor(true);             // Daily reminder
+    }
+  }, []);
+
+  // Auto-trigger Pacing / Anchor — once per calendar day
+  // The pacing ladder is one system: summit_bound → … → avalanche_warning → anchor_failure.
+  // When tier is anchor_failure, we dispatch the appropriate anchor modal instead of PacingModal.
   useEffect(() => {
     if (!dataReady || !pacingInfo || previewMode === "pacing") return;
     if (pacingShownRef.current) return;
@@ -290,12 +319,17 @@ export default function LibraryPage() {
 
     if (lastShown !== todayStr) {
       pacingShownRef.current = true;
-      setShowPacing(true);
       localStorage.setItem(storageKey, todayStr);
-    }
-  }, [dataReady, pacingInfo, showSummit, tierUnlock, previewMode, viewer]);
 
-  // visibilitychange — re-trigger pacing modal for stale tabs (new day)
+      if (pacingInfo.tier === "anchor_failure") {
+        showAnchorModal(viewer, pacingInfo);
+      } else {
+        setShowPacing(true);
+      }
+    }
+  }, [dataReady, pacingInfo, showSummit, tierUnlock, previewMode, viewer, showAnchorModal]);
+
+  // visibilitychange — re-trigger pacing/anchor modal for stale tabs (new day)
   useEffect(() => {
     if (!dataReady || !viewer) return;
 
@@ -305,14 +339,19 @@ export default function LibraryPage() {
       const todayStr = new Date().toLocaleDateString();
       const lastShown = localStorage.getItem(storageKey);
       if (lastShown !== todayStr && pacingInfo && !showSummit && tierUnlock === null) {
-        setShowPacing(true);
         localStorage.setItem(storageKey, todayStr);
+
+        if (pacingInfo.tier === "anchor_failure") {
+          showAnchorModal(viewer, pacingInfo);
+        } else {
+          setShowPacing(true);
+        }
       }
     };
 
     document.addEventListener("visibilitychange", handleVisibility);
     return () => document.removeEventListener("visibilitychange", handleVisibility);
-  }, [dataReady, viewer, pacingInfo, showSummit, tierUnlock]);
+  }, [dataReady, viewer, pacingInfo, showSummit, tierUnlock, showAnchorModal]);
 
   // Auto-trigger Summit — only after all data ready
   useEffect(() => {
@@ -331,43 +370,8 @@ export default function LibraryPage() {
     }
   }, [dataReady, allCompleted, showSummit, previewMode, viewer]);
 
-  // ── Anchor Failure detection — once per session ──
-  useEffect(() => {
-    if (!dataReady || !pacingInfo || !viewer) return;
-    if (anchorCheckedRef.current) return;
-    if (allCompleted) return; // no anchor needed if done
-    if (!pacingInfo.afterSummitDay) return; // not past summit day yet
-
-    anchorCheckedRef.current = true;
-
-    const anchorSlackKey = `anchor_failure_slack_sent_${viewer.id}`;
-    const adjustmentDeadlineKey = `anchor_adjustment_deadline_${viewer.id}`;
-    const adjustmentSlackKey = `anchor_adjustment_slack_sent_${viewer.id}`;
-
-    const anchorSlackSent = localStorage.getItem(anchorSlackKey) === "true";
-    const adjustmentSlackSent = localStorage.getItem(adjustmentSlackKey) === "true";
-
-    // Store the adjustment deadline the first time anchor failure triggers
-    if (!localStorage.getItem(adjustmentDeadlineKey) && pacingInfo.adjustmentDay) {
-      localStorage.setItem(adjustmentDeadlineKey, pacingInfo.adjustmentDay.toISOString());
-    }
-
-    // Read stored adjustment day (frozen from first trigger)
-    const storedAdjStr = localStorage.getItem(adjustmentDeadlineKey);
-    const storedAdjDay = storedAdjStr ? new Date(storedAdjStr) : pacingInfo.adjustmentDay;
-    const afterAdj = storedAdjDay ? isAfterDate(storedAdjDay) : false;
-
-    if (!anchorSlackSent) {
-      // Anchor Failure #1 — first time, requires Slack
-      setShowAnchorFailure(true);
-    } else if (afterAdj && !adjustmentSlackSent) {
-      // Anchor Failure #2 — escalated, missed adjustment deadline too
-      setShowAnchorEscalated(true);
-    } else {
-      // Light anchor — daily reminder
-      setShowLightAnchor(true);
-    }
-  }, [dataReady, pacingInfo, viewer, allCompleted]);
+  // (Anchor failure detection is now handled by the unified pacing trigger above —
+  //  getPacingTier returns "anchor_failure" when past summit day + incomplete)
 
   const WEEK_META: Record<number, { emoji: string; title: string; time: string; note: string }> = {
     2: {
