@@ -89,6 +89,9 @@ import SetupCheckinColumn from './v2/setup-checkin-column.js';
 import SetupLoginTracking from './v2/setup-login-tracking.js';
 import TrackLogin from './v2/track-login.js';
 import BackfillLastLogin from './v2/backfill-last-login.js';
+import FixCustomerStoriesQuestion from './v2/fix-customer-stories-question.js';
+import AdminFixBenSpekit from './v2/admin-fix-ben-spekit.js';
+import CleanupFirstPassXP from './v2/cleanup-first-pass-xp.js';
 
 
 const apis = {
@@ -180,6 +183,9 @@ ResetJTSessions,
   SetupLoginTracking,
   TrackLogin,
   BackfillLastLogin,
+  FixCustomerStoriesQuestion,
+  AdminFixBenSpekit,
+  CleanupFirstPassXP,
 } as const;
 
 export default apis;

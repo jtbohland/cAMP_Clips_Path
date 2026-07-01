@@ -9,8 +9,8 @@ const MODULE_LABELS: Record<string, { emoji: string; name: string }> = {
 };
 
 const TOPIC_DAY_LABELS: Record<string, { emoji: string; name: string }> = {
-  day5: { emoji: "📅", name: "Topic Day 5" },
-  day9: { emoji: "📅", name: "Topic Day 9" },
+  day5: { emoji: "📅", name: "Resource Day 5" },
+  day9: { emoji: "📅", name: "Resource Day 9" },
 };
 
 function SherpaSurveysSection() {
@@ -48,7 +48,7 @@ function SherpaSurveysSection() {
             activeTab === "topic" ? "bg-emerald-100 text-emerald-800 border-b-2 border-emerald-600" : "text-gray-500 hover:text-gray-700"
           }`}
         >
-          📅 Topic Day Reflections ({topicReflections.length})
+          📅 Resource Day Reflections ({topicReflections.length})
         </button>
         <button
           onClick={() => { setActiveTab("module"); setExpandedIdx(null); }}
@@ -64,7 +64,7 @@ function SherpaSurveysSection() {
       {activeTab === "topic" && (
         <div className="space-y-2">
           {topicReflections.length === 0 ? (
-            <p className="text-sm text-gray-500 text-center py-4">No topic day reflections yet.</p>
+            <p className="text-sm text-gray-500 text-center py-4">No resource day reflections yet.</p>
           ) : (
             topicReflections.map((r, i) => {
               const label = TOPIC_DAY_LABELS[r.topicDay] ?? { emoji: "📅", name: r.topicDay };

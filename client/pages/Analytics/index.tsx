@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import Week1AnalyticsSection from "@/components/analytics/Week1AnalyticsSection";
 import SherpaSurveysSection from "@/components/analytics/SherpaSurveysSection";
 import LearnerReflectionsSection from "@/components/analytics/LearnerReflectionsSection";
+import ManagerFeedbackSection from "@/components/analytics/ManagerFeedbackSection";
 
 /** Badge ID → display info */
 const BADGE_MAP: Record<string, { name: string; emoji: string }> = {
@@ -196,14 +197,18 @@ function AnalyticsContent() {
           <PitchClicksSection />
         </Section>
 
-        {/* 7. Sherpa Surveys */}
-        <Section title="Sherpa Surveys" subtitle="Topic day & module reflections from learners" emoji="🚩" defaultOpen={false}>
-          <SherpaSurveysSection />
+        {/* 7. Sherpa Surveys — manager input */}
+        <Section title="Sherpa Surveys" subtitle="Manager feedback & survey responses" emoji="🚩" defaultOpen={false}>
+          <ManagerFeedbackSection />
         </Section>
 
-        {/* 8. Learner Reflections */}
-        <Section title="Learner Reflections" subtitle="Reflections written during check-in emails" emoji="💭" defaultOpen={false}>
-          <LearnerReflectionsSection />
+        {/* 8. Journals + Logbooks — learner reflections */}
+        <Section title="Journals + Logbooks" subtitle="Resource day, module & check-in reflections from learners" emoji="📓" defaultOpen={false}>
+          <SherpaSurveysSection />
+          <div className="border-t border-gray-200 mt-4 pt-2">
+            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">💭 Check-in Reflections</h4>
+            <LearnerReflectionsSection />
+          </div>
         </Section>
       </div>
     </div>

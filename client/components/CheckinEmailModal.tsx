@@ -185,7 +185,7 @@ function CheckinEmailModalInner({ viewerId, viewerName, checkinType, onClose }: 
                   <div className="grid grid-cols-3 gap-4 text-center">
                     <div>
                       <p className="text-2xl font-bold text-indigo-600">
-                        {data.clipStats.completedSessions}/{data.clipStats.totalSessions}
+                        {data.clipStats.completedClips}/{data.clipStats.totalClips}
                       </p>
                       <p className="text-xs text-gray-500">Clips Done</p>
                     </div>

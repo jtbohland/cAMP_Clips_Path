@@ -15,9 +15,8 @@ const BASE_XP = [
   { action: "Trail Markers: 5/5", xp: 5, emoji: "🪧", description: "Perfect score on in-video questions" },
   { action: "Trail Markers: 4/5", xp: 3, emoji: "🪧", description: "Strong performance on questions" },
   { action: "Trail Markers: 3/5", xp: 1, emoji: "🪧", description: "Passing on questions" },
-  { action: "First-pass unlock", xp: 4, emoji: "✅", description: "Pass engagement without S&R" },
   { action: "Pass Search & Rescue", xp: 2, emoji: "🚁", description: "Score ≥80% on recovery questions" },
-  { action: "Complete Weather the Storm", xp: 1, emoji: "⛈️", description: "Wait out the 3-min review" },
+  { action: "Complete Weather the Storm", xp: 1, emoji: "⛈️", description: "Wait out the 2-min review" },
 ];
 
 const PERFORMANCE_BONUSES = [
@@ -92,7 +91,7 @@ export default function XPlanationPage() {
             <PhaseStep number={2} emoji="🪧" title="Trail Markers" description="Answer 5 questions that pop up during the video" />
             <PhaseStep number={3} emoji="📋" title="Ranger Report" description="See your scorecard (questions + focus + time)" />
             <PhaseStep number={4} emoji="🚁" title="Search & Rescue" description="If score <80: additional questions to demonstrate understanding" isConditional />
-            <PhaseStep number={5} emoji="⛈️" title="Weather the Storm" description="If S&R fails: 3-min study review before retrying" isConditional />
+            <PhaseStep number={5} emoji="⛈️" title="Weather the Storm" description="If S&R fails: 2-min study review before retrying" isConditional />
           </div>
         </Section>
 

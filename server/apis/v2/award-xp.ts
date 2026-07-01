@@ -86,11 +86,6 @@ export default api({
       xpEvents.push({ sourceId: "trail_markers_3", eventType: "base", xp: 1 });
     }
 
-    // First pass unlock (no S&R triggered)
-    if (passedFirstPass && !searchRescueTriggered) {
-      xpEvents.push({ sourceId: "first_pass_unlock", eventType: "base", xp: 4 });
-    }
-
     // Pass Search & Rescue
     if (searchRescueTriggered && searchRescueScore !== null && searchRescueTotal !== null) {
       const srPercent = searchRescueTotal > 0 ? (searchRescueScore / searchRescueTotal) * 100 : 0;
