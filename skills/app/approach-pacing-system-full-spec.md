@@ -13,19 +13,20 @@ createdAt: 2026-07-01T21:22:15.226Z
 
 ## Overview
 Approach = Week 1 = 5 weekdays, self-paced, no clips. Modules only.
-Begin Ascent button is **locked** until all 8 modules are complete.
+Begin Ascent button is **locked** until all 7 modules are complete.
 Once all modules done → learner can Begin Ascent (Day 5 or earlier since self-paced).
 
-## Week 1 Modules (8 trackable items)
+## Week 1 Modules (7 trackable items)
 - **MEDDPICC** signoff (screenshot + reflection) ✍🏽
 - **Academy screenshots** (4 courses) 🎓:
   - Getting Started with Analytics (40m + assessment)
   - Getting Started with Experiment (40m + assessment)
   - Contextualize User Experience with Session Replay (15m + assessment)
   - Engage Your Users with Guides & Surveys (30m + assessment)
-- **cAMP 101** signoff ✍🏽
 - **Challenger** signoff (account + contact + screenshot + reflection) ✍🏽
 - **Wheel & Deal** verification 🎡
+
+Note: cAMP 101 sign-off is NOT a separate trackable item — completing the 4 academy courses IS "cAMP 101." The sign-off/reflection is a 5-10 minute wrap-up, not a standalone to-do.
 
 ⏱️ Total: ~7h 20m | Daily average: ~1h 28m/day
 
@@ -35,11 +36,11 @@ Once all modules done → learner can Begin Ascent (Day 5 or earlier since self-
 |-----|-----------------|------------------|----------------|
 | Day 1 | MEDDPICC + Analytics Academy | 2 | 2 |
 | Day 2 | Experiment Academy + Session Replay Academy + start Challenger reading | 4 | 4 |
-| Day 3 | Guides & Surveys Academy + cAMP 101 signoff + continue Challenger | 6 | 6 |
-| Day 4 | Finish Challenger signoff | 7 | 7 |
-| Day 5 | Wheel & Deal | 8 | 8 |
+| Day 3 | Guides & Surveys Academy + continue Challenger | 5 | 5 |
+| Day 4 | Finish Challenger signoff | 6 | 6 |
+| Day 5 | Wheel & Deal | 7 | 7 |
 
-Expected-by-day array: `[0, 2, 4, 6, 7, 8]`
+Expected-by-day array: `[0, 2, 4, 5, 6, 7]`
 
 Note: Challenger is 4.5 hours spread across Days 2-4. We can only track the signoff (Day 4), not reading progress. Pacing is based on trackable completions.
 
@@ -54,7 +55,7 @@ Note: Challenger is 4.5 hours spread across Days 2-4. We can only track the sign
 - Uses **same tier system** as Ascent: summit_bound, off_the_trail, lost_in_the_woods, rockslide, avalanche_warning, anchor_failure
 - Same colors, same visual design, same tier names
 - **Approach-specific content inside:**
-  - "Modules Completed: X/8" instead of "Clips Completed"
+  - "Modules Completed: X/7" instead of "Clips Completed"
   - CTA button: "🚡 Continue to Approach"
   - Prescriptive **"Today's Plan" to-do list** with ☐/✅ + emojis (🎓 ✍🏽 🎡 📖)
   - If behind: **"Catch up" section** (amber/red) stacks overdue items above Today's Plan
@@ -70,7 +71,6 @@ Note: Challenger is 4.5 hours spread across Days 2-4. We can only track the sign
 
 **Day 3:**
 - ☐ Academy: Guides & Surveys (30m + assessment) 🎓
-- ☐ cAMP 101 sign-off ✍🏽
 - 📖 Continue Challenger
 
 **Day 4 (⚠️ Due Tomorrow):**
@@ -85,7 +85,7 @@ Note: Challenger is 4.5 hours spread across Days 2-4. We can only track the sign
 **Day 6 modal:**
 - Anchor failure style — missed Week 1 deadline
 - NO Slack message accountability
-- Message: "You have until tomorrow to catch up. After Day 7, we auto-unlock your Ascent path and you'll be expected to begin. You can revisit the Approach tab to finish what you missed, but all modules must be done by end of Ascent."
+- Message: "You have until tomorrow to catch up. After Day 7, we auto-unlock your Ascent path and you'll be expected to begin. You can revisit the Approach tab to finish what you missed, but all modules must be done before you can reach the summit."
 - Includes "Modules to complete" section
 - If they complete Approach + Begin Ascent on Day 6 → FirstAchievementModal fires, **half XP (+17), no badge**
 
@@ -100,6 +100,24 @@ Note: Challenger is 4.5 hours spread across Days 2-4. We can only track the sign
 - Message: "Ascent has been auto-unlocked. Please click Begin Ascent to go to the next part of your journey. You're still on the hook to finish Approach modules before you can reach the summit. Start Day 1: ICP."
 - **No XP, no badge, no FirstAchievementModal**
 - The only modal they get is this Oh Deer modal
+
+## Summit in Sight Modal (🌤️)
+- Fires when ALL 15 Ascent clip-days are done BUT Approach items remain
+- Auto-triggers daily (same localStorage once-per-day pattern)
+- Shows: 🚡 missed modules list, Summit Day date
+- Button: "🚡 Back to Approach" → navigates to Approach tab
+- Once they finish remaining modules → Summit Reached fires
+
+## Summit Reached Gate
+- **Both Approach AND Ascent must be 100% complete** to reach the summit
+- `allCompleted = ascentComplete && approachStatus.complete`
+- If Ascent done but Approach incomplete → Summit in Sight modal, NOT Summit Reached
+
+## Approach Status on Ascent Modals
+- ALL Ascent modals (PacingModal, AnchorFailureModal, LightAnchorModal) show approach status:
+  - ✅ Green "Approach Complete" pill when all 7 items done
+  - 🚡 "Modules Missed" catch-up list when items remain
+- This reminds learners they need to finish Approach before summit
 
 ## XP & Badge Rewards
 - **On-time (Day ≤ 5)**: +35 XP + 🚡 Peak Lift badge (via existing FirstAchievementModal / UnlockAscent API)
