@@ -12,7 +12,7 @@ type FirstAchievementModalProps = {
 /**
  * First Achievement modal — shown once when a learner transitions from
  * The Approach (Week 1) to The Ascent, celebrating their first XP and
- * Swiss Army badge (if earned within 5 weekdays).
+ * Peak Lift badge (if earned within 5 weekdays).
  */
 export default function FirstAchievementModal({
   viewerId,
@@ -25,9 +25,8 @@ export default function FirstAchievementModal({
   useEffect(() => {
     document.body.style.overflow = "hidden";
 
-    // Celebration confetti — axes + cable cars
-    const axeShape = (confetti as any).shapeFromText({ text: "🪓", scalar: 2 });
-    const cableCarShape = (confetti as any).shapeFromText({ text: "🚡", scalar: 2 });
+    // Celebration confetti — gondolas
+    const gondolaShape = (confetti as any).shapeFromText({ text: "🚡", scalar: 2 });
     const duration = 2500;
     const end = Date.now() + duration;
 
@@ -37,7 +36,7 @@ export default function FirstAchievementModal({
         angle: 60,
         spread: 55,
         origin: { x: 0, y: 0.6 },
-        shapes: [axeShape],
+        shapes: [gondolaShape],
         scalar: 2,
         flat: true,
       });
@@ -46,7 +45,7 @@ export default function FirstAchievementModal({
         angle: 120,
         spread: 55,
         origin: { x: 1, y: 0.6 },
-        shapes: [cableCarShape],
+        shapes: [gondolaShape],
         scalar: 2,
         flat: true,
       });
@@ -94,8 +93,8 @@ export default function FirstAchievementModal({
           <div className="flex items-center justify-center gap-3">
             {earnedBadge && (
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-50 border border-amber-200">
-                <span className="text-lg">🪓</span>
-                <span className="text-sm font-bold text-amber-700">Swiss Army Badge</span>
+                <span className="text-lg">🚡</span>
+                <span className="text-sm font-bold text-amber-700">Peak Lift Badge</span>
               </div>
             )}
             {earnedXp > 0 && (

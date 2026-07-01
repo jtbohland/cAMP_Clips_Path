@@ -401,33 +401,65 @@ export function isDayBeforeSummitDay(summitDay: Date): boolean {
 
 // --- Week 1 (The Approach) pacing ---
 
-export type Week1PacingStatus = 'on_track' | 'behind' | 'complete';
+export const WEEK1_TOTAL_ITEMS = 7; // MEDDPICC + 4 academies + Challenger + W&D (cAMP 101 sign-off is not a separate item)
 
 /**
- * Week 1 expected completion count by weekday:
- *   Day 1: 2 items (MEDDPICC + 1 academy course)
- *   Day 2: 4 items
- *   Day 3: 5 items
- *   Day 4: 6 items
- *   Day 5: 7 items (all done — 3 modules + W&D = 4 sign-offs, but we track 7 granular items)
+ * Week 1 expected completion count by weekday (7 items):
+ *   Day 0: 0 items (before start)
+ *   Day 1: 2 items  (MEDDPICC + Analytics Academy)
+ *   Day 2: 4 items  (Experiment Academy + Session Replay Academy)
+ *   Day 3: 5 items  (Guides & Surveys Academy)
+ *   Day 4: 6 items  (Challenger signoff)
+ *   Day 5: 7 items  (Wheel & Deal → Begin Ascent!)
  */
-const WEEK1_EXPECTED_BY_DAY = [0, 2, 4, 5, 6, 7];
-const WEEK1_TOTAL_ITEMS = 7; // 3 module signoffs + 4 academy screenshots... but W&D also needed
+export const WEEK1_EXPECTED_BY_DAY = [0, 2, 4, 5, 6, 7];
 
 /**
- * Get Week 1 progress status.
- * completedItems = number of completed items (module signoffs + academy screenshots + W&D)
- * Max = 8 (3 modules + 4 academy + 1 W&D)
+ * Determine the Approach pacing tier based on completed items vs expected.
+ * Uses the same tier system as Ascent for visual consistency.
+ * Returns a PacingTier string.
  */
-export function getWeek1PacingStatus(
+export function getApproachPacingTier(
   completedItems: number,
-  weekdaysElapsed: number,
-): Week1PacingStatus {
-  if (completedItems >= 8) return 'complete';
-  if (weekdaysElapsed <= 0) return 'on_track';
-  const day = Math.min(weekdaysElapsed, 5);
-  const expected = WEEK1_EXPECTED_BY_DAY[day] ?? 7;
-  return completedItems >= expected ? 'on_track' : 'behind';
+  approachWeekdaysElapsed: number,
+): PacingTier {
+  if (completedItems >= WEEK1_TOTAL_ITEMS) return "completed";
+  if (approachWeekdaysElapsed <= 0) return "not_started";
+
+  // Day 6-7: missed the 5-day deadline but still have catch-up time
+  if (approachWeekdaysElapsed >= 8) return "anchor_failure";
+  if (approachWeekdaysElapsed >= 6) return "anchor_failure";
+
+  // Days 1-5: compare to expected
+  const day = Math.min(approachWeekdaysElapsed, 5);
+  const expected = WEEK1_EXPECTED_BY_DAY[day] ?? WEEK1_TOTAL_ITEMS;
+  const itemsBehind = Math.max(0, expected - completedItems);
+
+  if (itemsBehind <= 0) return "summit_bound";
+  if (itemsBehind <= 1) return "off_the_trail";
+  if (itemsBehind <= 3) return "lost_in_the_woods";
+  if (itemsBehind <= 5) return "rockslide";
+  return "avalanche_warning";
+}
+
+/**
+ * Get the number of Approach items a learner is behind.
+ */
+export function getApproachItemsBehind(completedItems: number, approachWeekdaysElapsed: number): number {
+  if (completedItems >= WEEK1_TOTAL_ITEMS) return 0;
+  const day = Math.min(approachWeekdaysElapsed, 5);
+  const expected = WEEK1_EXPECTED_BY_DAY[day] ?? WEEK1_TOTAL_ITEMS;
+  return Math.max(0, expected - completedItems);
+}
+
+/**
+ * Check if today IS a specific date (same calendar day).
+ */
+export function isSameDay(date: Date): boolean {
+  const today = new Date();
+  const todayNorm = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const dateNorm = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  return todayNorm.getTime() === dateNorm.getTime();
 }
 
 export { TOTAL_CLIPS, TOTAL_SESSIONS, TOTAL_WEEKDAYS, WEEK1_WEEKDAYS, EXPECTED_SESSIONS_BY_WEEKDAY };

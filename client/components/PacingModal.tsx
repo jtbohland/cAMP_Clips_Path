@@ -3,8 +3,13 @@ import {
   type PacingTier,
   type MissedClip,
   PACING_TIERS,
-  getTopicDaysBehind,
 } from "@/lib/pacing";
+
+/** Incomplete approach module for catch-up display */
+export interface ApproachCatchUpItem {
+  emoji: string;
+  label: string;
+}
 
 interface PacingModalProps {
   tier: PacingTier;
@@ -15,6 +20,11 @@ interface PacingModalProps {
   missedClips: MissedClip[];
   summitDay: Date | null;
   isDayBeforeSummit?: boolean;
+  isSummitDay?: boolean;
+  /** Whether The Approach is fully complete */
+  approachComplete?: boolean;
+  /** Incomplete approach modules to show in catch-up list */
+  approachCatchUpItems?: ApproachCatchUpItem[];
   onDismiss: () => void;
 }
 
@@ -27,6 +37,9 @@ export default function PacingModal({
   missedClips,
   summitDay,
   isDayBeforeSummit,
+  isSummitDay,
+  approachComplete,
+  approachCatchUpItems,
   onDismiss,
 }: PacingModalProps) {
   const config = PACING_TIERS[tier];
@@ -132,7 +145,7 @@ export default function PacingModal({
           {/* Catch-up list */}
           {showCatchUpList && (
             <div className="mb-4">
-              <p className="text-sm font-bold mb-2">Clips to catch up on:</p>
+              <p className="text-sm font-bold mb-2">🎞️ Cold Clips</p>
               <div
                 className="rounded-lg px-4 py-3 space-y-1.5 max-h-48 overflow-y-auto"
                 style={{ backgroundColor: `${config.headerBg}10` }}
@@ -149,13 +162,46 @@ export default function PacingModal({
             </div>
           )}
 
-          {/* Pre-Summit warning banner */}
-          {tier === "avalanche_warning" && isDayBeforeSummit && (
+          {/* Approach completion indicator */}
+          {approachComplete === true && (
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-100 border border-green-300 mb-4">
+              <span className="text-sm">✅</span>
+              <span className="text-xs font-bold text-green-800">Approach Complete</span>
+            </div>
+          )}
+          {approachComplete === false && approachCatchUpItems && approachCatchUpItems.length > 0 && (
+            <div className="mb-4">
+              <p className="text-sm font-bold mb-2">🚡 Modules Missed</p>
+              <div
+                className="rounded-lg px-4 py-3 space-y-1.5"
+                style={{ backgroundColor: `${config.headerBg}10` }}
+              >
+                {approachCatchUpItems.map((item, i) => (
+                  <p key={i} className="text-sm">
+                    {item.label} {item.emoji}
+                  </p>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Pre-Summit warning banner — ALL tiers */}
+          {isDayBeforeSummit && !isSummitDay && (
             <div className="rounded-lg px-4 py-3 mb-4 border border-amber-400 bg-amber-50">
               <p className="text-sm font-bold text-amber-800">⚠️ Tomorrow is Summit Day</p>
               <p className="text-xs text-amber-700 mt-1 leading-relaxed">
                 If you're unable to finish by then, there will be additional steps to complete
                 starting the following day to keep your Ascent moving forward.
+              </p>
+            </div>
+          )}
+
+          {/* Today is Summit Day banner — ALL tiers */}
+          {isSummitDay && (
+            <div className="rounded-lg px-4 py-3 mb-4 border border-amber-400 bg-amber-50">
+              <p className="text-sm font-bold text-amber-800">🏔️ Today is Summit Day!</p>
+              <p className="text-xs text-amber-700 mt-1 leading-relaxed">
+                Today is the target finish line for your Ascent. Wrap up any remaining clips to reach the summit!
               </p>
             </div>
           )}
