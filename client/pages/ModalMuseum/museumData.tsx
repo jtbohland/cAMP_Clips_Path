@@ -805,6 +805,7 @@ function SummitGrandFinaleMockup() {
 function CheckinMockup({ type }: { type: "approach" | "week2" | "week3" | "summit" }) {
   const [step, setStep] = useState<"stats" | "reflect" | "email">("stats");
   const [reflection, setReflection] = useState("");
+  const [gmailOpened, setGmailOpened] = useState(false);
 
   const labels: Record<string, { title: string; emoji: string; gradient: string }> = {
     approach: { title: "The Approach: Anchor Point", emoji: "🚡", gradient: "from-amber-600 to-orange-600" },
@@ -1147,13 +1148,24 @@ function CheckinMockup({ type }: { type: "approach" | "week2" | "week3" | "summi
                   <p className="text-gray-500 text-xs mt-2">📋 Manager Feedback Survey link included (Required — only JT sees responses)</p>
                 </div>
               </div>
-              <span className="block w-full py-3 rounded-lg text-sm font-bold bg-emerald-600 text-white text-center cursor-pointer hover:bg-emerald-700 transition-colors">
-                📨 Send via Gmail
-              </span>
-              <span className="block w-full py-3 rounded-lg text-sm font-bold bg-blue-600 text-white text-center mt-2">
-                {type === "approach" ? "🔓 I Sent It — Unlock Week 2" : type === "week2" ? "🔓 I Sent It — Unlock Week 3" : type === "week3" ? "🔓 I Sent It — Unlock Week 4" : "📬 I Sent It — Mark as Sent"}
-              </span>
-              <p className="text-xs text-center text-gray-400">This opens Gmail with your email pre-filled. After sending, come back to unlock the next week.</p>
+              <button
+                onClick={() => setGmailOpened(true)}
+                className={`w-full py-3 rounded-lg text-sm font-bold transition-colors ${
+                  gmailOpened
+                    ? "bg-emerald-100 text-emerald-700 border border-emerald-300"
+                    : "bg-emerald-600 text-white hover:bg-emerald-700"
+                }`}
+              >
+                {gmailOpened ? "✅ Gmail Opened — send the email, then come back" : "📨 Send via Gmail"}
+              </button>
+              {gmailOpened && (
+                <span className="block w-full py-3 rounded-lg text-sm font-bold bg-blue-600 text-white text-center mt-2">
+                  {type === "approach" ? "📬 I Sent It — Unlock Week 2" : type === "week2" ? "📬 I Sent It — Unlock Week 3" : type === "week3" ? "📬 I Sent It — Unlock Week 4" : "📬 I Sent It — Mark as Sent"}
+                </span>
+              )}
+              {!gmailOpened && (
+                <p className="text-xs text-center text-gray-400">This opens Gmail with your email pre-filled. After sending, come back to unlock the next week.</p>
+              )}
             </>
           )}
         </div>
