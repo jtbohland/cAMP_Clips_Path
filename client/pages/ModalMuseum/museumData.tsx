@@ -222,19 +222,19 @@ const tierExhibits: MuseumExhibit[] = [
 const checkinExhibits: MuseumExhibit[] = [
   {
     id: "checkin-approach",
-    title: "The Approach Check-In",
+    title: "The Approach: Anchor Point",
     trigger: "Learner dismisses First Achievement modal → auto-opens if approach check-in not yet sent",
     render: () => <CheckinMockup type="approach" />,
   },
   {
     id: "checkin-week2",
-    title: "Week 2 Check-In",
+    title: "Week 2: Anchor Point",
     trigger: "Learner completes 5+ clips & approach already sent → auto-opens once per session",
     render: () => <CheckinMockup type="week2" />,
   },
   {
     id: "checkin-week3",
-    title: "Week 3 Check-In",
+    title: "Week 3: Anchor Point",
     trigger: "Learner completes 10+ clips & week2 already sent → auto-opens once per session",
     render: () => <CheckinMockup type="week3" />,
   },
@@ -599,9 +599,9 @@ function CheckinMockup({ type }: { type: "approach" | "week2" | "week3" | "summi
   const [reflection, setReflection] = useState("");
 
   const labels: Record<string, { title: string; emoji: string; gradient: string }> = {
-    approach: { title: "The Approach Check-In", emoji: "🚡", gradient: "from-amber-600 to-orange-600" },
-    week2: { title: "Week 2 Check-In", emoji: "🥾", gradient: "from-indigo-600 to-purple-600" },
-    week3: { title: "Week 3 Check-In", emoji: "🏞️", gradient: "from-emerald-600 to-teal-600" },
+    approach: { title: "The Approach: Anchor Point", emoji: "🚡", gradient: "from-amber-600 to-orange-600" },
+    week2: { title: "Week 2: Anchor Point", emoji: "🥾", gradient: "from-indigo-600 to-purple-600" },
+    week3: { title: "Week 3: Anchor Point", emoji: "🏞️", gradient: "from-emerald-600 to-teal-600" },
     summit: { title: "Summit Celebration", emoji: "🧗🏻‍♂️", gradient: "from-amber-500 to-yellow-500" },
   };
   const label = labels[type];
@@ -629,7 +629,7 @@ function CheckinMockup({ type }: { type: "approach" | "week2" | "week3" | "summi
                 <span>{label.emoji}</span> {label.title}
               </p>
               <p className="text-sm text-white/70 mt-0.5">
-                {step === "stats" ? "Step 1 of 3 — Review your stats" : step === "reflect" ? "Step 2 of 3 — Share a reflection" : "Step 3 of 3 — Send to your manager"}
+                {step === "stats" ? "🪝 Step 1 of 3 — Review your stats" : step === "reflect" ? "🪝 Step 2 of 3 — Share a reflection" : "🪝 Step 3 of 3 — Send to your manager"}
               </p>
             </div>
             <div className="flex items-center gap-1.5">
@@ -673,10 +673,59 @@ function CheckinMockup({ type }: { type: "approach" | "week2" | "week3" | "summi
                 </div>
               </div>
 
+              {/* Pacing banner (non-approach) */}
+              {type !== "approach" && (
+                <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-4 shadow-sm">
+                  <h3 className="text-sm font-bold text-blue-900 mb-3 flex items-center gap-1.5"><span className="w-1 h-4 rounded-full bg-blue-500 inline-block" />🧗 Pacing</h3>
+                  <div className="grid grid-cols-3 gap-3 text-center">
+                    <div className="rounded-lg bg-white/70 py-2">
+                      <p className="text-lg font-bold text-blue-700">Jun 16</p>
+                      <p className="text-xs text-gray-500">Ascent Date</p>
+                    </div>
+                    <div className="rounded-lg bg-white/70 py-2">
+                      <p className="text-lg font-bold text-blue-700">🏔️ Summit Bound</p>
+                      <p className="text-xs text-gray-500">Pacing Status</p>
+                    </div>
+                    <div className="rounded-lg bg-white/70 py-2">
+                      <p className="text-lg font-bold text-blue-700">Jul 11</p>
+                      <p className="text-xs text-gray-500">Summit Day</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Summit: Week 4 Performance */}
+              {type === "summit" && (
+                <>
+                  <div className="mt-1 mb-0">
+                    <h2 className="text-sm font-bold text-gray-800 flex items-center gap-1.5">⛰️ Week 4 Performance</h2>
+                  </div>
+                  <div className="rounded-xl border border-green-200 bg-green-50/60 p-4 shadow-sm">
+                    <h3 className="text-sm font-bold text-green-900 mb-3 flex items-center gap-1.5"><span className="w-1 h-4 rounded-full bg-green-500 inline-block" />🎞️ Week 4 Clips</h3>
+                    <div className="grid grid-cols-3 gap-4 text-center">
+                      <div className="rounded-lg bg-white/70 py-2"><p className="text-xl font-bold text-green-700">7/7</p><p className="text-xs text-gray-500">Clips Done</p></div>
+                      <div className="rounded-lg bg-white/70 py-2"><p className="text-xl font-bold text-green-700">89%</p><p className="text-xs text-gray-500">Avg Engagement</p></div>
+                      <div className="rounded-lg bg-white/70 py-2"><p className="text-xl font-bold text-green-700">#3/12</p><p className="text-xs text-gray-500">Leaderboard</p></div>
+                    </div>
+                  </div>
+                  <div className="rounded-xl border border-orange-200 bg-orange-50/60 p-4 shadow-sm">
+                    <h3 className="text-sm font-bold text-orange-900 mb-3 flex items-center gap-1.5"><span className="w-1 h-4 rounded-full bg-orange-500 inline-block" />🧠 Week 4 Quizzes</h3>
+                    <div className="grid grid-cols-3 gap-3 text-center">
+                      <div className="rounded-lg bg-white/70 py-2"><p className="text-xl font-bold text-orange-700">5/5</p><p className="text-xs text-gray-500">Passed</p></div>
+                      <div className="rounded-lg bg-white/70 py-2"><p className="text-xl font-bold text-orange-700">85%</p><p className="text-xs text-gray-500">Avg Score</p></div>
+                      <div className="rounded-lg bg-white/70 py-2"><p className="text-xl font-bold text-orange-700">89%</p><p className="text-xs text-gray-500">Engagement</p></div>
+                    </div>
+                  </div>
+                  <div className="mt-2 mb-0">
+                    <h2 className="text-sm font-bold text-gray-800 flex items-center gap-1.5">🏔️ Overall Journey</h2>
+                  </div>
+                </>
+              )}
+
               {/* Clip stats */}
               {type !== "approach" && (
                 <div className="rounded-xl border border-green-200 bg-green-50/60 p-4 shadow-sm">
-                  <h3 className="text-sm font-bold text-green-900 mb-3 flex items-center gap-1.5"><span className="w-1 h-4 rounded-full bg-green-500 inline-block" />🎞️ Clip Progress</h3>
+                  <h3 className="text-sm font-bold text-green-900 mb-3 flex items-center gap-1.5"><span className="w-1 h-4 rounded-full bg-green-500 inline-block" />🎞️ {type === "summit" ? "All Clips" : "Clip Progress"}</h3>
                   <div className="grid grid-cols-3 gap-4 text-center">
                     <div className="rounded-lg bg-white/70 py-2">
                       <p className="text-xl font-bold text-green-700">{mockClipCount}/17</p>
@@ -697,7 +746,7 @@ function CheckinMockup({ type }: { type: "approach" | "week2" | "week3" | "summi
               {/* Quiz stats (not shown in approach — no quizzes in week 1) */}
               {type !== "approach" && (
                 <div className="rounded-xl border border-orange-200 bg-orange-50/60 p-4 shadow-sm">
-                  <h3 className="text-sm font-bold text-orange-900 mb-3 flex items-center gap-1.5"><span className="w-1 h-4 rounded-full bg-orange-500 inline-block" />🧠 cAMP Quiz Stats</h3>
+                  <h3 className="text-sm font-bold text-orange-900 mb-3 flex items-center gap-1.5"><span className="w-1 h-4 rounded-full bg-orange-500 inline-block" />🧠 {type === "summit" ? "All Quizzes" : "cAMP Quiz Stats"}</h3>
                   <div className="grid grid-cols-3 gap-4 text-center">
                     <div className="rounded-lg bg-white/70 py-2"><p className="text-xl font-bold text-orange-700">{type === "week2" ? "8/9" : "14/15"}</p><p className="text-xs text-gray-500">Passed</p></div>
                     <div className="rounded-lg bg-white/70 py-2"><p className="text-xl font-bold text-orange-700">82%</p><p className="text-xs text-gray-500">Avg Score</p></div>
@@ -802,12 +851,17 @@ function CheckinMockup({ type }: { type: "approach" | "week2" | "week3" | "summi
                     <div><span className="font-semibold text-white">CC:</span> jt.bohland@amplitude.com</div>
                     <div>
                       <span className="font-semibold text-white">Subject:</span>{" "}
-                      {type === "summit" ? `🧗🏻‍♂️ ${mockName} — Summit Reached!` : type === "approach" ? `🚡 ${mockName} — Approach Check-In` : type === "week2" ? `🥾 ${mockName} — Week 2 Check-In` : `🏞️ ${mockName} — Week 3 Check-In`}
+                      {type === "summit" ? `🧗🏻‍♂️ ${mockName} — Summit Reached!` : type === "approach" ? `🚡 ${mockName} — Approach Anchor Point` : type === "week2" ? `🥾 ${mockName} — Week 2 Anchor Point` : `🏞️ ${mockName} — Week 3 Anchor Point`}
                     </div>
                   </div>
                 </div>
                 <div className="px-4 py-3 text-sm text-gray-700 space-y-2">
                   <p>Hi Jordan & Alex,</p>
+                  {/* Pacing line */}
+                  <div className="pl-3 border-l-2 border-blue-300 bg-blue-50/50 rounded py-1 space-y-0.5">
+                    <p className="font-semibold text-blue-800 text-xs">🧗 Pacing</p>
+                    <p className="text-xs">Ascent Date: Jun 16 · 🏔️ Summit Bound · Summit Day: Jul 11</p>
+                  </div>
                   {type === "approach" ? (
                     <>
                       <p>I just completed The Approach — the first phase of cAMP Ascent!</p>
@@ -829,23 +883,23 @@ function CheckinMockup({ type }: { type: "approach" | "week2" | "week3" | "summi
                   ) : type === "summit" ? (
                     <>
                       <p>I completed all 17 cAMP Clips and reached the Summit! 🏔️✨</p>
+                      <div className="pl-3 border-l-2 border-green-300 bg-green-50/50 rounded py-1 space-y-1">
+                        <p className="font-semibold text-gray-800">⛰️ Week 4 Performance</p>
+                        <p>• 🎞️ Clips: 7/7 · Avg Engagement: 89%</p>
+                        <p>• 🧠 Quizzes: 5/5 · Avg Score: 85%</p>
+                      </div>
                       <div className="pl-3 border-l-2 border-amber-200 space-y-1 bg-amber-50/50 rounded py-1">
-                        <p className="font-semibold text-gray-800">🏔️ Overall Summit Summary:</p>
-                        <p>• Clips: 17/17 completed</p>
-                        <p>• XP: 485 · Tier: ✨🏔️✨ Pinnacle Achiever</p>
-                        <p>• 🏆 Leaderboard: #3 of 12 cAMPers</p>
+                        <p className="font-semibold text-gray-800">🏔️ Overall Journey</p>
+                        <p>• 📊 XP: 485 · Tier: ✨🏔️✨ Pinnacle · 🏆 #3 of 12</p>
+                        <p>• 🎞️ Clips: 17/17 · Avg: 87%</p>
                       </div>
                       <div className="pl-3 border-l-2 border-gray-200 space-y-1">
                         <p className="font-semibold text-gray-800">👀 Engagement:</p>
                         <p>• 🥾 Trail Markers: 82% · 👀 Focus: 91% · ⏱️ Time: 78% · 🎯 Overall: 84%</p>
                       </div>
                       <div className="pl-3 border-l-2 border-gray-200 space-y-1">
-                        <p className="font-semibold text-gray-800">🧠 cAMP Quiz (All 15 Days):</p>
+                        <p className="font-semibold text-gray-800">🧠 All Quizzes (15 Days):</p>
                         <p>• Passed: 14/15 · Avg: 82% · 1st Pass: 79%</p>
-                      </div>
-                      <div className="pl-3 border-l-2 border-gray-200 space-y-1">
-                        <p className="font-semibold text-gray-800">🗓️ Week 4 Performance:</p>
-                        <p>• Final Tier: ✨🏔️✨ Pinnacle Achiever · Total XP: 485</p>
                       </div>
                     </>
                   ) : (
