@@ -93,19 +93,38 @@
 
 ---
 
-## 7. Week Unlocks
+## 7. Week Unlocks (Two-Key System)
 
-**No explicit week gates exist.** Weeks flow via sequential clip unlock only.
+**Files:** `client/pages/Library/index.tsx`, `client/components/LearnerCheckinModal.tsx`, `server/apis/v2/mark-checkin-sent.ts`
 
-| Week | Clips (sort order) | Notes |
-|------|-------------------|-------|
-| Week 2 | 0–4 | Pure sequential |
-| Week 3 | 5–9 | Includes Day 5 topic at sort 5 |
-| Week 4 | 10–17 | Includes Day 9 topic at sort 11 |
+Weeks are gated by a **two-key system**: sequential clip unlock in the DB + Anchor Point check-in email at the UI level.
 
-- `On the Trail` pace bonuses have week-based windows but **never block access**
-- Fast learners CAN advance into future weeks early
-- Pacing rewards on-time completion, never prevents progress
+| Transition | DB Gate | UI Gate |
+|------------|---------|---------|
+| Week 1 → Week 2 | UnlockAscent (3 modules + W&D) | Approach Anchor Point email |
+| Week 2 → Week 3 | Day 5 resource completion → Day 6 clip unlocked | Week 2 Anchor Point email |
+| Week 3 → Week 4 | Day 10 completion → Day 11 clip unlocked | Week 3 Anchor Point email |
+
+### How the UI gate works:
+- `LearnerCheckinModal` has **no close button** until the email is marked as sent
+- Modal blocks the entire Library — learner cannot see or click clips behind it
+- Trigger uses `sessionStorage` — refreshing re-prompts the modal (no escape)
+- `MarkCheckinSent` API sets `{type}_checkin_sent_at` timestamp on the viewer record
+- Library checks `progressData.{type}CheckinSentAt` to decide whether to trigger
+
+### Trigger conditions:
+| Check-in | Fires when |
+|----------|-----------|
+| Approach | After FirstAchievement dismiss + `approachCheckinSentAt` is null |
+| Week 2 | 5+ clips complete + approach sent + `week2CheckinSentAt` is null |
+| Week 3 | 10+ clips complete + `week3CheckinSentAt` is null |
+| Summit | All clips complete (summit celebration flow) |
+
+### Key detail:
+- Clips unlock sequentially in the DB regardless of check-in status
+- The check-in modal **prevents Library access** until sent — this is the actual week gate
+- `On the Trail` pace bonuses have week-based windows but don't block access
+- Admins bypass check-in modals via `allowClose` flag
 
 ---
 
