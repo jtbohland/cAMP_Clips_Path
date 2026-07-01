@@ -108,7 +108,7 @@ const MANAGER_KEY = `
 • 📝 cAMP Quiz — end-of-day assessment after completing all materials (10 questions, 80% to pass)
 • 🎯 Engagement Score — overall session quality (25% Trail Markers + 30% focus + 45% watch time)
 • 🏅 XP — experience points earned through clips, quizzes, badges, and bonus activities
-• 🔦 Search & Rescue — a second chance when engagement drops below 80%
+• 🚁 Search & Rescue — a second chance when engagement drops below 80%
 • ⛈️ Weather the Storm — a mandatory study break when engagement is critically low
 • 🧗 Pacing — tracks whether they're on schedule to finish by Summit Day
   - Summit Bound = on pace · Off the Trail = 1-2 days behind · Lost in the Woods = 3-5 days behind
@@ -195,17 +195,43 @@ function LearnerCheckinModalInner({ viewerId, checkinType, onClose, onSent, allo
 
     let body = `${greeting}\n\n`;
 
-    // ── PACING LINE (all check-in types) ──
+    // ── PACING CONTEXT (all check-in types) ──
     if (v.ascentDay1) {
       const startDate = new Date(v.ascentDay1);
       const today = new Date();
       const weekdaysElapsed = countWeekdays(startDate, today);
-      const hasStarted = data.clipStats.completedSessions > 0;
-      const pacingKey = getPacingTier(data.clipStats.completedSessions, weekdaysElapsed, hasStarted);
+      const hasStarted = data.completedTopics > 0;
+      const pacingKey = getPacingTier(data.completedTopics, weekdaysElapsed, hasStarted);
       const pacingConfig = PACING_TIERS[pacingKey];
       const summitDay = getSummitDay(startDate);
       const fmtDate = (d: Date) => d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-      body += `🧗 Ascent Date: ${fmtDate(startDate)} · Pacing: ${pacingConfig.emoji} ${pacingConfig.label} · Summit Day: ${fmtDate(summitDay)}\n\n`;
+
+      // Build descriptive pacing note
+      let pacingNote = "";
+      if (data.completedTopics >= data.totalTopics) {
+        pacingNote = "all topics complete!";
+      } else {
+        const openCount = data.openDays?.length ?? 0;
+        const resourceOpen = data.openDays?.filter(d => d.isResourceDay) ?? [];
+        const clipOpen = data.openDays?.filter(d => !d.isResourceDay) ?? [];
+        const parts: string[] = [];
+        if (data.completedTopics > 0) {
+          parts.push(`Day ${data.completedTopics} just unlocked`);
+        }
+        if (resourceOpen.length > 0) {
+          parts.push(`${resourceOpen.map(d => d.dayLabel).join(" & ")} (resource ${resourceOpen.length === 1 ? "day" : "days"}) still open`);
+        }
+        if (clipOpen.length > 0 && clipOpen.length <= 3) {
+          parts.push(`${clipOpen.length} clip ${clipOpen.length === 1 ? "day" : "days"} remaining`);
+        } else if (clipOpen.length > 3) {
+          parts.push(`${openCount} days remaining`);
+        }
+        pacingNote = parts.join(". ");
+      }
+
+      body += `🧗 Ascent Date: ${fmtDate(startDate)}\n`;
+      body += `Pacing: ${pacingConfig.emoji} ${pacingConfig.label}${pacingNote ? ` — ${pacingNote}` : ""}\n`;
+      body += `Summit Day: ${fmtDate(summitDay)}\n\n`;
     }
 
     // ── APPROACH ──
@@ -251,8 +277,8 @@ function LearnerCheckinModalInner({ viewerId, checkinType, onClose, onSent, allo
       body += `  • Tier: ${v.tier}\n`;
       body += `  • 🏆 Rank: #${data.leaderboard.rank} of ${data.leaderboard.totalLearners} cAMPers\n`;
       body += `\n🎞️ All Clips:\n`;
-      body += `  • Completed: ${data.clipStats.completedSessions}/${data.clipStats.totalSessions}\n`;
-      body += `  • 🔦 S&R Triggered: ${data.srCount}\n`;
+      body += `  • Completed: ${data.clipStats.completedClips}/${data.clipStats.totalClips}\n`;
+      body += `  • 🚁 S&R Triggered: ${data.srCount}\n`;
       body += `  • ⛈️ WtS Triggered: ${data.wtsCount}\n`;
       body += `\n👀 Engagement:\n`;
       body += `  • 🥾 Trail Markers: ${data.engagement.avgQuestionScore}%\n`;
@@ -272,8 +298,8 @@ function LearnerCheckinModalInner({ viewerId, checkinType, onClose, onSent, allo
       const weekLabel = checkinType === "week2" ? "Week 2" : "Week 3";
       body += `Here's my ${weekLabel} cAMP Ascent update:\n\n`;
       body += `🎞️ Clips:\n`;
-      body += `  • Completed: ${data.clipStats.completedSessions}/${data.clipStats.totalSessions}\n`;
-      body += `  • 🔦 S&R Triggered: ${data.srCount}\n`;
+      body += `  • Completed: ${data.clipStats.completedClips}/${data.clipStats.totalClips}\n`;
+      body += `  • 🚁 S&R Triggered: ${data.srCount}\n`;
       body += `  • ⛈️ WtS Triggered: ${data.wtsCount}\n`;
       body += `\n📊 Stats:\n`;
       body += `  • XP: ${v.totalXp}\n`;
@@ -298,6 +324,11 @@ function LearnerCheckinModalInner({ viewerId, checkinType, onClose, onSent, allo
       body += `\n💭 My reflection:\n"${reflection.trim()}"\n`;
     }
 
+    // ── FEEDBACK SURVEY LINK (directly after reflection, before manager key) ──
+    const feedbackUrl = `${window.location.origin}/feedback?token=${feedbackToken}`;
+    body += `\n📋 Manager Feedback Survey (Required — only JT sees responses):\n`;
+    body += `${feedbackUrl}\n`;
+
     // ── LAST ACTIVITY ──
     if (v.lastLoginAt || v.lastActivityAt) {
       const dateStr = new Date((v.lastLoginAt ?? v.lastActivityAt) as string).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
@@ -306,11 +337,6 @@ function LearnerCheckinModalInner({ viewerId, checkinType, onClose, onSent, allo
 
     // ── MANAGER KEY ──
     body += MANAGER_KEY;
-
-    // ── FEEDBACK SURVEY LINK ──
-    const feedbackUrl = `${window.location.origin}/feedback?token=${feedbackToken}`;
-    body += `\n📋 Manager Feedback Survey (Required — only JT sees responses):\n`;
-    body += `${feedbackUrl}\n`;
 
     body += `\nThanks!\n${fn}`;
 
@@ -665,8 +691,8 @@ function StatsView({ data, checkinType }: { data: any; checkinType: CheckinType 
         const startDate = new Date(data.viewer.ascentDay1);
         const today = new Date();
         const weekdaysElapsed = countWeekdays(startDate, today);
-        const hasStarted = data.clipStats.completedSessions > 0;
-        const pacingKey = getPacingTier(data.clipStats.completedSessions, weekdaysElapsed, hasStarted);
+        const hasStarted = data.completedTopics > 0;
+        const pacingKey = getPacingTier(data.completedTopics, weekdaysElapsed, hasStarted);
         const pacingConfig = PACING_TIERS[pacingKey];
         const summitDay = getSummitDay(startDate);
         const fmtDate = (d: Date) => d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
@@ -747,13 +773,13 @@ function StatsView({ data, checkinType }: { data: any; checkinType: CheckinType 
           <div className="grid grid-cols-4 gap-3 text-center">
             <div className="rounded-lg bg-white/70 py-2">
               <p className="text-xl font-bold text-green-700">
-                {data.clipStats.completedSessions}/{data.clipStats.totalSessions}
+                {data.clipStats.completedClips}/{data.clipStats.totalClips}
               </p>
               <p className="text-xs text-gray-500">Clips Done</p>
             </div>
             <div className="rounded-lg bg-white/70 py-2">
               <p className="text-xl font-bold text-red-600">{data.srCount}</p>
-              <p className="text-xs text-gray-500">🔦 S&R</p>
+              <p className="text-xs text-gray-500">🚁 S&R</p>
             </div>
             <div className="rounded-lg bg-white/70 py-2">
               <p className="text-xl font-bold text-amber-600">{data.wtsCount}</p>

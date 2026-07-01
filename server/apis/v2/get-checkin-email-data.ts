@@ -30,11 +30,7 @@ const ViewerStatsRow = z.object({
   ascent_day_1: z.string().nullable(),
 });
 
-const ClipStatsRow = z.object({
-  total_sessions: z.coerce.number(),
-  completed_sessions: z.coerce.number(),
-  avg_score: z.coerce.number(),
-});
+// ClipStatsRow removed — replaced by inline ClipCountRow (distinct clip counting)
 
 const LeaderboardRow = z.object({
   rank: z.coerce.number(),
@@ -48,20 +44,19 @@ const EngagementRow = z.object({
   overall_engagement: z.coerce.number(),
 });
 
-// XP tier thresholds (same as in award-xp.ts / get-analytics-v3.ts)
+// XP tier thresholds (must match award-xp.ts)
 const TIERS = [
-  { name: "Summit Legend", xpMin: 5000 },
-  { name: "Peak Performer", xpMin: 3500 },
-  { name: "Ridge Runner", xpMin: 2000 },
-  { name: "Trail Blazer", xpMin: 1000 },
-  { name: "Base Camp", xpMin: 0 },
+  { name: "Pinnacle Achiever", emoji: "✨🏔️✨", xpMin: 500 },
+  { name: "Summit Seeker", emoji: "🧗🏼", xpMin: 325 },
+  { name: "Trailblazer", emoji: "🥾", xpMin: 150 },
+  { name: "Base Camper", emoji: "🏕️", xpMin: 0 },
 ];
 
-function getTierFromXp(xp: number): string {
+function getTierFromXp(xp: number): { name: string; emoji: string } {
   for (const t of TIERS) {
-    if (xp >= t.xpMin) return t.name;
+    if (xp >= t.xpMin) return { name: t.name, emoji: t.emoji };
   }
-  return "Base Camp";
+  return { name: "Base Camper", emoji: "🏕️" };
 }
 
 export default api({
@@ -85,11 +80,23 @@ export default api({
       belayBuddyEmail: z.string().nullable(),
       totalXp: z.number(),
       tier: z.string(),
+      tierEmoji: z.string(),
       ascentDay1: z.string().nullable(),
     }),
     // Pacing data
     srCount: z.number(),
     wtsCount: z.number(),
+    // Topic-based clip progress (for accurate counts + pacing context)
+    completedClipCount: z.number(),
+    totalClipCount: z.number(),
+    completedTopics: z.number(),
+    totalTopics: z.number(),
+    // Open/behind days for pacing context
+    openDays: z.array(z.object({
+      dayLabel: z.string(),
+      title: z.string(),
+      isResourceDay: z.boolean(),
+    })),
     // Approach-specific data
     moduleReflections: z.array(z.object({
       moduleKey: z.string(),
@@ -103,8 +110,8 @@ export default api({
     }).nullable(),
     // Clip stats for week2/week3/summit
     clipStats: z.object({
-      totalSessions: z.number(),
-      completedSessions: z.number(),
+      totalClips: z.number(),
+      completedClips: z.number(),
       avgScore: z.number(),
     }),
     leaderboard: z.object({
@@ -158,7 +165,7 @@ export default api({
     }
 
     const viewer = viewerRows[0];
-    const tier = getTierFromXp(viewer.total_xp);
+    const tierInfo = getTierFromXp(viewer.total_xp);
 
     // Get module reflections (for approach checkin)
     let moduleReflections: { moduleKey: string; reflectionPrompt: string; reflectionResponse: string }[] = [];
@@ -197,20 +204,68 @@ export default api({
         : null;
     }
 
-    // Get clip stats (for week2/week3/summit)
+    // Get clip stats — count DISTINCT completed clips (not sessions, which include S&R retries)
+    const ClipCountRow = z.object({
+      total_clips: z.coerce.number(),
+      completed_clips: z.coerce.number(),
+      avg_score: z.coerce.number(),
+    });
     const clipStatsRows = await ctx.integrations.db.query(
       `SELECT
-        COUNT(*)::int AS total_sessions,
-        COUNT(*) FILTER (WHERE completed = true)::int AS completed_sessions,
-        COALESCE(AVG(CASE WHEN completed = true THEN engagement_score END)::int, 0) AS avg_score
-       FROM cliptracker_v2_sessions
-       WHERE viewer_id = $1`,
-      ClipStatsRow,
+        (SELECT COUNT(*)::int FROM cliptracker_v2_clips) AS total_clips,
+        COUNT(DISTINCT CASE WHEN s.completed = true THEN s.clip_id END)::int AS completed_clips,
+        COALESCE(AVG(CASE WHEN s.completed = true AND s.is_recovery_attempt = false THEN s.engagement_score END)::int, 0) AS avg_score
+       FROM cliptracker_v2_sessions s
+       WHERE s.viewer_id = $1`,
+      ClipCountRow,
       [viewerId],
-      { label: "Get clip stats" }
+      { label: "Get clip stats (distinct clips)" }
     );
 
-    const clipStats = clipStatsRows[0] ?? { total_sessions: 0, completed_sessions: 0, avg_score: 0 };
+    const clipStats = clipStatsRows[0] ?? { total_clips: 19, completed_clips: 0, avg_score: 0 };
+
+    // Get topic-level progress for pacing context (item #8)
+    const TopicProgressRow = z.object({
+      day_label: z.string(),
+      title: z.string(),
+      total_clips: z.coerce.number(),
+      completed_clips: z.coerce.number(),
+      is_resource_day: z.boolean(),
+    });
+
+    const topicProgress = await ctx.integrations.db.query(
+      `SELECT
+        c.day_label,
+        MIN(c.title) AS title,
+        COUNT(c.id)::int AS total_clips,
+        COUNT(DISTINCT CASE WHEN s.completed = true THEN s.clip_id END)::int AS completed_clips,
+        (c.day_label IN ('Day 5', 'Day 9')) AS is_resource_day
+       FROM cliptracker_v2_clips c
+       LEFT JOIN cliptracker_v2_sessions s ON s.clip_id = c.id AND s.viewer_id = $1
+       WHERE c.day_label IS NOT NULL
+       GROUP BY c.day_label
+       ORDER BY MIN(c.sort_order)
+       LIMIT 20`,
+      TopicProgressRow,
+      [viewerId],
+      { label: "Get topic progress for pacing context" }
+    );
+
+    // Count completed topics (all clips for that day done)
+    let completedTopics = 0;
+    const openDays: Array<{ dayLabel: string; title: string; isResourceDay: boolean }> = [];
+    for (const tp of topicProgress) {
+      if (tp.completed_clips >= tp.total_clips) {
+        completedTopics++;
+      } else {
+        openDays.push({
+          dayLabel: tp.day_label,
+          title: tp.title,
+          isResourceDay: tp.is_resource_day,
+        });
+      }
+    }
+    const totalTopics = topicProgress.length;
 
     // Get leaderboard rank using XP from xp_events
     const leaderboardRows = await ctx.integrations.db.query(
@@ -248,8 +303,8 @@ export default api({
 
     const srWtsRows = await ctx.integrations.db.query(
       `SELECT
-        COUNT(*) FILTER (WHERE is_recovery_attempt = true)::int AS sr_count,
-        COUNT(*) FILTER (WHERE attempt_number >= 3)::int AS wts_count
+        SUM(CASE WHEN is_recovery_attempt = true THEN 1 ELSE 0 END)::int AS sr_count,
+        SUM(CASE WHEN attempt_number >= 3 THEN 1 ELSE 0 END)::int AS wts_count
        FROM cliptracker_v2_sessions
        WHERE viewer_id = $1`,
       SrWtsRow,
@@ -293,10 +348,10 @@ export default api({
 
     const quizStatsRows = await ctx.integrations.db.query(
       `SELECT
-        COUNT(DISTINCT quiz_id) FILTER (WHERE passed = true)::int AS quizzes_passed,
+        COUNT(DISTINCT CASE WHEN passed = true THEN quiz_id END)::int AS quizzes_passed,
         COUNT(*)::int AS total_attempts,
         COALESCE(ROUND(AVG(score * 100.0 / NULLIF(total_questions, 0)))::int, 0) AS avg_score_pct,
-        COUNT(*) FILTER (WHERE attempt_number = 1 AND passed = true)::int AS first_pass_count
+        SUM(CASE WHEN attempt_number = 1 AND passed = true THEN 1 ELSE 0 END)::int AS first_pass_count
        FROM camp_quiz_attempts
        WHERE user_email = $1`,
       QuizStatsRow,
@@ -319,7 +374,7 @@ export default api({
 
       const w4ClipRows = await ctx.integrations.db.query(
         `SELECT
-          COUNT(*) FILTER (WHERE s.completed = true)::int AS completed,
+          SUM(CASE WHEN s.completed = true THEN 1 ELSE 0 END)::int AS completed,
           COUNT(*)::int AS total,
           COALESCE(AVG(CASE WHEN s.completed = true THEN s.engagement_score END)::int, 0) AS avg_engagement
          FROM cliptracker_v2_sessions s
@@ -339,7 +394,7 @@ export default api({
 
       const w4QuizRows = await ctx.integrations.db.query(
         `SELECT
-          COUNT(DISTINCT quiz_id) FILTER (WHERE passed = true)::int AS passed,
+          COUNT(DISTINCT CASE WHEN passed = true THEN quiz_id END)::int AS passed,
           COUNT(DISTINCT quiz_id)::int AS total_quizzes,
           COALESCE(ROUND(AVG(score * 100.0 / NULLIF(total_questions, 0)))::int, 0) AS avg_score
          FROM camp_quiz_attempts
@@ -369,16 +424,22 @@ export default api({
         managerEmail: viewer.manager_email || null,
         belayBuddyEmail: viewer.belay_buddy || null,
         totalXp: viewer.total_xp,
-        tier,
+        tier: tierInfo.name,
+        tierEmoji: tierInfo.emoji,
         ascentDay1: viewer.ascent_day_1 || null,
       },
       srCount,
       wtsCount,
+      completedClipCount: clipStats.completed_clips,
+      totalClipCount: clipStats.total_clips,
+      completedTopics,
+      totalTopics,
+      openDays,
       moduleReflections,
       wdVerification,
       clipStats: {
-        totalSessions: clipStats.total_sessions,
-        completedSessions: clipStats.completed_sessions,
+        totalClips: clipStats.total_clips,
+        completedClips: clipStats.completed_clips,
         avgScore: clipStats.avg_score,
       },
       leaderboard,
