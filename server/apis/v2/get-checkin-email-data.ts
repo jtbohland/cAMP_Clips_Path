@@ -108,6 +108,13 @@ export default api({
       scenario: z.string(),
       score: z.number(),
     }).nullable(),
+    // Approach completion status (available for all check-in types)
+    approachStatus: z.object({
+      complete: z.boolean(),
+      completedCount: z.number(),
+      totalCount: z.number(),
+      incompleteModules: z.array(z.string()),
+    }),
     // Clip stats for week2/week3/summit
     clipStats: z.object({
       totalClips: z.number(),
@@ -171,33 +178,72 @@ export default api({
     let moduleReflections: { moduleKey: string; reflectionPrompt: string; reflectionResponse: string }[] = [];
     let wdVerification: { product: string; scenario: string; score: number } | null = null;
 
-    if (checkinType === "approach") {
-      const signoffs = await ctx.integrations.db.query(
-        `SELECT module_key, reflection_prompt, reflection_response
-         FROM cliptracker_v2_module_signoffs
-         WHERE viewer_id = $1
-         ORDER BY completed_at ASC`,
-        ModuleSignoffRow,
-        [viewerId],
-        { label: "Get module reflections for approach email" }
-      );
+    // Always fetch approach module status (needed for all check-in types)
+    const signoffs = await ctx.integrations.db.query(
+      `SELECT module_key, reflection_prompt, reflection_response
+       FROM cliptracker_v2_module_signoffs
+       WHERE viewer_id = $1
+       ORDER BY completed_at ASC`,
+      ModuleSignoffRow,
+      [viewerId],
+      { label: "Get module signoffs for approach status" }
+    );
 
+    const AcademyScreenshotRow = z.object({ course_key: z.string() });
+    const academyRows = await ctx.integrations.db.query(
+      `SELECT DISTINCT course_key FROM cliptracker_v2_academy_screenshots WHERE viewer_id = $1`,
+      AcademyScreenshotRow,
+      [viewerId],
+      { label: "Get academy screenshots for approach status" }
+    );
+
+    const wdRows = await ctx.integrations.db.query(
+      `SELECT product, scenario, score
+       FROM cliptracker_v2_wd_verifications
+       WHERE viewer_id = $1
+       LIMIT 1`,
+      WdRow,
+      [viewerId],
+      { label: "Get W&D verification" }
+    );
+
+    // Compute approach status
+    const signoffKeys = new Set(signoffs.map(s => s.module_key));
+    const screenshotKeys = new Set(academyRows.map(s => s.course_key));
+    const wdDone = wdRows.length > 0;
+    const APPROACH_MODULES = [
+      { key: "meddpicc", label: "MEDDPICC", type: "signoff" },
+      { key: "analytics", label: "Academy: Analytics", type: "screenshot" },
+      { key: "experiment", label: "Academy: Experiment", type: "screenshot" },
+      { key: "session_replay", label: "Academy: Session Replay", type: "screenshot" },
+      { key: "guides_surveys", label: "Academy: Guides & Surveys", type: "screenshot" },
+      { key: "challenger", label: "Challenger", type: "signoff" },
+      { key: "wheel_deal", label: "Wheel & Deal", type: "wd" },
+    ] as const;
+
+    const incompleteModules: string[] = [];
+    let approachCompletedCount = 0;
+    for (const mod of APPROACH_MODULES) {
+      const done = mod.type === "signoff"
+        ? signoffKeys.has(mod.key)
+        : mod.type === "screenshot"
+          ? screenshotKeys.has(mod.key)
+          : wdDone;
+      if (done) {
+        approachCompletedCount++;
+      } else {
+        incompleteModules.push(mod.label);
+      }
+    }
+    const approachComplete = incompleteModules.length === 0;
+
+    // Populate approach-type-specific data
+    if (checkinType === "approach") {
       moduleReflections = signoffs.map((s) => ({
         moduleKey: s.module_key,
         reflectionPrompt: s.reflection_prompt,
         reflectionResponse: s.reflection_response,
       }));
-
-      // Get W&D verification
-      const wdRows = await ctx.integrations.db.query(
-        `SELECT product, scenario, score
-         FROM cliptracker_v2_wd_verifications
-         WHERE viewer_id = $1
-         LIMIT 1`,
-        WdRow,
-        [viewerId],
-        { label: "Get W&D for approach email" }
-      );
 
       wdVerification = wdRows.length > 0
         ? { product: wdRows[0].product, scenario: wdRows[0].scenario, score: wdRows[0].score }
@@ -437,6 +483,12 @@ export default api({
       openDays,
       moduleReflections,
       wdVerification,
+      approachStatus: {
+        complete: approachComplete,
+        completedCount: approachCompletedCount,
+        totalCount: APPROACH_MODULES.length,
+        incompleteModules,
+      },
       clipStats: {
         totalClips: clipStats.total_clips,
         completedClips: clipStats.completed_clips,

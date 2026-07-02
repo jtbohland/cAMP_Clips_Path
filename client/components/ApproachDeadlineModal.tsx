@@ -82,18 +82,18 @@ export default function ApproachDeadlineModal({
           <div className="rounded-lg px-4 py-3 text-sm mb-4 border border-red-300 bg-red-50">
             {isDay7 ? (
               <>
-                <p className="font-semibold text-red-800">⏰ Last chance</p>
+                <p className="font-semibold text-red-800">⏰ Last Chance</p>
                 <p className="mt-1 text-red-700 leading-relaxed">
-                  If you don't finish The Approach today, your Ascent path opens tomorrow and you'll be expected to start Day 1: ICP.
-                  You're also off pace, so you'll need to catch up to reach your summit on time.
+                  Finish The Approach today. If not, Ascent will unlock tomorrow and you'll be expected to start Day 1: ICP.
+                  You're already off pace, so catching up early matters.
                 </p>
               </>
             ) : (
               <>
-                <p className="font-semibold text-red-800">📅 Deadline missed</p>
+                <p className="font-semibold text-red-800">📅 Deadline Missed</p>
                 <p className="mt-1 text-red-700 leading-relaxed">
-                  You have until tomorrow to catch up. After Day 7, we auto-unlock your Ascent path and you'll be expected to begin.
-                  You can revisit the Approach tab to finish what you missed, but all modules must be done before you can reach the summit.
+                  You have until tomorrow to catch up. After Day 7, Ascent will unlock automatically and you'll be expected to begin.
+                  You can return to The Approach at any time, but all modules must be completed before you can reach the summit.
                 </p>
               </>
             )}

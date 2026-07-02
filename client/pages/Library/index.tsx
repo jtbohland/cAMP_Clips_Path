@@ -891,6 +891,12 @@ export default function LibraryPage() {
                 🖼️ Modal Museum
               </button>
               <button
+                onClick={() => setPreviewMode("register")}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-purple-700 border border-purple-300 hover:bg-purple-100 transition-colors"
+              >
+                📝 Registration
+              </button>
+              <button
                 onClick={() => setAscentTestMode((prev) => !prev)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
                   ascentTestMode

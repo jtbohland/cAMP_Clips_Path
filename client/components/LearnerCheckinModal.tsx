@@ -236,23 +236,40 @@ function LearnerCheckinModalInner({ viewerId, checkinType, onClose, onSent, allo
 
     // ── APPROACH ──
     if (checkinType === "approach") {
-      body += `I just completed The Approach — the first phase of cAMP Ascent! Here's my summary:\n\n`;
-      body += `📊 Stats:\n`;
-      body += `  • XP: ${v.totalXp}\n`;
-      body += `  • Tier: ${v.tier}\n`;
-      if (data.moduleReflections?.length > 0) {
-        body += `\n✍🏽 Module Reflections:\n`;
-        data.moduleReflections.forEach((r: any) => {
-          const me = r.moduleKey === "meddpicc" ? "🧱" : r.moduleKey === "camp101" ? "📦" : r.moduleKey === "challenger" ? "⚔️" : r.moduleKey === "wheel_deal" ? "🎡" : "📝";
-          body += `  ${me} ${r.reflectionPrompt}\n`;
-          body += `     “${r.reflectionResponse}”\n`;
-        });
-      }
-      if (data.wdVerification) {
-        body += `\n🎡 Wheel & Deal:\n`;
-        body += `  • Product: ${data.wdVerification.product}\n`;
-        body += `  • Scenario: ${data.wdVerification.scenario}\n`;
-        body += `  • Score: ${data.wdVerification.score}%\n`;
+      if (data.approachStatus?.complete) {
+        // Approach COMPLETE path — show reflections
+        body += `I just completed The Approach — the first phase of cAMP Ascent! Here's my summary:\n\n`;
+        body += `📊 Stats:\n`;
+        body += `  • XP: ${v.totalXp}\n`;
+        body += `  • Tier: ${v.tier}\n`;
+        if (data.moduleReflections?.length > 0) {
+          body += `\n✍🏽 Module Reflections:\n`;
+          data.moduleReflections.forEach((r: any) => {
+            const me = r.moduleKey === "meddpicc" ? "🧱" : r.moduleKey === "camp101" ? "📦" : r.moduleKey === "challenger" ? "⚔️" : r.moduleKey === "wheel_deal" ? "🎡" : "📝";
+            body += `  ${me} ${r.reflectionPrompt}\n`;
+            body += `     "${r.reflectionResponse}"\n`;
+          });
+        }
+        if (data.wdVerification) {
+          body += `\n🎡 Wheel & Deal:\n`;
+          body += `  • Product: ${data.wdVerification.product}\n`;
+          body += `  • Scenario: ${data.wdVerification.scenario}\n`;
+          body += `  • Score: ${data.wdVerification.score}%\n`;
+        }
+      } else {
+        // Approach INCOMPLETE path — auto-unlock, show remaining modules
+        body += `My Ascent path has been unlocked, but I still have Approach modules to finish. Here's where I stand:\n\n`;
+        body += `📊 Stats:\n`;
+        body += `  • XP: ${v.totalXp}\n`;
+        body += `  • Tier: ${v.tier}\n`;
+        body += `\n🚡 Approach Status: ${data.approachStatus?.completedCount ?? 0}/${data.approachStatus?.totalCount ?? 7} complete\n`;
+        if (data.approachStatus?.incompleteModules?.length > 0) {
+          body += `  Remaining:\n`;
+          data.approachStatus.incompleteModules.forEach((mod: string) => {
+            body += `  • ${mod}\n`;
+          });
+        }
+        body += `\nI'll continue working on these as I start Ascent.\n`;
       }
 
     // ── SUMMIT ──
@@ -292,6 +309,7 @@ function LearnerCheckinModalInner({ viewerId, checkinType, onClose, onSent, allo
         body += `  • 1st Pass Rate: ${qs.quizzesPassed > 0 ? Math.round((qs.firstPassCount / qs.quizzesPassed) * 100) : 0}%\n`;
         body += `  • Retakes: ${qs.retakes}\n`;
       }
+      body += `\n✅ Approach: Complete\n`;
 
     // ── WEEK 2 / WEEK 3 ──
     } else {
@@ -316,6 +334,18 @@ function LearnerCheckinModalInner({ viewerId, checkinType, onClose, onSent, allo
         body += `  • Avg Score: ${qs.avgScorePct}%\n`;
         body += `  • 1st Pass Rate: ${qs.quizzesPassed > 0 ? Math.round((qs.firstPassCount / qs.quizzesPassed) * 100) : 0}%\n`;
         body += `  • Retakes: ${qs.retakes}\n`;
+      }
+      // Approach status section
+      if (data.approachStatus?.complete) {
+        body += `\n✅ Approach: Complete (${data.approachStatus.totalCount}/${data.approachStatus.totalCount})\n`;
+      } else {
+        body += `\n🚡 Approach: ${data.approachStatus?.completedCount ?? 0}/${data.approachStatus?.totalCount ?? 7} complete\n`;
+        if (data.approachStatus?.incompleteModules?.length > 0) {
+          body += `  Remaining:\n`;
+          data.approachStatus.incompleteModules.forEach((mod: string) => {
+            body += `  • ${mod}\n`;
+          });
+        }
       }
     }
 
@@ -986,29 +1016,53 @@ function EmailView({
 
           {checkinType === "approach" ? (
             <>
-              <p>I just completed The Approach — the first phase of cAMP Ascent!</p>
-              <div className="pl-3 border-l-2 border-gray-200 space-y-1">
-                <p className="font-semibold text-gray-800">📊 Stats:</p>
-                <p>• XP: {v.totalXp}</p>
-                <p>• Tier: {v.tier}</p>
-              </div>
-              {data.moduleReflections.length > 0 && (
-                <div className="pl-3 border-l-2 border-gray-200 space-y-1">
-                  <p className="font-semibold text-gray-800">✍🏽 Module Reflections:</p>
-                  {data.moduleReflections.map((r: any, i: number) => {
-                    const emoji = r.moduleKey === "meddpicc" ? "🧱" : r.moduleKey === "camp101" ? "📦" : r.moduleKey === "challenger" ? "⚔️" : r.moduleKey === "wheel_deal" ? "🎡" : "📝";
-                    const label = r.moduleKey === "meddpicc" ? "MEDDPICC" : r.moduleKey === "camp101" ? "cAMP 101" : r.moduleKey === "challenger" ? "Challenger" : r.moduleKey === "wheel_deal" ? "Wheel & Deal" : r.moduleKey;
-                    return (
-                      <p key={i}>• {emoji} {label} — "{r.reflectionResponse}"</p>
-                    );
-                  })}
-                </div>
-              )}
-              {data.wdVerification && (
-                <div className="pl-3 border-l-2 border-gray-200 space-y-1">
-                  <p className="font-semibold text-gray-800">🎡 Wheel & Deal:</p>
-                  <p>• {data.wdVerification.product} · {data.wdVerification.scenario} · Self-Eval: {data.wdVerification.score}%</p>
-                </div>
+              {data.approachStatus?.complete ? (
+                <>
+                  <p>I just completed The Approach — the first phase of cAMP Ascent!</p>
+                  <div className="pl-3 border-l-2 border-gray-200 space-y-1">
+                    <p className="font-semibold text-gray-800">📊 Stats:</p>
+                    <p>• XP: {v.totalXp}</p>
+                    <p>• Tier: {v.tier}</p>
+                  </div>
+                  {data.moduleReflections.length > 0 && (
+                    <div className="pl-3 border-l-2 border-gray-200 space-y-1">
+                      <p className="font-semibold text-gray-800">✍🏽 Module Reflections:</p>
+                      {data.moduleReflections.map((r: any, i: number) => {
+                        const emoji = r.moduleKey === "meddpicc" ? "🧱" : r.moduleKey === "camp101" ? "📦" : r.moduleKey === "challenger" ? "⚔️" : r.moduleKey === "wheel_deal" ? "🎡" : "📝";
+                        const modLabel = r.moduleKey === "meddpicc" ? "MEDDPICC" : r.moduleKey === "camp101" ? "cAMP 101" : r.moduleKey === "challenger" ? "Challenger" : r.moduleKey === "wheel_deal" ? "Wheel & Deal" : r.moduleKey;
+                        return (
+                          <p key={i}>• {emoji} {modLabel} — "{r.reflectionResponse}"</p>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {data.wdVerification && (
+                    <div className="pl-3 border-l-2 border-gray-200 space-y-1">
+                      <p className="font-semibold text-gray-800">🎡 Wheel & Deal:</p>
+                      <p>• {data.wdVerification.product} · {data.wdVerification.scenario} · Self-Eval: {data.wdVerification.score}%</p>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <p>My Ascent path has been unlocked, but I still have Approach modules to finish.</p>
+                  <div className="pl-3 border-l-2 border-gray-200 space-y-1">
+                    <p className="font-semibold text-gray-800">📊 Stats:</p>
+                    <p>• XP: {v.totalXp}</p>
+                    <p>• Tier: {v.tier}</p>
+                  </div>
+                  <div className="pl-3 border-l-2 border-amber-300 bg-amber-50/50 rounded py-1 space-y-1">
+                    <p className="font-semibold text-gray-800">🚡 Approach: {data.approachStatus?.completedCount ?? 0}/{data.approachStatus?.totalCount ?? 7} complete</p>
+                    {data.approachStatus?.incompleteModules?.length > 0 && (
+                      <>
+                        <p className="text-xs text-gray-600">Remaining:</p>
+                        {data.approachStatus.incompleteModules.map((mod: string, i: number) => (
+                          <p key={i} className="text-xs">• {mod}</p>
+                        ))}
+                      </>
+                    )}
+                  </div>
+                </>
               )}
             </>
           ) : checkinType === "summit" ? (
@@ -1026,7 +1080,7 @@ function EmailView({
               <div className="pl-3 border-l-2 border-amber-200 space-y-1 bg-amber-50/50 rounded py-1">
                 <p className="font-semibold text-gray-800">🏔️ Overall Journey</p>
                 <p>• 📊 XP: {v.totalXp} · Tier: {v.tier} · 🏆 #{data.leaderboard.rank} of {data.leaderboard.totalLearners}</p>
-                <p>• 🎞️ Clips: {data.clipStats.completedSessions}/{data.clipStats.totalSessions} · 🔦 S&R: {data.srCount} · ⛈️ WtS: {data.wtsCount}</p>
+                <p>• 🎞️ Clips: {data.clipStats.completedClips}/{data.clipStats.totalClips} · 🚁 S&R: {data.srCount} · ⛈️ WtS: {data.wtsCount}</p>
               </div>
               <div className="pl-3 border-l-2 border-gray-200 space-y-1">
                 <p className="font-semibold text-gray-800">👀 Engagement:</p>
@@ -1042,13 +1096,16 @@ function EmailView({
                   <p>• 1st Pass Rate: {qs.quizzesPassed > 0 ? Math.round((qs.firstPassCount / qs.quizzesPassed) * 100) : 0}%</p>
                 </div>
               )}
+              <div className="pl-3 border-l-2 border-green-300 bg-green-50/50 rounded py-1">
+                <p className="font-semibold text-green-800 text-xs">✅ Approach: Complete</p>
+              </div>
             </>
           ) : (
             <>
               <p>Here's my {checkinType === "week2" ? "Week 2" : "Week 3"} cAMP Ascent update:</p>
               <div className="pl-3 border-l-2 border-gray-200 space-y-1">
                 <p className="font-semibold text-gray-800">🎞️ Clips:</p>
-                <p>• {data.clipStats.completedSessions}/{data.clipStats.totalSessions} completed · 🔦 S&R: {data.srCount} · ⛈️ WtS: {data.wtsCount}</p>
+                <p>• {data.clipStats.completedClips}/{data.clipStats.totalClips} completed · 🚁 S&R: {data.srCount} · ⛈️ WtS: {data.wtsCount}</p>
               </div>
               <div className="pl-3 border-l-2 border-gray-200 space-y-1">
                 <p className="font-semibold text-gray-800">📊 Stats:</p>
@@ -1067,6 +1124,23 @@ function EmailView({
                   <p className="font-semibold text-gray-800">🧠 cAMP Quiz Stats:</p>
                   <p>• Passed: {qs.quizzesPassed}/{qs.totalQuizzes} · Avg: {qs.avgScorePct}%</p>
                   <p>• 1st Pass Rate: {qs.quizzesPassed > 0 ? Math.round((qs.firstPassCount / qs.quizzesPassed) * 100) : 0}%</p>
+                </div>
+              )}
+              {/* Approach status section */}
+              {data.approachStatus?.complete ? (
+                <div className="pl-3 border-l-2 border-green-300 bg-green-50/50 rounded py-1">
+                  <p className="font-semibold text-green-800 text-xs">✅ Approach: Complete ({data.approachStatus.totalCount}/{data.approachStatus.totalCount})</p>
+                </div>
+              ) : (
+                <div className="pl-3 border-l-2 border-amber-300 bg-amber-50/50 rounded py-1 space-y-1">
+                  <p className="font-semibold text-gray-800 text-xs">🚡 Approach: {data.approachStatus?.completedCount ?? 0}/{data.approachStatus?.totalCount ?? 7} complete</p>
+                  {data.approachStatus?.incompleteModules?.length > 0 && (
+                    <>
+                      {data.approachStatus.incompleteModules.map((mod: string, i: number) => (
+                        <p key={i} className="text-xs text-gray-600">• {mod}</p>
+                      ))}
+                    </>
+                  )}
                 </div>
               )}
             </>

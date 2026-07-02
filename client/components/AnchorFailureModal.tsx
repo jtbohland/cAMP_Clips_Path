@@ -76,8 +76,8 @@ export default function AnchorFailureModal({
   // Build Slack message — addressed to manager + JT, emojis, bold dates
   const slackMessage = selectedReason
     ? isEscalated
-      ? `Hi ${managerFirst} & @JT 👋 — I started Ascent on *${formatDate(startDate)}* and have now missed both my original summit deadline of *${formatDate(summitDay)}* and my adjusted deadline of *${formatDate(adjustmentDay)}*. ⚠️\n\nReason: ${reasonObj?.label ?? selectedReason}\n\n📊 I still have ${sessionsBehind} session${sessionsBehind !== 1 ? "s" : ""} remaining. I'm sending JT a meeting invite to discuss next steps and create a plan to finish. I'll get that scheduled today. 📅`
-      : `Hi ${managerFirst} & @JT 👋 — I started Ascent on *${formatDate(startDate)}* and missed my summit deadline of *${formatDate(summitDay)}*. ⚠️\n\nReason: ${reasonObj?.label ?? selectedReason}\n\n📊 I still have ${sessionsBehind} session${sessionsBehind !== 1 ? "s" : ""} remaining. My Ascent Adjustment date is *${formatDate(adjustmentDay)}* — I'll have everything done by then. 💪`
+      ? `Hi ${managerFirst} & @JT 👋 I started Ascent on *${formatDate(startDate)}* and missed both my original Summit Day of *${formatDate(summitDay)}* and my Ascent Adjustment deadline of *${formatDate(adjustmentDay)}*.\n\nReason: ${reasonObj?.label ?? selectedReason}\nSessions remaining: ${sessionsBehind}\n\nI'm sending JT time today so we can align on next steps and lock a plan to finish. 📅`
+      : `Hi ${managerFirst} & @JT 👋 I started Ascent on *${formatDate(startDate)}* and missed my Summit Day of *${formatDate(summitDay)}*.\n\nReason: ${reasonObj?.label ?? selectedReason}\nSessions remaining: ${sessionsBehind}\n\nMy Ascent Adjustment deadline is *${formatDate(adjustmentDay)}*, and I'm committed to finishing by then. 💪`
     : "";
 
   const handleCopy = useCallback(() => {
