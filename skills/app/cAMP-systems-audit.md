@@ -115,12 +115,14 @@ Weeks are gated by a **two-key system**: sequential clip unlock in the DB + Anch
 ### Trigger conditions:
 | Check-in | Fires when |
 |----------|-----------|
-| Approach (on-time, Day ≤ 5) | After FirstAchievement dismiss + `approachCheckinSentAt` is null |
-| Approach (late, Day 6-7) | After FirstAchievement dismiss (half XP, no badge) + `approachCheckinSentAt` is null |
-| Approach (auto-unlock, Day 8+) | After Oh Deer dismiss → `onSwitchToAscent` + `approachCheckinSentAt` is null |
+| Approach (callback) | After FirstAchievement dismiss (Day ≤7) or Oh Deer dismiss (Day 8+) |
+| **Approach (auto-trigger)** | **Every Library load: `ascentDay1` exists + `approachCheckinSentAt` is null — persistent gate** |
 | Week 2 | 5+ clips complete + approach sent + `week2CheckinSentAt` is null |
 | Week 3 | 10+ clips complete + `week3CheckinSentAt` is null |
 | Summit | All clips complete (summit celebration flow) |
+
+All check-ins (Approach, Week 2, Week 3) use both a callback trigger AND an auto-trigger useEffect.
+The auto-trigger is the persistent gate — it re-fires on every Library load until the email is sent.
 
 ### Pacing status on check-in modals:
 - All check-in types (including Approach) show the pacing banner when `ascentDay1` exists
