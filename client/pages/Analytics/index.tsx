@@ -14,22 +14,41 @@ import ManagerFeedbackSection from "@/components/analytics/ManagerFeedbackSectio
 
 /** Badge ID → display info */
 const BADGE_MAP: Record<string, { name: string; emoji: string }> = {
+  // Per-clip performance
   perfect_hiker: { name: "Perfect Hiker", emoji: "🌲" },
   speed_hiker: { name: "Speed Hiker", emoji: "🥾" },
   search_and_rescue_hero: { name: "S&R Hero", emoji: "🚁" },
   storm_chaser: { name: "Storm Chaser", emoji: "⛈️" },
+  double_summit: { name: "Double Summit", emoji: "⛰️" },
+  swiss_army_knife: { name: "Swiss Army Knife", emoji: "🪓" },
+  // Engagement streaks
   no_detours: { name: "No Detours", emoji: "🧭" },
   leave_no_trace: { name: "Leave No Trace", emoji: "🌱" },
+  // Pacing streaks
+  ridge_runner: { name: "Ridge Runner", emoji: "🥾" },
+  alpine_endurance: { name: "Alpine Endurance", emoji: "🏔️" },
+  iron_legs: { name: "Iron Legs", emoji: "🦿" },
+  mountain_goat: { name: "Mountain Goat", emoji: "🐐" },
+  free_solo: { name: "Free Solo", emoji: "🧗" },
+  // Summit rewards
+  golden_summit: { name: "Golden Summit", emoji: "🌄" },
+  speed_ascent: { name: "Speed Ascent", emoji: "⛷️" },
+  second_wind: { name: "Second Wind", emoji: "💨" },
+  every_step_counts: { name: "Every Step Counts", emoji: "👣" },
+  // Grip Strength
+  grip_strength: { name: "Grip Strength", emoji: "💪" },
+  // Milestones
   first_step: { name: "First Step", emoji: "🎬" },
+  peak_lift: { name: "Peak Lift", emoji: "🚡" },
   halfway: { name: "Halfway Up", emoji: "🏔️" },
   week_4_entry: { name: "Summit Push", emoji: "🪢" },
-  summit: { name: "Summit Reached", emoji: "🏔️✨" },
   mystery: { name: "Ranger's Secret", emoji: "🌲" },
-  double_summit: { name: "Double Summit", emoji: "⛰️" },
-  on_the_trail: { name: "On the Trail", emoji: "🗓️" },
-  the_ascent: { name: "The Ascent", emoji: "🧗" },
   podcast_cast: { name: "The Full Cast", emoji: "🎣" },
   approach_complete: { name: "The Approach", emoji: "🚡" },
+  // Legacy (no longer awarded)
+  on_the_trail: { name: "On the Trail", emoji: "🗓️" },
+  the_ascent: { name: "The Ascent", emoji: "🧗" },
+  summit: { name: "Summit Reached", emoji: "🏔️✨" },
 };
 
 const ROLE_PILL: Record<string, { bg: string; text: string; border: string }> = {

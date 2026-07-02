@@ -19,6 +19,7 @@ import TrailManifesto from "@/components/TrailManifesto";
 import FirstAchievementModal from "@/components/FirstAchievementModal";
 import LearnerCheckinModal from "@/components/LearnerCheckinModal";
 import SummitInSightModal from "@/components/SummitInSightModal";
+import FinalAchievementModal from "@/components/FinalAchievementModal";
 import Week1Page from "@/components/week1/Week1Page";
 import {
   countWeekdays,
@@ -34,6 +35,7 @@ import {
   TOTAL_SESSIONS,
 } from "@/lib/pacing";
 import type { ApproachCatchUpItem } from "@/components/PacingModal";
+import { calculatePatchProgress } from "@/lib/patchProgress";
 
 function LoadingSkeleton() {
   return (
@@ -52,6 +54,7 @@ export default function LibraryPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { viewer, isLoading: viewerLoading, lookupError } = useViewer();
+  const [showFinalAchievement, setShowFinalAchievement] = useState(false);
   const [showSummit, setShowSummit] = useState(false);
   const [tierUnlock, setTierUnlock] = useState<number | null>(null);
   const [showPacing, setShowPacing] = useState(false);
@@ -303,6 +306,22 @@ export default function LibraryPage() {
     return { complete: false, catchUpItems: items };
   }, [week1Data]);
 
+  // ── Today's Patch Progress ──
+  const patchProgress = useMemo(() => {
+    if (!pacingInfo || !progressData || clips.length === 0) return null;
+    // Find the next uncompleted clip's sort order
+    const nextClip = clips.find((c: any) => !c.completed && c.unlocked);
+    const nextClipSortOrder = nextClip ? (nextClip as any).sortOrder : null;
+    const earnedBadgeIds = new Set((progressData.badges ?? []).map((b: any) => b.badgeId));
+    return calculatePatchProgress({
+      nextClipSortOrder,
+      earnedBadgeIds,
+      isLegacyLearner: !!week1Data?.isLegacyLearner,
+      pacingTier: pacingInfo.tier,
+      weekdaysElapsed: pacingInfo.weekdaysElapsed,
+    });
+  }, [clips, progressData, pacingInfo, week1Data]);
+
   // Summit Reached requires ALL Ascent clips AND ALL Approach items complete
   const allCompleted = ascentComplete && approachStatus?.complete === true;
 
@@ -420,10 +439,10 @@ export default function LibraryPage() {
     }
     if (stored === "true") return; // Already dismissed
     // Not dismissed + all completed = show summit
-    if (allCompleted && !showSummit) {
-      setShowSummit(true);
+    if (allCompleted && !showFinalAchievement && !showSummit) {
+      setShowFinalAchievement(true);
     }
-  }, [dataReady, allCompleted, showSummit, previewMode, viewer]);
+  }, [dataReady, allCompleted, showFinalAchievement, showSummit, previewMode, viewer]);
 
   // (Anchor failure detection is now handled by the unified pacing trigger above —
   //  getPacingTier returns "anchor_failure" when past summit day + incomplete)
@@ -599,6 +618,8 @@ export default function LibraryPage() {
           isSummitDay={pacingInfo.summitDayIsToday}
           approachComplete={approachStatus?.complete}
           approachCatchUpItems={approachStatus?.catchUpItems}
+          patchPills={patchProgress?.pills}
+          patchBestCaseXp={patchProgress?.bestCaseXp}
           onDismiss={() => setShowPacing(false)}
         />
       </div>
@@ -606,6 +627,19 @@ export default function LibraryPage() {
 }
 
   // ──────────────────── MODALS (only when dataReady) ────────────────────
+
+  // Final Achievement — fires after all clips done, BEFORE Grand Finale
+  if (showFinalAchievement && previewMode !== "tier") {
+    return (
+      <FinalAchievementModal
+        viewerId={viewer.id}
+        onDismiss={() => {
+          setShowFinalAchievement(false);
+          setShowSummit(true); // proceed to Grand Finale
+        }}
+      />
+    );
+  }
 
   // Summit celebration — opens merged LearnerCheckinModal with celebrate step
   if (showSummit && previewMode !== "tier") {
@@ -700,6 +734,8 @@ export default function LibraryPage() {
         isSummitDay={pacingInfo.summitDayIsToday}
         approachComplete={approachStatus?.complete}
         approachCatchUpItems={approachStatus?.catchUpItems}
+        patchPills={patchProgress?.pills}
+        patchBestCaseXp={patchProgress?.bestCaseXp}
         onDismiss={() => setShowPacing(false)}
       />
     )}

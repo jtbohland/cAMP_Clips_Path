@@ -4,6 +4,7 @@ import {
   type MissedClip,
   PACING_TIERS,
 } from "@/lib/pacing";
+import type { PatchPill } from "@/lib/patchProgress";
 
 /** Incomplete approach module for catch-up display */
 export interface ApproachCatchUpItem {
@@ -25,6 +26,9 @@ interface PacingModalProps {
   approachComplete?: boolean;
   /** Incomplete approach modules to show in catch-up list */
   approachCatchUpItems?: ApproachCatchUpItem[];
+  /** Today's Patch Progress — possible badges/XP for today */
+  patchPills?: PatchPill[];
+  patchBestCaseXp?: number;
   onDismiss: () => void;
 }
 
@@ -40,6 +44,8 @@ export default function PacingModal({
   isSummitDay,
   approachComplete,
   approachCatchUpItems,
+  patchPills,
+  patchBestCaseXp,
   onDismiss,
 }: PacingModalProps) {
   const config = PACING_TIERS[tier];
@@ -216,6 +222,35 @@ export default function PacingModal({
               <p className="text-lg font-bold">
                 {summitDay.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
               </p>
+            </div>
+          )}
+
+          {/* Today's Patch Progress */}
+          {patchPills && patchPills.length > 0 && tier !== "completed" && (
+            <div className="mb-4">
+              <p className="text-sm font-bold mb-1">🎖️ Today's Patch Progress</p>
+              <p className="text-xs opacity-75 mb-2 italic">
+                Complete the task, earn your emblems, advance your rank! Here's what's at stake...
+              </p>
+              <div
+                className="rounded-lg px-4 py-3 space-y-1.5"
+                style={{ backgroundColor: `${config.headerBg}10` }}
+              >
+                {patchPills.map((pill, i) => (
+                  <div key={i} className="flex items-center justify-between text-sm">
+                    <span>
+                      <span className="mr-1.5">{pill.emoji}</span>
+                      {pill.name}
+                    </span>
+                    <span className="font-bold text-amber-600">+{pill.xp} XP</span>
+                  </div>
+                ))}
+              </div>
+              {patchBestCaseXp !== undefined && patchBestCaseXp > 0 && (
+                <p className="text-xs font-semibold mt-2 text-center opacity-80">
+                  🕶️ Best case today: +{patchBestCaseXp} XP
+                </p>
+              )}
             </div>
           )}
 

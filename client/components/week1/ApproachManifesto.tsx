@@ -140,11 +140,11 @@ export default function ApproachManifesto({ viewerId }: ApproachManifestoProps) 
           <div>
             <p className="font-semibold text-gray-900">Suggested pace (5 weekdays)</p>
             <div className="text-xs text-gray-600 mt-1 space-y-0.5">
-              <p><strong>Day 1:</strong> MEDDPICC + 1 Academy course (~2 hrs)</p>
-              <p><strong>Day 2:</strong> 2 Academy courses + start Challenger reading (~2 hrs)</p>
-              <p><strong>Day 3:</strong> Final Academy course + finish Challenger sign-off (~1.5 hrs)</p>
-              <p><strong>Day 4:</strong> cAMP 101 sign-off + prep for Wheel & Deal (~1 hr)</p>
-              <p><strong>Day 5:</strong> Wheel & Deal with your manager (~30 min) → 🧗 Begin The Ascent!</p>
+              <p><strong>Day 1:</strong> MEDDPICC + Analytics Academy (~2 hrs)</p>
+              <p><strong>Day 2:</strong> Experiment + Session Replay Academy + start Challenger reading (~2 hrs)</p>
+              <p><strong>Day 3:</strong> Guides & Surveys Academy + continue Challenger (~1.5 hrs)</p>
+              <p><strong>Day 4:</strong> Finish Challenger + Challenger sign-off (~1 hr)</p>
+              <p><strong>Day 5:</strong> Wheel & Deal with your manager (~15 min) → 🧗 Begin The Ascent!</p>
             </div>
           </div>
         </div>

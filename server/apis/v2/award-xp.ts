@@ -269,24 +269,14 @@ export default api({
       badgesEarned.push({ badgeId: "first_step", name: "First Step", emoji: "🎬", xp: 5 });
     }
 
-    // Halfway Up: Complete Clip 9
-    if (sortOrder === 9) {
-      xpEvents.push({ sourceId: "halfway", eventType: "milestone", xp: 15 });
-      badgesEarned.push({ badgeId: "halfway", name: "Halfway Up", emoji: "🏔️", xp: 15 });
-    }
-
     // Into the Summit Push: Clip 10 gets unlocked (completing clip 9 triggers this)
     if (sortOrder === 9) {
       xpEvents.push({ sourceId: "week_4_entry", eventType: "milestone", xp: 10 });
       badgesEarned.push({ badgeId: "week_4_entry", name: "Into the Summit Push", emoji: "🪢", xp: 10 });
     }
 
-    // Summit Reached: Complete clip 17
+    // Ranger's Secret: Complete all 17 clips without ever triggering Weather the Storm
     if (sortOrder === 17) {
-      xpEvents.push({ sourceId: "summit", eventType: "milestone", xp: 25 });
-      badgesEarned.push({ badgeId: "summit", name: "Summit Reached", emoji: "🏔️✨", xp: 25 });
-
-      // Check for Ranger's Secret: never triggered Weather the Storm
       const StormSchema = z.object({ count: z.coerce.number() });
       const stormCheck = await ctx.integrations.db.query(
         `SELECT COUNT(*)::int as count FROM cliptracker_v2_xp_events
@@ -333,75 +323,6 @@ export default api({
     }
 
     // === INSERT XP EVENTS ===
-    // But first — PACE BONUSES (requires knowing sort_order and ascent_day_1)
-    const PaceSchema = z.object({ ascent_day_1: z.string().nullable() });
-    const paceData = await ctx.integrations.db.query(
-      `SELECT ascent_day_1::text FROM cliptracker_v2_viewers WHERE id = $1`,
-      PaceSchema, [viewerId], { label: "Get ascent day 1 for pace" }
-    );
-    const ascentDay1 = paceData[0]?.ascent_day_1 ? new Date(paceData[0].ascent_day_1) : null;
-
-    if (ascentDay1) {
-      const now = new Date();
-      const daysSinceStart = Math.floor((now.getTime() - ascentDay1.getTime()) / (1000 * 60 * 60 * 24));
-
-      // On the Trail: +10 per pacing window completed on time
-      // Week 2 (Clips 1-4 by day 7), Week 3 (Clips 5-9 by day 14), Week 4 (Clips 10-17 by day 28)
-      const paceWindows = [
-        { clips: [1, 2, 3, 4], deadline: 7, bonusId: "on_the_trail_week2" },
-        { clips: [5, 6, 7, 8, 9], deadline: 14, bonusId: "on_the_trail_week3" },
-        { clips: [10, 11, 12, 13, 14, 15, 16, 17], deadline: 28, bonusId: "on_the_trail_week4" },
-      ];
-
-      for (const window of paceWindows) {
-        // Only evaluate if current clip belongs to this window AND we're within the deadline
-        if (window.clips.includes(sortOrder) && daysSinceStart <= window.deadline) {
-          // Check if bonus already awarded
-          const ExPaceSchema = z.object({ count: z.coerce.number() });
-          const existingPace = await ctx.integrations.db.query(
-            `SELECT COUNT(*)::int as count FROM cliptracker_v2_xp_events
-             WHERE viewer_id = $1 AND source_id = $2`,
-            ExPaceSchema, [viewerId, window.bonusId], { label: `Check pace: ${window.bonusId}` }
-          );
-          if (existingPace[0]?.count === 0) {
-            // Check if ALL clips in this window are now completed (including the current one being awarded)
-            const CompletedPaceSchema = z.object({ count: z.coerce.number() });
-            const completedInWindow = await ctx.integrations.db.query(
-              `SELECT COUNT(DISTINCT c.id)::int as count
-               FROM cliptracker_v2_xp_events xe
-               JOIN cliptracker_v2_clips c ON c.id = xe.clip_id
-               WHERE xe.viewer_id = $1 AND xe.source_id = 'watch'
-               AND c.sort_order = ANY($2::int[])`,
-              CompletedPaceSchema,
-              [viewerId, window.clips],
-              { label: `Check completed clips in pace window: ${window.bonusId}` }
-            );
-            // Current clip's 'watch' event isn't inserted yet, so count it (+1)
-            const totalCompleted = (completedInWindow[0]?.count ?? 0) + 1;
-            if (totalCompleted >= window.clips.length) {
-              xpEvents.push({ sourceId: window.bonusId, eventType: "pace", xp: 10 });
-              badgesEarned.push({ badgeId: "on_the_trail", name: "On the Trail", emoji: "🗓️", xp: 10 });
-            }
-          }
-        }
-      }
-
-      // The Ascent: Complete all 17 clips within 28 days
-      if (sortOrder === 17 && daysSinceStart <= 28) {
-        const ExAscentSchema = z.object({ count: z.coerce.number() });
-        const existingAscent = await ctx.integrations.db.query(
-          `SELECT COUNT(*)::int as count FROM cliptracker_v2_xp_events
-           WHERE viewer_id = $1 AND source_id = 'the_ascent'`,
-          ExAscentSchema, [viewerId], { label: "Check existing ascent bonus" }
-        );
-        if (existingAscent[0]?.count === 0) {
-          xpEvents.push({ sourceId: "the_ascent", eventType: "pace", xp: 25 });
-          badgesEarned.push({ badgeId: "the_ascent", name: "The Ascent", emoji: "🧗", xp: 25 });
-        }
-      }
-    }
-
-    // === NOW INSERT XP EVENTS ===
     let totalAwarded = 0;
     for (const event of xpEvents) {
       try {
@@ -448,9 +369,10 @@ export default api({
       { tier: 1, name: "Base Camper", emoji: "🏕️" },
       { tier: 2, name: "Trailblazer", emoji: "🥾" },
       { tier: 3, name: "Summit Seeker", emoji: "🧗🏼" },
-      { tier: 4, name: "Pinnacle Achiever", emoji: "✨🏔️✨" },
+      { tier: 4, name: "Pinnacle Achiever", emoji: "⛰️" },
+      { tier: 5, name: "Alpinist All-Star", emoji: "💫" },
     ];
-    const TIER_THRESHOLDS = [0, 150, 325, 500];
+    const TIER_THRESHOLDS = [0, 150, 325, 500, 700];
     const prevXp = totalXp - totalAwarded;
     const prevTierIdx = TIER_THRESHOLDS.reduce((acc, t, i) => prevXp >= t ? i : acc, 0);
     const newTierIdx = TIER_THRESHOLDS.reduce((acc, t, i) => totalXp >= t ? i : acc, 0);

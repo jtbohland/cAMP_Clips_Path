@@ -5,7 +5,6 @@ const NAV_TABS = [
   { path: "/library", label: "Clips", emoji: "🎬" },
   { path: "/xp", label: "XP-lanation", emoji: "🔭" },
   { path: "/analytics", label: "Analytics", emoji: "📊" },
-  { path: "/admin", label: "Admin", emoji: "⚙️" },
 ];
 
 

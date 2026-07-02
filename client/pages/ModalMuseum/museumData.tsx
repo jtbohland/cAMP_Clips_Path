@@ -189,6 +189,15 @@ const MOCK_APPROACH_CATCH_UP: { emoji: string; label: string }[] = [
   { emoji: "🎡", label: "Wheel & Deal" },
 ];
 
+const MOCK_PATCH_PILLS: { emoji: string; name: string; xp: number }[] = [
+  { emoji: "🌲", name: "Perfect Hiker", xp: 8 },
+  { emoji: "🥾", name: "Speed Hiker", xp: 5 },
+  { emoji: "🚁", name: "Search & Rescue Hero", xp: 8 },
+  { emoji: "⛰️", name: "Double Summit", xp: 5 },
+  { emoji: "🧭", name: "No Detours", xp: 10 },
+  { emoji: "🏔️", name: "Alpine Endurance", xp: 15 },
+];
+
 const pacingExhibits: MuseumExhibit[] = [
   ...PACING_TIERS.map((p) => ({
     id: `pacing-${p.tier}`,
@@ -205,8 +214,10 @@ const pacingExhibits: MuseumExhibit[] = [
         summitDay={MOCK_SUMMIT_DAY}
         isDayBeforeSummit={false}
         isSummitDay={false}
-        approachComplete={true}
-        approachCatchUpItems={[]}
+        approachComplete={p.daysBehind >= 2 ? false : true}
+        approachCatchUpItems={p.daysBehind >= 2 ? MOCK_APPROACH_CATCH_UP : []}
+        patchPills={p.tier !== "completed" && p.tier !== "not_started" ? MOCK_PATCH_PILLS : undefined}
+        patchBestCaseXp={p.tier !== "completed" && p.tier !== "not_started" ? MOCK_PATCH_PILLS.reduce((s, pill) => s + pill.xp, 0) : undefined}
         onDismiss={noop}
       />
     ),
@@ -228,6 +239,8 @@ const pacingExhibits: MuseumExhibit[] = [
         isSummitDay={false}
         approachComplete={true}
         approachCatchUpItems={[]}
+        patchPills={MOCK_PATCH_PILLS}
+        patchBestCaseXp={MOCK_PATCH_PILLS.reduce((s, p) => s + p.xp, 0)}
         onDismiss={noop}
       />
     ),
@@ -249,6 +262,31 @@ const pacingExhibits: MuseumExhibit[] = [
         isSummitDay={true}
         approachComplete={true}
         approachCatchUpItems={[]}
+        patchPills={MOCK_PATCH_PILLS}
+        patchBestCaseXp={MOCK_PATCH_PILLS.reduce((s, p) => s + p.xp, 0)}
+        onDismiss={noop}
+      />
+    ),
+  },
+  {
+    id: "pacing-patch-progress",
+    title: "Today's Patch Progress",
+    trigger: "Summit Bound learner — shows possible badges for today's clip",
+    render: () => (
+      <PacingModal
+        tier="summit_bound"
+        daysBehind={0}
+        clipsCompleted={9}
+        totalClips={17}
+        weekdaysElapsed={14}
+        missedClips={[]}
+        summitDay={MOCK_SUMMIT_DAY}
+        isDayBeforeSummit={false}
+        isSummitDay={false}
+        approachComplete={true}
+        approachCatchUpItems={[]}
+        patchPills={MOCK_PATCH_PILLS}
+        patchBestCaseXp={MOCK_PATCH_PILLS.reduce((s, p) => s + p.xp, 0)}
         onDismiss={noop}
       />
     ),
@@ -270,6 +308,8 @@ const pacingExhibits: MuseumExhibit[] = [
         isSummitDay={false}
         approachComplete={false}
         approachCatchUpItems={MOCK_APPROACH_CATCH_UP}
+        patchPills={MOCK_PATCH_PILLS}
+        patchBestCaseXp={MOCK_PATCH_PILLS.reduce((s, p) => s + p.xp, 0)}
         onDismiss={noop}
       />
     ),
@@ -373,7 +413,7 @@ const tierExhibits: MuseumExhibit[] = [
         totalXp={162}
         leaderboardRank={4}
         nextTierName="Summit Seeker"
-        nextTierEmoji="🏔️"
+        nextTierEmoji="🧗🏼"
         xpToNextTier={163}
       />
     ),
@@ -389,7 +429,7 @@ const tierExhibits: MuseumExhibit[] = [
         totalXp={340}
         leaderboardRank={2}
         nextTierName="Pinnacle Achiever"
-        nextTierEmoji="✨🏔️✨"
+        nextTierEmoji="⛰️"
         xpToNextTier={160}
       />
     ),
@@ -397,12 +437,28 @@ const tierExhibits: MuseumExhibit[] = [
   {
     id: "tier-pinnacle",
     title: "Pinnacle Achiever Unlock",
-    trigger: "Learner reaches 500 XP — highest tier",
+    trigger: "Learner reaches 500 XP",
     render: () => (
       <TierUnlockMockup
         tierName="Pinnacle Achiever"
-        tierEmoji="✨🏔️✨"
+        tierEmoji="⛰️"
         totalXp={515}
+        leaderboardRank={1}
+        nextTierName="Alpinist All-Star"
+        nextTierEmoji="💫"
+        xpToNextTier={185}
+      />
+    ),
+  },
+  {
+    id: "tier-alpinist",
+    title: "💫 Alpinist All-Star Unlock",
+    trigger: "Learner reaches 700 XP — highest tier",
+    render: () => (
+      <TierUnlockMockup
+        tierName="Alpinist All-Star"
+        tierEmoji="💫"
+        totalXp={720}
         leaderboardRank={1}
         nextTierName={null}
         nextTierEmoji={null}
@@ -456,6 +512,30 @@ const summitExhibits: MuseumExhibit[] = [
         onDismiss={noop}
       />
     ),
+  },
+  {
+    id: "final-achievement-golden",
+    title: "🏆 Final Achievement (Golden Summit)",
+    trigger: "All 17 clips completed — Approach ✅ + finished by Summit Day. Shows before Grand Finale.",
+    render: () => <FinalAchievementMockup tier="golden" />,
+  },
+  {
+    id: "final-achievement-speed",
+    title: "🏆 Final Achievement (Speed Ascent)",
+    trigger: "All 17 clips completed — finished by Summit Day, Approach ❌. Shows before Grand Finale.",
+    render: () => <FinalAchievementMockup tier="speed" />,
+  },
+  {
+    id: "final-achievement-second",
+    title: "🏆 Final Achievement (Second Wind)",
+    trigger: "All 17 clips completed — finished by Adjustment Day. Shows before Grand Finale.",
+    render: () => <FinalAchievementMockup tier="second" />,
+  },
+  {
+    id: "final-achievement-every",
+    title: "🏆 Final Achievement (Every Step Counts)",
+    trigger: "All 17 clips completed — finished after Adjustment Day. Shows before Grand Finale.",
+    render: () => <FinalAchievementMockup tier="every" />,
   },
   {
     id: "summit-grand-finale",
@@ -726,7 +806,7 @@ function SummitGrandFinaleMockup() {
               {/* XP + Tier card */}
               <div className="rounded-xl bg-amber-50 border border-amber-200 px-5 py-4 flex items-center justify-between">
                 <div>
-                  <p className="text-lg font-bold text-amber-700">✨🏔️✨ Pinnacle Achiever</p>
+                  <p className="text-lg font-bold text-amber-700">⛰️ Pinnacle Achiever</p>
                   <p className="text-xs text-amber-500 mt-0.5">Your final tier</p>
                 </div>
                 <div className="text-right">
@@ -797,6 +877,131 @@ function SummitGrandFinaleMockup() {
   );
 }
 
+/** Static mockup of the Final Achievement Modal — shows summit rewards, pacing streaks, grip strength */
+function FinalAchievementMockup({ tier }: { tier: "golden" | "speed" | "second" | "every" }) {
+  const tiers = {
+    golden: { badgeId: "golden_summit", name: "Golden Summit", emoji: "🌄", xp: 40, gradient: "from-yellow-400 to-amber-500", desc: "Approach ✅ + Ascent ✅ by Summit Day" },
+    speed: { badgeId: "speed_ascent", name: "Speed Ascent", emoji: "⛷️", xp: 30, gradient: "from-sky-400 to-blue-500", desc: "Ascent ✅ by Summit Day, Approach ❌" },
+    second: { badgeId: "second_wind", name: "Second Wind", emoji: "💨", xp: 20, gradient: "from-slate-300 to-slate-500", desc: "Finished by Adjustment Day" },
+    every: { badgeId: "every_step_counts", name: "Every Step Counts", emoji: "👣", xp: 10, gradient: "from-stone-300 to-stone-500", desc: "Completed after Adjustment Day" },
+  };
+  const t = tiers[tier];
+
+  // Mock pacing streaks (only show for golden/speed to show the ideal case)
+  const mockPacingStreaks = tier === "golden" ? [
+    { badgeId: "ridge_runner", name: "Ridge Runner", emoji: "🥾", xp: 10, desc: "5 consecutive days Summit Bound" },
+    { badgeId: "alpine_endurance", name: "Alpine Endurance", emoji: "🏔️", xp: 15, desc: "10 consecutive days Summit Bound" },
+    { badgeId: "iron_legs", name: "Iron Legs", emoji: "🦿", xp: 20, desc: "15 consecutive days Summit Bound" },
+    { badgeId: "mountain_goat", name: "Mountain Goat", emoji: "🐐", xp: 30, desc: "20 consecutive days Summit Bound" },
+    { badgeId: "free_solo", name: "Free Solo", emoji: "🧗", xp: 40, desc: "Zero rockslide or worse across all Ascent days" },
+  ] : tier === "speed" ? [
+    { badgeId: "ridge_runner", name: "Ridge Runner", emoji: "🥾", xp: 10, desc: "5 consecutive days Summit Bound" },
+    { badgeId: "alpine_endurance", name: "Alpine Endurance", emoji: "🏔️", xp: 15, desc: "10 consecutive days Summit Bound" },
+  ] : [];
+
+  // Mock grip strength (show for golden/speed)
+  const mockGrip = (tier === "golden" || tier === "speed") ? { badgeId: "grip_strength", name: "Grip Strength", emoji: "💪", xp: 35, desc: "Avg engagement score ≥85% across all 17 clips" } : null;
+
+  const totalXp = t.xp + mockPacingStreaks.reduce((s, b) => s + b.xp, 0) + (mockGrip?.xp ?? 0);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+      <div className="w-full max-w-lg mx-4 max-h-[90vh] rounded-2xl bg-white shadow-2xl overflow-hidden flex flex-col">
+        {/* Gradient header */}
+        <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 px-8 pt-8 pb-6 text-center shrink-0">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm mb-4 text-4xl">
+            🏆
+          </div>
+          <h2 className="text-2xl font-bold text-white">Final Achievement Unlocked!</h2>
+          <p className="mt-2 text-sm text-white/80 leading-relaxed max-w-md mx-auto">
+            Your journey defined your rewards. Here's what you earned on the way to the summit.
+          </p>
+        </div>
+
+        {/* Badge grid */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+          {/* Summit Reward — featured card */}
+          <div className="space-y-2">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400">Summit Reward</h3>
+            <div className={`rounded-xl bg-gradient-to-r ${t.gradient} p-[2px]`}>
+              <div className="rounded-[10px] bg-white px-5 py-4 flex items-center gap-4">
+                <span className="text-3xl">{t.emoji}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-base font-bold text-gray-900">{t.name}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{t.desc}</p>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className="text-lg font-bold text-amber-600">+{t.xp}</p>
+                  <p className="text-xs text-gray-400">XP</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Pacing Streaks */}
+          {mockPacingStreaks.length > 0 && (
+            <div className="space-y-2">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400">Pacing Streaks</h3>
+              <div className="grid gap-2">
+                {mockPacingStreaks.map((badge) => (
+                  <div key={badge.badgeId} className="rounded-xl bg-gray-50 border border-gray-200 px-5 py-3.5 flex items-center gap-3">
+                    <span className="text-2xl">{badge.emoji}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-gray-900">{badge.name}</p>
+                      {badge.desc && <p className="text-xs text-gray-500 mt-0.5">{badge.desc}</p>}
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-base font-bold text-amber-600">+{badge.xp}</p>
+                      <p className="text-xs text-gray-400">XP</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Grip Strength */}
+          {mockGrip && (
+            <div className="space-y-2">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400">Performance</h3>
+              <div className="rounded-xl bg-gray-50 border border-gray-200 px-5 py-3.5 flex items-center gap-3">
+                <span className="text-2xl">{mockGrip.emoji}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-gray-900">{mockGrip.name}</p>
+                  {mockGrip.desc && <p className="text-xs text-gray-500 mt-0.5">{mockGrip.desc}</p>}
+                </div>
+                <div className="text-right shrink-0">
+                  <p className="text-base font-bold text-amber-600">+{mockGrip.xp}</p>
+                  <p className="text-xs text-gray-400">XP</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Total XP earned */}
+          <div className="rounded-xl bg-amber-50 border border-amber-200 px-5 py-3 flex items-center justify-between">
+            <span className="text-sm font-semibold text-amber-700">Summit achievement bonus</span>
+            <span className="text-xl font-bold text-amber-700">+{totalXp} XP</span>
+          </div>
+        </div>
+
+        {/* Dismiss button */}
+        <div className="px-8 pb-8 pt-2 shrink-0">
+          <button
+            onClick={noop}
+            className="w-full py-3.5 rounded-xl text-sm font-bold bg-gradient-to-r from-amber-500 to-yellow-500 text-white hover:from-amber-600 hover:to-yellow-600 transition-all shadow-lg"
+          >
+            ⚓ Final Anchor Point
+          </button>
+          <p className="text-xs text-center text-gray-400 mt-2">
+            Continue to your Summit Celebration
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /** Static mockup of the Learner Check-In Email Modal — 3-step flow preview */
 function CheckinMockup({ type }: { type: "approach" | "week2" | "week3" | "summit" }) {
   const [step, setStep] = useState<"stats" | "reflect" | "email">("stats");
@@ -859,7 +1064,7 @@ function CheckinMockup({ type }: { type: "approach" | "week2" | "week3" | "summi
                       <p className="text-xs text-gray-500 mt-0.5">Total XP</p>
                     </div>
                     <div className="text-center">
-                      <p className="text-xl font-bold text-gray-900">{type === "summit" ? "✨🏔️✨ Pinnacle" : type === "week3" ? "🧗🏼 Seeker" : type === "week2" ? "🥾 Trailblazer" : "🏕️ Base Camper"}</p>
+                      <p className="text-xl font-bold text-gray-900">{type === "summit" ? "⛰️ Pinnacle" : type === "week3" ? "🧗🏼 Seeker" : type === "week2" ? "🥾 Trailblazer" : "🏕️ Base Camper"}</p>
                       <p className="text-xs text-gray-500 mt-0.5">Tier</p>
                     </div>
                     {type !== "approach" && (
@@ -1097,7 +1302,7 @@ function CheckinMockup({ type }: { type: "approach" | "week2" | "week3" | "summi
                       </div>
                       <div className="pl-3 border-l-2 border-amber-200 space-y-1 bg-amber-50/50 rounded py-1">
                         <p className="font-semibold text-gray-800">🏔️ Overall Journey</p>
-                        <p>• 📊 XP: 485 · Tier: ✨🏔️✨ Pinnacle · 🏆 #3 of 12</p>
+                        <p>• 📊 XP: 485 · Tier: ⛰️ Pinnacle · 🏆 #3 of 12</p>
                         <p>• 🎞️ Clips: 17/17 · 🔦 S&R: 3 · ⛈️ WtS: 1</p>
                       </div>
                       <div className="pl-3 border-l-2 border-gray-200 space-y-1">
