@@ -488,7 +488,8 @@ export default function LibraryPage() {
     if (
       completed >= 0 &&
       progressData.ascentDay1 &&
-      !progressData.approachCheckinSentAt
+      !progressData.approachCheckinSentAt &&
+      !week1Data?.isLegacyLearner  // legacy learners exempt from Approach check-in
     ) {
       const sessionKey = `checkin_approach_prompted_${viewer!.id}`;
       if (!sessionStorage.getItem(sessionKey)) {
@@ -635,7 +636,7 @@ export default function LibraryPage() {
         onDismiss={() => {
           setShowFirstAchievement(false);
           // After dismissing First Achievement, trigger Approach check-in if not yet sent
-          if (progressData && !progressData.approachCheckinSentAt) {
+          if (progressData && !progressData.approachCheckinSentAt && !week1Data?.isLegacyLearner) {
             setCheckinType("approach");
             setShowCheckin(true);
           }
@@ -837,7 +838,7 @@ export default function LibraryPage() {
             onSwitchToAscent={() => {
               setActiveTab("ascent");
               // Day 8+ Oh Deer auto-unlock — trigger Approach check-in if not yet sent
-              if (progressData && !progressData.approachCheckinSentAt) {
+              if (progressData && !progressData.approachCheckinSentAt && !week1Data?.isLegacyLearner) {
                 setCheckinType("approach");
                 setShowCheckin(true);
               }
