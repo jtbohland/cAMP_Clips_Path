@@ -479,6 +479,7 @@ export default function LibraryPage() {
   useEffect(() => {
     if (!dataReady || !progressData || checkinTriggeredRef.current) return;
     if (showSummit || showFirstAchievement || tierUnlock !== null || showCheckin) return;
+    if (viewer?.isAdmin) return; // admins use the Test Check-In dropdown instead
 
     const completed = progressData.clipsCompleted;
 
@@ -644,7 +645,7 @@ export default function LibraryPage() {
         onDismiss={() => {
           setShowFirstAchievement(false);
           // After dismissing First Achievement, trigger Approach check-in if not yet sent
-          if (progressData && !progressData.approachCheckinSentAt && !week1Data?.isLegacyLearner) {
+          if (progressData && !progressData.approachCheckinSentAt && !week1Data?.isLegacyLearner && !viewer?.isAdmin) {
             setCheckinType("approach");
             setShowCheckin(true);
           }
