@@ -58,9 +58,13 @@ type Week1PageProps = {
   onBeginAscent: (unlockResult?: UnlockResult) => void;
   /** Switch to Ascent tab (used by Oh Deer auto-unlock) */
   onSwitchToAscent?: () => void;
+  /** Admin: open registration preview */
+  onOpenRegistration?: () => void;
+  /** Admin: trigger a test check-in modal */
+  onTestCheckin?: (type: "approach" | "week2" | "week3" | "summit") => void;
 };
 
-export default function Week1Page({ viewerId, viewerName, isAdmin, onBeginAscent, onSwitchToAscent }: Week1PageProps) {
+export default function Week1Page({ viewerId, viewerName, isAdmin, onBeginAscent, onSwitchToAscent, onOpenRegistration, onTestCheckin }: Week1PageProps) {
   const navigate = useNavigate();
   // Admin "Test as New Learner" toggle — resets view to fresh state
   const [testMode, setTestMode] = useState(false);
@@ -348,13 +352,37 @@ export default function Week1Page({ viewerId, viewerName, isAdmin, onBeginAscent
               {testMode ? "Showing fresh learner view" : "Showing your real progress"}
             </span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <select
+              onChange={(e) => {
+                if (e.target.value && onTestCheckin) {
+                  onTestCheckin(e.target.value as "approach" | "week2" | "week3" | "summit");
+                  e.target.value = "";
+                }
+              }}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-300 cursor-pointer"
+              defaultValue=""
+            >
+              <option value="" disabled>📧 Test Check-In…</option>
+              <option value="approach">🚡 Approach</option>
+              <option value="week2">🏕️ Week 2</option>
+              <option value="week3">🧗 Week 3</option>
+              <option value="summit">🏔️ Summit</option>
+            </select>
             <button
               onClick={() => navigate("/modal-museum")}
               className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-purple-700 border border-purple-300 hover:bg-purple-100 transition-colors"
             >
               🖼️ Modal Museum
             </button>
+            {onOpenRegistration && (
+              <button
+                onClick={onOpenRegistration}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-purple-700 border border-purple-300 hover:bg-purple-100 transition-colors"
+              >
+                📝 Registration
+              </button>
+            )}
             <button
               onClick={() => setTestMode((prev) => !prev)}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${

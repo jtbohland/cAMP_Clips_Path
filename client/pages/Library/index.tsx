@@ -568,7 +568,18 @@ export default function LibraryPage() {
   }
 
   // 4. Preview overrides (admin only — never affects real users, even if params leak to deployed URL)
-  if (viewer.isAdmin && previewMode === "register") return <RegistrationForm />;
+  if (viewer.isAdmin && previewMode === "register") return (
+    <div className="relative">
+      <button
+        onClick={() => setPreviewMode(null)}
+        className="fixed top-4 right-4 z-50 w-8 h-8 rounded-full bg-gray-800/80 text-white hover:bg-gray-900 flex items-center justify-center text-lg shadow-lg transition-colors"
+        title="Close preview"
+      >
+        ×
+      </button>
+      <RegistrationForm />
+    </div>
+  );
   if (viewer.isAdmin && previewMode === "welcome") {
     return <WelcomeModal viewerId={viewer.id} onDismiss={() => {}} />;
   }
@@ -833,6 +844,12 @@ export default function LibraryPage() {
             viewerId={viewer.id}
             viewerName={viewer.name}
             isAdmin={viewer.isAdmin}
+            onOpenRegistration={() => setPreviewMode("register")}
+            onTestCheckin={(type) => {
+              setCheckinType(type);
+              setCheckinAdminTest(true);
+              setShowCheckin(true);
+            }}
             onBeginAscent={(unlockResult) => {
               setActiveTab("ascent");
               // Show First Achievement modal if they earned XP/badge
