@@ -64,6 +64,7 @@ export default function LibraryPage() {
   const [showSummitInSight, setShowSummitInSight] = useState(false);
   const [checkinType, setCheckinType] = useState<"approach" | "week2" | "week3" | "summit">("approach");
   const [checkinAdminTest, setCheckinAdminTest] = useState(false);
+  const [approachCompleteOverride, setApproachCompleteOverride] = useState<boolean | undefined>(undefined);
   const checkinTriggeredRef = useRef(false);
   const pacingShownRef = useRef(false);
 
@@ -674,13 +675,15 @@ export default function LibraryPage() {
         <LearnerCheckinModal
           viewerId={viewer!.id}
           checkinType={checkinType}
-          onClose={() => { setShowCheckin(false); setCheckinAdminTest(false); }}
+          onClose={() => { setShowCheckin(false); setCheckinAdminTest(false); setApproachCompleteOverride(undefined); }}
           onSent={() => {
             setShowCheckin(false);
             setCheckinAdminTest(false);
+            setApproachCompleteOverride(undefined);
             toast.success("Check-in email marked as sent!");
           }}
           allowClose={checkinAdminTest}
+          approachCompleteOverride={approachCompleteOverride}
         />
       </div>
     )}
@@ -784,15 +787,6 @@ export default function LibraryPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <a
-              href="https://docs.google.com/document/d/13f7KQNiPEcTdtVl4vBM2izuwewNA1zA1NWY0Bj91hDo/edit?tab=t.0"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-green-200/30 bg-white/15 text-sm font-medium text-white hover:bg-white/25 transition-colors shadow-sm"
-            >
-              <span>🧭</span>
-              Ascent Guide
-            </a>
             {[
               { path: "/xp", label: "XP-lanation", emoji: "🔭" },
               { path: "/analytics", label: "Analytics", emoji: "📊" },
@@ -845,8 +839,9 @@ export default function LibraryPage() {
             viewerName={viewer.name}
             isAdmin={viewer.isAdmin}
             onOpenRegistration={() => setPreviewMode("register")}
-            onTestCheckin={(type) => {
+            onTestCheckin={(type, approachOverride) => {
               setCheckinType(type);
+              setApproachCompleteOverride(approachOverride);
               setCheckinAdminTest(true);
               setShowCheckin(true);
             }}
@@ -887,7 +882,14 @@ export default function LibraryPage() {
               <select
                 onChange={(e) => {
                   if (e.target.value) {
-                    setCheckinType(e.target.value as "approach" | "week2" | "week3" | "summit");
+                    const val = e.target.value;
+                    if (val === "approach-complete" || val === "approach-incomplete") {
+                      setCheckinType("approach");
+                      setApproachCompleteOverride(val === "approach-complete");
+                    } else {
+                      setCheckinType(val as "week2" | "week3" | "summit");
+                      setApproachCompleteOverride(undefined);
+                    }
                     setCheckinAdminTest(true);
                     setShowCheckin(true);
                     e.target.value = "";
@@ -897,7 +899,8 @@ export default function LibraryPage() {
                 defaultValue=""
               >
                 <option value="" disabled>📧 Test Check-In…</option>
-                <option value="approach">🚡 Approach</option>
+                <option value="approach-complete">🚡 Approach (Complete)</option>
+                <option value="approach-incomplete">🚡 Approach (Incomplete)</option>
                 <option value="week2">🏕️ Week 2</option>
                 <option value="week3">🧗 Week 3</option>
                 <option value="summit">🏔️ Summit</option>

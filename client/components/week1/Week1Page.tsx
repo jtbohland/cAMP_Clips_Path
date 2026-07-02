@@ -61,7 +61,7 @@ type Week1PageProps = {
   /** Admin: open registration preview */
   onOpenRegistration?: () => void;
   /** Admin: trigger a test check-in modal */
-  onTestCheckin?: (type: "approach" | "week2" | "week3" | "summit") => void;
+  onTestCheckin?: (type: "approach" | "week2" | "week3" | "summit", approachOverride?: boolean) => void;
 };
 
 export default function Week1Page({ viewerId, viewerName, isAdmin, onBeginAscent, onSwitchToAscent, onOpenRegistration, onTestCheckin }: Week1PageProps) {
@@ -356,7 +356,12 @@ export default function Week1Page({ viewerId, viewerName, isAdmin, onBeginAscent
             <select
               onChange={(e) => {
                 if (e.target.value && onTestCheckin) {
-                  onTestCheckin(e.target.value as "approach" | "week2" | "week3" | "summit");
+                  const val = e.target.value;
+                  if (val === "approach-complete" || val === "approach-incomplete") {
+                    onTestCheckin("approach", val === "approach-complete");
+                  } else {
+                    onTestCheckin(val as "week2" | "week3" | "summit");
+                  }
                   e.target.value = "";
                 }
               }}
@@ -364,7 +369,8 @@ export default function Week1Page({ viewerId, viewerName, isAdmin, onBeginAscent
               defaultValue=""
             >
               <option value="" disabled>📧 Test Check-In…</option>
-              <option value="approach">🚡 Approach</option>
+              <option value="approach-complete">🚡 Approach (Complete)</option>
+              <option value="approach-incomplete">🚡 Approach (Incomplete)</option>
               <option value="week2">🏕️ Week 2</option>
               <option value="week3">🧗 Week 3</option>
               <option value="summit">🏔️ Summit</option>

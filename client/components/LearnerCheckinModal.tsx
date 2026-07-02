@@ -15,6 +15,8 @@ interface LearnerCheckinModalProps {
   onSent?: () => void;
   /** When true, always show the X close button (admin/test mode) */
   allowClose?: boolean;
+  /** Admin override: force approach status to complete (true) or incomplete (false) for testing */
+  approachCompleteOverride?: boolean;
 }
 
 /* ── Emojis match Library WEEK_META headers ── */
@@ -118,7 +120,7 @@ const MANAGER_KEY = `
 /* ════════════════════════════════════════════════════════════════════════
    MAIN COMPONENT
    ════════════════════════════════════════════════════════════════════════ */
-function LearnerCheckinModalInner({ viewerId, checkinType, onClose, onSent, allowClose }: LearnerCheckinModalProps) {
+function LearnerCheckinModalInner({ viewerId, checkinType, onClose, onSent, allowClose, approachCompleteOverride }: LearnerCheckinModalProps) {
   const label = CHECKIN_LABELS[checkinType];
   const isSummit = checkinType === "summit";
 
@@ -179,209 +181,194 @@ function LearnerCheckinModalInner({ viewerId, checkinType, onClose, onSent, allo
     const managerFirst = firstName(v.managerName ?? v.managerEmail);
     const buddyFirst = firstName(v.belayBuddyName ?? v.belayBuddyEmail);
 
-    // Subject line — emojis match Library week headers
-    const subject = checkinType === "summit"
-      ? `🧗🏻‍♂️ ${v.name} — Summit Reached!`
-      : checkinType === "approach"
-        ? `🚡 ${v.name} — Approach Anchor Point`
-        : checkinType === "week2"
-          ? `🥾 ${v.name} — Week 2 Anchor Point`
-          : `🏞️ ${v.name} — Week 3 Anchor Point`;
+    // Derive approach complete — admin override takes precedence
+    const approachComplete = approachCompleteOverride ?? data.approachStatus?.complete ?? true;
 
-    // Greeting — "Hi Jordan & Alex" (first names only)
+    // Pacing context — shared across all templates
+    const startDate = v.ascentDay1 ? new Date(v.ascentDay1) : new Date();
+    const today = new Date();
+    const weekdaysElapsed = countWeekdays(startDate, today);
+    const hasStarted = data.completedTopics > 0;
+    const pacingKey = getPacingTier(data.completedTopics, weekdaysElapsed, hasStarted);
+    const pacingConfig = PACING_TIERS[pacingKey];
+    const summitDay = getSummitDay(startDate);
+    const fmtDate = (d: Date) => d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+
+    // Pacing note — brief explanation
+    let pacingNote = "";
+    if (data.completedTopics >= data.totalTopics) {
+      pacingNote = "all topics complete!";
+    } else {
+      const openCount = data.openDays?.length ?? 0;
+      const resourceOpen = data.openDays?.filter((d: any) => d.isResourceDay) ?? [];
+      const clipOpen = data.openDays?.filter((d: any) => !d.isResourceDay) ?? [];
+      const parts: string[] = [];
+      if (data.completedTopics > 0) parts.push(`Day ${data.completedTopics} just unlocked`);
+      if (resourceOpen.length > 0) parts.push(`${resourceOpen.map((d: any) => d.dayLabel).join(" & ")} (resource ${resourceOpen.length === 1 ? "day" : "days"}) still open`);
+      if (clipOpen.length > 0 && clipOpen.length <= 3) parts.push(`${clipOpen.length} clip ${clipOpen.length === 1 ? "day" : "days"} remaining`);
+      else if (clipOpen.length > 3) parts.push(`${openCount} days remaining`);
+      pacingNote = parts.join(". ");
+    }
+    const pacingLine = `${pacingConfig.emoji} ${pacingConfig.label}${pacingNote ? ` — ${pacingNote}` : ""}`;
+    const feedbackUrl = `${window.location.origin}/feedback?token=${feedbackToken}`;
+
+    // Module status helper for approach incomplete template
+    const incompleteSet = new Set(data.approachStatus?.incompleteModules ?? []);
+    const modStatus = (label: string) => incompleteSet.has(label) ? `❌ Incomplete` : `✅ Complete`;
+
+    // Subject line — approach has two variants
+    let subject: string;
+    if (checkinType === "summit") {
+      subject = `🧗🏻‍♂️ ${v.name} — Summit Reached!`;
+    } else if (checkinType === "approach") {
+      subject = approachComplete
+        ? `🚡 ${v.name} — Approach Anchor Point`
+        : `🚡cAMP Ascent Update — The Approach Incomplete / Ascent Unlocked`;
+    } else if (checkinType === "week2") {
+      subject = `🥾 ${v.name} — Week 2 Anchor Point`;
+    } else {
+      subject = `🏞️ ${v.name} — Week 3 Anchor Point`;
+    }
+
+    // To/CC — always Manager + Mentor as recipients, JT CC'd
+    const toRecipients = [v.managerEmail, v.belayBuddyEmail].filter(Boolean);
+    const ccRecipients = JT_EMAIL;
+
+    // Greeting — always Manager + Mentor
     const greeting = buddyFirst
-      ? `Hi ${managerFirst} & ${buddyFirst},`
+      ? `Hi ${managerFirst} and ${buddyFirst},`
       : `Hi ${managerFirst},`;
 
     let body = `${greeting}\n\n`;
 
-    // ── PACING CONTEXT (all check-in types) ──
-    if (v.ascentDay1) {
-      const startDate = new Date(v.ascentDay1);
-      const today = new Date();
-      const weekdaysElapsed = countWeekdays(startDate, today);
-      const hasStarted = data.completedTopics > 0;
-      const pacingKey = getPacingTier(data.completedTopics, weekdaysElapsed, hasStarted);
-      const pacingConfig = PACING_TIERS[pacingKey];
-      const summitDay = getSummitDay(startDate);
-      const fmtDate = (d: Date) => d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    // ── TEMPLATE 1: APPROACH (COMPLETE) ──
+    if (checkinType === "approach" && approachComplete) {
+      body += `🚡I just completed The Approach, the first phase of cAMP Ascent. Here's my summary:\n\n`;
+      body += `Ascent start date: ${fmtDate(startDate)}\n`;
+      body += `Current pacing status: ${pacingLine}\n`;
+      body += `Summit Day: ${fmtDate(summitDay)}\n\n`;
+      body += `XP: ${v.totalXp}\n`;
+      body += `Tier: ${v.tier}\n\n`;
 
-      // Build descriptive pacing note
-      let pacingNote = "";
-      if (data.completedTopics >= data.totalTopics) {
-        pacingNote = "all topics complete!";
-      } else {
-        const openCount = data.openDays?.length ?? 0;
-        const resourceOpen = data.openDays?.filter(d => d.isResourceDay) ?? [];
-        const clipOpen = data.openDays?.filter(d => !d.isResourceDay) ?? [];
-        const parts: string[] = [];
-        if (data.completedTopics > 0) {
-          parts.push(`Day ${data.completedTopics} just unlocked`);
-        }
-        if (resourceOpen.length > 0) {
-          parts.push(`${resourceOpen.map(d => d.dayLabel).join(" & ")} (resource ${resourceOpen.length === 1 ? "day" : "days"}) still open`);
-        }
-        if (clipOpen.length > 0 && clipOpen.length <= 3) {
-          parts.push(`${clipOpen.length} clip ${clipOpen.length === 1 ? "day" : "days"} remaining`);
-        } else if (clipOpen.length > 3) {
-          parts.push(`${openCount} days remaining`);
-        }
-        pacingNote = parts.join(". ");
+      // Module reflections — only show lines for completed modules
+      body += `✍🏽 Module reflections:\n`;
+      const meddpicc = data.moduleReflections?.find((r: any) => r.moduleKey === "meddpicc");
+      const product101 = data.moduleReflections?.find((r: any) => r.moduleKey === "camp101");
+      const challenger = data.moduleReflections?.find((r: any) => r.moduleKey === "challenger");
+      if (meddpicc) body += `MEDDPICC: ${meddpicc.reflectionResponse}\n`;
+      if (product101) body += `Product 101: ${product101.reflectionResponse}\n`;
+      if (challenger) body += `Challenger: ${challenger.reflectionResponse}\n`;
+      if (data.wdVerification) {
+        body += `Wheel & Deal:\n`;
+        body += `  Product: ${data.wdVerification.product}\n`;
+        body += `  Scenario: ${data.wdVerification.scenario}\n`;
+        body += `  Self-score: ${data.wdVerification.score}/10\n`;
       }
 
-      body += `🧗 Ascent Date: ${fmtDate(startDate)}\n`;
-      body += `Pacing: ${pacingConfig.emoji} ${pacingConfig.label}${pacingNote ? ` — ${pacingNote}` : ""}\n`;
+    // ── TEMPLATE 2: APPROACH (INCOMPLETE / AUTO-UNLOCK) ──
+    } else if (checkinType === "approach" && !approachComplete) {
+      body += `My cAMP Ascent path has now been unlocked, and I'm moving into the next phase of onboarding. I still have unfinished Approach work that remains required before I can reach Summit.\n\n`;
+      body += `🧗🏻‍♂️Current status:\n`;
+      body += `Ascent start date: ${fmtDate(startDate)}\n`;
+      body += `Current pacing status: ${pacingLine}\n`;
+      body += `Summit Day: ${fmtDate(summitDay)}\n`;
+      body += `The Approach completed: ${data.approachStatus?.completedCount ?? 0} / ${data.approachStatus?.totalCount ?? 7}\n`;
+      body += `Remaining Approach modules: ${data.approachStatus?.incompleteModules?.length ?? 0}\n`;
+      body += `Ascent unlocked on: ${fmtDate(startDate)}\n\n`;
+      body += `🚩Remaining Approach work:\n`;
+      body += `MEDDPICC: ${modStatus("MEDDPICC")}\n`;
+      body += `Product 101: ${modStatus("Product 101")}\n`;
+      body += `Challenger: ${modStatus("Challenger")}\n`;
+      body += `Wheel & Deal: ${modStatus("Wheel & Deal")}\n`;
+
+    // ── TEMPLATE 4: SUMMIT ──
+    } else if (checkinType === "summit") {
+      body += `I've completed Week 4 of cAMP Ascent. Here's my current summary:\n\n`;
+      body += `Ascent start date: ${fmtDate(startDate)}\n`;
+      body += `Current pacing status: ${pacingLine}\n`;
       body += `Summit Day: ${fmtDate(summitDay)}\n\n`;
+
+      if (data.week4) {
+        body += `🧗🏻‍♂️ Week 4 performance:\n`;
+        body += `Clips completed: ${data.week4.clipsCompleted} / ${data.week4.totalClips}\n`;
+        body += `Average engagement: ${data.week4.avgEngagement}%\n`;
+        body += `Quizzes passed: ${data.week4.quizzesPassed} / ${data.week4.totalQuizzes}\n`;
+        body += `Average quiz score: ${data.week4.avgQuizScore}%\n\n`;
+      }
+
+      body += `🏞️ Overall journey:\n`;
+      body += `XP: ${v.totalXp}\n`;
+      body += `Tier: ${v.tier}\n`;
+      body += `Leaderboard rank: #${data.leaderboard.rank} of ${data.leaderboard.totalLearners}\n`;
+      body += `Sessions completed: ${data.clipStats.completedClips} / ${data.clipStats.totalClips}\n`;
+      body += `Search & Rescue triggered: ${data.srCount}\n`;
+      body += `Weather the Storm triggered: ${data.wtsCount}\n\n`;
+
+      body += `👀 Engagement:\n`;
+      body += `Trail Markers / quizzes: ${data.engagement.avgQuestionScore}% — average\n`;
+      body += `Focus: ${data.engagement.avgFocusScore}% — average\n`;
+      body += `Watch time: ${data.engagement.avgTimeScore}% — average\n`;
+      body += `Overall engagement: ${data.engagement.overallEngagement}% — average\n\n`;
+
+      if (qs.totalAttempts > 0) {
+        body += `🧠 Quiz performance:\n`;
+        body += `Quizzes passed: ${qs.quizzesPassed} / ${qs.totalQuizzes}\n`;
+        body += `Average quiz score: ${qs.avgScorePct}%\n`;
+        body += `First-pass rate: ${qs.quizzesPassed > 0 ? Math.round((qs.firstPassCount / qs.quizzesPassed) * 100) : 0}%\n`;
+        body += `Retakes: ${qs.retakes}\n\n`;
+      }
+
+    // ── TEMPLATE 3: WEEK 2/3 ──
+    } else {
+      const weekEmoji = checkinType === "week2" ? "🥾" : "🏞️";
+      body += `🧗🏻‍♂️Here's my current Ascent update:\n\n`;
+      body += `Start date: ${fmtDate(startDate)}\n`;
+      body += `Current status: ${pacingLine}\n`;
+      body += `Summit Day: ${fmtDate(summitDay)}\n\n`;
+      body += `Sessions completed: ${data.clipStats.completedClips} / ${data.clipStats.totalClips}\n`;
+      body += `Sessions remaining: ${data.clipStats.totalClips - data.clipStats.completedClips}\n`;
+      body += `XP: ${v.totalXp}\n`;
+      body += `Leaderboard: #${data.leaderboard.rank} of ${data.leaderboard.totalLearners}\n`;
+      body += `Average quiz score: ${qs.avgScorePct}%\n`;
+      body += `Engagement: ${data.engagement.overallEngagement}% (quizzes: ${data.engagement.avgQuestionScore}% | focus: ${data.engagement.avgFocusScore}% | time: ${data.engagement.avgTimeScore}%)\n`;
     }
 
-    // ── APPROACH ──
-    if (checkinType === "approach") {
-      if (data.approachStatus?.complete) {
-        // Approach COMPLETE path — show reflections
-        body += `I just completed The Approach — the first phase of cAMP Ascent! Here's my summary:\n\n`;
-        body += `📊 Stats:\n`;
-        body += `  • XP: ${v.totalXp}\n`;
-        body += `  • Tier: ${v.tier}\n`;
-        if (data.moduleReflections?.length > 0) {
-          body += `\n✍🏽 Module Reflections:\n`;
-          data.moduleReflections.forEach((r: any) => {
-            const me = r.moduleKey === "meddpicc" ? "🧱" : r.moduleKey === "camp101" ? "📦" : r.moduleKey === "challenger" ? "⚔️" : r.moduleKey === "wheel_deal" ? "🎡" : "📝";
-            body += `  ${me} ${r.reflectionPrompt}\n`;
-            body += `     "${r.reflectionResponse}"\n`;
-          });
-        }
-        if (data.wdVerification) {
-          body += `\n🎡 Wheel & Deal:\n`;
-          body += `  • Product: ${data.wdVerification.product}\n`;
-          body += `  • Scenario: ${data.wdVerification.scenario}\n`;
-          body += `  • Score: ${data.wdVerification.score}%\n`;
-        }
-      } else {
-        // Approach INCOMPLETE path — auto-unlock, show remaining modules
-        body += `My Ascent path has been unlocked, but I still have Approach modules to finish. Here's where I stand:\n\n`;
-        body += `📊 Stats:\n`;
-        body += `  • XP: ${v.totalXp}\n`;
-        body += `  • Tier: ${v.tier}\n`;
-        body += `\n🚡 Approach Status: ${data.approachStatus?.completedCount ?? 0}/${data.approachStatus?.totalCount ?? 7} complete\n`;
-        if (data.approachStatus?.incompleteModules?.length > 0) {
-          body += `  Remaining:\n`;
-          data.approachStatus.incompleteModules.forEach((mod: string) => {
-            body += `  • ${mod}\n`;
-          });
-        }
-        body += `\nI'll continue working on these as I start Ascent.\n`;
-      }
+    // ── REFLECTION (all templates) ──
+    if (reflection.trim()) {
+      body += `\nLearner reflection:\n${reflection.trim()}\n`;
+    }
 
-    // ── SUMMIT ──
-    } else if (checkinType === "summit") {
-      body += `I completed all 17 cAMP Clips and reached the Summit! 🏔️✨\n\n`;
-
-      // Week 4 first
-      if (data.week4) {
-        body += `--- ⛰️ Week 4 Performance ---\n\n`;
-        body += `🎞️ Week 4 Clips:\n`;
-        body += `  • Completed: ${data.week4.clipsCompleted}/${data.week4.totalClips}\n`;
-        body += `  • Avg Engagement: ${data.week4.avgEngagement}%\n`;
-        body += `\n🧠 Week 4 Quizzes:\n`;
-        body += `  • Passed: ${data.week4.quizzesPassed}/${data.week4.totalQuizzes}\n`;
-        body += `  • Avg Score: ${data.week4.avgQuizScore}%\n`;
-      }
-
-      // Overall Journey second
-      body += `\n--- 🏔️ Overall Journey ---\n\n`;
-      body += `📊 Final Stats:\n`;
-      body += `  • XP: ${v.totalXp}\n`;
-      body += `  • Tier: ${v.tier}\n`;
-      body += `  • 🏆 Rank: #${data.leaderboard.rank} of ${data.leaderboard.totalLearners} cAMPers\n`;
-      body += `\n🎞️ All Clips:\n`;
-      body += `  • Completed: ${data.clipStats.completedClips}/${data.clipStats.totalClips}\n`;
-      body += `  • 🚁 S&R Triggered: ${data.srCount}\n`;
-      body += `  • ⛈️ WtS Triggered: ${data.wtsCount}\n`;
-      body += `\n👀 Engagement:\n`;
-      body += `  • 🥾 Trail Markers: ${data.engagement.avgQuestionScore}%\n`;
-      body += `  • 👀 Focus: ${data.engagement.avgFocusScore}%\n`;
-      body += `  • ⏱️ Watch Time: ${data.engagement.avgTimeScore}%\n`;
-      body += `  • 🎯 Overall: ${data.engagement.overallEngagement}%\n`;
-      if (qs.totalAttempts > 0) {
-        body += `\n🧠 All Quizzes (15 Days):\n`;
-        body += `  • Passed: ${qs.quizzesPassed}/${qs.totalQuizzes}\n`;
-        body += `  • Avg Score: ${qs.avgScorePct}%\n`;
-        body += `  • 1st Pass Rate: ${qs.quizzesPassed > 0 ? Math.round((qs.firstPassCount / qs.quizzesPassed) * 100) : 0}%\n`;
-        body += `  • Retakes: ${qs.retakes}\n`;
-      }
-      body += `\n✅ Approach: Complete\n`;
-
-    // ── WEEK 2 / WEEK 3 ──
-    } else {
-      const weekLabel = checkinType === "week2" ? "Week 2" : "Week 3";
-      body += `Here's my ${weekLabel} cAMP Ascent update:\n\n`;
-      body += `🎞️ Clips:\n`;
-      body += `  • Completed: ${data.clipStats.completedClips}/${data.clipStats.totalClips}\n`;
-      body += `  • 🚁 S&R Triggered: ${data.srCount}\n`;
-      body += `  • ⛈️ WtS Triggered: ${data.wtsCount}\n`;
-      body += `\n📊 Stats:\n`;
-      body += `  • XP: ${v.totalXp}\n`;
-      body += `  • Tier: ${v.tier}\n`;
-      body += `  • 🏆 Leaderboard: #${data.leaderboard.rank} of ${data.leaderboard.totalLearners} cAMPers (cumulative XP, all cohorts)\n`;
-      body += `\n👀 Engagement:\n`;
-      body += `  • 🥾 Trail Markers: ${data.engagement.avgQuestionScore}%\n`;
-      body += `  • 👀 Focus: ${data.engagement.avgFocusScore}%\n`;
-      body += `  • ⏱️ Watch Time: ${data.engagement.avgTimeScore}%\n`;
-      body += `  • 🎯 Overall: ${data.engagement.overallEngagement}%\n`;
-      if (qs.totalAttempts > 0) {
-        body += `\n🧠 cAMP Quiz Stats:\n`;
-        body += `  • Quizzes Completed: ${qs.quizzesPassed}/${qs.totalQuizzes}\n`;
-        body += `  • Avg Score: ${qs.avgScorePct}%\n`;
-        body += `  • 1st Pass Rate: ${qs.quizzesPassed > 0 ? Math.round((qs.firstPassCount / qs.quizzesPassed) * 100) : 0}%\n`;
-        body += `  • Retakes: ${qs.retakes}\n`;
-      }
-      // Approach status section
-      if (data.approachStatus?.complete) {
-        body += `\n✅ Approach: Complete (${data.approachStatus.totalCount}/${data.approachStatus.totalCount})\n`;
+    // ── APPROACH STATUS FOOTER (Week 2/3 and Summit) ──
+    if (checkinType !== "approach") {
+      if (approachComplete) {
+        body += `\n✅ Approach: Complete\n`;
       } else {
         body += `\n🚡 Approach: ${data.approachStatus?.completedCount ?? 0}/${data.approachStatus?.totalCount ?? 7} complete\n`;
         if (data.approachStatus?.incompleteModules?.length > 0) {
-          body += `  Remaining:\n`;
-          data.approachStatus.incompleteModules.forEach((mod: string) => {
-            body += `  • ${mod}\n`;
-          });
+          body += `Remaining: ${data.approachStatus.incompleteModules.join(", ")}\n`;
         }
       }
     }
 
-    // ── REFLECTION ──
-    if (reflection.trim()) {
-      body += `\n💭 My reflection:\n"${reflection.trim()}"\n`;
-    }
-
-    // ── FEEDBACK SURVEY LINK (directly after reflection, before manager key) ──
-    const feedbackUrl = `${window.location.origin}/feedback?token=${feedbackToken}`;
-    body += `\n📋 Manager Feedback Survey (Required — only JT sees responses):\n`;
-    body += `${feedbackUrl}\n`;
-
-    // ── LAST ACTIVITY ──
-    if (v.lastLoginAt || v.lastActivityAt) {
-      const dateStr = new Date((v.lastLoginAt ?? v.lastActivityAt) as string).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-      body += `\n📅 Last Activity: ${dateStr}\n`;
-    }
+    // ── FEEDBACK SURVEY LINK ──
+    body += `\n📮 Manager feedback survey:\n${feedbackUrl}\n`;
 
     // ── MANAGER KEY ──
     body += MANAGER_KEY;
 
-    body += `\nThanks!\n${fn}`;
+    body += `\nThanks,\n${fn}`;
 
     // Gmail compose params
-    const to = [v.managerEmail, v.belayBuddyEmail].filter(Boolean).join(",");
-    const cc = JT_EMAIL;
+    const to = toRecipients.join(",");
     const params = new URLSearchParams({
       to,
-      cc,
+      cc: ccRecipients,
       su: subject,
       body,
     });
 
     return `https://mail.google.com/mail/?view=cm&${params.toString()}`;
-  }, [data, checkinType, reflection, feedbackToken]);
+  }, [data, checkinType, reflection, feedbackToken, approachCompleteOverride]);
 
   const handleOpenGmail = useCallback(() => {
     if (gmailUrl) {
@@ -532,6 +519,7 @@ function LearnerCheckinModalInner({ viewerId, checkinType, onClose, onSent, allo
               onOpenGmail={handleOpenGmail}
               onMarkSent={handleMarkSent}
               marking={marking}
+              approachCompleteOverride={approachCompleteOverride}
             />
           )}
         </div>
@@ -947,6 +935,7 @@ function EmailView({
   onOpenGmail,
   onMarkSent,
   marking,
+  approachCompleteOverride,
 }: {
   data: any;
   checkinType: CheckinType;
@@ -956,6 +945,7 @@ function EmailView({
   onOpenGmail: () => void;
   onMarkSent: () => void;
   marking: boolean;
+  approachCompleteOverride?: boolean;
 }) {
   const v = data.viewer;
   const fn = firstName(v.name);
@@ -963,15 +953,42 @@ function EmailView({
   const buddyFirst = firstName(v.belayBuddyName ?? v.belayBuddyEmail);
   const qs = data.quizStats;
 
-  const toDisplay = [v.managerEmail, v.belayBuddyEmail].filter(Boolean).join(", ");
-  const subjectEmoji = checkinType === "summit" ? "🧗🏻‍♂️" : checkinType === "approach" ? "🚡" : checkinType === "week2" ? "🥾" : "🏞️";
-  const subjectText = checkinType === "summit"
-    ? `${v.name} — Summit Reached!`
-    : checkinType === "approach"
-      ? `${v.name} — Approach Anchor Point`
-      : checkinType === "week2"
-        ? `${v.name} — Week 2 Anchor Point`
-        : `${v.name} — Week 3 Anchor Point`;
+  const approachComplete = approachCompleteOverride ?? data.approachStatus?.complete ?? true;
+  const incompleteSet = new Set(data.approachStatus?.incompleteModules ?? []);
+  const modIcon = (label: string) => incompleteSet.has(label) ? "❌" : "✅";
+
+  // Subject — approach has two variants
+  let subjectLine: string;
+  if (checkinType === "summit") {
+    subjectLine = `🧗🏻‍♂️ ${v.name} — Summit Reached!`;
+  } else if (checkinType === "approach") {
+    subjectLine = approachComplete
+      ? `🚡 ${v.name} — Approach Anchor Point`
+      : `🚡 cAMP Ascent Update — The Approach Incomplete / Ascent Unlocked`;
+  } else if (checkinType === "week2") {
+    subjectLine = `🥾 ${v.name} — Week 2 Anchor Point`;
+  } else {
+    subjectLine = `🏞️ ${v.name} — Week 3 Anchor Point`;
+  }
+
+  // To — approach complete + summit → manager only; others include belay buddy
+  const toDisplay = (checkinType === "approach" && approachComplete) || checkinType === "summit"
+    ? v.managerEmail || "—"
+    : [v.managerEmail, v.belayBuddyEmail].filter(Boolean).join(", ") || "—";
+
+  // Greeting
+  const greetingName = (checkinType === "approach" && approachComplete) || checkinType === "summit"
+    ? `${managerFirst} and JT`
+    : buddyFirst ? `${managerFirst} and ${buddyFirst}` : managerFirst;
+
+  // Pacing
+  const startDate = v.ascentDay1 ? new Date(v.ascentDay1) : new Date();
+  const weekdaysElapsed = countWeekdays(startDate, new Date());
+  const hasStarted = data.completedTopics > 0;
+  const pacingKey = getPacingTier(data.completedTopics, weekdaysElapsed, hasStarted);
+  const pacingConfig = PACING_TIERS[pacingKey];
+  const summitDay = getSummitDay(startDate);
+  const fmtDate = (d: Date) => d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
   const label = CHECKIN_LABELS[checkinType];
 
@@ -985,181 +1002,139 @@ function EmailView({
       <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm">
         <div className={`bg-gradient-to-r ${label.gradient} px-4 py-2.5`}>
           <div className="text-xs text-white/90 space-y-1">
-            <div><span className="font-semibold text-white">To:</span> {toDisplay || "—"}</div>
+            <div><span className="font-semibold text-white">To:</span> {toDisplay}</div>
             <div><span className="font-semibold text-white">CC:</span> {JT_EMAIL}</div>
-            <div>
-              <span className="font-semibold text-white">Subject:</span>{" "}
-              {subjectEmoji} {subjectText}
-            </div>
+            <div><span className="font-semibold text-white">Subject:</span> {subjectLine}</div>
           </div>
         </div>
-        <div className="px-4 py-3 text-sm text-gray-700 space-y-2 max-h-64 overflow-y-auto">
-          <p>Hi {buddyFirst ? `${managerFirst} & ${buddyFirst}` : managerFirst},</p>
+        <div className="px-4 py-3 text-sm text-gray-700 space-y-1.5 max-h-64 overflow-y-auto font-mono text-xs leading-relaxed whitespace-pre-wrap">
+          <p>Hi {greetingName},</p>
 
-          {/* Pacing line */}
-          {v.ascentDay1 && (() => {
-            const startDate = new Date(v.ascentDay1);
-            const today = new Date();
-            const weekdaysElapsed = countWeekdays(startDate, today);
-            const hasStarted = data.clipStats.completedSessions > 0;
-            const pacingKey = getPacingTier(data.clipStats.completedSessions, weekdaysElapsed, hasStarted);
-            const pacingConfig = PACING_TIERS[pacingKey];
-            const summitDay = getSummitDay(startDate);
-            const fmtDate = (d: Date) => d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-            return (
-              <div className="pl-3 border-l-2 border-blue-300 bg-blue-50/50 rounded py-1 space-y-0.5">
-                <p className="font-semibold text-blue-800 text-xs">🧗 Pacing</p>
-                <p className="text-xs">Ascent Date: {fmtDate(startDate)} · {pacingConfig.emoji} {pacingConfig.label} · Summit Day: {fmtDate(summitDay)}</p>
-              </div>
-            );
-          })()}
-
-          {checkinType === "approach" ? (
+          {/* ── APPROACH (COMPLETE) ── */}
+          {checkinType === "approach" && approachComplete && (
             <>
-              {data.approachStatus?.complete ? (
+              <p className="mt-2">🚡I just completed The Approach, the first phase of cAMP Ascent. Here's my summary:</p>
+              <p>Ascent start date: {fmtDate(startDate)}</p>
+              <p>Current pacing status: {pacingConfig.emoji} {pacingConfig.label}</p>
+              <p>Summit Day: {fmtDate(summitDay)}</p>
+              <p className="mt-1">XP: {v.totalXp}</p>
+              <p>Tier: {v.tier}</p>
+              <p className="mt-1 font-semibold">✍🏽 Module reflections:</p>
+              {data.moduleReflections?.find((r: any) => r.moduleKey === "meddpicc") && (
+                <p>MEDDPICC: {data.moduleReflections.find((r: any) => r.moduleKey === "meddpicc").reflectionResponse}</p>
+              )}
+              {data.moduleReflections?.find((r: any) => r.moduleKey === "camp101") && (
+                <p>Product 101: {data.moduleReflections.find((r: any) => r.moduleKey === "camp101").reflectionResponse}</p>
+              )}
+              {data.moduleReflections?.find((r: any) => r.moduleKey === "challenger") && (
+                <p>Challenger: {data.moduleReflections.find((r: any) => r.moduleKey === "challenger").reflectionResponse}</p>
+              )}
+              {data.wdVerification && (
                 <>
-                  <p>I just completed The Approach — the first phase of cAMP Ascent!</p>
-                  <div className="pl-3 border-l-2 border-gray-200 space-y-1">
-                    <p className="font-semibold text-gray-800">📊 Stats:</p>
-                    <p>• XP: {v.totalXp}</p>
-                    <p>• Tier: {v.tier}</p>
-                  </div>
-                  {data.moduleReflections.length > 0 && (
-                    <div className="pl-3 border-l-2 border-gray-200 space-y-1">
-                      <p className="font-semibold text-gray-800">✍🏽 Module Reflections:</p>
-                      {data.moduleReflections.map((r: any, i: number) => {
-                        const emoji = r.moduleKey === "meddpicc" ? "🧱" : r.moduleKey === "camp101" ? "📦" : r.moduleKey === "challenger" ? "⚔️" : r.moduleKey === "wheel_deal" ? "🎡" : "📝";
-                        const modLabel = r.moduleKey === "meddpicc" ? "MEDDPICC" : r.moduleKey === "camp101" ? "cAMP 101" : r.moduleKey === "challenger" ? "Challenger" : r.moduleKey === "wheel_deal" ? "Wheel & Deal" : r.moduleKey;
-                        return (
-                          <p key={i}>• {emoji} {modLabel} — "{r.reflectionResponse}"</p>
-                        );
-                      })}
-                    </div>
-                  )}
-                  {data.wdVerification && (
-                    <div className="pl-3 border-l-2 border-gray-200 space-y-1">
-                      <p className="font-semibold text-gray-800">🎡 Wheel & Deal:</p>
-                      <p>• {data.wdVerification.product} · {data.wdVerification.scenario} · Self-Eval: {data.wdVerification.score}%</p>
-                    </div>
-                  )}
+                  <p>Wheel & Deal:</p>
+                  <p>{"  "}Product: {data.wdVerification.product}</p>
+                  <p>{"  "}Scenario: {data.wdVerification.scenario}</p>
+                  <p>{"  "}Self-score: {data.wdVerification.score}/10</p>
                 </>
-              ) : (
-                <>
-                  <p>My Ascent path has been unlocked, but I still have Approach modules to finish.</p>
-                  <div className="pl-3 border-l-2 border-gray-200 space-y-1">
-                    <p className="font-semibold text-gray-800">📊 Stats:</p>
-                    <p>• XP: {v.totalXp}</p>
-                    <p>• Tier: {v.tier}</p>
-                  </div>
-                  <div className="pl-3 border-l-2 border-amber-300 bg-amber-50/50 rounded py-1 space-y-1">
-                    <p className="font-semibold text-gray-800">🚡 Approach: {data.approachStatus?.completedCount ?? 0}/{data.approachStatus?.totalCount ?? 7} complete</p>
-                    {data.approachStatus?.incompleteModules?.length > 0 && (
-                      <>
-                        <p className="text-xs text-gray-600">Remaining:</p>
-                        {data.approachStatus.incompleteModules.map((mod: string, i: number) => (
-                          <p key={i} className="text-xs">• {mod}</p>
-                        ))}
-                      </>
-                    )}
-                  </div>
-                </>
-              )}
-            </>
-          ) : checkinType === "summit" ? (
-            <>
-              <p>I completed all 17 cAMP Clips and reached the Summit! 🏔️✨</p>
-              {data.week4 && (
-                <>
-                  <div className="pl-3 border-l-2 border-green-300 bg-green-50/50 rounded py-1 space-y-1">
-                    <p className="font-semibold text-gray-800">⛰️ Week 4 Performance</p>
-                    <p>• 🎞️ Clips: {data.week4.clipsCompleted}/{data.week4.totalClips} · Avg Engagement: {data.week4.avgEngagement}%</p>
-                    <p>• 🧠 Quizzes: {data.week4.quizzesPassed}/{data.week4.totalQuizzes} · Avg Score: {data.week4.avgQuizScore}%</p>
-                  </div>
-                </>
-              )}
-              <div className="pl-3 border-l-2 border-amber-200 space-y-1 bg-amber-50/50 rounded py-1">
-                <p className="font-semibold text-gray-800">🏔️ Overall Journey</p>
-                <p>• 📊 XP: {v.totalXp} · Tier: {v.tier} · 🏆 #{data.leaderboard.rank} of {data.leaderboard.totalLearners}</p>
-                <p>• 🎞️ Clips: {data.clipStats.completedClips}/{data.clipStats.totalClips} · 🚁 S&R: {data.srCount} · ⛈️ WtS: {data.wtsCount}</p>
-              </div>
-              <div className="pl-3 border-l-2 border-gray-200 space-y-1">
-                <p className="font-semibold text-gray-800">👀 Engagement:</p>
-                <p>• 🥾 Trail Markers: {data.engagement.avgQuestionScore}%</p>
-                <p>• 👀 Focus: {data.engagement.avgFocusScore}%</p>
-                <p>• ⏱️ Watch Time: {data.engagement.avgTimeScore}%</p>
-                <p>• 🎯 Overall: {data.engagement.overallEngagement}%</p>
-              </div>
-              {qs.totalAttempts > 0 && (
-                <div className="pl-3 border-l-2 border-gray-200 space-y-1">
-                  <p className="font-semibold text-gray-800">🧠 All Quizzes (15 Days):</p>
-                  <p>• Passed: {qs.quizzesPassed}/{qs.totalQuizzes} · Avg: {qs.avgScorePct}%</p>
-                  <p>• 1st Pass Rate: {qs.quizzesPassed > 0 ? Math.round((qs.firstPassCount / qs.quizzesPassed) * 100) : 0}%</p>
-                </div>
-              )}
-              <div className="pl-3 border-l-2 border-green-300 bg-green-50/50 rounded py-1">
-                <p className="font-semibold text-green-800 text-xs">✅ Approach: Complete</p>
-              </div>
-            </>
-          ) : (
-            <>
-              <p>Here's my {checkinType === "week2" ? "Week 2" : "Week 3"} cAMP Ascent update:</p>
-              <div className="pl-3 border-l-2 border-gray-200 space-y-1">
-                <p className="font-semibold text-gray-800">🎞️ Clips:</p>
-                <p>• {data.clipStats.completedClips}/{data.clipStats.totalClips} completed · 🚁 S&R: {data.srCount} · ⛈️ WtS: {data.wtsCount}</p>
-              </div>
-              <div className="pl-3 border-l-2 border-gray-200 space-y-1">
-                <p className="font-semibold text-gray-800">📊 Stats:</p>
-                <p>• XP: {v.totalXp} · Tier: {v.tier}</p>
-                <p>• 🏆 Leaderboard: #{data.leaderboard.rank} of {data.leaderboard.totalLearners} cAMPers</p>
-              </div>
-              <div className="pl-3 border-l-2 border-gray-200 space-y-1">
-                <p className="font-semibold text-gray-800">👀 Engagement:</p>
-                <p>• 🥾 Trail Markers: {data.engagement.avgQuestionScore}%</p>
-                <p>• 👀 Focus: {data.engagement.avgFocusScore}%</p>
-                <p>• ⏱️ Watch Time: {data.engagement.avgTimeScore}%</p>
-                <p>• 🎯 Overall: {data.engagement.overallEngagement}%</p>
-              </div>
-              {qs.totalAttempts > 0 && (
-                <div className="pl-3 border-l-2 border-gray-200 space-y-1">
-                  <p className="font-semibold text-gray-800">🧠 cAMP Quiz Stats:</p>
-                  <p>• Passed: {qs.quizzesPassed}/{qs.totalQuizzes} · Avg: {qs.avgScorePct}%</p>
-                  <p>• 1st Pass Rate: {qs.quizzesPassed > 0 ? Math.round((qs.firstPassCount / qs.quizzesPassed) * 100) : 0}%</p>
-                </div>
-              )}
-              {/* Approach status section */}
-              {data.approachStatus?.complete ? (
-                <div className="pl-3 border-l-2 border-green-300 bg-green-50/50 rounded py-1">
-                  <p className="font-semibold text-green-800 text-xs">✅ Approach: Complete ({data.approachStatus.totalCount}/{data.approachStatus.totalCount})</p>
-                </div>
-              ) : (
-                <div className="pl-3 border-l-2 border-amber-300 bg-amber-50/50 rounded py-1 space-y-1">
-                  <p className="font-semibold text-gray-800 text-xs">🚡 Approach: {data.approachStatus?.completedCount ?? 0}/{data.approachStatus?.totalCount ?? 7} complete</p>
-                  {data.approachStatus?.incompleteModules?.length > 0 && (
-                    <>
-                      {data.approachStatus.incompleteModules.map((mod: string, i: number) => (
-                        <p key={i} className="text-xs text-gray-600">• {mod}</p>
-                      ))}
-                    </>
-                  )}
-                </div>
               )}
             </>
           )}
 
+          {/* ── APPROACH (INCOMPLETE) ── */}
+          {checkinType === "approach" && !approachComplete && (
+            <>
+              <p className="mt-2">My cAMP Ascent path has now been unlocked, and I'm moving into the next phase of onboarding. I still have unfinished Approach work that remains required before I can reach Summit.</p>
+              <p className="mt-1 font-semibold">🧗🏻‍♂️Current status:</p>
+              <p>Ascent start date: {fmtDate(startDate)}</p>
+              <p>Current pacing status: {pacingConfig.emoji} {pacingConfig.label}</p>
+              <p>Summit Day: {fmtDate(summitDay)}</p>
+              <p>The Approach completed: {data.approachStatus?.completedCount ?? 0} / {data.approachStatus?.totalCount ?? 7}</p>
+              <p>Remaining Approach modules: {data.approachStatus?.incompleteModules?.length ?? 0}</p>
+              <p>Ascent unlocked on: {fmtDate(startDate)}</p>
+              <p className="mt-1 font-semibold">🚩Remaining Approach work:</p>
+              <p>MEDDPICC: {modIcon("MEDDPICC")} {incompleteSet.has("MEDDPICC") ? "Incomplete" : "Complete"}</p>
+              <p>Product 101: {modIcon("Product 101")} {incompleteSet.has("Product 101") ? "Incomplete" : "Complete"}</p>
+              <p>Challenger: {modIcon("Challenger")} {incompleteSet.has("Challenger") ? "Incomplete" : "Complete"}</p>
+              <p>Wheel & Deal: {modIcon("Wheel & Deal")} {incompleteSet.has("Wheel & Deal") ? "Incomplete" : "Complete"}</p>
+            </>
+          )}
+
+          {/* ── SUMMIT ── */}
+          {checkinType === "summit" && (
+            <>
+              <p className="mt-2">I've completed Week 4 of cAMP Ascent. Here's my current summary:</p>
+              <p>Ascent start date: {fmtDate(startDate)}</p>
+              <p>Current pacing status: {pacingConfig.emoji} {pacingConfig.label}</p>
+              <p>Summit Day: {fmtDate(summitDay)}</p>
+              {data.week4 && (
+                <>
+                  <p className="mt-1 font-semibold">🧗🏻‍♂️ Week 4 performance:</p>
+                  <p>Clips completed: {data.week4.clipsCompleted} / {data.week4.totalClips}</p>
+                  <p>Average engagement: {data.week4.avgEngagement}%</p>
+                  <p>Quizzes passed: {data.week4.quizzesPassed} / {data.week4.totalQuizzes}</p>
+                  <p>Average quiz score: {data.week4.avgQuizScore}%</p>
+                </>
+              )}
+              <p className="mt-1 font-semibold">🏞️ Overall journey:</p>
+              <p>XP: {v.totalXp} · Tier: {v.tier}</p>
+              <p>Leaderboard rank: #{data.leaderboard.rank} of {data.leaderboard.totalLearners}</p>
+              <p>Sessions: {data.clipStats.completedClips}/{data.clipStats.totalClips} · S&R: {data.srCount} · WtS: {data.wtsCount}</p>
+              <p className="mt-1 font-semibold">👀 Engagement:</p>
+              <p>Trail Markers: {data.engagement.avgQuestionScore}% · Focus: {data.engagement.avgFocusScore}% · Time: {data.engagement.avgTimeScore}% · Overall: {data.engagement.overallEngagement}%</p>
+              {qs.totalAttempts > 0 && (
+                <>
+                  <p className="mt-1 font-semibold">🧠 Quiz performance:</p>
+                  <p>Passed: {qs.quizzesPassed}/{qs.totalQuizzes} · Avg: {qs.avgScorePct}% · 1st Pass: {qs.quizzesPassed > 0 ? Math.round((qs.firstPassCount / qs.quizzesPassed) * 100) : 0}% · Retakes: {qs.retakes}</p>
+                </>
+              )}
+            </>
+          )}
+
+          {/* ── WEEK 2/3 ── */}
+          {(checkinType === "week2" || checkinType === "week3") && (
+            <>
+              <p className="mt-2">🧗🏻‍♂️Here's my current Ascent update:</p>
+              <p>Start date: {fmtDate(startDate)}</p>
+              <p>Current status: {pacingConfig.emoji} {pacingConfig.label}</p>
+              <p>Summit Day: {fmtDate(summitDay)}</p>
+              <p className="mt-1">Sessions completed: {data.clipStats.completedClips} / {data.clipStats.totalClips}</p>
+              <p>Sessions remaining: {data.clipStats.totalClips - data.clipStats.completedClips}</p>
+              <p>XP: {v.totalXp} · Leaderboard: #{data.leaderboard.rank} of {data.leaderboard.totalLearners}</p>
+              <p>Average quiz score: {qs.avgScorePct}%</p>
+              <p>Engagement: {data.engagement.overallEngagement}% (quizzes: {data.engagement.avgQuestionScore}% | focus: {data.engagement.avgFocusScore}% | time: {data.engagement.avgTimeScore}%)</p>
+            </>
+          )}
+
+          {/* Reflection */}
           {reflection.trim() && (
-            <div className="bg-amber-50 rounded px-3 py-2 border border-amber-100">
-              <p className="font-medium text-amber-800 text-xs mb-1">💭 My reflection:</p>
-              <p className="text-gray-700 italic">"{reflection.trim()}"</p>
+            <div className="bg-amber-50 rounded px-2 py-1.5 border border-amber-100 mt-1">
+              <p className="font-semibold text-amber-800">Learner reflection:</p>
+              <p className="text-gray-700">{reflection.trim()}</p>
             </div>
           )}
 
-          {/* Manager Key preview */}
+          {/* Approach status footer (week2/3 + summit) */}
+          {checkinType !== "approach" && (
+            <div className={`mt-1 rounded px-2 py-1 ${approachComplete ? "bg-green-50 border border-green-200" : "bg-amber-50 border border-amber-200"}`}>
+              {approachComplete ? (
+                <p className="font-semibold text-green-800">✅ Approach: Complete</p>
+              ) : (
+                <>
+                  <p className="font-semibold text-amber-800">🚡 Approach: {data.approachStatus?.completedCount ?? 0}/{data.approachStatus?.totalCount ?? 7} complete</p>
+                  {data.approachStatus?.incompleteModules?.length > 0 && (
+                    <p className="text-gray-600">Remaining: {data.approachStatus.incompleteModules.join(", ")}</p>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Manager Key + Survey link note */}
           <div className="border-t border-gray-200 pt-2 mt-2">
             <p className="font-semibold text-gray-600 text-xs">📖 Quick Reference for Managers</p>
             <p className="text-[11px] text-gray-400 mt-1">Trail Markers · cAMP Quiz · Engagement Score · XP · S&R · WtS · Pacing</p>
           </div>
-
-          <p className="text-gray-500 text-xs mt-2">📋 Manager Feedback Survey link included (Required — only JT sees responses)</p>
+          <p className="text-gray-500 text-xs mt-1">📮 Manager feedback survey link included</p>
         </div>
       </div>
 

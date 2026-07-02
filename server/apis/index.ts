@@ -92,6 +92,7 @@ import BackfillLastLogin from './v2/backfill-last-login.js';
 import FixCustomerStoriesQuestion from './v2/fix-customer-stories-question.js';
 import AdminFixBenSpekit from './v2/admin-fix-ben-spekit.js';
 import CleanupFirstPassXP from './v2/cleanup-first-pass-xp.js';
+import RepairResourceDays from './v2/repair-resource-days.js';
 
 
 const apis = {
@@ -186,6 +187,7 @@ ResetJTSessions,
   FixCustomerStoriesQuestion,
   AdminFixBenSpekit,
   CleanupFirstPassXP,
+  RepairResourceDays,
 } as const;
 
 export default apis;

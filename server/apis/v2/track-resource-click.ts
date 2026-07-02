@@ -81,9 +81,9 @@ export default api({
       if (!isAdmin) {
         // Record Swiss Army Knife badge (XP awarded on reflection submission)
         await ctx.integrations.db.execute(
-          `INSERT INTO cliptracker_v2_xp_events (viewer_id, clip_id, event_type, xp_amount, badge_id)
+          `INSERT INTO cliptracker_v2_xp_events (viewer_id, clip_id, event_type, xp_amount, source_id)
            VALUES ($1, $2, 'swiss_army_knife', 0, 'swiss_army_knife')
-           ON CONFLICT DO NOTHING`,
+           ON CONFLICT (viewer_id, source_id, clip_id) DO NOTHING`,
           [viewerId, clipId],
           { label: "Record Swiss Army Knife badge (no XP yet)" }
         );

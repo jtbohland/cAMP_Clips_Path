@@ -531,10 +531,6 @@ function WelcomeMockup() {
         <div className="px-8 pt-6 pb-4">
           <div className="space-y-3 text-sm text-gray-700">
             <div className="flex items-start gap-3 rounded-lg bg-gray-50 px-4 py-3">
-              <span className="text-lg mt-0.5 shrink-0">🗺️</span>
-              <div><span className="font-semibold text-indigo-600">Ascent Guide</span> is your daily base camp — follow it closely and read it first.</div>
-            </div>
-            <div className="flex items-start gap-3 rounded-lg bg-gray-50 px-4 py-3">
               <span className="text-lg mt-0.5 shrink-0">🎞️</span>
               <div><span className="font-semibold text-indigo-600">cAMP Clips</span> (this app!) is where you watch the videos and complete Trail Markers.</div>
             </div>

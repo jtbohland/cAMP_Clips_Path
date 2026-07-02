@@ -135,6 +135,8 @@ export default api({
       isAnchorFailure: z.boolean(),
       ascentAdjustmentDay: z.string().nullable(),
       lastLogin: z.string().nullable(),
+      approachComplete: z.boolean(),
+      approachCompletedCount: z.number(),
     })),
     clipBreakdown: z.array(z.object({
       clipId: z.string(),
@@ -265,7 +267,37 @@ export default api({
       badgeMap.get(b.viewer_id)!.push(b.badge_id);
     }
 
-    // 2e. Topics completed per learner (for topic-based pacing).
+    // 2e. Approach completion per learner (7 modules: meddpicc, 4 academy, challenger, wheel & deal)
+    const ApproachRow = z.object({ viewer_id: z.string(), completed: z.coerce.number() });
+    const approachRows = await ctx.integrations.db.query(
+      `SELECT viewer_id, SUM(cnt)::int AS completed FROM (
+        SELECT viewer_id, COUNT(DISTINCT module_key)::int AS cnt
+        FROM cliptracker_v2_module_signoffs
+        WHERE module_key IN ('meddpicc','challenger')
+        GROUP BY viewer_id
+      UNION ALL
+        SELECT viewer_id, COUNT(DISTINCT course_key)::int AS cnt
+        FROM cliptracker_v2_academy_screenshots
+        WHERE course_key IN ('analytics','experiment','session_replay','guides_surveys')
+        GROUP BY viewer_id
+      UNION ALL
+        SELECT viewer_id, 1::int AS cnt
+        FROM cliptracker_v2_wd_verifications
+        GROUP BY viewer_id
+      ) sub
+      GROUP BY viewer_id
+      LIMIT 500`,
+      ApproachRow,
+      undefined,
+      { label: "Approach module completion per learner" }
+    );
+    const approachMap = new Map<string, number>();
+    for (const a of approachRows) {
+      approachMap.set(a.viewer_id, a.completed);
+    }
+    const TOTAL_APPROACH_MODULES = 7;
+
+    // 2f. Topics completed per learner (for topic-based pacing).
     // A topic = a day_label. Complete = ALL clips with that day_label have a completed session.
     const TopicsCompletedRow = z.object({ viewer_id: z.string(), topics_completed: z.coerce.number() });
     const topicsRows = await ctx.integrations.db.query(
@@ -450,6 +482,8 @@ export default api({
         isAnchorFailure,
         ascentAdjustmentDay: ascentAdjustmentDayStr,
         lastLogin: l.last_login_at,
+        approachComplete: (approachMap.get(l.viewer_id) ?? 0) >= TOTAL_APPROACH_MODULES,
+        approachCompletedCount: approachMap.get(l.viewer_id) ?? 0,
       };
     });
 

@@ -72,12 +72,6 @@ export default function WelcomeModal({ viewerId, onDismiss }: WelcomeModalProps)
           {/* Orientation bullets */}
           <div className="space-y-3 text-sm text-gray-700">
             <div className="flex items-start gap-3 rounded-lg bg-gray-50 px-4 py-3">
-              <span className="text-lg mt-0.5 shrink-0">🗺️</span>
-              <div>
-                <a href="https://docs.google.com/document/d/13f7KQNiPEcTdtVl4vBM2izuwewNA1zA1NWY0Bj91hDo/edit?tab=t.xoeibmsufcdj#heading=h.3p0e4mlo19ak" target="_blank" rel="noopener noreferrer" className="font-semibold text-indigo-600 underline decoration-indigo-300 hover:text-indigo-800">Ascent Guide</a> is your daily base camp — follow it closely and read it first.
-              </div>
-            </div>
-            <div className="flex items-start gap-3 rounded-lg bg-gray-50 px-4 py-3">
               <span className="text-lg mt-0.5 shrink-0">🎞️</span>
               <div>
                 <a href="https://app.superblocks.com/code-mode/applications/fbc1d457-949d-4756-9cd4-ca723f3cb5ac" target="_blank" rel="noopener noreferrer" className="font-semibold text-indigo-600 underline decoration-indigo-300 hover:text-indigo-800">cAMP Clips</a> (this app!) is where you watch the videos and complete the in-video Trail Markers as you go.
