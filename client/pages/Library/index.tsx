@@ -488,7 +488,8 @@ export default function LibraryPage() {
     if (
       completed >= 0 &&
       progressData.ascentDay1 &&
-      !progressData.approachCheckinSentAt
+      !progressData.approachCheckinSentAt &&
+      !week1Data?.isLegacyLearner  // legacy learners exempt from Approach check-in
     ) {
       const sessionKey = `checkin_approach_prompted_${viewer!.id}`;
       if (!sessionStorage.getItem(sessionKey)) {
@@ -517,14 +518,22 @@ export default function LibraryPage() {
       return;
     }
 
-    // Week 2 check-in: 5+ clips, approach sent, week2 not sent, AND less than 10 clips
+    // Week 2 check-in: 5+ clips, week2 not sent, AND less than 10 clips
     // (once they hit 10 clips, week 3 takes priority above)
+    // No approachCheckinSentAt dependency — for new learners the Approach gate
+    // naturally ensures it's sent before reaching 5 clips; legacy learners
+    // (who bypass Approach) get Week 2 based purely on clip count.
     if (
       completed >= 5 &&
       completed < 10 &&
-      progressData.approachCheckinSentAt &&
       !progressData.week2CheckinSentAt
     ) {
+      // Legacy learners already mid-week skip backlogged anchors —
+      // only fire at the exact boundary (5 clips = just finished Week 1).
+      // They'll naturally hit Week 3 at 10 clips instead.
+      if (week1Data?.isLegacyLearner && completed > 5) {
+        return; // skip backlogged Week 2, let Week 3 catch them at 10
+      }
       const sessionKey = `checkin_week2_prompted_${viewer!.id}`;
       if (!sessionStorage.getItem(sessionKey)) {
         sessionStorage.setItem(sessionKey, "true");
@@ -635,7 +644,7 @@ export default function LibraryPage() {
         onDismiss={() => {
           setShowFirstAchievement(false);
           // After dismissing First Achievement, trigger Approach check-in if not yet sent
-          if (progressData && !progressData.approachCheckinSentAt) {
+          if (progressData && !progressData.approachCheckinSentAt && !week1Data?.isLegacyLearner) {
             setCheckinType("approach");
             setShowCheckin(true);
           }
@@ -837,7 +846,7 @@ export default function LibraryPage() {
             onSwitchToAscent={() => {
               setActiveTab("ascent");
               // Day 8+ Oh Deer auto-unlock — trigger Approach check-in if not yet sent
-              if (progressData && !progressData.approachCheckinSentAt) {
+              if (progressData && !progressData.approachCheckinSentAt && !week1Data?.isLegacyLearner) {
                 setCheckinType("approach");
                 setShowCheckin(true);
               }
