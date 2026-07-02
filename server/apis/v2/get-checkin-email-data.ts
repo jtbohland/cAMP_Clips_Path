@@ -46,7 +46,8 @@ const EngagementRow = z.object({
 
 // XP tier thresholds (must match award-xp.ts)
 const TIERS = [
-  { name: "Pinnacle Achiever", emoji: "✨🏔️✨", xpMin: 500 },
+  { name: "Alpinist All-Star", emoji: "💫", xpMin: 700 },
+  { name: "Pinnacle Achiever", emoji: "⛰️", xpMin: 500 },
   { name: "Summit Seeker", emoji: "🧗🏼", xpMin: 325 },
   { name: "Trailblazer", emoji: "🥾", xpMin: 150 },
   { name: "Base Camper", emoji: "🏕️", xpMin: 0 },

@@ -117,6 +117,49 @@ export default api({
       }
     }
 
+    // === HALFWAY UP MILESTONE: Award when Day 9 resource day reflection is submitted ===
+    // Day 9 is the natural halfway point of The Ascent (Topic 9 of 15).
+    // Moved here from AwardXP (was at clip sort_order 9) to tie to resource day completion.
+    if (!isAdmin && topicDay === "day9") {
+      const HalfwayClipSchema = z.object({ id: z.string() });
+      const halfwayClipRows = await ctx.integrations.db.query(
+        "SELECT id FROM cliptracker_v2_clips WHERE day_label = 'Day 9' LIMIT 1",
+        HalfwayClipSchema,
+        [/* no params */],
+        { label: "Find Day 9 clip for Halfway Up milestone" }
+      );
+      if (halfwayClipRows.length > 0) {
+        const halfwayClipId = halfwayClipRows[0].id;
+        // Check if already awarded (idempotent)
+        const HalfwayCheckSchema = z.object({ count: z.coerce.number() });
+        const existingHalfway = await ctx.integrations.db.query(
+          `SELECT COUNT(*)::int as count FROM cliptracker_v2_xp_events
+           WHERE viewer_id = $1 AND source_id = 'halfway'`,
+          HalfwayCheckSchema,
+          [viewerId],
+          { label: "Check existing Halfway Up milestone" }
+        );
+        if (existingHalfway[0].count === 0) {
+          await ctx.integrations.db.execute(
+            `INSERT INTO cliptracker_v2_xp_events (viewer_id, clip_id, event_type, xp_amount, source_id)
+             VALUES ($1, $2, 'milestone', 15, 'halfway')
+             ON CONFLICT (viewer_id, source_id, clip_id) DO NOTHING`,
+            [viewerId, halfwayClipId],
+            { label: "Award Halfway Up +15 XP" }
+          );
+          await ctx.integrations.db.execute(
+            `INSERT INTO cliptracker_v2_badges (viewer_id, badge_id, clip_id)
+             VALUES ($1, 'halfway', $2)
+             ON CONFLICT (viewer_id, badge_id, clip_id) DO NOTHING`,
+            [viewerId, halfwayClipId],
+            { label: "Award Halfway Up badge" }
+          );
+          xpAwarded += 15;
+          ctx.log.info("Halfway Up milestone awarded on Day 9 reflection", { viewerId });
+        }
+      }
+    }
+
     ctx.log.info("Topic reflection submitted", { viewerId, topicDay, xpAwarded });
     return { success: true, alreadySubmitted: false, xpAwarded };
   },

@@ -7,7 +7,8 @@ const TIERS = [
   { tier: 1, name: "Base Camper", emoji: "🏕️", xpMin: 0, xpMax: 149, description: "Just getting started on the trail" },
   { tier: 2, name: "Trailblazer", emoji: "🥾", xpMin: 150, xpMax: 324, description: "Building momentum and finding your footing" },
   { tier: 3, name: "Summit Seeker", emoji: "🧗🏼", xpMin: 325, xpMax: 499, description: "Pushing toward mastery" },
-  { tier: 4, name: "Pinnacle Achiever", emoji: "✨🏔️✨", xpMin: 500, xpMax: null, description: "You've conquered the Ascent" },
+  { tier: 4, name: "Pinnacle Achiever", emoji: "⛰️", xpMin: 500, xpMax: 699, description: "You've conquered the Ascent" },
+  { tier: 5, name: "Alpinist All-Star", emoji: "💫", xpMin: 700, xpMax: null, description: "Peak performance — the best of the best" },
 ];
 
 const BASE_XP = [
@@ -26,19 +27,34 @@ const PERFORMANCE_BONUSES = [
   { badge: "Storm Chaser", xp: 3, emoji: "⛈️", condition: "Hit Weather Storm on previous clip, then pass the next clip first try" },
   { badge: "Double Summit", xp: 5, emoji: "⛰️", condition: "Complete 2 clips in one calendar day" },
   { badge: "Swiss Army Knife", xp: 10, emoji: "🪓", condition: "All tools. All terrain. You're ready for anything. (Review all resources + submit reflection on a topic day — ×2 available: Day 5, Day 9)" },
+  { badge: "Grip Strength", xp: 35, emoji: "💪", condition: "Average ≥85% engagement score across all 17 Ascent clips" },
 ];
 
-const STREAK_BONUSES = [
+const ENGAGEMENT_STREAK_BONUSES = [
   { badge: "No Detours", xp: 10, emoji: "🧭", condition: "Complete a 5-clip window without triggering S&R (×3 max: clips 1–5, 6–10, 11–15)" },
   { badge: "Leave No Trace", xp: 15, emoji: "🌱", condition: "5/5 Trail Markers on a 3-clip window (×5 max: clips 1–3, 4–6, 7–9, 10–12, 13–15)" },
+];
+
+const PACING_STREAK_BONUSES = [
+  { badge: "Ridge Runner", xp: 10, emoji: "🥾", condition: "5 consecutive days Summit Bound" },
+  { badge: "Alpine Endurance", xp: 15, emoji: "🏔️", condition: "10 consecutive days Summit Bound" },
+  { badge: "Iron Legs", xp: 20, emoji: "🦿", condition: "15 consecutive days Summit Bound" },
+  { badge: "Mountain Goat", xp: 30, emoji: "🐐", condition: "20 consecutive days Summit Bound — every single day on pace" },
+  { badge: "Free Solo", xp: 40, emoji: "🧗", condition: "0 rockslide, avalanche, or anchor failure across all 20 Ascent days" },
+];
+
+const SUMMIT_REWARDS = [
+  { badge: "Golden Summit", xp: 40, emoji: "🌄", condition: "Approach ✅ + Ascent ✅ completed by Summit Day" },
+  { badge: "Speed Ascent", xp: 30, emoji: "⛷️", condition: "Ascent ✅ completed by Summit Day (Approach incomplete)" },
+  { badge: "Second Wind", xp: 20, emoji: "💨", condition: "Approach ✅ + Ascent ✅ completed by Adjustment Day" },
+  { badge: "Every Step Counts", xp: 10, emoji: "👣", condition: "Finished Ascent after Adjustment Day — you still made it" },
 ];
 
 const MILESTONE_BONUSES = [
   { badge: "First Step", xp: 5, emoji: "🎬", condition: "Complete Clip 1" },
   { badge: "Peak Lift", xp: 35, emoji: "🚡", condition: "Finish The Approach in 5 days or less — you rode the gondola and you're ready to climb" },
-  { badge: "Halfway Up", xp: 15, emoji: "🏔️", condition: "Complete Clip 9" },
+  { badge: "Halfway Up", xp: 15, emoji: "🏔️", condition: "Complete Day 10 — review all resources + submit reflection" },
   { badge: "Into the Summit Push", xp: 10, emoji: "🪢", condition: "Unlock Week 4 (complete Clip 9)" },
-  { badge: "Summit Reached", xp: 25, emoji: "🏔️✨", condition: "Complete all 17 clips" },
   { badge: "The Ranger's Secret", xp: 20, emoji: "🌲", condition: "Complete all 17 clips without EVER triggering Weather the Storm" },
   { badge: "The Full Cast", xp: 50, emoji: "🎣", condition: "Listen to 80%+ of all 4 PODcast episodes" },
 ];
@@ -123,10 +139,42 @@ export default function XPlanationPage() {
           </div>
         </Section>
 
-        {/* Streak Bonuses */}
-        <Section title="🔥 Streak Bonuses" description="Consistency pays off:">
+        {/* Engagement Streak Bonuses */}
+        <Section title="🔥 Engagement Streaks" description="Consistency on clips pays off:">
           <div className="space-y-2">
-            {STREAK_BONUSES.map((b) => (
+            {ENGAGEMENT_STREAK_BONUSES.map((b) => (
+              <BadgeRow
+                key={b.badge}
+                emoji={b.emoji}
+                badge={b.badge}
+                xp={b.xp}
+                condition={b.condition}
+                earned={earnedBadgeIds.has(b.badge.toLowerCase().replace(/ /g, "_"))}
+              />
+            ))}
+          </div>
+        </Section>
+
+        {/* Pacing Streak Bonuses */}
+        <Section title="🥾 Pacing Streaks" description="Stay on pace, earn your patches:">
+          <div className="space-y-2">
+            {PACING_STREAK_BONUSES.map((b) => (
+              <BadgeRow
+                key={b.badge}
+                emoji={b.emoji}
+                badge={b.badge}
+                xp={b.xp}
+                condition={b.condition}
+                earned={earnedBadgeIds.has(b.badge.toLowerCase().replace(/ /g, "_"))}
+              />
+            ))}
+          </div>
+        </Section>
+
+        {/* Summit Rewards */}
+        <Section title="🌄 Summit Rewards" description="Tiered rewards based on when you finish — everyone who completes earns one:">
+          <div className="space-y-2">
+            {SUMMIT_REWARDS.map((b) => (
               <BadgeRow
                 key={b.badge}
                 emoji={b.emoji}
@@ -204,11 +252,11 @@ export default function XPlanationPage() {
         {/* Max Possible XP */}
         <div className="rounded-xl bg-white border border-gray-200 shadow-[0_1px_3px_rgba(0,0,0,0.08)] p-5 text-center space-y-2">
           <p className="text-lg font-bold text-gray-900">
-            🏆 Theoretical Maximum: ~745 XP
+            🏆 Theoretical Maximum: ~910 XP
           </p>
           <p className="text-sm text-gray-500">
-            A strong, engaged learner typically lands around <span className="font-semibold text-gray-900">400–450 XP</span> (Summit Seeker).
-            Pinnacle Achiever (500+) requires consistent first-pass scores, staying on pace, and earning real bonuses — without demanding perfection.
+            A strong, engaged learner typically lands around <span className="font-semibold text-gray-900">400–500 XP</span> (Summit Seeker).
+            Pinnacle Achiever (500+) requires consistent first-pass scores and staying on pace. Alpinist All-Star (700+) is reserved for those who earn real bonuses across the board.
           </p>
         </div>
 

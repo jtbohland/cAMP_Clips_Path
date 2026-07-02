@@ -4,6 +4,7 @@
 import AutoLookupViewer from './v2/auto-lookup-viewer.js';
 import CleanupDuplicateResponses from './v2/cleanup-duplicate-responses.js';
 import CleanupDuplicateSessions from './v2/cleanup-duplicate-sessions.js';
+import AwardFinalAchievement from './v2/award-final-achievement.js';
 import AwardXP from './v2/award-xp.js';
 import BackfillBadges from './v2/backfill-badges.js';
 import BackfillTimezones from './v2/backfill-timezones.js';
@@ -97,6 +98,7 @@ import RepairResourceDays from './v2/repair-resource-days.js';
 
 const apis = {
   AutoLookupViewer,
+  AwardFinalAchievement,
   AwardXP,
   BackfillBadges,
   BackfillTimezones,
