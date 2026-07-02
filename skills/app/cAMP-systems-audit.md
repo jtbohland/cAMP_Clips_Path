@@ -141,7 +141,9 @@ The auto-trigger is the persistent gate — it re-fires on every Library load un
   1. Auto-trigger useEffect (persistent Library load gate)
   2. FirstAchievement dismiss callback
   3. Oh Deer dismiss / onSwitchToAscent callback
-- Week 2/3 check-ins don't need this guard — legacy learners have `approachCheckinSentAt` set (or skip the condition naturally)
+- Week 2 trigger: removed `approachCheckinSentAt` dependency (redundant — Approach gate naturally ensures it for new learners). Legacy learners at exact boundary (5 clips) get Week 2; those already mid-week (6-9 clips) skip to Week 3 at 10.
+- Week 3 trigger: no changes needed — already fires on clip count alone (`completed >= 10`)
+- Summit trigger: no changes needed — fires on `allCompleted` (all clips + Approach complete)
 
 ---
 
