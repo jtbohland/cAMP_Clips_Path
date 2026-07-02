@@ -475,12 +475,30 @@ export default function LibraryPage() {
       });
   }, [clips]);
 
-  // ── Auto-trigger Week 2 / Week 3 check-ins based on clip milestones ──
+  // ── Auto-trigger Anchor Point check-ins (persistent — re-fires on every load until sent) ──
   useEffect(() => {
     if (!dataReady || !progressData || checkinTriggeredRef.current) return;
     if (showSummit || showFirstAchievement || tierUnlock !== null || showCheckin) return;
 
     const completed = progressData.clipsCompleted;
+
+    // Approach check-in: Ascent unlocked (has clips) but approach check-in not yet sent.
+    // This is the persistent gate — fires on every Library load until the learner sends it.
+    // Prevents access to Week 2 clips (modal has no close button).
+    if (
+      completed >= 0 &&
+      progressData.ascentDay1 &&
+      !progressData.approachCheckinSentAt
+    ) {
+      const sessionKey = `checkin_approach_prompted_${viewer!.id}`;
+      if (!sessionStorage.getItem(sessionKey)) {
+        sessionStorage.setItem(sessionKey, "true");
+        checkinTriggeredRef.current = true;
+        setCheckinType("approach");
+        setShowCheckin(true);
+      }
+      return;
+    }
 
     // Week 3 check-in: 10+ clips, week3 not sent yet.
     // Bypasses week 2 check-in — learners already in week 2/3 when check-in
@@ -816,7 +834,14 @@ export default function LibraryPage() {
                 setShowFirstAchievement(true);
               }
             }}
-            onSwitchToAscent={() => setActiveTab("ascent")}
+            onSwitchToAscent={() => {
+              setActiveTab("ascent");
+              // Day 8+ Oh Deer auto-unlock — trigger Approach check-in if not yet sent
+              if (progressData && !progressData.approachCheckinSentAt) {
+                setCheckinType("approach");
+                setShowCheckin(true);
+              }
+            }}
           />
         </div>
       ) : (

@@ -418,7 +418,7 @@ const checkinExhibits: MuseumExhibit[] = [
   {
     id: "checkin-approach",
     title: "The Approach: Anchor Point",
-    trigger: "Learner dismisses First Achievement modal → auto-opens if approach check-in not yet sent",
+    trigger: "Day ≤5: after FirstAchievement dismiss · Day 6-7: after FirstAchievement (half XP) · Day 8+: after Oh Deer dismiss — all require approachCheckinSentAt to be null",
     render: () => <CheckinMockup type="approach" />,
   },
   {
@@ -805,6 +805,7 @@ function SummitGrandFinaleMockup() {
 function CheckinMockup({ type }: { type: "approach" | "week2" | "week3" | "summit" }) {
   const [step, setStep] = useState<"stats" | "reflect" | "email">("stats");
   const [reflection, setReflection] = useState("");
+  const [gmailOpened, setGmailOpened] = useState(false);
 
   const labels: Record<string, { title: string; emoji: string; gradient: string }> = {
     approach: { title: "The Approach: Anchor Point", emoji: "🚡", gradient: "from-amber-600 to-orange-600" },
@@ -881,26 +882,24 @@ function CheckinMockup({ type }: { type: "approach" | "week2" | "week3" | "summi
                 </div>
               </div>
 
-              {/* Pacing banner (non-approach) */}
-              {type !== "approach" && (
-                <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-4 shadow-sm">
-                  <h3 className="text-sm font-bold text-blue-900 mb-3 flex items-center gap-1.5"><span className="w-1 h-4 rounded-full bg-blue-500 inline-block" />🧗 Pacing</h3>
-                  <div className="grid grid-cols-3 gap-3 text-center">
-                    <div className="rounded-lg bg-white/70 py-2">
-                      <p className="text-lg font-bold text-blue-700">Jun 16</p>
-                      <p className="text-xs text-gray-500">Ascent Date</p>
-                    </div>
-                    <div className="rounded-lg bg-white/70 py-2">
-                      <p className="text-lg font-bold text-blue-700">🏔️ Summit Bound</p>
-                      <p className="text-xs text-gray-500">Pacing Status</p>
-                    </div>
-                    <div className="rounded-lg bg-white/70 py-2">
-                      <p className="text-lg font-bold text-blue-700">Jul 11</p>
-                      <p className="text-xs text-gray-500">Summit Day</p>
-                    </div>
+              {/* Pacing banner — shown for all check-in types */}
+              <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-4 shadow-sm">
+                <h3 className="text-sm font-bold text-blue-900 mb-3 flex items-center gap-1.5"><span className="w-1 h-4 rounded-full bg-blue-500 inline-block" />🧗 Pacing</h3>
+                <div className="grid grid-cols-3 gap-3 text-center">
+                  <div className="rounded-lg bg-white/70 py-2">
+                    <p className="text-lg font-bold text-blue-700">{type === "approach" ? "Jun 20" : "Jun 16"}</p>
+                    <p className="text-xs text-gray-500">Ascent Date</p>
+                  </div>
+                  <div className="rounded-lg bg-white/70 py-2">
+                    <p className="text-lg font-bold text-blue-700">{type === "approach" ? "🌲 Off the Trail" : "🏔️ Summit Bound"}</p>
+                    <p className="text-xs text-gray-500">Pacing Status</p>
+                  </div>
+                  <div className="rounded-lg bg-white/70 py-2">
+                    <p className="text-lg font-bold text-blue-700">{type === "approach" ? "Jul 15" : "Jul 11"}</p>
+                    <p className="text-xs text-gray-500">Summit Day</p>
                   </div>
                 </div>
-              )}
+              </div>
 
               {/* Summit: Week 4 Performance */}
               {type === "summit" && (
@@ -1149,10 +1148,24 @@ function CheckinMockup({ type }: { type: "approach" | "week2" | "week3" | "summi
                   <p className="text-gray-500 text-xs mt-2">📋 Manager Feedback Survey link included (Required — only JT sees responses)</p>
                 </div>
               </div>
-              <span className="block w-full py-3 rounded-lg text-sm font-bold bg-emerald-600 text-white text-center cursor-pointer hover:bg-emerald-700 transition-colors">
-                📨 Send via Gmail
-              </span>
-              <p className="text-xs text-center text-gray-400">This opens Gmail with your email pre-filled. After sending, come back to mark it as sent.</p>
+              <button
+                onClick={() => setGmailOpened(true)}
+                className={`w-full py-3 rounded-lg text-sm font-bold transition-colors ${
+                  gmailOpened
+                    ? "bg-emerald-100 text-emerald-700 border border-emerald-300"
+                    : "bg-emerald-600 text-white hover:bg-emerald-700"
+                }`}
+              >
+                {gmailOpened ? "✅ Gmail Opened — send the email, then come back" : "📨 Send via Gmail"}
+              </button>
+              {gmailOpened && (
+                <span className="block w-full py-3 rounded-lg text-sm font-bold bg-blue-600 text-white text-center mt-2">
+                  {type === "approach" ? "📬 I Sent It — Unlock Week 2" : type === "week2" ? "📬 I Sent It — Unlock Week 3" : type === "week3" ? "📬 I Sent It — Unlock Week 4" : "📬 I Sent It — Mark as Sent"}
+                </span>
+              )}
+              {!gmailOpened && (
+                <p className="text-xs text-center text-gray-400">This opens Gmail with your email pre-filled. After sending, come back to unlock the next week.</p>
+              )}
             </>
           )}
         </div>
