@@ -62,13 +62,10 @@ export default function OhDeerModal({
 
           {/* Message */}
           <div className="rounded-lg px-4 py-3 text-sm mb-4 border border-amber-300 bg-white">
-            <p className="font-semibold text-amber-800">🔓 Ascent has been auto-unlocked</p>
+            <p className="font-semibold text-amber-800">🔓 Ascent Unlocked</p>
             <p className="mt-2 text-amber-700 leading-relaxed">
-              Please click <strong>Begin Ascent</strong> to go to the next part of your journey.
-              You're still on the hook to finish Approach modules before you can reach the summit.
-            </p>
-            <p className="mt-2 text-amber-700 leading-relaxed font-medium">
-              Start Day 1: ICP.
+              Click <strong>Begin Ascent</strong> to start the next part of your journey: Day 1: ICP.
+              You still need to finish all Approach modules before you can reach the summit.
             </p>
           </div>
 

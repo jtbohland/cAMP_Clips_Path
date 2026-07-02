@@ -179,7 +179,7 @@ export default function ApproachPacingModal({
             <div className="rounded-lg px-4 py-3 mb-4 border border-amber-400 bg-amber-50">
               <p className="text-sm font-bold text-amber-800">⚠️ Due Tomorrow</p>
               <p className="text-xs text-amber-700 mt-1 leading-relaxed">
-                Tomorrow is your last day to finish The Approach on time. Complete today's tasks and you'll be ready for Wheel &amp; Deal tomorrow!
+                Tomorrow is your last day to finish The Approach on time. Complete today's tasks so you can start Ascent on pace.
               </p>
             </div>
           )}
