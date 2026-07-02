@@ -826,7 +826,6 @@ export default function LibraryPage() {
             {[
               { path: "/xp", label: "XP-lanation", emoji: "🔭" },
               { path: "/analytics", label: "Analytics", emoji: "📊" },
-              { path: "/admin", label: "Admin", emoji: "⚙️" },
             ].map((nav) => (
               <button
                 key={nav.path}
