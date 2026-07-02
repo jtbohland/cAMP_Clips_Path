@@ -282,14 +282,28 @@ function CampersSection({ learners, totalClips }: { learners: any[]; totalClips:
   const PAGE_SIZE = 20;
 
   const filtered = useMemo(() => {
-    if (!search) return learners;
-    const q = search.toLowerCase();
-    return learners.filter((l: any) =>
-      l.name.toLowerCase().includes(q) ||
-      l.email.toLowerCase().includes(q) ||
-      l.role.toLowerCase().includes(q)
-    );
-  }, [learners, search]);
+    let list = learners;
+    if (search) {
+      const q = search.toLowerCase();
+      list = list.filter((l: any) =>
+        l.name.toLowerCase().includes(q) ||
+        l.email.toLowerCase().includes(q) ||
+        l.role.toLowerCase().includes(q)
+      );
+    }
+    // Sort: active learners with soonest summit day first, fully completed at bottom
+    // "Fully completed" = approach complete (7 modules) AND ascent complete (all topics)
+    return [...list].sort((a: any, b: any) => {
+      const aComplete = a.approachComplete && a.pacingStatus === "completed";
+      const bComplete = b.approachComplete && b.pacingStatus === "completed";
+      // Completed learners sink to bottom
+      if (aComplete !== bComplete) return aComplete ? 1 : -1;
+      // Among active: soonest summit day first (no summit day → after those with one)
+      const aDay = a.summitDay ? new Date(a.summitDay + "T00:00:00").getTime() : Infinity;
+      const bDay = b.summitDay ? new Date(b.summitDay + "T00:00:00").getTime() : Infinity;
+      return aDay - bDay;
+    });
+  }, [learners, search, totalClips]);
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const pageData = useMemo(() => filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE), [filtered, page]);
@@ -329,9 +343,10 @@ function CampersSection({ learners, totalClips }: { learners: any[]; totalClips:
         {pageData.map((l: any) => {
           const pacing = PACING_LABEL[l.pacingStatus] ?? PACING_LABEL.not_started;
           const progressPct = totalClips > 0 ? Math.round((l.clipsCompleted / totalClips) * 100) : 0;
+          const isFullyComplete = l.approachComplete && l.pacingStatus === "completed";
 
           return (
-            <div key={l.viewerId} className="grid grid-cols-[1.4fr_70px_70px_70px_80px_60px_60px_90px_80px_1fr] gap-2 items-center px-3 py-2.5 rounded-md border border-gray-100 bg-white">
+            <div key={l.viewerId} className={`grid grid-cols-[1.4fr_70px_70px_70px_80px_60px_60px_90px_80px_1fr] gap-2 items-center px-3 py-2.5 rounded-md border ${isFullyComplete ? "border-gray-200 bg-gray-50 opacity-50" : "border-gray-100 bg-white"}`}>
               {/* cAMPer name + tier */}
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
