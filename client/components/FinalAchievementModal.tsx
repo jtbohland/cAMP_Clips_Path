@@ -82,7 +82,7 @@ export default function FinalAchievementModal({ viewerId, onDismiss }: FinalAchi
             onClick={onDismiss}
             className="w-full py-3 rounded-xl text-sm font-bold bg-gradient-to-r from-amber-500 to-yellow-500 text-white hover:from-amber-600 hover:to-yellow-600 transition-all shadow-lg"
           >
-            ⚓ Final Anchor Point — Continue
+            🪝 Final Anchor Point — Continue
           </button>
         </div>
       </div>
@@ -156,7 +156,7 @@ export default function FinalAchievementModal({ viewerId, onDismiss }: FinalAchi
             onClick={onDismiss}
             className="w-full py-3.5 rounded-xl text-sm font-bold bg-gradient-to-r from-amber-500 to-yellow-500 text-white hover:from-amber-600 hover:to-yellow-600 transition-all shadow-lg"
           >
-            ⚓ Final Anchor Point
+            🪝 Final Anchor Point
           </button>
           <p className="text-xs text-center text-gray-400 mt-2">
             Continue to your Summit Celebration
