@@ -135,6 +135,14 @@ The auto-trigger is the persistent gate — it re-fires on every Library load un
 - `On the Trail` pace bonuses have week-based windows but don't block access
 - Admins bypass check-in modals via `allowClose` flag
 
+### Legacy learner exemption (added 2026-07-02):
+- Legacy learners (`clips_completed > 0 AND week1_unlock_type IS NULL`) are fully exempt from the Approach check-in gate
+- Guard: `!week1Data?.isLegacyLearner` on all three Approach trigger points:
+  1. Auto-trigger useEffect (persistent Library load gate)
+  2. FirstAchievement dismiss callback
+  3. Oh Deer dismiss / onSwitchToAscent callback
+- Week 2/3 check-ins don't need this guard — legacy learners have `approachCheckinSentAt` set (or skip the condition naturally)
+
 ---
 
 ## 8. XP System
