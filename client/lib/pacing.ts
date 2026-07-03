@@ -345,12 +345,14 @@ export function getMissedClips(
 
 /**
  * Calculate a learner's Summit Day — the date they should finish by.
- * Summit Day = start date + 20 weekdays (the last weekday of the program).
+ * Summit Day = start date + (20 + extensionDays) weekdays.
+ * extensionDays shifts the entire Ascent deadline forward.
  */
-export function getSummitDay(startDate: Date): Date {
+export function getSummitDay(startDate: Date, extensionDays: number = 0): Date {
+  const totalDays = TOTAL_WEEKDAYS + extensionDays;
   const cursor = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
   let weekdaysCounted = 0;
-  while (weekdaysCounted < TOTAL_WEEKDAYS) {
+  while (weekdaysCounted < totalDays) {
     cursor.setDate(cursor.getDate() + 1);
     const dow = cursor.getDay();
     if (dow !== 0 && dow !== 6) weekdaysCounted++;

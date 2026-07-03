@@ -245,15 +245,18 @@ export default function LibraryPage() {
     if (!progressData?.ascentDay1 || clips.length === 0) return null;
     const startDate = new Date(progressData.ascentDay1 + "T00:00:00");
     const today = new Date();
+    const extensionDays = progressData.extensionDays ?? 0;
     const weekdaysElapsed = countWeekdays(startDate, today);
+    // Effective weekdays = actual minus extension (extension pushes deadline forward)
+    const effectiveWeekdaysElapsed = Math.max(0, weekdaysElapsed - extensionDays);
     // Count completed TOPICS (days where ALL clips are done) for pacing
     const sessionsCompleted = countCompletedTopics(
       clips.map((c: any) => ({ dayLabel: c.dayLabel, completed: c.completed }))
     );
-    const summitDay = getSummitDay(startDate);
+    const summitDay = getSummitDay(startDate, extensionDays);
     const afterSummitDay = isAfterDate(summitDay);
-    const tier = getPacingTier(sessionsCompleted, weekdaysElapsed, true, afterSummitDay);
-    const daysBehind = getTopicDaysBehind(sessionsCompleted, weekdaysElapsed);
+    const tier = getPacingTier(sessionsCompleted, effectiveWeekdaysElapsed, true, afterSummitDay);
+    const daysBehind = getTopicDaysBehind(sessionsCompleted, effectiveWeekdaysElapsed);
     const missedClips = getMissedClips(
       clips.map((c: any) => ({
         sortOrder: c.sortOrder,
@@ -262,7 +265,7 @@ export default function LibraryPage() {
         title: c.title,
         completed: c.completed,
       })),
-      weekdaysElapsed
+      effectiveWeekdaysElapsed
     );
     const incompleteSessions = TOTAL_SESSIONS - sessionsCompleted;
     const adjustmentDay = getAscentAdjustmentDay(summitDay, incompleteSessions);
@@ -270,7 +273,7 @@ export default function LibraryPage() {
     const dayBeforeSummit = isDayBeforeSummitDay(summitDay);
     const summitDayIsToday = isSameDay(summitDay);
     return {
-      tier, daysBehind, clipsCompleted: sessionsCompleted, weekdaysElapsed, missedClips, summitDay,
+      tier, daysBehind, clipsCompleted: sessionsCompleted, weekdaysElapsed: effectiveWeekdaysElapsed, missedClips, summitDay,
       startDate, adjustmentDay, afterSummitDay, afterAdjustmentDay, dayBeforeSummit,
       summitDayIsToday, incompleteSessions,
     };

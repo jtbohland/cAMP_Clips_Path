@@ -108,10 +108,12 @@ export default api({
       ascent_day_1: z.string().nullable(),
       week1_unlock_type: z.string().nullable(),
       clips_completed: z.coerce.number(),
+      extension_days: z.coerce.number(),
     });
     const viewers = await ctx.integrations.db.query(
       `SELECT ascent_day_1::text,
-              week1_unlock_type, COALESCE(clips_completed, 0)::int as clips_completed
+              week1_unlock_type, COALESCE(clips_completed, 0)::int as clips_completed,
+              COALESCE(extension_days, 0)::int as extension_days
        FROM cliptracker_v2_viewers WHERE id = $1`,
       ViewerSchema, [viewerId], { label: "Fetch viewer data" }
     );
@@ -120,6 +122,7 @@ export default api({
 
     const isLegacy = viewer.clips_completed > 0 && viewer.week1_unlock_type === null;
     const ascentDay1 = viewer.ascent_day_1 ? new Date(viewer.ascent_day_1) : null;
+    const extensionDays = viewer.extension_days;
 
     const xpEvents: Array<{ sourceId: string; eventType: string; xp: number }> = [];
     const badgesAwarded: BadgeEarned[] = [];
@@ -146,8 +149,8 @@ export default api({
     let adjustmentDay: Date | null = null;
 
     if (ascentDay1) {
-      // Summit Day = ascentDay1 + 15 weekdays (matches getSummitDay from pacing.ts)
-      summitDay = addWeekdays(ascentDay1, TOTAL_ASCENT_DAYS);
+      // Summit Day = ascentDay1 + (15 + extensionDays) weekdays
+      summitDay = addWeekdays(ascentDay1, TOTAL_ASCENT_DAYS + extensionDays);
 
       // Adjustment Day needs completion timestamps, which we fetch now
       // (also used by pacing streaks below).
@@ -254,25 +257,29 @@ export default api({
       // Reconstruct daily pacing tiers from completion timestamps.
       // For each Ascent day (1-15), check if learner was summit_bound.
 
-      // Now walk each Ascent weekday and check if learner was summit_bound
-      // A learner is summit_bound on Ascent day N (weekday 5+N) if they have
-      // completed >= expected topics for that weekday by end of that day.
+      // Now walk each Ascent weekday and check if learner was summit_bound.
+      // Extension days come at the START — during those days, expected = 0 (summit_bound by default).
+      // After extension days, normal Ascent schedule resumes.
       const ascentStart = new Date(ascentDay1.getFullYear(), ascentDay1.getMonth(), ascentDay1.getDate());
+      const totalAscentWithExtension = TOTAL_ASCENT_DAYS + extensionDays;
       let consecutiveSummitBound = 0;
       let maxConsecutive = 0;
       let anyBadTier = false;
 
-      // Walk 20 weekdays total from the original program start (Week 1 start = ascentDay1 - 5 weekdays)
-      // But we only care about Ascent days (weekdays 6-20), which is ascentDay1 + 0..14 weekdays
-      for (let ascentDayNum = 1; ascentDayNum <= TOTAL_ASCENT_DAYS; ascentDayNum++) {
-        // Calculate the actual calendar date of this Ascent day
+      for (let ascentDayNum = 1; ascentDayNum <= totalAscentWithExtension; ascentDayNum++) {
         const dayDate = addWeekdays(ascentStart, ascentDayNum - 1);
-        const weekday = ascentDayNum + 5; // absolute weekday in program (1-indexed from Week 1)
 
-        // How many topics should be done by end of this weekday?
-        const expectedTopics = EXPECTED_BY_WEEKDAY[weekday] ?? 0;
+        // During extension days (first N days), expected topics = 0 → always summit_bound
+        let expectedTopics: number;
+        if (ascentDayNum <= extensionDays) {
+          expectedTopics = 0;
+        } else {
+          // Effective Ascent day after extension
+          const effectiveAscentDay = ascentDayNum - extensionDays;
+          const weekday = effectiveAscentDay + 5; // absolute weekday in program
+          expectedTopics = EXPECTED_BY_WEEKDAY[weekday] ?? 0;
+        }
 
-        // How many topics WERE done by end of this day?
         let topicsDoneByDay = 0;
         for (const [, completedDate] of topicCompletedDate) {
           const compNorm = new Date(completedDate.getFullYear(), completedDate.getMonth(), completedDate.getDate());
@@ -318,10 +325,17 @@ export default api({
       // Simpler: !anyBadTier is wrong (lost_in_the_woods is allowed)
       // Let me recompute by tracking max days behind
       let maxDaysBehind = 0;
-      for (let ascentDayNum = 1; ascentDayNum <= TOTAL_ASCENT_DAYS; ascentDayNum++) {
+      for (let ascentDayNum = 1; ascentDayNum <= totalAscentWithExtension; ascentDayNum++) {
         const dayDate = addWeekdays(ascentStart, ascentDayNum - 1);
-        const weekday = ascentDayNum + 5;
-        const expectedTopics = EXPECTED_BY_WEEKDAY[weekday] ?? 0;
+
+        let expectedTopics: number;
+        if (ascentDayNum <= extensionDays) {
+          expectedTopics = 0;
+        } else {
+          const effectiveAscentDay = ascentDayNum - extensionDays;
+          const weekday = effectiveAscentDay + 5;
+          expectedTopics = EXPECTED_BY_WEEKDAY[weekday] ?? 0;
+        }
 
         let topicsDoneByDay = 0;
         for (const [, completedDate] of topicCompletedDate) {
