@@ -186,12 +186,14 @@ function LearnerCheckinModalInner({ viewerId, checkinType, onClose, onSent, allo
 
     // Pacing context — shared across all templates
     const startDate = v.ascentDay1 ? new Date(v.ascentDay1) : new Date();
+    const extDays = v.extensionDays ?? 0;
     const today = new Date();
     const weekdaysElapsed = countWeekdays(startDate, today);
+    const effectiveWeekdaysElapsed = Math.max(0, weekdaysElapsed - extDays);
     const hasStarted = data.completedTopics > 0;
-    const pacingKey = getPacingTier(data.completedTopics, weekdaysElapsed, hasStarted);
+    const pacingKey = getPacingTier(data.completedTopics, effectiveWeekdaysElapsed, hasStarted);
     const pacingConfig = PACING_TIERS[pacingKey];
-    const summitDay = getSummitDay(startDate);
+    const summitDay = getSummitDay(startDate, extDays);
     const fmtDate = (d: Date) => d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
     // Pacing note — brief explanation
@@ -707,12 +709,14 @@ function StatsView({ data, checkinType }: { data: any; checkinType: CheckinType 
       {/* Pacing Banner — shown for all check-in types when Ascent has started */}
       {data.viewer.ascentDay1 && (() => {
         const startDate = new Date(data.viewer.ascentDay1);
+        const extDays = data.viewer.extensionDays ?? 0;
         const today = new Date();
         const weekdaysElapsed = countWeekdays(startDate, today);
+        const effectiveWeekdaysElapsed = Math.max(0, weekdaysElapsed - extDays);
         const hasStarted = data.completedTopics > 0;
-        const pacingKey = getPacingTier(data.completedTopics, weekdaysElapsed, hasStarted);
+        const pacingKey = getPacingTier(data.completedTopics, effectiveWeekdaysElapsed, hasStarted);
         const pacingConfig = PACING_TIERS[pacingKey];
-        const summitDay = getSummitDay(startDate);
+        const summitDay = getSummitDay(startDate, extDays);
         const fmtDate = (d: Date) => d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
         return (
@@ -983,11 +987,13 @@ function EmailView({
 
   // Pacing
   const startDate = v.ascentDay1 ? new Date(v.ascentDay1) : new Date();
+  const extDays = v.extensionDays ?? 0;
   const weekdaysElapsed = countWeekdays(startDate, new Date());
+  const effectiveWeekdaysElapsed = Math.max(0, weekdaysElapsed - extDays);
   const hasStarted = data.completedTopics > 0;
-  const pacingKey = getPacingTier(data.completedTopics, weekdaysElapsed, hasStarted);
+  const pacingKey = getPacingTier(data.completedTopics, effectiveWeekdaysElapsed, hasStarted);
   const pacingConfig = PACING_TIERS[pacingKey];
-  const summitDay = getSummitDay(startDate);
+  const summitDay = getSummitDay(startDate, extDays);
   const fmtDate = (d: Date) => d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
   const label = CHECKIN_LABELS[checkinType];
