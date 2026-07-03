@@ -25,9 +25,11 @@ export default function FirstAchievementModal({
   useEffect(() => {
     document.body.style.overflow = "hidden";
 
-    // Celebration confetti — gondolas
+    // Celebration confetti — gondolas + cable cars + stars
     const gondolaShape = (confetti as any).shapeFromText({ text: "🚡", scalar: 2 });
-    const duration = 2500;
+    const cableCarShape = (confetti as any).shapeFromText({ text: "🚠", scalar: 2 });
+    const starShape = (confetti as any).shapeFromText({ text: "⭐️", scalar: 2 });
+    const duration = 3000;
     const end = Date.now() + duration;
 
     const frame = () => {
@@ -36,7 +38,7 @@ export default function FirstAchievementModal({
         angle: 60,
         spread: 55,
         origin: { x: 0, y: 0.6 },
-        shapes: [gondolaShape],
+        shapes: [gondolaShape, cableCarShape, starShape],
         scalar: 2,
         flat: true,
       });
@@ -45,7 +47,7 @@ export default function FirstAchievementModal({
         angle: 120,
         spread: 55,
         origin: { x: 1, y: 0.6 },
-        shapes: [gondolaShape],
+        shapes: [gondolaShape, cableCarShape, starShape],
         scalar: 2,
         flat: true,
       });

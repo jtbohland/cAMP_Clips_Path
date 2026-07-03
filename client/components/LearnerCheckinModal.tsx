@@ -150,17 +150,44 @@ function LearnerCheckinModalInner({ viewerId, checkinType, onClose, onSent, allo
     return () => { document.body.style.overflow = ""; };
   }, []);
 
-  // Fire confetti for summit on mount
+  // Fire fireworks burst for summit on mount
   useEffect(() => {
     if (!isSummit) return;
     const duration = 3000;
     const end = Date.now() + duration;
-    const frame = () => {
-      confetti({ particleCount: 3, angle: 60, spread: 55, origin: { x: 0, y: 0.6 }, colors: ["#6366F1", "#F59E0B", "#10B981", "#EF4444", "#8B5CF6"] });
-      confetti({ particleCount: 3, angle: 120, spread: 55, origin: { x: 1, y: 0.6 }, colors: ["#6366F1", "#F59E0B", "#10B981", "#EF4444", "#8B5CF6"] });
-      if (Date.now() < end) requestAnimationFrame(frame);
+    const fireworkColors = ["#FFD700", "#9B59B6", "#2ECC71"];
+
+    const burst = () => {
+      // Random position for each starburst
+      const x = 0.2 + Math.random() * 0.6;
+      const y = 0.2 + Math.random() * 0.5;
+      confetti({
+        particleCount: 40,
+        angle: 90,
+        spread: 360,
+        origin: { x, y },
+        startVelocity: 25 + Math.random() * 15,
+        gravity: 0.6,
+        scalar: 0.9 + Math.random() * 0.4,
+        ticks: 60,
+        colors: fireworkColors,
+        shapes: ["circle", "square"],
+        drift: 0,
+      });
     };
-    requestAnimationFrame(frame);
+
+    // Rapid multi-burst sequence over the duration
+    const interval = setInterval(() => {
+      if (Date.now() >= end) {
+        clearInterval(interval);
+        return;
+      }
+      burst();
+    }, 250);
+    // Immediate first burst
+    burst();
+
+    return () => clearInterval(interval);
   }, [isSummit]);
 
   // JT quote (stable per render)

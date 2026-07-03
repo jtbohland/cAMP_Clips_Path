@@ -27,6 +27,11 @@ export default function TierUnlockModal({
     document.body.style.overflow = "hidden";
 
     const emojiShape = (confetti as any).shapeFromText({ text: tierEmoji, scalar: 2 });
+    const starShape = (confetti as any).shapeFromText({ text: "⭐️", scalar: 2 });
+    // Alpinist All-Star (💫) gets extra sparkle ✨
+    const shapes = tierEmoji === "💫"
+      ? [emojiShape, starShape, (confetti as any).shapeFromText({ text: "✨", scalar: 2 })]
+      : [emojiShape, starShape];
 
     const duration = 3000;
     const end = Date.now() + duration;
@@ -38,7 +43,7 @@ export default function TierUnlockModal({
         angle: 60,
         spread: 55,
         origin: { x: 0, y: 0.6 },
-        shapes: [emojiShape],
+        shapes,
         scalar: 2,
         flat: true,
       });
@@ -48,7 +53,7 @@ export default function TierUnlockModal({
         angle: 120,
         spread: 55,
         origin: { x: 1, y: 0.6 },
-        shapes: [emojiShape],
+        shapes,
         scalar: 2,
         flat: true,
       });
