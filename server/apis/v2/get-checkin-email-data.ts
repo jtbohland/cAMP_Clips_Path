@@ -28,6 +28,7 @@ const ViewerStatsRow = z.object({
   belay_buddy: z.string().nullable(),
   total_xp: z.coerce.number(),
   ascent_day_1: z.string().nullable(),
+  extension_days: z.coerce.number(),
 });
 
 // ClipStatsRow removed — replaced by inline ClipCountRow (distinct clip counting)
@@ -83,6 +84,7 @@ export default api({
       tier: z.string(),
       tierEmoji: z.string(),
       ascentDay1: z.string().nullable(),
+      extensionDays: z.number(),
     }),
     // Pacing data
     srCount: z.number(),
@@ -160,7 +162,8 @@ export default api({
         COALESCE(v.manager_email, '') AS manager_email,
         COALESCE(v.belay_buddy, '') AS belay_buddy,
         COALESCE((SELECT SUM(xp_amount)::int FROM cliptracker_v2_xp_events x WHERE x.viewer_id = v.id), 0) AS total_xp,
-        v.ascent_day_1::text AS ascent_day_1
+        v.ascent_day_1::text AS ascent_day_1,
+        COALESCE(v.extension_days, 0)::int AS extension_days
        FROM cliptracker_v2_viewers v
        WHERE v.id = $1`,
       ViewerStatsRow,
@@ -474,6 +477,7 @@ export default api({
         tier: tierInfo.name,
         tierEmoji: tierInfo.emoji,
         ascentDay1: viewer.ascent_day_1 || null,
+        extensionDays: viewer.extension_days,
       },
       srCount,
       wtsCount,

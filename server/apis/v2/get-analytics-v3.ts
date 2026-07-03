@@ -28,6 +28,7 @@ const LearnerRow = z.object({
   timezone: z.string().nullable(),
   manager_name: z.string().nullable(),
   ascent_day_1: z.string().nullable(),
+  extension_days: z.coerce.number(),
   clips_completed: z.coerce.number(),
   total_xp: z.coerce.number(),
   clip_score_avg: z.string().nullable(),
@@ -202,6 +203,7 @@ export default api({
         v.timezone,
         v.manager_name,
         v.ascent_day_1::text AS ascent_day_1,
+        COALESCE(v.extension_days, 0)::int AS extension_days,
         COUNT(DISTINCT s.clip_id) FILTER (WHERE s.completed = true)::int AS clips_completed,
         COALESCE((SELECT SUM(xp_amount)::int FROM cliptracker_v2_xp_events x WHERE x.viewer_id = v.id), 0) AS total_xp,
         ROUND(AVG(s.engagement_score) FILTER (WHERE s.completed = true), 1)::text AS clip_score_avg,
@@ -214,7 +216,7 @@ export default api({
        FROM cliptracker_v2_viewers v
        LEFT JOIN cliptracker_v2_sessions s ON s.viewer_id = v.id
        WHERE v.is_admin = false
-       GROUP BY v.id, v.name, v.email, v.role, v.timezone, v.manager_name, v.ascent_day_1, v.last_login_at
+       GROUP BY v.id, v.name, v.email, v.role, v.timezone, v.manager_name, v.ascent_day_1, v.extension_days, v.last_login_at
        ORDER BY v.name ASC
        LIMIT 500`,
       LearnerRow,
@@ -355,10 +357,11 @@ export default api({
     const TOTAL_WEEKDAYS = 20;
     const TOTAL_SESSIONS_SCHEDULE = 15;
 
-    function getSummitDay(startDate: Date): Date {
+    function getSummitDay(startDate: Date, extensionDays: number = 0): Date {
+      const totalDays = TOTAL_WEEKDAYS + extensionDays;
       const cursor = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
       let weekdaysCounted = 0;
-      while (weekdaysCounted < TOTAL_WEEKDAYS) {
+      while (weekdaysCounted < totalDays) {
         cursor.setDate(cursor.getDate() + 1);
         const dow = cursor.getDay();
         if (dow !== 0 && dow !== 6) weekdaysCounted++;
@@ -419,11 +422,13 @@ export default api({
 
       if (l.ascent_day_1) {
         const start = new Date(l.ascent_day_1);
+        const extDays = l.extension_days;
         const weekdaysElapsed = countWeekdays(start, now);
+        const effectiveWeekdaysElapsed = Math.max(0, weekdaysElapsed - extDays);
         // Use topic-based completion for pacing (not raw clip count)
         const topicsCompleted = topicsMap.get(l.viewer_id) ?? 0;
-        const daysBehind = getTopicDaysBehind(topicsCompleted, weekdaysElapsed);
-        const summit = getSummitDay(start);
+        const daysBehind = getTopicDaysBehind(topicsCompleted, effectiveWeekdaysElapsed);
+        const summit = getSummitDay(start, extDays);
         summitDayStr = summit.toISOString().split("T")[0];
         const pastSummit = isAfterDate(summit);
 
