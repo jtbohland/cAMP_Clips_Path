@@ -1,4 +1,5 @@
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
+import confetti from "canvas-confetti";
 import { useApi } from "@/hooks/useApi.js";
 
 // ─── Types ──────────────────────────────────────────────────────────
@@ -38,6 +39,53 @@ export default function FinalAchievementModal({ viewerId, onDismiss }: FinalAchi
       });
     }
   }, [viewerId, awardFinal, awarded]);
+
+  // Fire personalized confetti when data arrives
+  const confettiFired = useRef(false);
+  useEffect(() => {
+    if (!data || confettiFired.current) return;
+    confettiFired.current = true;
+
+    const result = data as FinalAchievementResult;
+    // Collect the best emoji from each earned category
+    const emojis: string[] = [];
+    if (result.summitReward) emojis.push(result.summitReward.emoji);
+    if (result.pacingStreaks.length > 0) {
+      // Highest XP pacing streak = best
+      const best = result.pacingStreaks.reduce((a, b) => (b.xp > a.xp ? b : a));
+      emojis.push(best.emoji);
+    }
+    if (result.gripStrength) emojis.push(result.gripStrength.emoji);
+
+    if (emojis.length === 0) return;
+
+    const shapes = emojis.map((e) => (confetti as any).shapeFromText({ text: e, scalar: 2 }));
+    const duration = 3000;
+    const end = Date.now() + duration;
+
+    const frame = () => {
+      confetti({
+        particleCount: 2,
+        angle: 60,
+        spread: 55,
+        origin: { x: 0, y: 0.6 },
+        shapes,
+        scalar: 2,
+        flat: true,
+      });
+      confetti({
+        particleCount: 2,
+        angle: 120,
+        spread: 55,
+        origin: { x: 1, y: 0.6 },
+        shapes,
+        scalar: 2,
+        flat: true,
+      });
+      if (Date.now() < end) requestAnimationFrame(frame);
+    };
+    requestAnimationFrame(frame);
+  }, [data]);
 
   // Collect all earned badges for display
   const earnedBadges = useMemo(() => {
