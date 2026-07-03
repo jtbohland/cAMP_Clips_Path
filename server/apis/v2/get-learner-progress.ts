@@ -58,6 +58,7 @@ export default api({
     approachCheckinSentAt: z.string().nullable(),
     week2CheckinSentAt: z.string().nullable(),
     week3CheckinSentAt: z.string().nullable(),
+    extensionDays: z.number(),
   }),
 
   async run(ctx, { viewerId }) {
@@ -121,14 +122,16 @@ export default api({
       approach_checkin_sent_at: z.string().nullable(),
       week2_checkin_sent_at: z.string().nullable(),
       week3_checkin_sent_at: z.string().nullable(),
+      extension_days: z.coerce.number(),
     });
     const viewerDate = await ctx.integrations.db.query(
       `SELECT ascent_day_1::text, manager_name,
-              approach_checkin_sent_at::text, week2_checkin_sent_at::text, week3_checkin_sent_at::text
+              approach_checkin_sent_at::text, week2_checkin_sent_at::text, week3_checkin_sent_at::text,
+              COALESCE(extension_days, 0)::int as extension_days
        FROM cliptracker_v2_viewers WHERE id = $1`,
       ViewerDateSchema,
       [viewerId],
-      { label: "Get ascent day 1 + checkin timestamps" }
+      { label: "Get ascent day 1 + checkin timestamps + extension" }
     );
 
     // Leaderboard rank — count non-admin viewers with higher XP + 1
@@ -179,6 +182,7 @@ export default api({
       approachCheckinSentAt: viewerDate[0]?.approach_checkin_sent_at ?? null,
       week2CheckinSentAt: viewerDate[0]?.week2_checkin_sent_at ?? null,
       week3CheckinSentAt: viewerDate[0]?.week3_checkin_sent_at ?? null,
+      extensionDays: viewerDate[0]?.extension_days ?? 0,
     };
   },
 });
