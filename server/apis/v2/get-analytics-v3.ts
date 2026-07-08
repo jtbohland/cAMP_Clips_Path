@@ -187,7 +187,7 @@ export default api({
           COUNT(*) FILTER (WHERE s.completed = true)::numeric * 100.0 /
           NULLIF(COUNT(*), 0), 1
         )::text AS completion_rate,
-        (SELECT COUNT(DISTINCT c2.id)::int FROM cliptracker_v2_clips c2 WHERE c2.status = 'live' AND EXISTS (SELECT 1 FROM cliptracker_v2_questions q WHERE q.clip_id = c2.id)) AS total_clips
+        (SELECT COUNT(*)::int FROM cliptracker_v2_clips c2 WHERE c2.status = 'live') AS total_clips
        FROM cliptracker_v2_sessions s
        JOIN cliptracker_v2_viewers v ON v.id = s.viewer_id
        WHERE v.is_admin = false`,
@@ -204,7 +204,9 @@ export default api({
         v.manager_name,
         v.ascent_day_1::text AS ascent_day_1,
         COALESCE(v.extension_days, 0)::int AS extension_days,
-        COUNT(DISTINCT s.clip_id) FILTER (WHERE s.completed = true)::int AS clips_completed,
+        (COUNT(DISTINCT s.clip_id) FILTER (WHERE s.completed = true)
+         + COALESCE((SELECT COUNT(*)::int FROM cliptracker_v2_xp_events x WHERE x.viewer_id = v.id AND x.event_type = 'swiss_army_knife'), 0)
+        )::int AS clips_completed,
         COALESCE((SELECT SUM(xp_amount)::int FROM cliptracker_v2_xp_events x WHERE x.viewer_id = v.id), 0) AS total_xp,
         ROUND(AVG(s.engagement_score) FILTER (WHERE s.completed = true), 1)::text AS clip_score_avg,
         ROUND(AVG(s.engagement_score) FILTER (WHERE s.completed = true AND s.is_recovery_attempt = false), 1)::text AS first_attempt_avg,
@@ -543,7 +545,9 @@ export default api({
       `SELECT
         v.id AS viewer_id, v.name, v.role, v.timezone,
         COALESCE((SELECT SUM(xp_amount)::int FROM cliptracker_v2_xp_events x WHERE x.viewer_id = v.id), 0) AS total_xp,
-        COUNT(DISTINCT s.clip_id) FILTER (WHERE s.completed = true)::int AS clips_completed,
+        (COUNT(DISTINCT s.clip_id) FILTER (WHERE s.completed = true)
+         + COALESCE((SELECT COUNT(*)::int FROM cliptracker_v2_xp_events x WHERE x.viewer_id = v.id AND x.event_type = 'swiss_army_knife'), 0)
+        )::int AS clips_completed,
         COALESCE((SELECT COUNT(*)::int FROM cliptracker_v2_badges b WHERE b.viewer_id = v.id), 0) AS badges_earned
        FROM cliptracker_v2_viewers v
        LEFT JOIN cliptracker_v2_sessions s ON s.viewer_id = v.id
