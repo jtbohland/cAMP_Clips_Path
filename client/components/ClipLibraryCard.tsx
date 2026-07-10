@@ -326,7 +326,7 @@ export default function ClipLibraryCard({
             onClick={(e) => { e.stopPropagation(); onCampQuiz(); }}
             className="w-full py-2.5 rounded-lg text-sm font-semibold bg-[#EA580C] hover:bg-[#C2410C] text-white transition-colors"
           >
-            🧠 cAMP Quiz
+            🧠 Take cAMP Quiz
           </button>
         )}
         {CAMP_QUIZ_SORT_ORDERS.has(clip.sortOrder) && onCampQuiz && (

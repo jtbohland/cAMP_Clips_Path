@@ -19,6 +19,33 @@ const IncorrectQuestionSchema = z.object({
   is_recovery: z.boolean(),
 });
 
+/** Map clip sort_order → quiz day ID */
+const SORT_ORDER_TO_QUIZ_DAY: Record<number, string> = {
+  1: "day1", 2: "day2", 3: "day3", 4: "day4", 5: "day5", 6: "day6",
+  7: "day7", 8: "day7", 9: "day8", 10: "day8", 11: "day9",
+  12: "day10", 13: "day11", 14: "day11", 15: "day12",
+  16: "day13", 17: "day14", 18: "day15", 19: "day15",
+};
+
+/** Quiz day → display name */
+const QUIZ_DAY_TO_NAME: Record<string, string> = {
+  day1: "🔎 Ideal Customer Profiles (Personas & Industries)",
+  day2: "📥 Top of Funnel (TOFU) – MQLs & Inbounds",
+  day3: "📈 GTM Launch Pad",
+  day4: "📇 Prospecting Process",
+  day5: "🐦\u200d🔥 Renewal Operations",
+  day6: "🥊 The Competitive Landscape",
+  day7: "🩺 Account Planning Best Practices",
+  day8: "🏎️ Discovery That Accelerates",
+  day9: "💰 Pricing & Packaging 101",
+  day10: "🪢 Leveraging Partners",
+  day11: "☂️ Forecasting",
+  day12: "📖 Customer Stories",
+  day13: "📑 Contract Lifecycle Management",
+  day14: "🫱🏻\u200d🫲🏼 Deal Desk & CPQ",
+  day15: "🪢 Leveraging Solution Engineers & Professional Services",
+};
+
 export default api({
   name: "GetClipReport",
   description: "Fetches Ranger Report data for a completed clip with S&R and Back Track details",
@@ -74,6 +101,14 @@ export default api({
       url: z.string(),
       type: z.string(),
     })).nullable(),
+    // Quiz data
+    quizDay: z.string().nullable(),
+    quizName: z.string().nullable(),
+    quizBestScore: z.number().nullable(),
+    quizBestCorrect: z.number().nullable(),
+    quizTotalQuestions: z.number().nullable(),
+    quizAttempts: z.number().nullable(),
+    quizLiveAverage: z.number().nullable(),
   }),
 
   async run(ctx, { clipId, viewerId }) {
@@ -203,6 +238,75 @@ export default api({
 
     const totalXpEarned = xpEvents.reduce((sum, e) => sum + e.xp_amount, 0);
 
+    // --- Quiz data ---
+    const quizDay = SORT_ORDER_TO_QUIZ_DAY[clip.sort_order] ?? null;
+    const quizName = quizDay ? (QUIZ_DAY_TO_NAME[quizDay] ?? null) : null;
+
+    let quizBestScore: number | null = null;
+    let quizBestCorrect: number | null = null;
+    let quizTotalQuestions: number | null = null;
+    let quizAttempts: number | null = null;
+    let quizLiveAverage: number | null = null;
+
+    if (quizDay) {
+      // Get viewer email for cross-app join
+      const viewerRows = await ctx.integrations.db.query(
+        `SELECT email FROM cliptracker_v2_viewers WHERE id = $1`,
+        z.object({ email: z.string() }),
+        [viewerId],
+        { label: "Get viewer email for quiz join" }
+      );
+      const viewerEmail = viewerRows[0]?.email ?? null;
+
+      if (viewerEmail) {
+        // Best attempt for this quiz
+        const bestAttempt = await ctx.integrations.db.query(
+          `SELECT score, total_questions
+           FROM camp_quiz_attempts
+           WHERE user_email = $1 AND quiz_id = $2
+           ORDER BY score DESC
+           LIMIT 1`,
+          z.object({ score: z.coerce.number(), total_questions: z.coerce.number() }),
+          [viewerEmail, quizDay],
+          { label: "Get best quiz attempt" }
+        );
+
+        // Attempt count for this quiz
+        const attemptCount = await ctx.integrations.db.query(
+          `SELECT COUNT(*)::int as cnt
+           FROM camp_quiz_attempts
+           WHERE user_email = $1 AND quiz_id = $2`,
+          z.object({ cnt: z.coerce.number() }),
+          [viewerEmail, quizDay],
+          { label: "Get quiz attempt count" }
+        );
+
+        if (bestAttempt.length > 0) {
+          quizBestCorrect = bestAttempt[0].score;
+          quizTotalQuestions = bestAttempt[0].total_questions;
+          quizBestScore = quizTotalQuestions > 0
+            ? Math.round((quizBestCorrect / quizTotalQuestions) * 100)
+            : 0;
+          quizAttempts = attemptCount[0]?.cnt ?? 0;
+        }
+
+        // Live average across ALL completed quizzes for this learner
+        const avgResult = await ctx.integrations.db.query(
+          `SELECT ROUND(AVG(best_pct))::int as avg_score
+           FROM (
+             SELECT quiz_id, MAX(score::float / NULLIF(total_questions, 0) * 100) as best_pct
+             FROM camp_quiz_attempts
+             WHERE user_email = $1
+             GROUP BY quiz_id
+           ) sub`,
+          z.object({ avg_score: z.coerce.number().nullable() }),
+          [viewerEmail],
+          { label: "Get live quiz average" }
+        );
+        quizLiveAverage = avgResult[0]?.avg_score ?? null;
+      }
+    }
+
     return {
       engagementScore,
       engagementThreshold: 80,
@@ -229,6 +333,14 @@ export default api({
       clipSortOrder: clip.sort_order,
       videoUrl: clip.video_url,
       resources: Array.isArray(clip.resources) ? clip.resources : null,
+      // Quiz
+      quizDay,
+      quizName,
+      quizBestScore,
+      quizBestCorrect,
+      quizTotalQuestions,
+      quizAttempts,
+      quizLiveAverage,
     };
   },
 });
