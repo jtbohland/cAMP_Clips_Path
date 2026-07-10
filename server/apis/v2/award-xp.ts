@@ -269,14 +269,14 @@ export default api({
       badgesEarned.push({ badgeId: "first_step", name: "First Step", emoji: "🎬", xp: 5 });
     }
 
-    // Into the Summit Push: Clip 10 gets unlocked (completing clip 9 triggers this)
-    if (sortOrder === 9) {
+    // Into the Summit Push: Clip 11 gets unlocked (completing clip 10 triggers this)
+    if (sortOrder === 10) {
       xpEvents.push({ sourceId: "week_4_entry", eventType: "milestone", xp: 10 });
       badgesEarned.push({ badgeId: "week_4_entry", name: "Into the Summit Push", emoji: "🪢", xp: 10 });
     }
 
-    // Ranger's Secret: Complete all 17 clips without ever triggering Weather the Storm
-    if (sortOrder === 17) {
+    // Ranger's Secret: Complete all 20 clips without ever triggering Weather the Storm
+    if (sortOrder === 20) {
       const StormSchema = z.object({ count: z.coerce.number() });
       const stormCheck = await ctx.integrations.db.query(
         `SELECT COUNT(*)::int as count FROM cliptracker_v2_xp_events

@@ -5,7 +5,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
  * Merged A/B clip card — renders two clips in one tile for dual-session days.
  * Follows the same visual pattern as the Sort 4 Reachdesk card.
  *
- * Pairs: Sort 6+7 (Day 7), Sort 8+9 (Day 8), Sort 11+12 (Day 11), Sort 16+17 (Day 15)
+ * Pairs: Sort 1+2 (Day 1), Sort 8+9 (Day 7), Sort 10+11 (Day 8), Sort 14+15 (Day 11), Sort 19+20 (Day 15)
  */
 
 type ClipData = {
@@ -41,9 +41,9 @@ type PairedClipCardProps = {
 };
 
 // Clips that show the cAMP Quiz button
-const CAMP_QUIZ_SORT_ORDERS = new Set([1, 2, 3, 4, 5, 6, 8, 10, 11, 12, 14, 15, 16, 17, 19]);
+const CAMP_QUIZ_SORT_ORDERS = new Set([1, 2, 3, 4, 5, 6, 7, 9, 11, 12, 13, 15, 16, 17, 18, 20]);
 // Clips that show the Wheel & Deal practice button
-const WHEEL_AND_DEAL_SORT_ORDERS = new Set([3, 7, 10, 14, 17]);
+const WHEEL_AND_DEAL_SORT_ORDERS = new Set([4, 8, 11, 15, 18]);
 
 type ButtonState = "watch" | "resume" | "report" | "locked";
 
@@ -60,8 +60,8 @@ function getButtonState(
 
 function getWeekLabel(weekNumber: number | null, sortOrder: number): string {
   if (weekNumber != null) return `WEEK ${weekNumber}`;
-  if (sortOrder <= 4) return "WEEK 2";
-  if (sortOrder <= 9) return "WEEK 3";
+  if (sortOrder <= 5) return "WEEK 2";
+  if (sortOrder <= 11) return "WEEK 3";
   return "WEEK 4";
 }
 
@@ -72,10 +72,16 @@ function getDayLabel(dayLabel: string | null, sortOrder: number): string {
 
 /** For paired cards, map sort orders to the clean day number (no A/B suffix) */
 const PAIRED_DAY_MAP: Record<number, number> = {
-  7: 7, 8: 7,
-  9: 8, 10: 8,
-  13: 11, 14: 11,
-  18: 15, 19: 15,
+  1: 1, 2: 1,
+  8: 7, 9: 7,
+  10: 8, 11: 8,
+  14: 11, 15: 11,
+  19: 15, 20: 15,
+};
+
+/** Custom merged title overrides for specific pairs (keyed by clip A sort order) */
+const PAIRED_TITLE_OVERRIDE: Record<number, { emoji: string; text: string }> = {
+  1: { emoji: "🔎", text: "Understanding Our Verticals & Personas" },
 };
 
 function getPairedDayLabel(sortOrder: number): string {
@@ -105,7 +111,9 @@ function splitEmoji(title: string): [string, string] {
 }
 
 /** Merged title parts for rendering with pill badges */
-function getMergedTitleParts(clipA: ClipData, clipB: ClipData): { emoji: string; nameA: string; nameB: string } {
+function getMergedTitleParts(clipA: ClipData, clipB: ClipData): { emoji: string; nameA: string; nameB: string; override?: string } {
+  const custom = PAIRED_TITLE_OVERRIDE[clipA.sortOrder];
+  if (custom) return { emoji: custom.emoji, nameA: custom.text, nameB: "", override: custom.text };
   const titleA = getSessionTitle(clipA.title);
   const titleB = getSessionTitle(clipB.title);
   const [emojiA, nameA] = splitEmoji(titleA);
@@ -213,7 +221,15 @@ export default function PairedClipCard({
         {/* Row 2: Merged title with pill badges */}
         <h3 className="text-base font-bold text-gray-900 leading-snug flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
           {(() => {
-            const { emoji, nameA, nameB } = getMergedTitleParts(clipA, clipB);
+            const { emoji, nameA, nameB, override } = getMergedTitleParts(clipA, clipB);
+            if (override) {
+              return (
+                <>
+                  {emoji && <span>{emoji}</span>}
+                  <span>{override}</span>
+                </>
+              );
+            }
             return (
               <>
                 {emoji && <span>{emoji}</span>}

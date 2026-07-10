@@ -84,7 +84,7 @@ export default function ApproachDeadlineModal({
               <>
                 <p className="font-semibold text-red-800">⏰ Last Chance</p>
                 <p className="mt-1 text-red-700 leading-relaxed">
-                  Finish The Approach today. If not, Ascent will unlock tomorrow and you'll be expected to start Day 1: ICP.
+                  Finish The Approach today. If not, Ascent will unlock tomorrow and you'll be expected to start Day 1: Industries & Personas.
                   You're already off pace, so catching up early matters.
                 </p>
               </>

@@ -64,7 +64,7 @@ export default function OhDeerModal({
           <div className="rounded-lg px-4 py-3 text-sm mb-4 border border-amber-300 bg-white">
             <p className="font-semibold text-amber-800">🔓 Ascent Unlocked</p>
             <p className="mt-2 text-amber-700 leading-relaxed">
-              Click <strong>Begin Ascent</strong> to start the next part of your journey: Day 1: ICP.
+              Click <strong>Begin Ascent</strong> to start the next part of your journey: Day 1: Industries & Personas.
               You still need to finish all Approach modules before you can reach the summit.
             </p>
           </div>

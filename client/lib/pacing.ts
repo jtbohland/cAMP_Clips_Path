@@ -3,33 +3,33 @@
  *
  * Schedule: 20 weekdays total = 5 weekdays (Week 1 "The Approach") + 15 weekdays ("The Ascent").
  * Week 1 (weekdays 1–5): onboarding modules, no video clips.
- * The Ascent (weekdays 6–20): 19 clips across 15 topic-days (1 topic per weekday).
+ * The Ascent (weekdays 6–20): 20 clips across 15 topic-days (1 topic per weekday).
  * Weekends (Sat / Sun) are skipped.
  * Days 5 and 9 (Ascent days 5 & 9) are content-review / resource days (no video clips).
  *
  * PACING counts TOPICS (completed days), not individual clips.
  * A topic is complete when ALL clips for that day_label are marked completed.
- * Multi-clip days (Day 7, 8, 11, 15) require both a/b clips finished.
+ * Multi-clip days (Day 1, 7, 8, 11, 15) require both a/b clips finished.
  *
  * Week 1 pacing (The Approach — modules, not clips):
  *   Weekday 1–5  → Complete MEDDPICC, cAMP 101, Challenger, Wheel & Deal
  *
  * Ascent pacing (weekdays 6–20, mapped to Ascent days 1–15):
- *   Weekday 6   → Day 1   (sort 1)          1 clip   → Topic 1
- *   Weekday 7   → Day 2   (sort 2)          1 clip   → Topic 2
- *   Weekday 8   → Day 3   (sort 3)          1 clip   → Topic 3
- *   Weekday 9   → Day 4   (sort 4)          1 clip   → Topic 4
- *   Weekday 10  → Day 5   (sort 5, RESOURCE) 0 clips → Topic 5
- *   Weekday 11  → Day 6   (sort 6)          1 clip   → Topic 6
- *   Weekday 12  → Day 7   (sorts 7-8)       2 clips  → Topic 7
- *   Weekday 13  → Day 8   (sorts 9-10)      2 clips  → Topic 8
- *   Weekday 14  → Day 9   (sort 11, RESOURCE) 0 clips → Topic 9
- *   Weekday 15  → Day 10  (sort 12)         1 clip   → Topic 10
- *   Weekday 16  → Day 11  (sorts 13-14)     2 clips  → Topic 11
- *   Weekday 17  → Day 12  (sort 15)         1 clip   → Topic 12
- *   Weekday 18  → Day 13  (sort 16)         1 clip   → Topic 13
- *   Weekday 19  → Day 14  (sort 17)         1 clip   → Topic 14
- *   Weekday 20  → Day 15  (sorts 18-19)     2 clips  → Topic 15
+ *   Weekday 6   → Day 1   (sorts 1-2)       2 clips  → Topic 1
+ *   Weekday 7   → Day 2   (sort 3)          1 clip   → Topic 2
+ *   Weekday 8   → Day 3   (sort 4)          1 clip   → Topic 3
+ *   Weekday 9   → Day 4   (sort 5)          1 clip   → Topic 4
+ *   Weekday 10  → Day 5   (sort 6, RESOURCE) 0 clips → Topic 5
+ *   Weekday 11  → Day 6   (sort 7)          1 clip   → Topic 6
+ *   Weekday 12  → Day 7   (sorts 8-9)       2 clips  → Topic 7
+ *   Weekday 13  → Day 8   (sorts 10-11)     2 clips  → Topic 8
+ *   Weekday 14  → Day 9   (sort 12, RESOURCE) 0 clips → Topic 9
+ *   Weekday 15  → Day 10  (sort 13)         1 clip   → Topic 10
+ *   Weekday 16  → Day 11  (sorts 14-15)     2 clips  → Topic 11
+ *   Weekday 17  → Day 12  (sort 16)         1 clip   → Topic 12
+ *   Weekday 18  → Day 13  (sort 17)         1 clip   → Topic 13
+ *   Weekday 19  → Day 14  (sort 18)         1 clip   → Topic 14
+ *   Weekday 20  → Day 15  (sorts 19-20)     2 clips  → Topic 15
  */
 
 // Week 1 (The Approach) has no clip sessions — it's module-based.
@@ -67,21 +67,21 @@ const EXPECTED_SESSIONS_BY_WEEKDAY = [
  */
 const TOPIC_TO_MAX_SORT: number[] = [
   0,   // 0 topics → nothing expected
-  1,   // 1 topic  (Day 1)  → sort 1
-  2,   // 2 topics (Day 2)  → sort 2
-  3,   // 3 topics (Day 3)  → sort 3
-  4,   // 4 topics (Day 4)  → sort 4
-  5,   // 5 topics (Day 5)  → sort 5  (resource day)
-  6,   // 6 topics (Day 6)  → sort 6
-  8,   // 7 topics (Day 7)  → sorts 7-8
-  10,  // 8 topics (Day 8)  → sorts 9-10
-  11,  // 9 topics (Day 9)  → sort 11 (resource day)
-  12,  // 10 topics (Day 10) → sort 12
-  14,  // 11 topics (Day 11) → sorts 13-14
-  15,  // 12 topics (Day 12) → sort 15
-  16,  // 13 topics (Day 13) → sort 16
-  17,  // 14 topics (Day 14) → sort 17
-  19,  // 15 topics (Day 15) → sorts 18-19
+  2,   // 1 topic  (Day 1)  → sorts 1-2  (Industries + Personas)
+  3,   // 2 topics (Day 2)  → sort 3
+  4,   // 3 topics (Day 3)  → sort 4
+  5,   // 4 topics (Day 4)  → sort 5
+  6,   // 5 topics (Day 5)  → sort 6  (resource day)
+  7,   // 6 topics (Day 6)  → sort 7
+  9,   // 7 topics (Day 7)  → sorts 8-9
+  11,  // 8 topics (Day 8)  → sorts 10-11
+  12,  // 9 topics (Day 9)  → sort 12 (resource day)
+  13,  // 10 topics (Day 10) → sort 13
+  15,  // 11 topics (Day 11) → sorts 14-15
+  16,  // 12 topics (Day 12) → sort 16
+  17,  // 13 topics (Day 13) → sort 17
+  18,  // 14 topics (Day 14) → sort 18
+  20,  // 15 topics (Day 15) → sorts 19-20
 ];
 
 const TOTAL_WEEKDAYS = 20;
@@ -241,7 +241,7 @@ export function getExpectedSessions(weekdaysElapsed: number): number {
  */
 export function getExpectedMaxSortOrder(weekdaysElapsed: number): number {
   const expectedTopics = getExpectedSessions(weekdaysElapsed);
-  return TOPIC_TO_MAX_SORT[expectedTopics] ?? 19;
+  return TOPIC_TO_MAX_SORT[expectedTopics] ?? 20;
 }
 
 /**

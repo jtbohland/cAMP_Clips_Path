@@ -779,7 +779,7 @@ export default function WatchPage() {
   if (phase === "resume_prompt" && pausedSessionData) {
     return (
       <ResumePrompt
-        clipTitle={`Clip ${clip.sortOrder}: ${clip.title}`}
+        clipTitle={clip.title}
         elapsedSeconds={pausedSessionData.elapsedSeconds}
         durationSeconds={clip.durationSeconds}
         answeredCount={pausedSessionData.answeredQuestionIds.length}

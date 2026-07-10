@@ -39,8 +39,8 @@ type ClipLibraryCardProps = {
 
 function getWeekLabel(weekNumber: number | null, sortOrder: number): string {
   if (weekNumber != null) return `WEEK ${weekNumber}`;
-  if (sortOrder <= 4) return "WEEK 2";
-  if (sortOrder <= 9) return "WEEK 3";
+  if (sortOrder <= 5) return "WEEK 2";
+  if (sortOrder <= 11) return "WEEK 3";
   return "WEEK 4";
 }
 
@@ -83,17 +83,17 @@ function getButtonState(
   return "watch";
 }
 
-// ── Sort order constants (updated after Day 5/Day 9 topic day insertion) ──
-// Topic days: sort_order 5 (Renewal Ops), 11 (Pricing & Packaging)
-const TOPIC_DAY_SORT_ORDERS = new Set([5, 11]);
-// Clips that show the cAMP Quiz button (includes topic days 5, 11)
-const CAMP_QUIZ_SORT_ORDERS = new Set([1, 2, 3, 4, 5, 6, 8, 10, 11, 12, 14, 15, 16, 17, 19]);
+// ── Sort order constants (updated after Day 1 ICP split + topic day insertion) ──
+// Topic days: sort_order 6 (Renewal Ops), 12 (Pricing & Packaging)
+const TOPIC_DAY_SORT_ORDERS = new Set([6, 12]);
+// Clips that show the cAMP Quiz button (includes topic days 6, 12)
+const CAMP_QUIZ_SORT_ORDERS = new Set([1, 2, 3, 4, 5, 6, 7, 9, 11, 12, 13, 15, 16, 17, 18, 20]);
 // Clips that show the Wheel & Deal practice button
-const WHEEL_AND_DEAL_SORT_ORDERS = new Set([3, 7, 10, 14, 17]);
-// Sort order 4 has an additional Zoom clip (Reachdesk) — shows extra button
-const REACHDESK_SORT_ORDER = 4;
-// Sort order 17 (Deal Desk & CPQ) has two bonus Wistia clips
-const DEAL_DESK_SORT_ORDER = 17;
+const WHEEL_AND_DEAL_SORT_ORDERS = new Set([4, 8, 11, 15, 18]);
+// Sort order 5 has an additional Zoom clip (Reachdesk) — shows extra button
+const REACHDESK_SORT_ORDER = 5;
+// Sort order 18 (Deal Desk & CPQ) has two bonus Wistia clips
+const DEAL_DESK_SORT_ORDER = 18;
 
 export default function ClipLibraryCard({
   clip,
@@ -351,7 +351,7 @@ export default function ClipLibraryCard({
         )}
 
         {/* PODcast button — sort order 15 (Customer Stories) */}
-        {clip.sortOrder === 15 && onPodcasts && (
+        {clip.sortOrder === 16 && onPodcasts && (
           <button
             onClick={(e) => { e.stopPropagation(); onPodcasts(); }}
             className="w-full py-2.5 rounded-lg text-sm font-semibold bg-[#fec302] hover:bg-[#e5b002] text-gray-900 transition-colors"
@@ -359,7 +359,7 @@ export default function ClipLibraryCard({
             🎧 Listen to PODcasts
           </button>
         )}
-        {clip.sortOrder === 15 && onPodcasts && (
+        {clip.sortOrder === 16 && onPodcasts && (
           <p className="text-[11px] text-gray-400 text-center -mt-1">
             Real Amplitude PODs break down complex wins — listen at your own pace
           </p>

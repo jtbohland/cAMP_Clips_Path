@@ -230,7 +230,7 @@ const BADGE_DESCRIPTIONS: Record<string, string> = {
   mountain_goat: "20 consecutive days Summit Bound",
   free_solo: "Zero rockslide or worse across all Ascent days",
   // Performance
-  grip_strength: "Avg engagement score ≥85% across all 17 clips",
+  grip_strength: "Avg engagement score ≥85% across all 18 clips",
 };
 
 // ─── Sub-components ─────────────────────────────────────────────────

@@ -44,8 +44,8 @@ export default function RangerReport({
   xpData,
 }: RangerReportProps) {
   const missedCount = totalQuestions - correctAnswers;
-  const isPerfect = missedCount === 0;
   const passed = !needsRecovery;
+  const isPerfect = missedCount === 0 && passed;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.6)" }}>
@@ -131,13 +131,47 @@ export default function RangerReport({
           </div>
         )}
 
-        {/* Perfect score celebration */}
+        {/* Perfect score celebration — only when markers perfect AND engagement passed */}
         {isPerfect && (
           <div className="mx-6 mb-5 rounded-xl bg-green-50 border border-green-200 p-4 text-center">
             <span className="text-3xl">🌲</span>
             <p className="font-bold text-sm text-green-700 mt-1">
-              Perfect run! Forest fully preserved.
+              All clear, Ranger! Not a branch out of place.
             </p>
+          </div>
+        )}
+
+        {/* 🔥 Wildfire Warning — engagement below 80% */}
+        {needsRecovery && (
+          <div className="mx-6 mb-4 rounded-xl bg-red-50 border border-red-200 p-4">
+            <div className="flex items-start gap-3">
+              <span className="text-3xl flex-shrink-0">🔥</span>
+              <div>
+                <p className="font-bold text-sm text-gray-900">
+                  Wildfire Warning
+                </p>
+                <p className="text-sm text-gray-600 mt-1">
+                  Your engagement score dropped below the 80% safety line. The forest is at risk.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 🪂 Smokejumper Briefing — explains S&R before they click */}
+        {needsRecovery && (
+          <div className="mx-6 mb-5 rounded-xl bg-indigo-50 border border-indigo-200 p-4">
+            <div className="flex items-start gap-3">
+              <span className="text-3xl flex-shrink-0">🪂</span>
+              <div>
+                <p className="font-bold text-sm text-gray-900">
+                  Smokejumper Briefing
+                </p>
+                <p className="text-sm text-gray-600 mt-1">
+                  Search & Rescue deploys a short set of targeted questions to contain the damage. Score ≥80% to clear the fire line and unlock your next clip.
+                </p>
+              </div>
+            </div>
           </div>
         )}
 

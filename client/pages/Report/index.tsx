@@ -226,7 +226,7 @@ export default function ReportPage() {
             <div className="text-center py-2">
               <span className="text-3xl">🌲</span>
               <p className="font-bold text-sm text-green-700 mt-2">
-                Perfect run! No missed questions — forest fully preserved.
+                All clear, Ranger! Not a branch out of place.
               </p>
             </div>
           </div>

@@ -272,7 +272,7 @@ export default api({
       { label: "Get clip stats (distinct clips)" }
     );
 
-    const clipStats = clipStatsRows[0] ?? { total_clips: 17, completed_clips: 0, avg_score: 0 };
+    const clipStats = clipStatsRows[0] ?? { total_clips: 18, completed_clips: 0, avg_score: 0 };
 
     // Get topic-level progress for pacing context (item #8)
     const TopicProgressRow = z.object({
@@ -413,7 +413,7 @@ export default api({
     const totalQuizzes = 15;
     const retakes = Math.max(0, qs.total_attempts - qs.quizzes_passed - (qs.total_attempts > 0 ? (qs.total_attempts - qs.quizzes_passed) : 0));
 
-    // Get Week 4 specific stats (sort_order 13-19, quiz days 11-15) — summit only
+    // Get Week 4 specific stats (sort_order 14-20, quiz days 11-15) — summit only
     let week4: { clipsCompleted: number; totalClips: number; avgEngagement: number; avgQuizScore: number; quizzesPassed: number; totalQuizzes: number } | null = null;
     if (checkinType === "summit") {
       const Week4ClipRow = z.object({
@@ -429,7 +429,7 @@ export default api({
           COALESCE(AVG(CASE WHEN s.completed = true THEN s.engagement_score END)::int, 0) AS avg_engagement
          FROM cliptracker_v2_sessions s
          JOIN cliptracker_v2_clips c ON c.id = s.clip_id
-         WHERE s.viewer_id = $1 AND c.sort_order >= 13 AND c.sort_order <= 19
+         WHERE s.viewer_id = $1 AND c.sort_order >= 14 AND c.sort_order <= 20
            AND s.is_recovery_attempt = false`,
         Week4ClipRow,
         [viewerId],
@@ -459,7 +459,7 @@ export default api({
 
       week4 = {
         clipsCompleted: w4c.completed,
-        totalClips: 7, // sort 13-19 = 7 clips in week 4
+        totalClips: 7, // sort 14-20 = 7 clips in week 4
         avgEngagement: w4c.avg_engagement,
         avgQuizScore: w4q.avg_score,
         quizzesPassed: w4q.passed,

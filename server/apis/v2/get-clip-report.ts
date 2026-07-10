@@ -21,15 +21,15 @@ const IncorrectQuestionSchema = z.object({
 
 /** Map clip sort_order → quiz day ID */
 const SORT_ORDER_TO_QUIZ_DAY: Record<number, string> = {
-  1: "day1", 2: "day2", 3: "day3", 4: "day4", 5: "day5", 6: "day6",
-  7: "day7", 8: "day7", 9: "day8", 10: "day8", 11: "day9",
-  12: "day10", 13: "day11", 14: "day11", 15: "day12",
-  16: "day13", 17: "day14", 18: "day15", 19: "day15",
+  1: "day1", 2: "day1", 3: "day2", 4: "day3", 5: "day4", 6: "day5", 7: "day6",
+  8: "day7", 9: "day7", 10: "day8", 11: "day8", 12: "day9",
+  13: "day10", 14: "day11", 15: "day11", 16: "day12",
+  17: "day13", 18: "day14", 19: "day15", 20: "day15",
 };
 
 /** Quiz day → display name */
 const QUIZ_DAY_TO_NAME: Record<string, string> = {
-  day1: "🔎 Ideal Customer Profiles (Personas & Industries)",
+  day1: "🔎 Industries & Personas",
   day2: "📥 Top of Funnel (TOFU) – MQLs & Inbounds",
   day3: "📈 GTM Launch Pad",
   day4: "📇 Prospecting Process",
