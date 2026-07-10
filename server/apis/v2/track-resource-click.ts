@@ -4,13 +4,13 @@ const APPS_DB = "c6e32cf4-ca66-42ae-aeb3-58c84ffae574";
 
 /**
  * Records a resource click for a topic day.
- * When all resources are clicked, automatically inserts an unlock override
- * for the next clip (sort_order + 1) and records the Swiss Army Knife badge.
- * XP is awarded later when the learner submits their reflection.
+ * When all resources are clicked, records the Swiss Army Knife badge (0 XP).
+ * The next clip is NOT unlocked here — that happens when the learner
+ * submits their reflection (submit-topic-reflection.ts).
  */
 export default api({
   name: "TrackResourceClick",
-  description: "Records resource click on topic day, unlocks next clip when all clicked",
+  description: "Records resource click on topic day, awards badge when all clicked",
 
   integrations: {
     db: postgres(APPS_DB),
@@ -89,37 +89,7 @@ export default api({
         );
       }
 
-      // Unlock next clip (sort_order + 1)
-      const SortSchema = z.object({ sort_order: z.coerce.number() });
-      const currentClips = await ctx.integrations.db.query(
-        "SELECT sort_order FROM cliptracker_v2_clips WHERE id = $1",
-        SortSchema,
-        [clipId],
-        { label: "Get topic day sort order" }
-      );
-
-      if (currentClips.length > 0) {
-        const nextSortOrder = currentClips[0].sort_order + 1;
-        const NextClipSchema = z.object({ id: z.string() });
-        const nextClips = await ctx.integrations.db.query(
-          "SELECT id FROM cliptracker_v2_clips WHERE sort_order = $1 AND status = 'live'",
-          NextClipSchema,
-          [nextSortOrder],
-          { label: "Find next clip to unlock" }
-        );
-
-        if (nextClips.length > 0) {
-          await ctx.integrations.db.execute(
-            `INSERT INTO cliptracker_v2_unlock_overrides (viewer_id, clip_id, unlocked_by, reason)
-             VALUES ($1, $2, 'system', 'Completed topic day resources')
-             ON CONFLICT (viewer_id, clip_id) DO NOTHING`,
-            [viewerId, nextClips[0].id],
-            { label: "Unlock next clip via topic day completion" }
-          );
-        }
-      }
-
-      ctx.log.info("Topic day completed — all resources clicked", { viewerId, clipId, xpAwarded });
+      ctx.log.info("Topic day badge earned — all resources clicked, awaiting reflection", { viewerId, clipId });
     }
 
     return { recorded: true, clickedCount, allClicked, justCompleted, xpAwarded };

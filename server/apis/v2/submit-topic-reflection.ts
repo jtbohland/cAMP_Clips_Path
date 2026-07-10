@@ -117,6 +117,43 @@ export default api({
       }
     }
 
+    // === UNLOCK NEXT CLIP after reflection is submitted ===
+    // The next clip only unlocks once the learner submits their reflection,
+    // not when they click all resources (badge only at that point).
+    if (!isAdmin) {
+      const DayMapUnlock: Record<string, string> = { day5: "Day 5", day9: "Day 9" };
+      const dayLabelUnlock = DayMapUnlock[topicDay];
+      const UnlockClipSchema = z.object({ id: z.string(), sort_order: z.coerce.number() });
+      const topicClipRows = await ctx.integrations.db.query(
+        "SELECT id, sort_order FROM cliptracker_v2_clips WHERE day_label = $1 LIMIT 1",
+        UnlockClipSchema,
+        [dayLabelUnlock],
+        { label: "Find topic day clip for unlock" }
+      );
+
+      if (topicClipRows.length > 0) {
+        const nextSortOrder = topicClipRows[0].sort_order + 1;
+        const NextClipSchema = z.object({ id: z.string() });
+        const nextClips = await ctx.integrations.db.query(
+          "SELECT id FROM cliptracker_v2_clips WHERE sort_order = $1 AND status = 'live'",
+          NextClipSchema,
+          [nextSortOrder],
+          { label: "Find next clip to unlock" }
+        );
+
+        if (nextClips.length > 0) {
+          await ctx.integrations.db.execute(
+            `INSERT INTO cliptracker_v2_unlock_overrides (viewer_id, clip_id, unlocked_by, reason)
+             VALUES ($1, $2, 'system', 'Completed topic day reflection')
+             ON CONFLICT (viewer_id, clip_id) DO NOTHING`,
+            [viewerId, nextClips[0].id],
+            { label: "Unlock next clip via reflection submission" }
+          );
+          ctx.log.info("Next clip unlocked via reflection", { viewerId, topicDay, nextClipId: nextClips[0].id });
+        }
+      }
+    }
+
     // === HALFWAY UP MILESTONE: Award when Day 9 resource day reflection is submitted ===
     // Day 9 is the natural halfway point of The Ascent (Topic 9 of 15).
     // Moved here from AwardXP (was at clip sort_order 9) to tie to resource day completion.
