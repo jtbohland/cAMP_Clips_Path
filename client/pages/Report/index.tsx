@@ -172,7 +172,7 @@ export default function ReportPage() {
         {/* Score Tiles */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
           <p className="text-base font-medium text-indigo-500 text-center mb-4">
-            Clip {clipSortOrder}: {clipTitle}
+            {clipTitle}
           </p>
           <ScoreTiles
             engagementScore={engagementScore}
