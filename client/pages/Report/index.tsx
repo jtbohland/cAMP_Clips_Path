@@ -12,6 +12,7 @@ import XpCollectedSection from "@/components/report/XpCollectedSection";
 import WeatherStormCard from "@/components/report/WeatherStormCard";
 import RewatchPlayer from "@/components/report/RewatchPlayer";
 import CampGearSection from "@/components/report/CampGearSection";
+import CampQuizSection from "@/components/report/CampQuizSection";
 import ReachdeskReport from "@/components/report/ReachdeskReport";
 
 /** Badge ID → display info */
@@ -139,6 +140,12 @@ export default function ReportPage() {
     clipTitle,
     clipSortOrder,
     resources,
+    quizName,
+    quizBestScore,
+    quizBestCorrect,
+    quizTotalQuestions,
+    quizAttempts,
+    quizLiveAverage,
   } = reportData;
 
 
@@ -196,6 +203,20 @@ export default function ReportPage() {
         {hasIncorrect && (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
             <BackTrackSection incorrectQuestions={incorrectQuestions} />
+          </div>
+        )}
+
+        {/* 🧠 cAMP Quiz */}
+        {quizName && (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+            <CampQuizSection
+              quizName={quizName}
+              quizBestScore={quizBestScore}
+              quizBestCorrect={quizBestCorrect}
+              quizTotalQuestions={quizTotalQuestions}
+              quizAttempts={quizAttempts}
+              quizLiveAverage={quizLiveAverage}
+            />
           </div>
         )}
 
