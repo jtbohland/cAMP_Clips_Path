@@ -14,7 +14,7 @@ export interface PatchPill {
 }
 
 interface PatchProgressInput {
-  /** Sort order of the next uncompleted clip (1–19). null if all done. */
+  /** Sort order of the next uncompleted clip (1–20). null if all done. */
   nextClipSortOrder: number | null;
   /** Set of already-earned badge IDs (from GetLearnerProgress) */
   earnedBadgeIds: Set<string>;
@@ -96,13 +96,13 @@ export function calculatePatchProgress(input: PatchProgressInput): PatchProgress
     pills.push({ emoji: "🎬", name: "First Step", xp: 5 });
   }
 
-  // Into the Summit Push: clip 9 triggers Week 4 unlock
-  if (nextClipSortOrder === 9 && !earnedBadgeIds.has("week_4_entry")) {
+  // Into the Summit Push: clip 10 triggers Week 4 unlock
+  if (nextClipSortOrder === 10 && !earnedBadgeIds.has("week_4_entry")) {
     pills.push({ emoji: "🪢", name: "Into the Summit Push", xp: 10 });
   }
 
-  // Ranger's Secret: only possible on clip 17, and only if WtS never triggered
-  if (nextClipSortOrder === 17 && !hasTriggeredWeatherStorm && !earnedBadgeIds.has("mystery")) {
+  // Ranger's Secret: only possible on clip 20, and only if WtS never triggered
+  if (nextClipSortOrder === 20 && !hasTriggeredWeatherStorm && !earnedBadgeIds.has("mystery")) {
     pills.push({ emoji: "🌲", name: "The Ranger's Secret", xp: 20 });
   }
 
@@ -122,8 +122,8 @@ export function calculatePatchProgress(input: PatchProgressInput): PatchProgress
 
     // Free Solo: if no rockslide/avalanche/anchor_failure across all Ascent days
     // We can't easily check this client-side, but if they're summit_bound they're doing well
-    // Only show this on the last clip (sort 17+) when it would be awarded
-    if (nextClipSortOrder >= 17 && !earnedBadgeIds.has("free_solo")) {
+    // Only show this on the last clip (sort 20+) when it would be awarded
+    if (nextClipSortOrder >= 20 && !earnedBadgeIds.has("free_solo")) {
       pills.push({ emoji: "🧗", name: "Free Solo", xp: 40 });
     }
   }

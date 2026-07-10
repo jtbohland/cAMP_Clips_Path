@@ -181,7 +181,7 @@ const PACING_TIERS: { tier: PacingTier; title: string; trigger: string; daysBehi
   { tier: "lost_in_the_woods", title: "Lost in the Woods", trigger: "2 days behind expected pace", daysBehind: 2, clips: 5 },
   { tier: "rockslide", title: "Rockslide", trigger: "3 days behind expected pace", daysBehind: 3, clips: 4 },
   { tier: "avalanche_warning", title: "Avalanche Warning", trigger: "4+ days behind expected pace", daysBehind: 4, clips: 3 },
-  { tier: "completed", title: "Completed", trigger: "All 17 clips finished", daysBehind: 0, clips: 17 },
+  { tier: "completed", title: "Completed", trigger: "All 18 clips finished", daysBehind: 0, clips: 18 },
 ];
 
 const MOCK_APPROACH_CATCH_UP: { emoji: string; label: string }[] = [
@@ -208,7 +208,7 @@ const pacingExhibits: MuseumExhibit[] = [
         tier={p.tier}
         daysBehind={p.daysBehind}
         clipsCompleted={p.clips}
-        totalClips={17}
+        totalClips={18}
         weekdaysElapsed={10}
         missedClips={p.daysBehind > 0 ? MOCK_MISSED_CLIPS.slice(0, Math.min(p.daysBehind, 3)) : []}
         summitDay={MOCK_SUMMIT_DAY}
@@ -231,7 +231,7 @@ const pacingExhibits: MuseumExhibit[] = [
         tier="summit_bound"
         daysBehind={0}
         clipsCompleted={14}
-        totalClips={17}
+        totalClips={18}
         weekdaysElapsed={19}
         missedClips={[]}
         summitDay={MOCK_SUMMIT_DAY}
@@ -254,7 +254,7 @@ const pacingExhibits: MuseumExhibit[] = [
         tier="off_the_trail"
         daysBehind={1}
         clipsCompleted={14}
-        totalClips={17}
+        totalClips={18}
         weekdaysElapsed={20}
         missedClips={MOCK_MISSED_CLIPS.slice(0, 1)}
         summitDay={MOCK_SUMMIT_DAY}
@@ -277,7 +277,7 @@ const pacingExhibits: MuseumExhibit[] = [
         tier="summit_bound"
         daysBehind={0}
         clipsCompleted={9}
-        totalClips={17}
+        totalClips={18}
         weekdaysElapsed={14}
         missedClips={[]}
         summitDay={MOCK_SUMMIT_DAY}
@@ -300,7 +300,7 @@ const pacingExhibits: MuseumExhibit[] = [
         tier="lost_in_the_woods"
         daysBehind={3}
         clipsCompleted={5}
-        totalClips={17}
+        totalClips={18}
         weekdaysElapsed={12}
         missedClips={MOCK_MISSED_CLIPS}
         summitDay={MOCK_SUMMIT_DAY}
@@ -371,7 +371,7 @@ const anchorExhibits: MuseumExhibit[] = [
         adjustmentDay={MOCK_ADJUSTMENT_DAY}
         adjustmentMissed={false}
         clipsCompleted={12}
-        totalClips={17}
+        totalClips={18}
         missedClips={MOCK_MISSED_CLIPS}
         approachComplete={false}
         approachCatchUpItems={MOCK_APPROACH_CATCH_UP}
@@ -389,7 +389,7 @@ const anchorExhibits: MuseumExhibit[] = [
         adjustmentDay={MOCK_ADJUSTMENT_DAY}
         adjustmentMissed={true}
         clipsCompleted={12}
-        totalClips={17}
+        totalClips={18}
         missedClips={MOCK_MISSED_CLIPS}
         approachComplete={false}
         approachCatchUpItems={MOCK_APPROACH_CATCH_UP}
@@ -516,31 +516,31 @@ const summitExhibits: MuseumExhibit[] = [
   {
     id: "final-achievement-golden",
     title: "🏆 Final Achievement (Golden Summit)",
-    trigger: "All 17 clips completed — Approach ✅ + finished by Summit Day. Shows before Grand Finale.",
+    trigger: "All 18 clips completed — Approach ✅ + finished by Summit Day. Shows before Grand Finale.",
     render: () => <FinalAchievementMockup tier="golden" />,
   },
   {
     id: "final-achievement-speed",
     title: "🏆 Final Achievement (Speed Ascent)",
-    trigger: "All 17 clips completed — finished by Summit Day, Approach ❌. Shows before Grand Finale.",
+    trigger: "All 18 clips completed — finished by Summit Day, Approach ❌. Shows before Grand Finale.",
     render: () => <FinalAchievementMockup tier="speed" />,
   },
   {
     id: "final-achievement-second",
     title: "🏆 Final Achievement (Second Wind)",
-    trigger: "All 17 clips completed — finished by Adjustment Day. Shows before Grand Finale.",
+    trigger: "All 18 clips completed — finished by Adjustment Day. Shows before Grand Finale.",
     render: () => <FinalAchievementMockup tier="second" />,
   },
   {
     id: "final-achievement-every",
     title: "🏆 Final Achievement (Every Step Counts)",
-    trigger: "All 17 clips completed — finished after Adjustment Day. Shows before Grand Finale.",
+    trigger: "All 18 clips completed — finished after Adjustment Day. Shows before Grand Finale.",
     render: () => <FinalAchievementMockup tier="every" />,
   },
   {
     id: "summit-grand-finale",
     title: "Grand Finale",
-    trigger: "All 17 clips completed — standalone celebration before the check-in flow",
+    trigger: "All 18 clips completed — standalone celebration before the check-in flow",
     render: () => <SummitGrandFinaleMockup />,
   },
 ];
@@ -797,7 +797,7 @@ function SummitGrandFinaleMockup() {
               </div>
               <h2 className="text-2xl font-bold text-white">Summit Reached — Ascent Complete!</h2>
               <p className="mt-2 text-sm text-white/80 leading-relaxed max-w-lg mx-auto">
-                You've completed all 17 cAMP Clips and conquered your Ascent. The trail behind you is proof — you showed up, engaged, and earned it.
+                You've completed all 18 cAMP Clips and conquered your Ascent. The trail behind you is proof — you showed up, engaged, and earned it.
               </p>
             </div>
 
@@ -900,7 +900,7 @@ function FinalAchievementMockup({ tier }: { tier: "golden" | "speed" | "second" 
   ] : [];
 
   // Mock grip strength (show for golden/speed)
-  const mockGrip = (tier === "golden" || tier === "speed") ? { badgeId: "grip_strength", name: "Grip Strength", emoji: "💪", xp: 35, desc: "Avg engagement score ≥85% across all 17 clips" } : null;
+  const mockGrip = (tier === "golden" || tier === "speed") ? { badgeId: "grip_strength", name: "Grip Strength", emoji: "💪", xp: 35, desc: "Avg engagement score ≥85% across all 18 clips" } : null;
 
   const totalXp = t.xp + mockPacingStreaks.reduce((s, b) => s + b.xp, 0) + (mockGrip?.xp ?? 0);
 
@@ -1024,7 +1024,7 @@ function CheckinMockup({ type }: { type: "approach" | "week2" | "week3" | "summi
     summit: "Looking back at your entire Ascent, what's the #1 thing that will change how you sell?",
   };
 
-  const mockClipCount = type === "approach" ? "—" : type === "week2" ? "8" : type === "week3" ? "14" : "17";
+  const mockClipCount = type === "approach" ? "—" : type === "week2" ? "8" : type === "week3" ? "14" : "18";
   const mockName = "Alex Rivera";
   const mockManager = "jordan.chen@amplitude.com";
 
@@ -1136,7 +1136,7 @@ function CheckinMockup({ type }: { type: "approach" | "week2" | "week3" | "summi
                   <h3 className="text-sm font-bold text-green-900 mb-3 flex items-center gap-1.5"><span className="w-1 h-4 rounded-full bg-green-500 inline-block" />🎞️ {type === "summit" ? "All Clips" : "Clip Progress"}</h3>
                   <div className="grid grid-cols-4 gap-3 text-center">
                     <div className="rounded-lg bg-white/70 py-2">
-                      <p className="text-xl font-bold text-green-700">{mockClipCount}/17</p>
+                      <p className="text-xl font-bold text-green-700">{mockClipCount}/18</p>
                       <p className="text-xs text-gray-500">Clips Done</p>
                     </div>
                     <div className="rounded-lg bg-white/70 py-2">
@@ -1294,7 +1294,7 @@ function CheckinMockup({ type }: { type: "approach" | "week2" | "week3" | "summi
                     </>
                   ) : type === "summit" ? (
                     <>
-                      <p>I completed all 17 cAMP Clips and reached the Summit! 🏔️✨</p>
+                      <p>I completed all 18 cAMP Clips and reached the Summit! 🏔️✨</p>
                       <div className="pl-3 border-l-2 border-green-300 bg-green-50/50 rounded py-1 space-y-1">
                         <p className="font-semibold text-gray-800">⛰️ Week 4 Performance</p>
                         <p>• 🎞️ Clips: 7/7 · Avg Engagement: 89%</p>
@@ -1303,7 +1303,7 @@ function CheckinMockup({ type }: { type: "approach" | "week2" | "week3" | "summi
                       <div className="pl-3 border-l-2 border-amber-200 space-y-1 bg-amber-50/50 rounded py-1">
                         <p className="font-semibold text-gray-800">🏔️ Overall Journey</p>
                         <p>• 📊 XP: 485 · Tier: ⛰️ Pinnacle · 🏆 #3 of 12</p>
-                        <p>• 🎞️ Clips: 17/17 · 🔦 S&R: 3 · ⛈️ WtS: 1</p>
+                        <p>• 🎞️ Clips: 18/18 · 🔦 S&R: 3 · ⛈️ WtS: 1</p>
                       </div>
                       <div className="pl-3 border-l-2 border-gray-200 space-y-1">
                         <p className="font-semibold text-gray-800">👀 Engagement:</p>
@@ -1319,7 +1319,7 @@ function CheckinMockup({ type }: { type: "approach" | "week2" | "week3" | "summi
                       <p>Here's my {type === "week2" ? "Week 2" : "Week 3"} cAMP Ascent update:</p>
                       <div className="pl-3 border-l-2 border-gray-200 space-y-1">
                         <p className="font-semibold text-gray-800">🎞️ Clips:</p>
-                        <p>• {type === "week2" ? "8" : "14"}/17 completed · 🔦 S&R: {type === "week2" ? 1 : 2} · ⛈️ WtS: {type === "week2" ? 0 : 1}</p>
+                        <p>• {type === "week2" ? "8" : "14"}/18 completed · 🔦 S&R: {type === "week2" ? 1 : 2} · ⛈️ WtS: {type === "week2" ? 0 : 1}</p>
                       </div>
                       <div className="pl-3 border-l-2 border-gray-200 space-y-1">
                         <p className="font-semibold text-gray-800">📊 Stats:</p>

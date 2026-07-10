@@ -631,7 +631,7 @@ function SummitCelebrateView({ data, jtQuote }: { data: any; jtQuote: string }) 
         </div>
         <h2 className="text-2xl font-bold text-white">Summit Reached — Ascent Complete!</h2>
         <p className="mt-2 text-sm text-white/80 leading-relaxed max-w-lg mx-auto">
-          You've completed all 17 cAMP Clips and conquered your Ascent. The trail behind you is proof — you showed up, engaged, and earned it.
+          You've completed all 18 cAMP Clips and conquered your Ascent. The trail behind you is proof — you showed up, engaged, and earned it.
         </p>
       </div>
 

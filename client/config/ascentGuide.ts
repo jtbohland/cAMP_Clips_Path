@@ -16,13 +16,24 @@ export type AscentGuideEntry = {
 
 // Full guide data, keyed by session ID
 const GUIDE_SESSIONS: Record<string, AscentGuideEntry> = {
-  day1: {
-    id: "day1",
+  day1_industries: {
+    id: "day1_industries",
     summary:
-      "This session introduces who we sell to and why it matters. New hires will dig into Amplitude's priority industries and buyer personas to understand their goals, challenges, and success metrics. The focus is on connecting product value to real-world problems, not just memorizing attributes. By the end, AEs should see ICPs as a filter for focus and qualification, not a slide to skim once.",
+      "This session introduces who we sell to at the industry level. New hires will learn why vertical fluency matters, explore Amplitude's priority industries, and practice a five-step repeatable habit for selling into any vertical. The focus is on connecting product value to real-world industry workflows, not just memorizing company names.",
     learningObjectives: [
-      "Identify Amplitude's target industries and core buyer personas, including their top priorities and pain points.",
-      "Map Amplitude value drivers to specific persona and industry needs.",
+      "Explain why vertical fluency matters and how it reduces uncertainty for buyers.",
+      "Identify Amplitude's priority industries and the key challenges each one faces.",
+      "Apply the five-step repeatable habit to prepare for conversations in any industry.",
+    ],
+    smes: [{ name: "Michele Morales", title: "Group Product Marketing Manager" }],
+  },
+  day1_personas: {
+    id: "day1_personas",
+    summary:
+      "This session digs into the buyer personas AEs will engage across Amplitude's target accounts. Reps will learn how to identify decision-makers, influencers, and end-users, understand their goals, challenges, and success metrics, and map Amplitude value drivers to specific persona needs. The emphasis is on seeing ICPs as a filter for focus and qualification.",
+    learningObjectives: [
+      "Identify core buyer personas at target accounts, including their top priorities and pain points.",
+      "Map Amplitude value drivers to specific persona needs and buying motivations.",
       "Use ICP criteria to quickly qualify or deprioritize accounts and opportunities.",
     ],
     smes: [{ name: "Michele Morales", title: "Group Product Marketing Manager" }],
@@ -182,23 +193,24 @@ const GUIDE_SESSIONS: Record<string, AscentGuideEntry> = {
 // Map from clip sort order → guide session ID
 // Days without cAMP Clips (Day 5 Renewals, Day 9 Pricing) are not included
 const SORT_ORDER_TO_SESSION_ID: Record<number, string> = {
-  1: "day1",
-  2: "day2",
-  3: "day3",
-  4: "day4",
-  5: "day6",  // clip sort 5 = Competitive Landscape (Day 6 in guide)
-  6: "day7",
-  7: "day7",  // Account Planning (Momentum for Slack) — same guide
-  8: "day8",
-  9: "day8",  // Discovery (Spekit Deal Rooms) — same guide
-  10: "day10",
-  11: "day11",
-  12: "day11", // Forecasting (Intro to Services) — same guide
-  13: "day12",
-  14: "day13",
-  15: "day14",
-  16: "day15",
-  17: "day15", // Leveraging Professional Services — same guide
+  1: "day1_industries",
+  2: "day1_personas",
+  3: "day2",
+  4: "day3",
+  5: "day4",
+  6: "day6",  // clip sort 6 = Competitive Landscape (Day 6 in guide)
+  7: "day7",
+  8: "day7",  // Account Planning (Momentum for Slack) — same guide
+  9: "day8",
+  10: "day8",  // Discovery (Spekit Deal Rooms) — same guide
+  11: "day10",
+  12: "day11",
+  13: "day11", // Forecasting (Intro to Services) — same guide
+  14: "day12",
+  15: "day13",
+  16: "day14",
+  17: "day15",
+  18: "day15", // Leveraging Professional Services — same guide
 };
 
 /**

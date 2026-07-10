@@ -107,7 +107,7 @@ export default function TrailManifesto({ viewerId }: TrailManifestoProps) {
           <div>
             <p className="font-semibold text-gray-900">How I'll track your progress</p>
             <p className="text-xs text-gray-600 mt-0.5">
-              I can see everything — engagement scores, Trail Marker results, quiz performance, XP, and pacing across all 17 clips. My goal isn't to catch you slipping — it's to make sure no one falls behind without a hand to grab onto. If I notice you're off pace or struggling with a topic, I'll reach out. If you're flying through — I'll notice that too. 👀
+              I can see everything — engagement scores, Trail Marker results, quiz performance, XP, and pacing across all 18 clips. My goal isn't to catch you slipping — it's to make sure no one falls behind without a hand to grab onto. If I notice you're off pace or struggling with a topic, I'll reach out. If you're flying through — I'll notice that too. 👀
             </p>
           </div>
         </div>

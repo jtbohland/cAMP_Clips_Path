@@ -27,18 +27,19 @@ const EXPECTED_BY_WEEKDAY = [
 // Map each sort_order → which Ascent day (1-15) it belongs to.
 // Multi-clip days share the same Ascent day number.
 const SORT_TO_ASCENT_DAY: Record<number, number> = {
-  1: 1, 2: 2, 3: 3, 4: 4,
-  5: 5,  // resource day
-  6: 6,
-  7: 7, 8: 7,   // Day 7: 2 clips
-  9: 8, 10: 8,  // Day 8: 2 clips
-  11: 9,        // resource day
-  12: 10,
-  13: 11, 14: 11, // Day 11: 2 clips
-  15: 12,
-  16: 13,
-  17: 14,
-  18: 15, 19: 15, // Day 15: 2 clips
+  1: 1, 2: 1,   // Day 1: 2 clips (Industries + Personas)
+  3: 2, 4: 3, 5: 4,
+  6: 5,  // resource day
+  7: 6,
+  8: 7, 9: 7,   // Day 7: 2 clips
+  10: 8, 11: 8,  // Day 8: 2 clips
+  12: 9,        // resource day
+  13: 10,
+  14: 11, 15: 11, // Day 11: 2 clips
+  16: 12,
+  17: 13,
+  18: 14,
+  19: 15, 20: 15, // Day 15: 2 clips
 };
 
 // Total Ascent weekdays = 15
@@ -363,7 +364,7 @@ export default api({
     }
 
     // ── 3. GRIP STRENGTH ──
-    // Average engagement score ≥85% across all 17 clips (all learners eligible)
+    // Average engagement score ≥85% across all 18 clips (all learners eligible)
     const EngagementSchema = z.object({
       avg_engagement: z.coerce.number(),
       session_count: z.coerce.number(),
@@ -376,21 +377,21 @@ export default api({
        WHERE viewer_id = $1 AND completed = true AND engagement_score IS NOT NULL`,
       EngagementSchema, [viewerId], { label: "Calculate average engagement" }
     );
-    if (engData[0] && engData[0].session_count >= 17 && engData[0].avg_engagement >= 85) {
+    if (engData[0] && engData[0].session_count >= 18 && engData[0].avg_engagement >= 85) {
       gripStrength = { badgeId: "grip_strength", name: "Grip Strength", emoji: "💪", xp: 35 };
       xpEvents.push({ sourceId: "grip_strength", eventType: "performance", xp: 35 });
       badgesAwarded.push(gripStrength);
     }
 
     // ── INSERT XP EVENTS & BADGES ──
-    // Use last clip (sort_order 17) as the clip reference for these awards
+    // Use last clip (sort_order 20) as the clip reference for these awards
     const LastClipSchema = z.object({ id: z.string() });
     const lastClip = await ctx.integrations.db.query(
-      "SELECT id FROM cliptracker_v2_clips WHERE sort_order = 17 LIMIT 1",
+      "SELECT id FROM cliptracker_v2_clips WHERE sort_order = 20 LIMIT 1",
       LastClipSchema, [], { label: "Get last clip ID" }
     );
     const lastClipId = lastClip[0]?.id;
-    if (!lastClipId) throw new Error("Clip sort_order 17 not found");
+    if (!lastClipId) throw new Error("Clip sort_order 20 not found");
 
     let totalXpAwarded = 0;
     for (const event of xpEvents) {

@@ -125,7 +125,7 @@ export default function LibraryPage() {
     navigate("/report/reachdesk");
   }, [viewer?.id, logClick, reachdeskStorageKey, navigate]);
 
-  // Deal Desk bonus clips (sort order 17 after topic day insertion) — tracked via localStorage
+  // Deal Desk bonus clips (sort order 18 after Day 1 ICP split) — tracked via localStorage
   const bonus1StorageKey = viewer?.id ? `deal_desk_bonus1_watched_${viewer.id}` : null;
   const bonus2StorageKey = viewer?.id ? `deal_desk_bonus2_watched_${viewer.id}` : null;
   const [bonus1Watched, setBonus1Watched] = useState(() => {
@@ -235,9 +235,9 @@ export default function LibraryPage() {
   }, [rawClips, ascentTestMode]);
   const ascentComplete = clips.length >= TOTAL_SESSIONS && clips.every((c: any) => c.completed);
 
-  // A/B pair sort orders — updated after Day 5 + Day 9 topic day insertion
-  // Old: [6,7],[8,9],[11,12],[16,17] → New: [7,8],[9,10],[13,14],[18,19]
-  const AB_PAIRS: [number, number][] = [[7, 8], [9, 10], [13, 14], [18, 19]];
+  // A/B pair sort orders — updated after Day 1 ICP split (20 clips total)
+  // Pairs: sorts 1+2 (Day 1), 8+9 (Day 7), 10+11 (Day 8), 14+15 (Day 11), 19+20 (Day 15)
+  const AB_PAIRS: [number, number][] = [[1, 2], [8, 9], [10, 11], [14, 15], [19, 20]];
   const pairedSortOrders = new Set(AB_PAIRS.flat());
 
   // ── Pacing calculation ──
@@ -1142,19 +1142,19 @@ export default function LibraryPage() {
                           onCampQuiz={handleCampQuiz}
                           onViewGear={
                             clip.isTopicDay
-                              ? () => navigate(`/topic-gear/${clip.sortOrder === 5 ? "day5" : "day9"}/${clip.id}`)
+                              ? () => navigate(`/topic-gear/${clip.sortOrder === 6 ? "day5" : "day9"}/${clip.id}`)
                               : undefined
                           }
-                          onZoomClipWatch={clip.sortOrder === 4 ? handleReachdeskWatch : undefined}
-                          onZoomClipReview={clip.sortOrder === 4 ? () => navigate(`/report/reachdesk`) : undefined}
-                          zoomClipWatched={clip.sortOrder === 4 ? reachdeskWatched : undefined}
-                          onPodcasts={clip.sortOrder === 15 ? () => navigate("/podcasts") : undefined}
-                          onBonusClip1Watch={clip.sortOrder === 17 ? handleBonusClip1Watch : undefined}
-                          onBonusClip1Review={clip.sortOrder === 17 ? handleBonusClip1Review : undefined}
-                          bonusClip1Watched={clip.sortOrder === 17 ? bonus1Watched : undefined}
-                          onBonusClip2Watch={clip.sortOrder === 17 ? handleBonusClip2Watch : undefined}
-                          onBonusClip2Review={clip.sortOrder === 17 ? handleBonusClip2Review : undefined}
-                          bonusClip2Watched={clip.sortOrder === 17 ? bonus2Watched : undefined}
+                          onZoomClipWatch={clip.sortOrder === 5 ? handleReachdeskWatch : undefined}
+                          onZoomClipReview={clip.sortOrder === 5 ? () => navigate(`/report/reachdesk`) : undefined}
+                          zoomClipWatched={clip.sortOrder === 5 ? reachdeskWatched : undefined}
+                          onPodcasts={clip.sortOrder === 16 ? () => navigate("/podcasts") : undefined}
+                          onBonusClip1Watch={clip.sortOrder === 18 ? handleBonusClip1Watch : undefined}
+                          onBonusClip1Review={clip.sortOrder === 18 ? handleBonusClip1Review : undefined}
+                          bonusClip1Watched={clip.sortOrder === 18 ? bonus1Watched : undefined}
+                          onBonusClip2Watch={clip.sortOrder === 18 ? handleBonusClip2Watch : undefined}
+                          onBonusClip2Review={clip.sortOrder === 18 ? handleBonusClip2Review : undefined}
+                          bonusClip2Watched={clip.sortOrder === 18 ? bonus2Watched : undefined}
                         />
                       );
                     });
