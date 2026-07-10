@@ -136,7 +136,7 @@ export default function RangerReport({
           <div className="mx-6 mb-5 rounded-xl bg-green-50 border border-green-200 p-4 text-center">
             <span className="text-3xl">🌲</span>
             <p className="font-bold text-sm text-green-700 mt-1">
-              All clear, Ranger! Not a branch out of place.
+              Leave No Trace! The trail is pristine.
             </p>
           </div>
         )}
