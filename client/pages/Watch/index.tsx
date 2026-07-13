@@ -247,9 +247,40 @@ export default function WatchPage() {
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Session init on mount
+  // Session init — runs on mount AND when clipId changes (e.g. "Continue to Next")
   useEffect(() => {
     if (!clipId || !viewer?.id) return;
+
+    // Reset all session-specific state so nothing carries over between clips
+    setPhase("loading_resume");
+    setPausedSessionData(null);
+    setSessionId(null);
+    setCurrentQuestionIdx(0);
+    setAnsweredQuestions(new Set());
+    answeredQuestionsRef.current = new Set();
+    setCorrectCount(0);
+    setTotalTrailMarkers(0);
+    setScore(0);
+    setSearchRescueScore(null);
+    setSrCorrectCount(0);
+    setSearchRescueTriggered(false);
+    setNewEngagementScore(null);
+    setEngagementScore(null);
+    setIncorrectQuestions([]);
+    setReportReady(false);
+    setElapsedSeconds(0);
+    setWatchedSeconds(0);
+    setFocusSeconds(0);
+    setBlurSeconds(0);
+    setXpData(null);
+    autoEndedRef.current = false;
+    resumeFromSecondsRef.current = null;
+    lastTimeRef.current = 0;
+    lastWatchedTimeRef.current = 0;
+    tabAwayCountRef.current = 0;
+    lowVolumeSecondsRef.current = 0;
+    isLowVolumeRef.current = false;
+
     executeApi("GetPausedSession", { clipId, viewerId: viewer.id })
       .then((result: any) => {
         // 1. Passed clip via deep link (no ?source=library) → redirect to report
