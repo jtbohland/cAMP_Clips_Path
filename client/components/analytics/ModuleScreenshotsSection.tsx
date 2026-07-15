@@ -1,5 +1,6 @@
 import { memo, useState, useMemo, useCallback } from "react";
 import { useApiData } from "@/hooks/useApiData";
+import { useApi } from "@/hooks/useApi";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const ITEM_LABELS: Record<string, { emoji: string; name: string }> = {
@@ -12,19 +13,30 @@ const ITEM_LABELS: Record<string, { emoji: string; name: string }> = {
   challenger: { emoji: "⚔️", name: "Challenger" },
 };
 
-type Screenshot = {
+type ScreenshotMeta = {
   id: string;
   viewerId: string;
   viewerName: string;
   source: string;
   itemKey: string;
   filename: string | null;
-  screenshotData: string;
   uploadedAt: string;
 };
 
-function LightboxOverlay({ screenshot, onClose }: { screenshot: Screenshot; onClose: () => void }) {
+function LightboxOverlay({
+  screenshot,
+  onClose,
+}: {
+  screenshot: ScreenshotMeta;
+  onClose: () => void;
+}) {
   const label = ITEM_LABELS[screenshot.itemKey] ?? { emoji: "📸", name: screenshot.itemKey };
+
+  // Fetch the actual base64 data on demand
+  const { data, loading, isError } = useApiData("GetScreenshotData", {
+    id: screenshot.id,
+    source: screenshot.source as "academy" | "module",
+  });
 
   return (
     <div
@@ -55,12 +67,23 @@ function LightboxOverlay({ screenshot, onClose }: { screenshot: Screenshot; onCl
           </div>
         </div>
         {/* Image */}
-        <div className="overflow-auto max-h-[calc(90vh-56px)]">
-          <img
-            src={screenshot.screenshotData}
-            alt={`${screenshot.viewerName} - ${label.name}`}
-            className="block max-w-full"
-          />
+        <div className="overflow-auto max-h-[calc(90vh-56px)] min-w-[300px] min-h-[200px] flex items-center justify-center">
+          {loading && (
+            <div className="p-8 text-center text-gray-400">
+              <div className="animate-spin inline-block w-6 h-6 border-2 border-gray-300 border-t-blue-500 rounded-full mb-2" />
+              <p className="text-xs">Loading screenshot…</p>
+            </div>
+          )}
+          {isError && (
+            <p className="p-8 text-sm text-red-500 text-center">Failed to load screenshot.</p>
+          )}
+          {data?.screenshotData && (
+            <img
+              src={data.screenshotData}
+              alt={`${screenshot.viewerName} - ${label.name}`}
+              className="block max-w-full"
+            />
+          )}
         </div>
       </div>
     </div>
@@ -75,7 +98,7 @@ function ModuleScreenshotsSection() {
 
   // Group by viewer
   const grouped = useMemo(() => {
-    const groups: Record<string, { name: string; items: Screenshot[] }> = {};
+    const groups: Record<string, { name: string; items: ScreenshotMeta[] }> = {};
     for (const s of screenshots) {
       if (!groups[s.viewerId]) {
         groups[s.viewerId] = { name: s.viewerName, items: [] };
@@ -136,15 +159,12 @@ function ModuleScreenshotsSection() {
                   onClick={() => setLightboxId(s.id)}
                   className="group relative w-32 rounded-lg border border-gray-200 overflow-hidden hover:border-blue-400 hover:shadow-md transition-all cursor-pointer"
                 >
-                  <img
-                    src={s.screenshotData}
-                    alt={`${s.viewerName} - ${label.name}`}
-                    className="w-full h-20 object-cover object-top"
-                    loading="lazy"
-                  />
+                  {/* Placeholder thumbnail (no image data in listing) */}
+                  <div className="w-full h-20 bg-gray-100 flex items-center justify-center">
+                    <span className="text-2xl">{label.emoji}</span>
+                  </div>
                   <div className="px-2 py-1.5 bg-white border-t border-gray-100">
                     <div className="flex items-center gap-1">
-                      <span className="text-[10px]">{label.emoji}</span>
                       <span className="text-[10px] font-medium text-gray-700 truncate">
                         {label.name}
                       </span>
@@ -166,7 +186,7 @@ function ModuleScreenshotsSection() {
         </div>
       ))}
 
-      {/* Lightbox */}
+      {/* Lightbox — fetches base64 data on demand */}
       {lightboxScreenshot && (
         <LightboxOverlay screenshot={lightboxScreenshot} onClose={handleClose} />
       )}

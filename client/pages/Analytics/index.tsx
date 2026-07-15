@@ -8,10 +8,9 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Week1AnalyticsSection from "@/components/analytics/Week1AnalyticsSection";
-import SherpaSurveysSection from "@/components/analytics/SherpaSurveysSection";
+import JournalsTabsSection from "@/components/analytics/JournalsTabsSection";
 import LearnerReflectionsSection from "@/components/analytics/LearnerReflectionsSection";
 import ManagerFeedbackSection from "@/components/analytics/ManagerFeedbackSection";
-import ModuleScreenshotsSection from "@/components/analytics/ModuleScreenshotsSection";
 
 /** Badge ID → display info */
 const BADGE_MAP: Record<string, { name: string; emoji: string }> = {
@@ -224,15 +223,12 @@ function AnalyticsContent() {
 
         {/* 8. Journals + Logbooks — learner reflections */}
         <Section title="Journals + Logbooks" subtitle="Resource day, module & check-in reflections from learners" emoji="📓" defaultOpen={false}>
-          <SherpaSurveysSection />
+          <JournalsTabsSection />
           <div className="border-t border-gray-200 mt-4 pt-2">
             <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">💭 Check-in Reflections</h4>
             <LearnerReflectionsSection />
           </div>
-          <div className="border-t border-gray-200 mt-4 pt-2">
-            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">📸 Module Screenshots</h4>
-            <ModuleScreenshotsSection />
-          </div>
+
         </Section>
       </div>
     </div>

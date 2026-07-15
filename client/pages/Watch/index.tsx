@@ -10,8 +10,7 @@ import SearchRescue from "@/components/SearchRescue";
 import WeatherStorm from "@/components/WeatherStorm";
 import SearchRescuePassPopup from "@/components/SearchRescuePassPopup";
 import ResumePrompt from "@/components/ResumePrompt";
-import AscentGuidePanel from "@/components/AscentGuidePanel.js";
-import { getGuideEntryForClip } from "@/config/ascentGuide.js";
+
 import { getLibraryPath } from "@/lib/libraryNav";
 
 import { WistiaPlayer } from "@wistia/wistia-player-react";
@@ -96,7 +95,7 @@ export default function WatchPage() {
   const lowVolumeSecondsRef = useRef(0);
   const isLowVolumeRef = useRef(false);
   const [showTranscript, setShowTranscript] = useState(false);
-  const [guideOpen, setGuideOpen] = useState(true);
+
   const [xpData, setXpData] = useState<{
     sessionBreakdown: { base: number; milestones: number; bonuses: number };
     totalXp: number;
@@ -791,7 +790,7 @@ export default function WatchPage() {
   }
 
   const clip = clipData.clip;
-  const guideEntry = getGuideEntryForClip(clip.sortOrder);
+
   const durationFormatted = clip.durationSeconds
     ? `${Math.floor(clip.durationSeconds / 3600) > 0 ? Math.floor(clip.durationSeconds / 3600) + "h " : ""}${Math.floor((clip.durationSeconds % 3600) / 60)}m`
     : "";
@@ -836,14 +835,7 @@ export default function WatchPage() {
             <span>💬 CC available — click CC on the video for captions & auto-translation</span>
           </p>
         </div>
-        {/* Ascent Guide Panel */}
-        {guideEntry && (
-          <AscentGuidePanel
-            entry={guideEntry}
-            isOpen={guideOpen}
-            onSwatAway={() => setGuideOpen(false)}
-          />
-        )}
+
         <div className="flex items-center justify-end gap-3 px-4 pb-2">
           {/* Timer pill — always yellow */}
           <span className="text-xs font-mono px-3 py-1 rounded-full bg-amber-100 text-amber-700">
@@ -861,15 +853,7 @@ export default function WatchPage() {
           >
             📄 Transcript
           </button>
-          {/* Ascent Guide chip — only shows when panel is collapsed */}
-          {guideEntry && !guideOpen && (
-            <button
-              onClick={() => setGuideOpen(true)}
-              className="text-sm font-semibold px-3 py-1.5 rounded-lg transition-colors bg-green-100 text-green-700 hover:bg-green-200"
-            >
-              🧭 Ascent Guide
-            </button>
-          )}
+
           {/* Back to Clips — unchanged */}
           <button
             onClick={handlePauseAndBack}

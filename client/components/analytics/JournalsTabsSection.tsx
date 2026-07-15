@@ -1,6 +1,7 @@
 import { memo, useState, useMemo } from "react";
 import { useApiData } from "@/hooks/useApiData.js";
 import { Skeleton } from "@/components/ui/skeleton";
+import ModuleScreenshotsSection from "./ModuleScreenshotsSection";
 
 const MODULE_LABELS: Record<string, { emoji: string; name: string }> = {
   meddpicc: { emoji: "📘", name: "MEDDPICC" },
@@ -13,9 +14,9 @@ const TOPIC_DAY_LABELS: Record<string, { emoji: string; name: string }> = {
   day9: { emoji: "📅", name: "Resource Day 9" },
 };
 
-function SherpaSurveysSection() {
+function JournalsTabsSection() {
   const { data, loading, isError, error } = useApiData("GetSherpaSurveys", {});
-  const [activeTab, setActiveTab] = useState<"topic" | "module">("topic");
+  const [activeTab, setActiveTab] = useState<"topic" | "module" | "screenshots">("topic");
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
 
   const topicReflections = useMemo(() => data?.topicReflections ?? [], [data]);
@@ -57,6 +58,14 @@ function SherpaSurveysSection() {
           }`}
         >
           📚 Module Reflections ({moduleReflections.length})
+        </button>
+        <button
+          onClick={() => { setActiveTab("screenshots"); setExpandedIdx(null); }}
+          className={`px-3 py-1.5 rounded-t-lg text-xs font-semibold transition-colors ${
+            activeTab === "screenshots" ? "bg-amber-100 text-amber-800 border-b-2 border-amber-600" : "text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          📸 Module Screenshots
         </button>
       </div>
 
@@ -143,8 +152,11 @@ function SherpaSurveysSection() {
           )}
         </div>
       )}
+
+      {/* Module Screenshots */}
+      {activeTab === "screenshots" && <ModuleScreenshotsSection />}
     </div>
   );
 }
 
-export default memo(SherpaSurveysSection);
+export default memo(JournalsTabsSection);
