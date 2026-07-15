@@ -11,6 +11,7 @@ import Week1AnalyticsSection from "@/components/analytics/Week1AnalyticsSection"
 import SherpaSurveysSection from "@/components/analytics/SherpaSurveysSection";
 import LearnerReflectionsSection from "@/components/analytics/LearnerReflectionsSection";
 import ManagerFeedbackSection from "@/components/analytics/ManagerFeedbackSection";
+import ModuleScreenshotsSection from "@/components/analytics/ModuleScreenshotsSection";
 
 /** Badge ID → display info */
 const BADGE_MAP: Record<string, { name: string; emoji: string }> = {
@@ -227,6 +228,10 @@ function AnalyticsContent() {
           <div className="border-t border-gray-200 mt-4 pt-2">
             <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">💭 Check-in Reflections</h4>
             <LearnerReflectionsSection />
+          </div>
+          <div className="border-t border-gray-200 mt-4 pt-2">
+            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">📸 Module Screenshots</h4>
+            <ModuleScreenshotsSection />
           </div>
         </Section>
       </div>
