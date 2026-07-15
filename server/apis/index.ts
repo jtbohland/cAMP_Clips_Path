@@ -97,6 +97,7 @@ import RepairResourceDays from './v2/repair-resource-days.js';
 import AddExtensionDays from './v2/add-extension-days.js';
 import FixPrematureCheckins from './v2/fix-premature-checkins.js';
 import GetModuleScreenshots from './v2/get-module-screenshots.js';
+import GetScreenshotData from './v2/get-screenshot-data.js';
 
 
 
@@ -199,6 +200,7 @@ ResetJTSessions,
   AddExtensionDays,
   FixPrematureCheckins,
   GetModuleScreenshots,
+  GetScreenshotData,
 } as const;
 
 export default apis;
