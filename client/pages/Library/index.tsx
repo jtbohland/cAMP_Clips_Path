@@ -506,14 +506,17 @@ export default function LibraryPage() {
 
     const completed = progressData.clipsCompleted;
 
-    // Approach check-in: Ascent unlocked (has clips) but approach check-in not yet sent.
-    // This is the persistent gate — fires on every Library load until the learner sends it.
-    // Prevents access to Week 2 clips (modal has no close button).
+    // Approach check-in: fires ONLY after Approach is complete (all 7 items) or force-unlocked.
+    // This is the persistent safety net — the primary trigger is the callback from
+    // FirstAchievement dismiss (earned) or Oh Deer dismiss (Day 8+ auto-unlock).
+    // This auto-trigger re-fires on every Library load until the learner sends it,
+    // preventing access to Week 2 clips (modal has no close button).
     if (
       completed >= 0 &&
       progressData.ascentDay1 &&
       !progressData.approachCheckinSentAt &&
-      !week1Data?.isLegacyLearner  // legacy learners exempt from Approach check-in
+      !week1Data?.isLegacyLearner &&  // legacy learners exempt from Approach check-in
+      (approachStatus?.complete || !!week1Data?.week1UnlockedAt)  // must finish Approach first
     ) {
       const sessionKey = `checkin_approach_prompted_${viewer!.id}`;
       if (!sessionStorage.getItem(sessionKey)) {
@@ -567,7 +570,7 @@ export default function LibraryPage() {
       }
       return;
     }
-  }, [dataReady, progressData, showSummit, showFirstAchievement, tierUnlock, showCheckin, viewer]);
+  }, [dataReady, progressData, showSummit, showFirstAchievement, tierUnlock, showCheckin, viewer, approachStatus, week1Data]);
 
   // ──────────────────── RENDER GATES ────────────────────
   // 1. Viewer still loading → skeleton
