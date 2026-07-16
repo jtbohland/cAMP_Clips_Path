@@ -791,6 +791,21 @@ export default function WatchPage() {
 
   const clip = clipData.clip;
 
+  // Determine where "Continue to Next" should go. Resource days (no video URL)
+  // route to their cAMP Gear landing page, not the video watch page.
+  const nextClip = clipData.nextClip;
+  const nextIsResourceDay = !!nextClip && nextClip.videoUrl === null;
+  const goToNextClip = nextClip
+    ? () => {
+        if (nextIsResourceDay) {
+          const topicKey = nextClip.sortOrder === 6 ? "day5" : "day9";
+          navigate(`/topic-gear/${topicKey}/${nextClip.id}`);
+        } else {
+          navigate(`/watch/${nextClip.id}`);
+        }
+      }
+    : undefined;
+
   const durationFormatted = clip.durationSeconds
     ? `${Math.floor(clip.durationSeconds / 3600) > 0 ? Math.floor(clip.durationSeconds / 3600) + "h " : ""}${Math.floor((clip.durationSeconds % 3600) / 60)}m`
     : "";
@@ -940,7 +955,8 @@ export default function WatchPage() {
           score={score}
           needsRecovery={score < 80 && recoveryQuestions.length > 0}
           onBackToClips={() => navigate(getLibraryPath())}
-          onContinueToNext={clipData?.nextClipId ? () => navigate(`/watch/${clipData.nextClipId}`) : undefined}
+          onContinueToNext={goToNextClip}
+          nextIsResourceDay={nextIsResourceDay}
           onSearchRescue={() => setPhase("search_rescue")}
           incorrectQuestions={incorrectQuestions}
           xpData={xpData ?? undefined}
@@ -975,11 +991,8 @@ export default function WatchPage() {
           newEngagementScore={newEngagementScore}
           xpData={xpData ?? undefined}
           onBackToClips={() => navigate(getLibraryPath())}
-          onContinueToNext={
-            clipData?.nextClipId
-              ? () => navigate(`/watch/${clipData.nextClipId}`)
-              : undefined
-          }
+          onContinueToNext={goToNextClip}
+          nextIsResourceDay={nextIsResourceDay}
         />
       )}
 

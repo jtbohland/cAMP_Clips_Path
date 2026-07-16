@@ -17,6 +17,7 @@ type RangerReportProps = {
   score: number;
   onBackToClips: () => void;
   onContinueToNext?: () => void;
+  nextIsResourceDay?: boolean;
   onSearchRescue: () => void;
   needsRecovery: boolean;
   incorrectQuestions?: IncorrectQuestion[];
@@ -37,6 +38,7 @@ export default function RangerReport({
   score,
   onBackToClips,
   onContinueToNext,
+  nextIsResourceDay = false,
   onSearchRescue,
   needsRecovery,
   incorrectQuestions = [],
@@ -226,7 +228,7 @@ export default function RangerReport({
                   onClick={onContinueToNext}
                   className="flex-1 py-3 rounded-xl text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition-colors"
                 >
-                  🚵🏼‍♂️ Continue to Next Clip
+                  {nextIsResourceDay ? "🎒 Continue to cAMP Gear" : "🚵🏼‍♂️ Continue to Next Clip"}
                 </button>
               ) : (
                 <button
