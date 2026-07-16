@@ -30,7 +30,11 @@ const WeatherRow = z.object({
   timer_minutes: z.coerce.number(),
 });
 
-const NextClipRow = z.object({ id: z.string() });
+const NextClipRow = z.object({
+  id: z.string(),
+  video_url: z.string().nullable(),
+  sort_order: z.coerce.number(),
+});
 
 export default api({
   name: "GetClipForWatching",
@@ -74,7 +78,13 @@ export default api({
         timerMinutes: z.number(),
       })
       .nullable(),
-    nextClipId: z.string().nullable(),
+    nextClip: z
+      .object({
+        id: z.string(),
+        videoUrl: z.string().nullable(),
+        sortOrder: z.number(),
+      })
+      .nullable(),
   }),
 
   async run(ctx, { clipId }) {
@@ -109,7 +119,7 @@ export default api({
 
     // Find the next clip by sort_order
     const nextClipRows = await ctx.integrations.db.query(
-      `SELECT id FROM cliptracker_v2_clips
+      `SELECT id, video_url, sort_order FROM cliptracker_v2_clips
        WHERE sort_order > $1 AND status = 'live'
        ORDER BY sort_order ASC LIMIT 1`,
       NextClipRow,
@@ -137,7 +147,13 @@ export default api({
         correctFeedback: q.correct_feedback ? (typeof q.correct_feedback === "string" ? JSON.parse(q.correct_feedback) : q.correct_feedback) : null,
         incorrectFeedback: q.incorrect_feedback ? (typeof q.incorrect_feedback === "string" ? JSON.parse(q.incorrect_feedback) : q.incorrect_feedback) : null,
       })),
-      nextClipId: nextClipRows.length > 0 ? nextClipRows[0].id : null,
+      nextClip: nextClipRows.length > 0
+        ? {
+            id: nextClipRows[0].id,
+            videoUrl: nextClipRows[0].video_url,
+            sortOrder: nextClipRows[0].sort_order,
+          }
+        : null,
       weatherStorm: weatherCards.length > 0
         ? {
             overview: weatherCards[0].overview,

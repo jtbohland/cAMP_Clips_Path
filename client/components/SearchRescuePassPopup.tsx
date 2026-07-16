@@ -13,6 +13,7 @@ type SearchRescuePassPopupProps = {
   xpData?: XpData;
   onBackToClips: () => void;
   onContinueToNext?: () => void;
+  nextIsResourceDay?: boolean;
 };
 
 export default function SearchRescuePassPopup({
@@ -24,6 +25,7 @@ export default function SearchRescuePassPopup({
   xpData,
   onBackToClips,
   onContinueToNext,
+  nextIsResourceDay = false,
 }: SearchRescuePassPopupProps) {
   return (
     <div
@@ -132,7 +134,7 @@ export default function SearchRescuePassPopup({
                 onClick={onContinueToNext}
                 className="flex-1 py-3 rounded-xl text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition-colors"
               >
-                🚵🏼‍♂️ Continue to Next Clip
+                {nextIsResourceDay ? "🎒 Continue to cAMP Gear" : "🚵🏼‍♂️ Continue to Next Clip"}
               </button>
             ) : (
               <button
