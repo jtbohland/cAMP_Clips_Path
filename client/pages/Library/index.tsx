@@ -85,6 +85,13 @@ export default function LibraryPage() {
 
   const { run: logClick } = useApi("LogPitchClick");
   const { run: trackLogin } = useApi("TrackLogin");
+  const { run: trackModal } = useApi("TrackModalInteraction");
+
+  // Fire-and-forget modal tracking helper
+  const logModal = useCallback((modalType: string, action: string, metadata?: Record<string, unknown>) => {
+    if (!viewer?.id) return;
+    trackModal({ viewerId: viewer.id, modalType, action, metadata }).catch(() => {});
+  }, [viewer?.id, trackModal]);
 
   // Track login — update last_login_at once per session
   useEffect(() => {
@@ -369,12 +376,15 @@ export default function LibraryPage() {
 
     if (!anchorSlackSent) {
       setShowAnchorFailure(true);           // #1 — first time, requires Slack
+      logModal("anchor_failure", "shown");
     } else if (afterAdj && !adjustmentSlackSent) {
       setShowAnchorEscalated(true);         // #2 — escalated, missed adjustment deadline
+      logModal("anchor_escalated", "shown");
     } else {
       setShowLightAnchor(true);             // Daily reminder
+      logModal("light_anchor", "shown");
     }
-  }, []);
+  }, [logModal]);
 
   // Auto-trigger Pacing / Anchor / Summit in Sight — once per calendar day
   // The pacing ladder is one system: summit_bound → … → avalanche_warning → anchor_failure.
@@ -396,10 +406,12 @@ export default function LibraryPage() {
       // Ascent done but Approach incomplete → Summit in Sight
       if (ascentComplete && approachStatus?.complete === false) {
         setShowSummitInSight(true);
+        logModal("summit_in_sight", "shown");
       } else if (pacingInfo.tier === "anchor_failure") {
         showAnchorModal(viewer, pacingInfo);
       } else {
         setShowPacing(true);
+        logModal("pacing", "shown", { tier: pacingInfo.tier });
       }
     }
   }, [dataReady, pacingInfo, showSummit, tierUnlock, previewMode, viewer, showAnchorModal, ascentComplete, approachStatus]);
@@ -418,17 +430,19 @@ export default function LibraryPage() {
 
         if (ascentComplete && approachStatus?.complete === false) {
           setShowSummitInSight(true);
+          logModal("summit_in_sight", "shown");
         } else if (pacingInfo.tier === "anchor_failure") {
           showAnchorModal(viewer, pacingInfo);
         } else {
           setShowPacing(true);
+          logModal("pacing", "shown", { tier: pacingInfo.tier });
         }
       }
     };
 
     document.addEventListener("visibilitychange", handleVisibility);
     return () => document.removeEventListener("visibilitychange", handleVisibility);
-  }, [dataReady, viewer, pacingInfo, showSummit, tierUnlock, showAnchorModal]);
+  }, [dataReady, viewer, pacingInfo, showSummit, tierUnlock, showAnchorModal, logModal, ascentComplete, approachStatus]);
 
   // Auto-trigger Summit — only after all data ready
   useEffect(() => {
@@ -524,6 +538,7 @@ export default function LibraryPage() {
         checkinTriggeredRef.current = true;
         setCheckinType("approach");
         setShowCheckin(true);
+        logModal("checkin_approach", "shown");
       }
       return;
     }
@@ -541,6 +556,7 @@ export default function LibraryPage() {
         checkinTriggeredRef.current = true;
         setCheckinType("week3");
         setShowCheckin(true);
+        logModal("checkin_week3", "shown");
       }
       return;
     }
@@ -567,6 +583,7 @@ export default function LibraryPage() {
         checkinTriggeredRef.current = true;
         setCheckinType("week2");
         setShowCheckin(true);
+        logModal("checkin_week2", "shown");
       }
       return;
     }
@@ -678,6 +695,7 @@ export default function LibraryPage() {
         nextTierEmoji={nextTier?.emoji ?? null}
         xpToNextTier={xpNeeded}
         onDismiss={() => {
+          logModal("tier_unlock", "dismissed", { tier: tier.name });
           setTierUnlock(null);
           if (previewMode !== "tier") {
             localStorage.setItem(`tier_celebrated_${viewer.id}`, String(tier.tier));
@@ -720,6 +738,7 @@ export default function LibraryPage() {
             setShowCheckin(false);
             setCheckinAdminTest(false);
             setApproachCompleteOverride(undefined);
+            logModal(`checkin_${checkinType}`, "sent");
             toast.success("Check-in email marked as sent!");
           }}
           allowClose={checkinAdminTest}
@@ -742,7 +761,7 @@ export default function LibraryPage() {
         approachCatchUpItems={approachStatus?.catchUpItems}
         patchPills={patchProgress?.pills}
         patchBestCaseXp={patchProgress?.bestCaseXp}
-        onDismiss={() => setShowPacing(false)}
+        onDismiss={() => { logModal("pacing", "dismissed", { tier: pacingInfo.tier }); setShowPacing(false); }}
       />
     )}
     {/* Summit in Sight — Ascent done, Approach incomplete */}
@@ -751,7 +770,7 @@ export default function LibraryPage() {
         catchUpItems={approachStatus.catchUpItems}
         summitDay={pacingInfo?.summitDay}
         onGoToApproach={() => setActiveTab("approach")}
-        onDismiss={() => setShowSummitInSight(false)}
+        onDismiss={() => { logModal("summit_in_sight", "dismissed"); setShowSummitInSight(false); }}
       />
     )}
     {/* Anchor Failure #1 — first time past Summit Day */}
@@ -771,6 +790,7 @@ export default function LibraryPage() {
           if (!localStorage.getItem(`anchor_adjustment_deadline_${viewer.id}`)) {
             localStorage.setItem(`anchor_adjustment_deadline_${viewer.id}`, pacingInfo.adjustmentDay.toISOString());
           }
+          logModal("anchor_failure", "dismissed", { reason: "slack_copied" });
           setShowAnchorFailure(false);
         }}
       />
@@ -793,6 +813,7 @@ export default function LibraryPage() {
         approachCatchUpItems={approachStatus?.catchUpItems}
         onDismiss={() => {
           localStorage.setItem(`anchor_adjustment_slack_sent_${viewer.id}`, "true");
+          logModal("anchor_escalated", "dismissed");
           setShowAnchorEscalated(false);
         }}
       />
@@ -814,7 +835,7 @@ export default function LibraryPage() {
         missedClips={pacingInfo.missedClips}
         approachComplete={approachStatus?.complete}
         approachCatchUpItems={approachStatus?.catchUpItems}
-        onDismiss={() => setShowLightAnchor(false)}
+        onDismiss={() => { logModal("light_anchor", "dismissed"); setShowLightAnchor(false); }}
       />
     )}
     <div className="flex flex-col h-full overflow-hidden" style={{ backgroundColor: "#ECFDF5" }}>
