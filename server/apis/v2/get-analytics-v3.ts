@@ -303,17 +303,32 @@ export default api({
     const TOTAL_APPROACH_MODULES = 7;
 
     // 2f. Topics completed per learner (for topic-based pacing).
-    // A topic = a day_label. Complete = ALL clips with that day_label have a completed session.
+    // A topic = a day_label. Complete = ALL clips with that day_label have a completed session
+    // OR (for resource days) a swiss_army_knife XP event exists for that clip.
     const TopicsCompletedRow = z.object({ viewer_id: z.string(), topics_completed: z.coerce.number() });
     const topicsRows = await ctx.integrations.db.query(
       `WITH clip_days AS (
         SELECT id, day_label FROM cliptracker_v2_clips WHERE status = 'live'
       ),
-      learner_completions AS (
+      -- Session-based completions (video clips)
+      session_completions AS (
         SELECT s.viewer_id, s.clip_id
         FROM cliptracker_v2_sessions s
         WHERE s.completed = true
         GROUP BY s.viewer_id, s.clip_id
+      ),
+      -- XP-event-based completions (resource days via swiss_army_knife)
+      resource_completions AS (
+        SELECT x.viewer_id, x.clip_id
+        FROM cliptracker_v2_xp_events x
+        JOIN cliptracker_v2_clips c ON c.id = x.clip_id
+        WHERE x.event_type = 'swiss_army_knife' AND c.status = 'live'
+      ),
+      -- Union both completion types
+      learner_completions AS (
+        SELECT viewer_id, clip_id FROM session_completions
+        UNION
+        SELECT viewer_id, clip_id FROM resource_completions
       ),
       day_totals AS (
         SELECT day_label, COUNT(*) AS total FROM clip_days GROUP BY day_label
