@@ -1,7 +1,8 @@
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import { useNavigate, useParams } from "react-router";
 import { useViewer } from "@/components/ViewerContext";
 import { getLibraryPath } from "@/lib/libraryNav";
+import { WistiaPlayer } from "@wistia/wistia-player-react";
 
 const BONUS_CLIPS: Record<string, { title: string; wistiaId: string; duration: string; storageKeySuffix: string }> = {
   "support-case": {
@@ -31,25 +32,6 @@ export default function BonusWatchPage() {
     const key = `${config.storageKeySuffix}_watched_${viewer.id}`;
     localStorage.setItem(key, "true");
   }, [config, viewer?.id]);
-
-  // Load Wistia embed script
-  useEffect(() => {
-    if (!config) return;
-
-    // Check if script already exists
-    const existingScript = document.querySelector('script[src*="wistia"]');
-    if (!existingScript) {
-      const script = document.createElement("script");
-      script.src = "https://fast.wistia.com/assets/external/E-v1.js";
-      script.async = true;
-      document.head.appendChild(script);
-    }
-  }, [config]);
-
-  const wistiaEmbedClass = useMemo(() => {
-    if (!config) return "";
-    return `wistia_embed wistia_async_${config.wistiaId} seo=true videoFoam=true`;
-  }, [config]);
 
   if (!config) {
     return (
@@ -85,43 +67,17 @@ export default function BonusWatchPage() {
         </div>
       </header>
 
-      {/* Wistia Player */}
+      {/* Wistia Player — uses the same WistiaPlayer component as main Watch page */}
       <main className="flex-1 flex items-start justify-center p-6">
         <div className="w-full max-w-4xl">
-          <div
-            className="wistia_responsive_padding"
-            style={{ padding: "56.25% 0 0 0", position: "relative" }}
-          >
-            <div
-              className="wistia_responsive_wrapper"
-              style={{ height: "100%", left: 0, position: "absolute", top: 0, width: "100%" }}
-            >
-              <div
-                className={wistiaEmbedClass}
-                style={{ height: "100%", position: "relative", width: "100%" }}
-              >
-                <div
-                  className="wistia_swatch"
-                  style={{
-                    height: "100%",
-                    left: 0,
-                    opacity: 0,
-                    overflow: "hidden",
-                    position: "absolute",
-                    top: 0,
-                    transition: "opacity 200ms",
-                    width: "100%",
-                  }}
-                >
-                  <img
-                    src={`https://fast.wistia.com/embed/medias/${config.wistiaId}/swatch`}
-                    style={{ filter: "blur(5px)", height: "100%", objectFit: "contain", width: "100%" }}
-                    alt=""
-                    aria-hidden="true"
-                  />
-                </div>
-              </div>
-            </div>
+          <div style={{ position: "relative", width: "100%", aspectRatio: "16 / 9" }}>
+            <WistiaPlayer
+              mediaId={config.wistiaId}
+              playerColor="ff5733"
+              autoplay={false}
+              silentAutoplay={false}
+              style={{ width: "100%", height: "100%", position: "absolute", top: 0, left: 0 }}
+            />
           </div>
 
           {/* Info card below player */}

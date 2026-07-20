@@ -102,6 +102,7 @@ export default function WatchPage() {
     tier: { name: string; emoji: string };
   } | null>(null);
   const autoEndedRef = useRef(false);
+  const videoEndedWhileQuizRef = useRef(false);
   const resumeFromSecondsRef = useRef<number | null>(null);
 
   // Use refs for stale-closure-safe access — these are updated on every render cycle
@@ -170,15 +171,21 @@ export default function WatchPage() {
   const handleWistiaEnded = useCallback(() => {
     setIsVideoPlaying(false);
     // When Wistia fires "ended", the video reached the end — trigger completion
-    // if we're in watching phase and all trail markers are answered
-    if (phaseRef.current === "watching" && !autoEndedRef.current) {
-      const allAnswered = trailMarkersRef.current.every(
-        (q: any) => answeredQuestionsRef.current.has(q.id)
-      );
+    // if we're in watching phase and all trail markers are answered.
+    // At 2x speed, "ended" can fire while a trail marker quiz is showing (phase !== "watching").
+    // In that case, flag it so handleTrailMarkerContinue picks it up after the quiz.
+    if (autoEndedRef.current) return;
+    const allAnswered = trailMarkersRef.current.every(
+      (q: any) => answeredQuestionsRef.current.has(q.id)
+    );
+    if (phaseRef.current === "watching") {
       if (allAnswered || trailMarkersRef.current.length === 0) {
         autoEndedRef.current = true;
         handleFinishWatchingRef.current();
       }
+    } else {
+      // Video ended while quiz overlay is showing (2x speed race) — remember it
+      videoEndedWhileQuizRef.current = true;
     }
   }, []);
 
@@ -218,10 +225,11 @@ export default function WatchPage() {
       setPhase("trail_marker");
     }
 
-    // Auto-end detection — use tolerance of 5s for the duration check
-    // (Wistia secondchange reports Math.floor, so last value can be durationSeconds - 1)
+    // Auto-end detection — use Wistia player's actual duration (not DB durationSeconds
+    // which can be inaccurate/rounded). Fall back to DB value if player duration unavailable.
     const player = playerRef.current;
-    const clipDur = clipData?.clip?.durationSeconds;
+    const actualDur = player?.duration;
+    const clipDur = actualDur && actualDur > 0 ? actualDur : clipData?.clip?.durationSeconds;
     if (player && (player.ended || (clipDur && t >= clipDur - 5))) {
       if (!autoEndedRef.current) {
         const allAnswered = trailMarkersRef.current.every(
@@ -273,6 +281,7 @@ export default function WatchPage() {
     setBlurSeconds(0);
     setXpData(null);
     autoEndedRef.current = false;
+    videoEndedWhileQuizRef.current = false;
     resumeFromSecondsRef.current = null;
     lastTimeRef.current = 0;
     lastWatchedTimeRef.current = 0;
@@ -501,8 +510,9 @@ export default function WatchPage() {
   const handleTrailMarkerContinue = useCallback(() => {
     // Safety net: if video already ended while quiz was showing, complete now
     const player = playerRef.current;
-    const clipDur = clipData?.clip?.durationSeconds;
-    const videoAlreadyEnded = player?.ended || (clipDur && lastTimeRef.current >= clipDur - 5);
+    const actualDur = player?.duration;
+    const clipDur = actualDur && actualDur > 0 ? actualDur : clipData?.clip?.durationSeconds;
+    const videoAlreadyEnded = videoEndedWhileQuizRef.current || player?.ended || (clipDur && lastTimeRef.current >= clipDur - 5);
     const allAnswered = trailMarkersRef.current.every(
       (q: any) => answeredQuestionsRef.current.has(q.id)
     );

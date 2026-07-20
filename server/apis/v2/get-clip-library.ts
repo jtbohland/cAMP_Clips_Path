@@ -153,9 +153,12 @@ export default api({
       const isTopicDay = clip.video_url === null && clip.duration_seconds === null;
       const resourceCount = clip.resource_count;
       const isCompleted = completionStatus[index];
-      const hasExistingSession = clip.attempts !== null && parseInt(clip.attempts) > 0;
-
-      // Admins get all clips unlocked
+      // Unlock rules (in priority order):
+      // 1. Admins → all unlocked
+      // 2. First clip → always unlocked
+      // 3. Unlock override exists → unlocked (set by CompleteClipPath via first_pass / S&R / WtS)
+      // 4. Previous clip completed → unlocked
+      // No other path should unlock a clip.
       let isLocked = true;
       if (isAdmin) {
         isLocked = false;
@@ -163,13 +166,7 @@ export default api({
         isLocked = false;
       } else if (overrideSet.has(clip.id)) {
         isLocked = false;
-      } else if (hasExistingSession) {
-        // Learner already started this clip — keep it unlocked
-        // (handles cases where prior topic-day requirements were deployed
-        //  after the learner had already moved past them)
-        isLocked = false;
       } else {
-        // Use computed completion (topic days + video clips) for prev clip
         isLocked = !completionStatus[index - 1];
       }
 

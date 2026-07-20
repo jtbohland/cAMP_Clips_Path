@@ -92,12 +92,16 @@ import TrackLogin from './v2/track-login.js';
 import BackfillLastLogin from './v2/backfill-last-login.js';
 import FixCustomerStoriesQuestion from './v2/fix-customer-stories-question.js';
 import AdminFixBenSpekit from './v2/admin-fix-ben-spekit.js';
+import FixBenSessions from './v2/fix-ben-sessions.js';
 import CleanupFirstPassXP from './v2/cleanup-first-pass-xp.js';
 import RepairResourceDays from './v2/repair-resource-days.js';
 import AddExtensionDays from './v2/add-extension-days.js';
 import FixPrematureCheckins from './v2/fix-premature-checkins.js';
 import GetModuleScreenshots from './v2/get-module-screenshots.js';
 import GetScreenshotData from './v2/get-screenshot-data.js';
+import UpdatePartnerResources from './v2/update-partner-resources.js';
+import FixLegacyDay1 from './v2/fix-legacy-day1.js';
+import CleanupChrisDay9Xp from './v2/cleanup-chris-day9-xp.js';
 
 
 
@@ -195,12 +199,16 @@ ResetJTSessions,
   BackfillLastLogin,
   FixCustomerStoriesQuestion,
   AdminFixBenSpekit,
+  FixBenSessions,
   CleanupFirstPassXP,
   RepairResourceDays,
   AddExtensionDays,
   FixPrematureCheckins,
   GetModuleScreenshots,
   GetScreenshotData,
+  UpdatePartnerResources,
+  FixLegacyDay1,
+  CleanupChrisDay9Xp,
 } as const;
 
 export default apis;
