@@ -16,6 +16,16 @@ const MODAL_LABELS: Record<string, { label: string; emoji: string }> = {
   checkin_summit:    { label: "Check-in: Summit",    emoji: "🏕️" },
 };
 
+/** Pacing tier labels — matches PACING_TIERS in pacing.ts */
+const PACING_TIER_LABELS: Record<string, { label: string; emoji: string }> = {
+  summit_bound:      { label: "Summit Bound",        emoji: "🧗🏻‍♂️" },
+  off_the_trail:     { label: "Off the Trail",       emoji: "🧭" },
+  lost_in_the_woods: { label: "Lost in the Woods",   emoji: "🌲" },
+  rockslide:         { label: "Rockslide",            emoji: "🪨" },
+  avalanche_warning: { label: "Avalanche Warning",   emoji: "❄️" },
+  anchor_failure:    { label: "Anchor Failure",       emoji: "⛓️‍💥" },
+};
+
 const ACTION_COLORS: Record<string, string> = {
   shown:     "bg-blue-100 text-blue-700",
   dismissed: "bg-gray-100 text-gray-600",
@@ -26,32 +36,70 @@ function getModalLabel(type: string) {
   return MODAL_LABELS[type] ?? { label: type, emoji: "📦" };
 }
 
+/** Extract the pacing tier from metadata, if present */
+function extractTier(metadata: unknown): string | null {
+  if (metadata && typeof metadata === "object" && "tier" in metadata) {
+    return String((metadata as Record<string, unknown>).tier);
+  }
+  return null;
+}
+
+/** Build a display label that includes pacing tier when available */
+function getDisplayLabel(modalType: string, metadata: unknown): { label: string; emoji: string } {
+  if (modalType === "pacing") {
+    const tier = extractTier(metadata);
+    if (tier && PACING_TIER_LABELS[tier]) {
+      const t = PACING_TIER_LABELS[tier];
+      return { label: `Pacing: ${t.label}`, emoji: t.emoji };
+    }
+    return { label: "Pacing", emoji: "🥾" };
+  }
+  return getModalLabel(modalType);
+}
+
+/** Build a summary key that splits pacing by tier */
+function getSummaryKey(modalType: string, metadata: unknown): string {
+  if (modalType === "pacing") {
+    const tier = extractTier(metadata);
+    if (tier) return `pacing::${tier}`;
+  }
+  return modalType;
+}
+
 const ModalMovementsSection = memo(function ModalMovementsSection() {
   const { data, loading } = useApiData("GetModalInteractions", {});
 
+  // Build summary from raw interactions so we can split pacing by tier
   const summaryByModal = useMemo(() => {
-    if (!data?.summary) return [];
-    const map = new Map<string, { shown: number; dismissed: number; sent: number; uniqueViewers: number }>();
-    for (const row of data.summary) {
-      if (!map.has(row.modal_type)) {
-        map.set(row.modal_type, { shown: 0, dismissed: 0, sent: 0, uniqueViewers: 0 });
+    if (!data?.interactions) return [];
+    const map = new Map<string, { label: string; emoji: string; shown: number; dismissed: number; sent: number; shownViewers: Set<string>; dismissedViewers: Set<string>; sentViewers: Set<string> }>();
+
+    for (const row of data.interactions) {
+      const key = getSummaryKey(row.modal_type, row.metadata);
+      if (!map.has(key)) {
+        const info = getDisplayLabel(row.modal_type, row.metadata);
+        map.set(key, { ...info, shown: 0, dismissed: 0, sent: 0, shownViewers: new Set(), dismissedViewers: new Set(), sentViewers: new Set() });
       }
-      const entry = map.get(row.modal_type)!;
+      const entry = map.get(key)!;
       if (row.action === "shown") {
-        entry.shown = row.count;
-        entry.uniqueViewers = Math.max(entry.uniqueViewers, row.unique_viewers);
+        entry.shown++;
+        entry.shownViewers.add(row.viewer_id);
       } else if (row.action === "dismissed") {
-        entry.dismissed = row.count;
-        entry.uniqueViewers = Math.max(entry.uniqueViewers, row.unique_viewers);
+        entry.dismissed++;
+        entry.dismissedViewers.add(row.viewer_id);
       } else if (row.action === "sent") {
-        entry.sent = row.count;
-        entry.uniqueViewers = Math.max(entry.uniqueViewers, row.unique_viewers);
+        entry.sent++;
+        entry.sentViewers.add(row.viewer_id);
       }
     }
+
     return Array.from(map.entries())
       .sort(([a], [b]) => a.localeCompare(b))
-      .map(([type, counts]) => ({ type, ...counts }));
-  }, [data?.summary]);
+      .map(([key, { shownViewers, dismissedViewers, sentViewers, ...rest }]) => {
+        const allViewers = new Set([...shownViewers, ...dismissedViewers, ...sentViewers]);
+        return { key, ...rest, uniqueViewers: allViewers.size };
+      });
+  }, [data?.interactions]);
 
   if (loading) {
     return <div className="py-4"><Skeleton className="h-40" /></div>;
@@ -68,25 +116,22 @@ const ModalMovementsSection = memo(function ModalMovementsSection() {
       {/* Summary grid */}
       {summaryByModal.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-          {summaryByModal.map((m) => {
-            const info = getModalLabel(m.type);
-            return (
-              <div key={m.type} className="p-3 rounded-lg border border-gray-100 bg-[#fafafa]">
-                <div className="flex items-center gap-1.5 mb-2">
-                  <span className="text-base">{info.emoji}</span>
-                  <span className="text-sm font-semibold text-gray-900 truncate">{info.label}</span>
-                </div>
-                <div className="flex gap-3 text-xs">
-                  <span className="text-blue-600 font-medium">{m.shown} shown</span>
-                  <span className="text-gray-500">{m.dismissed} dismissed</span>
-                  {m.sent > 0 && <span className="text-green-600">{m.sent} sent</span>}
-                </div>
-                <div className="text-[10px] text-gray-400 mt-1">
-                  {m.uniqueViewers} unique {m.uniqueViewers === 1 ? "viewer" : "viewers"}
-                </div>
+          {summaryByModal.map((m) => (
+            <div key={m.key} className="p-3 rounded-lg border border-gray-100 bg-[#fafafa]">
+              <div className="flex items-center gap-1.5 mb-2">
+                <span className="text-base">{m.emoji}</span>
+                <span className="text-sm font-semibold text-gray-900 truncate">{m.label}</span>
               </div>
-            );
-          })}
+              <div className="flex gap-3 text-xs">
+                <span className="text-blue-600 font-medium">{m.shown} shown</span>
+                <span className="text-gray-500">{m.dismissed} dismissed</span>
+                {m.sent > 0 && <span className="text-green-600">{m.sent} sent</span>}
+              </div>
+              <div className="text-[10px] text-gray-400 mt-1">
+                {m.uniqueViewers} unique {m.uniqueViewers === 1 ? "viewer" : "viewers"}
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
@@ -95,17 +140,17 @@ const ModalMovementsSection = memo(function ModalMovementsSection() {
         <div>
           <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Recent Interactions</h4>
           <div className="rounded-lg border border-gray-200 overflow-hidden">
-            <div className="grid grid-cols-[1fr_120px_80px_140px] gap-2 px-3 py-2 bg-gray-50 text-[10px] font-semibold text-gray-500 uppercase tracking-wide border-b border-gray-200">
+            <div className="grid grid-cols-[1fr_180px_80px_140px] gap-2 px-3 py-2 bg-gray-50 text-[10px] font-semibold text-gray-500 uppercase tracking-wide border-b border-gray-200">
               <div>cAMPer</div>
               <div>Modal</div>
               <div>Action</div>
               <div>When</div>
             </div>
             {interactions.slice(0, 30).map((i) => {
-              const info = getModalLabel(i.modal_type);
+              const info = getDisplayLabel(i.modal_type, i.metadata);
               const actionColor = ACTION_COLORS[i.action] ?? "bg-gray-100 text-gray-600";
               return (
-                <div key={i.id} className="grid grid-cols-[1fr_120px_80px_140px] gap-2 px-3 py-2 border-b border-gray-50 last:border-0 items-center">
+                <div key={i.id} className="grid grid-cols-[1fr_180px_80px_140px] gap-2 px-3 py-2 border-b border-gray-50 last:border-0 items-center">
                   <div className="text-sm text-gray-900 truncate">{i.viewer_name}</div>
                   <div className="flex items-center gap-1 text-sm text-gray-700 truncate">
                     <span className="text-xs">{info.emoji}</span>
