@@ -102,6 +102,9 @@ import GetScreenshotData from './v2/get-screenshot-data.js';
 import UpdatePartnerResources from './v2/update-partner-resources.js';
 import FixLegacyDay1 from './v2/fix-legacy-day1.js';
 import CleanupChrisDay9Xp from './v2/cleanup-chris-day9-xp.js';
+import SetupModalTracking from './v2/setup-modal-tracking.js';
+import TrackModalInteraction from './v2/track-modal-interaction.js';
+import GetModalInteractions from './v2/get-modal-interactions.js';
 
 
 
@@ -209,6 +212,9 @@ ResetJTSessions,
   UpdatePartnerResources,
   FixLegacyDay1,
   CleanupChrisDay9Xp,
+  SetupModalTracking,
+  TrackModalInteraction,
+  GetModalInteractions,
 } as const;
 
 export default apis;

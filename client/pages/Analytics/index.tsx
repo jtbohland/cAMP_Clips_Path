@@ -11,6 +11,7 @@ import Week1AnalyticsSection from "@/components/analytics/Week1AnalyticsSection"
 import JournalsTabsSection from "@/components/analytics/JournalsTabsSection";
 import LearnerReflectionsSection from "@/components/analytics/LearnerReflectionsSection";
 import ManagerFeedbackSection from "@/components/analytics/ManagerFeedbackSection";
+import ModalMovementsSection from "@/components/analytics/ModalMovementsSection";
 
 /** Badge ID → display info */
 const BADGE_MAP: Record<string, { name: string; emoji: string }> = {
@@ -211,24 +212,28 @@ function AnalyticsContent() {
           <QuestionsSection questions={questions ?? []} />
         </Section>
 
-        {/* 6. cAMP Gear Clicks (collapsed by default) */}
-        <Section title="cAMP Gear Clicks" subtitle="Elevator pitches · cAMP Gear resources · Wheel & Deal" emoji="🎒" defaultOpen={false}>
-          <PitchClicksSection />
-        </Section>
-
-        {/* 7. Sherpa Surveys — manager input */}
-        <Section title="Sherpa Surveys" subtitle="Manager feedback & survey responses" emoji="🚩" defaultOpen={false}>
-          <ManagerFeedbackSection />
-        </Section>
-
-        {/* 8. Journals + Logbooks — learner reflections */}
+        {/* 6. Journals + Logbooks — learner reflections */}
         <Section title="Journals + Logbooks" subtitle="Resource day, module & check-in reflections from learners" emoji="📓" defaultOpen={false}>
           <JournalsTabsSection />
           <div className="border-t border-gray-200 mt-4 pt-2">
             <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">💭 Check-in Reflections</h4>
             <LearnerReflectionsSection />
           </div>
+        </Section>
 
+        {/* 7. cAMP Gear Clicks */}
+        <Section title="cAMP Gear Clicks" subtitle="Elevator pitches · cAMP Gear resources · Wheel & Deal" emoji="🎒" defaultOpen={false}>
+          <PitchClicksSection />
+        </Section>
+
+        {/* 8. Modal Movements — modal interaction tracking */}
+        <Section title="Modal Movements" subtitle="Pacing, anchor, check-in & tier unlock modal events" emoji="🔔" defaultOpen={false}>
+          <ModalMovementsSection />
+        </Section>
+
+        {/* 9. Sherpa Surveys — manager input */}
+        <Section title="Sherpa Surveys" subtitle="Manager feedback & survey responses" emoji="🚩" defaultOpen={false}>
+          <ManagerFeedbackSection />
         </Section>
       </div>
     </div>
