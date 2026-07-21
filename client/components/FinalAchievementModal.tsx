@@ -100,6 +100,24 @@ export default function FinalAchievementModal({ viewerId, onDismiss }: FinalAchi
 
   const totalXp = (data as FinalAchievementResult | undefined)?.totalXpAwarded ?? 0;
 
+  // Error state — must come BEFORE loading check so errors show dismiss button
+  if (error) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+        <div className="w-full max-w-lg mx-4 rounded-2xl bg-white shadow-2xl p-8 text-center space-y-4">
+          <div className="text-4xl">⚠️</div>
+          <p className="text-sm text-gray-600">We couldn't load your final achievements, but don't worry — your XP is safe!</p>
+          <button
+            onClick={onDismiss}
+            className="w-full py-3 rounded-xl text-sm font-bold bg-gradient-to-r from-amber-500 to-yellow-500 text-white hover:from-amber-600 hover:to-yellow-600 transition-all shadow-lg"
+          >
+            🪝 Final Anchor Point — Continue
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // Loading state
   if (loading || !data) {
     return (
@@ -114,24 +132,6 @@ export default function FinalAchievementModal({ viewerId, onDismiss }: FinalAchi
               <div className="w-2 h-2 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: "300ms" }} />
             </div>
           </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Error state — still allow dismissal
-  if (error) {
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-        <div className="w-full max-w-lg mx-4 rounded-2xl bg-white shadow-2xl p-8 text-center space-y-4">
-          <div className="text-4xl">⚠️</div>
-          <p className="text-sm text-gray-600">We couldn't load your final achievements, but don't worry — your XP is safe!</p>
-          <button
-            onClick={onDismiss}
-            className="w-full py-3 rounded-xl text-sm font-bold bg-gradient-to-r from-amber-500 to-yellow-500 text-white hover:from-amber-600 hover:to-yellow-600 transition-all shadow-lg"
-          >
-            🪝 Final Anchor Point — Continue
-          </button>
         </div>
       </div>
     );
