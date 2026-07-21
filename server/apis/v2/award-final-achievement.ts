@@ -112,10 +112,11 @@ export default api({
       extension_days: z.coerce.number(),
     });
     const viewers = await ctx.integrations.db.query(
-      `SELECT ascent_day_1::text,
-              week1_unlock_type, COALESCE(clips_completed, 0)::int as clips_completed,
-              COALESCE(extension_days, 0)::int as extension_days
-       FROM cliptracker_v2_viewers WHERE id = $1`,
+      `SELECT v.ascent_day_1::text,
+              v.week1_unlock_type,
+              COALESCE((SELECT COUNT(DISTINCT s.clip_id)::int FROM cliptracker_v2_sessions s WHERE s.viewer_id = v.id AND s.completed = true), 0) as clips_completed,
+              COALESCE(v.extension_days, 0)::int as extension_days
+       FROM cliptracker_v2_viewers v WHERE v.id = $1`,
       ViewerSchema, [viewerId], { label: "Fetch viewer data" }
     );
     if (viewers.length === 0) throw new Error("Viewer not found");
@@ -133,14 +134,40 @@ export default api({
 
     // ── 1. SUMMIT REWARD ──
     // Determine approach completion
-    const ApproachSchema = z.object({ count: z.coerce.number() });
-    const approachModules = await ctx.integrations.db.query(
-      `SELECT COUNT(*)::int as count FROM cliptracker_v2_week1_progress
-       WHERE viewer_id = $1 AND completed = true`,
-      ApproachSchema, [viewerId], { label: "Count completed approach modules" }
-    );
-    // Approach requires 7 items completed (same as WEEK1_TOTAL_ITEMS)
-    const approachComplete = approachModules[0].count >= 7;
+    // Legacy learners auto-complete approach (they skipped Week 1)
+    let approachComplete = isLegacy;
+
+    if (!isLegacy) {
+      // Check the 3 real tables that track approach progress:
+      // 1. module_signoffs: meddpicc, camp101, challenger
+      // 2. academy_screenshots: analytics, experiment, session_replay, guides_surveys
+      // 3. wd_verifications: Wheel & Deal (any row = done)
+      const SignoffSchema = z.object({ module_key: z.string() });
+      const signoffs = await ctx.integrations.db.query(
+        `SELECT module_key FROM cliptracker_v2_module_signoffs WHERE viewer_id = $1`,
+        SignoffSchema, [viewerId], { label: "Fetch approach signoffs" }
+      );
+      const signoffKeys = new Set(signoffs.map(s => s.module_key));
+
+      const ScreenshotSchema = z.object({ course_key: z.string() });
+      const screenshots = await ctx.integrations.db.query(
+        `SELECT course_key FROM cliptracker_v2_academy_screenshots WHERE viewer_id = $1`,
+        ScreenshotSchema, [viewerId], { label: "Fetch academy screenshots" }
+      );
+      const screenshotKeys = new Set(screenshots.map(s => s.course_key));
+
+      const WdSchema = z.object({ count: z.coerce.number() });
+      const wdCheck = await ctx.integrations.db.query(
+        `SELECT COUNT(*)::int as count FROM cliptracker_v2_wd_verifications WHERE viewer_id = $1`,
+        WdSchema, [viewerId], { label: "Check Wheel & Deal completion" }
+      );
+      const wdDone = wdCheck[0].count > 0;
+
+      approachComplete = signoffKeys.has("meddpicc") && signoffKeys.has("camp101") && signoffKeys.has("challenger")
+        && screenshotKeys.has("analytics") && screenshotKeys.has("experiment")
+        && screenshotKeys.has("session_replay") && screenshotKeys.has("guides_surveys")
+        && wdDone;
+    }
 
     // Determine timing: summit day vs adjustment day
     const now = new Date();
@@ -163,10 +190,10 @@ export default api({
       completed_at: z.string(),
     });
     const completions = ascentDay1 ? await ctx.integrations.db.query(
-      `SELECT c.sort_order, MIN(s.completed_at)::text as completed_at
+      `SELECT c.sort_order, MIN(s.ended_at)::text as completed_at
        FROM cliptracker_v2_sessions s
        JOIN cliptracker_v2_clips c ON c.id = s.clip_id
-       WHERE s.viewer_id = $1 AND s.completed = true
+       WHERE s.viewer_id = $1 AND s.completed = true AND s.ended_at IS NOT NULL
        GROUP BY c.sort_order
        ORDER BY c.sort_order`,
       CompletionSchema, [viewerId], { label: "Get clip completion timestamps" }
@@ -177,7 +204,7 @@ export default api({
       submitted_at: z.string(),
     });
     const reflections = ascentDay1 ? await ctx.integrations.db.query(
-      `SELECT topic_day, created_at::text as submitted_at
+      `SELECT topic_day, submitted_at::text as submitted_at
        FROM cliptracker_v2_topic_reflections
        WHERE viewer_id = $1`,
       ReflectionSchema, [viewerId], { label: "Get resource day reflections" }
