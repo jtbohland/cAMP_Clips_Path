@@ -32,7 +32,7 @@ const PERFORMANCE_BONUSES = [
 
 const ENGAGEMENT_STREAK_BONUSES = [
   { badge: "No Detours", xp: 10, emoji: "🧭", condition: "Complete a 5-clip window without triggering S&R (×3 max: clips 1–5, 6–10, 11–15)" },
-  { badge: "Leave No Trace", xp: 15, emoji: "🌱", condition: "5/5 Trail Markers on a 3-clip window (×5 max: clips 1–3, 4–6, 7–9, 10–12, 13–15)" },
+  { badge: "Leave No Trace", xp: 15, emoji: "🌱", condition: "5/5 Trail Markers on a 3-clip window (×5 max: clips 1–3, 3–5, 7–9, 10–11+13, 13–15)" },
 ];
 
 const PACING_STREAK_BONUSES = [
@@ -252,7 +252,7 @@ export default function XPlanationPage() {
         {/* Max Possible XP */}
         <div className="rounded-xl bg-white border border-gray-200 shadow-[0_1px_3px_rgba(0,0,0,0.08)] p-5 text-center space-y-2">
           <p className="text-lg font-bold text-gray-900">
-            🏆 Theoretical Maximum: ~910 XP
+            🏆 Theoretical Maximum: ~924 XP
           </p>
           <p className="text-sm text-gray-500">
             A strong, engaged learner typically lands around <span className="font-semibold text-gray-900">400–500 XP</span> (Summit Seeker).

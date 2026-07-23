@@ -278,7 +278,7 @@ export default api({
       `SELECT viewer_id, SUM(cnt)::int AS completed FROM (
         SELECT viewer_id, COUNT(DISTINCT module_key)::int AS cnt
         FROM cliptracker_v2_module_signoffs
-        WHERE module_key IN ('meddpicc','challenger')
+        WHERE module_key IN ('meddpicc','challenger','camp101')
         GROUP BY viewer_id
       UNION ALL
         SELECT viewer_id, COUNT(DISTINCT course_key)::int AS cnt
@@ -300,7 +300,7 @@ export default api({
     for (const a of approachRows) {
       approachMap.set(a.viewer_id, a.completed);
     }
-    const TOTAL_APPROACH_MODULES = 7;
+    const TOTAL_APPROACH_MODULES = 8;
 
     // 2f. Topics completed per learner (for topic-based pacing).
     // A topic = a day_label. Complete = ALL clips with that day_label have a completed session

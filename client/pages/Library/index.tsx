@@ -70,6 +70,7 @@ export default function LibraryPage() {
   const [approachCompleteOverride, setApproachCompleteOverride] = useState<boolean | undefined>(undefined);
   const checkinTriggeredRef = useRef(false);
   const pacingShownRef = useRef(false);
+  const firstAchievementCatchUpRef = useRef(false);
 
   // Tab state: "approach" (Week 1) vs "ascent" (existing clips)
   const initialTab = searchParams.get("tab") === "ascent" ? "ascent" : "approach";
@@ -511,6 +512,24 @@ export default function LibraryPage() {
         };
       });
   }, [clips]);
+
+  // ── First Achievement catch-up — for learners who unlocked Ascent but never saw the modal ──
+  useEffect(() => {
+    if (!dataReady || !week1Data || firstAchievementCatchUpRef.current) return;
+    if (showFirstAchievement || showCheckin || showSummit || tierUnlock !== null) return;
+    if (viewer?.isAdmin) return;
+    // Only fire if Ascent is unlocked but modal was never shown
+    if (!week1Data.week1UnlockedAt || week1Data.firstAchievementShown) return;
+    // Legacy learners don't get the First Achievement modal
+    if (week1Data.isLegacyLearner) return;
+
+    firstAchievementCatchUpRef.current = true;
+    setFirstAchievementData({
+      earnedXp: week1Data.approachXp,
+      earnedBadge: week1Data.approachBadge,
+    });
+    setShowFirstAchievement(true);
+  }, [dataReady, week1Data, showFirstAchievement, showCheckin, showSummit, tierUnlock, viewer]);
 
   // ── Auto-trigger Anchor Point check-ins (persistent — re-fires on every load until sent) ──
   useEffect(() => {

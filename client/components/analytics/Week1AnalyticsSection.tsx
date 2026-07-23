@@ -42,7 +42,7 @@ export default function Week1AnalyticsSection() {
           <tr className="border-b border-gray-200 bg-gray-50">
             <th className="px-3 py-2 text-left font-semibold text-gray-600">Name</th>
             <th className="px-3 py-2 text-left font-semibold text-gray-600">TZ</th>
-            <th className="px-3 py-2 text-center font-semibold text-gray-600">🚡 (0-7)</th>
+            <th className="px-3 py-2 text-center font-semibold text-gray-600">🚡 (0-8)</th>
             <th className="px-3 py-2 text-center font-semibold text-gray-600">🧱</th>
             <th className="px-3 py-2 text-center font-semibold text-gray-600">📦 (0-4)</th>
             <th className="px-3 py-2 text-center font-semibold text-gray-600">🚀</th>
@@ -63,8 +63,8 @@ export default function Week1AnalyticsSection() {
                 <td className="px-3 py-2 font-medium text-gray-900 whitespace-nowrap">{l.name}</td>
                 <td className="px-3 py-2"><TzPill tz={l.timezone} /></td>
                 <td className="px-3 py-2 text-center">
-                  <span className={approachTotal >= 7 ? "text-green-600 font-bold" : approachTotal >= 4 ? "text-amber-600 font-semibold" : "text-gray-600"}>
-                    {approachTotal}/7
+                  <span className={approachTotal >= 8 ? "text-green-600 font-bold" : approachTotal >= 4 ? "text-amber-600 font-semibold" : "text-gray-600"}>
+                    {approachTotal}/8
                   </span>
                 </td>
                 <td className="px-3 py-2 text-center"><StatusDot done={l.meddpiccSigned} /></td>

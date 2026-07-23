@@ -71,7 +71,7 @@ export default api({
     }
 
     const xpEvents: Array<{ sourceId: string; eventType: string; xp: number }> = [];
-    const badgesEarned: Array<{ badgeId: string; name: string; emoji: string; xp: number }> = [];
+    const badgesEarned: Array<{ badgeId: string; name: string; emoji: string; xp: number; clipIdOverride?: string }> = [];
 
     // === BASE XP ===
     // Watch clip (always 3 XP if session completed)
@@ -213,8 +213,11 @@ export default api({
       }
     }
 
-    // Leave No Trace: 5/5 Trail Markers on 3 consecutive clips — max 5 awards
-    // Windows: clips 1-3, 4-6, 7-9, 10-12, 13-15
+    // Leave No Trace: 5/5 Trail Markers on a 3-clip window — max 5 awards
+    // Windows shifted to avoid resource days (sorts 6, 12):
+    //   W1: 1-3, W2: 3-5, W3: 7-9, W4: 10-11+13, W5: 13-15
+    // Each window fires when its LAST clip gets 5/5.
+    // Sort 13 is the last clip in both W4 and W5, so both are checked.
     if (trailMarkerCorrect === 5) {
       const SortSchema = z.object({ sort_order: z.coerce.number() });
       const currentSort = await ctx.integrations.db.query(
@@ -223,32 +226,48 @@ export default api({
       );
       if (currentSort[0]) {
         const cs = currentSort[0].sort_order;
-        // Non-overlapping windows: award only at the END of each window (clip 3, 6, 9, 12, 15)
-        const lntWindows = [3, 6, 9, 12, 15];
-        if (lntWindows.includes(cs)) {
-          const windowStart = cs - 2;
-          // Check all 3 clips in window got 5/5
+        // Define windows as [triggerSort, otherSorts[]]
+        // triggerSort = last clip in window (fires the check)
+        // otherSorts = the other 2 clips that must also have 5/5
+        const lntWindowDefs: Array<{ trigger: number; others: number[] }> = [
+          { trigger: 3,  others: [1, 2] },    // W1: clips 1-3
+          { trigger: 5,  others: [3, 4] },    // W2: clips 3-5
+          { trigger: 9,  others: [7, 8] },    // W3: clips 7-9
+          { trigger: 13, others: [10, 11] },  // W4: clips 10, 11, 13
+          { trigger: 15, others: [13, 14] },  // W5: clips 13-15
+        ];
+        const matchingWindows = lntWindowDefs.filter(w => w.trigger === cs);
+        for (const win of matchingWindows) {
+          // Check the other 2 clips in this window got 5/5
           const PerfectSchema = z.object({ count: z.coerce.number() });
           const perfectInWindow = await ctx.integrations.db.query(
             `SELECT COUNT(DISTINCT xe.clip_id)::int as count
              FROM cliptracker_v2_xp_events xe
              JOIN cliptracker_v2_clips c ON c.id = xe.clip_id
              WHERE xe.viewer_id = $1 AND xe.source_id = 'trail_markers_5'
-             AND c.sort_order BETWEEN $2 AND $3`,
+             AND c.sort_order = ANY($2::int[])`,
             PerfectSchema,
-            [viewerId, windowStart, cs - 1],
-            { label: "Check LNT window" }
+            [viewerId, `{${win.others.join(",")}}`],
+            { label: `Check LNT window (others: ${win.others.join(",")})` }
           );
           if (perfectInWindow[0]?.count === 2) {
+            // Use the clip at the first sort of the window as the badge's clip_id
+            // This ensures unique (viewer_id, badge_id, clip_id) per window
+            const AnchorClipSchema = z.object({ id: z.string() });
+            const anchorClip = await ctx.integrations.db.query(
+              `SELECT id FROM cliptracker_v2_clips WHERE sort_order = $1`,
+              AnchorClipSchema, [win.others[0]], { label: `LNT anchor clip for sort ${win.others[0]}` }
+            );
+            const anchorClipId = anchorClip[0]?.id ?? clipId;
             const ExBadgeSchema = z.object({ count: z.coerce.number() });
             const ex = await ctx.integrations.db.query(
               `SELECT COUNT(*)::int as count FROM cliptracker_v2_badges
                WHERE viewer_id = $1 AND badge_id = 'leave_no_trace' AND clip_id = $2`,
-              ExBadgeSchema, [viewerId, clipId], { label: "Check existing LNT" }
+              ExBadgeSchema, [viewerId, anchorClipId], { label: `Check existing LNT sort ${win.others[0]}` }
             );
             if (ex[0]?.count === 0) {
               xpEvents.push({ sourceId: "leave_no_trace", eventType: "streak", xp: 15 });
-              badgesEarned.push({ badgeId: "leave_no_trace", name: "Leave No Trace", emoji: "🌱", xp: 15 });
+              badgesEarned.push({ badgeId: "leave_no_trace", name: "Leave No Trace", emoji: "🌱", xp: 15, clipIdOverride: anchorClipId });
             }
           }
         }
@@ -347,7 +366,7 @@ export default api({
           `INSERT INTO cliptracker_v2_badges (viewer_id, badge_id, clip_id)
            VALUES ($1, $2, $3)
            ON CONFLICT (viewer_id, badge_id, clip_id) DO NOTHING`,
-          [viewerId, badge.badgeId, clipId],
+          [viewerId, badge.badgeId, badge.clipIdOverride ?? clipId],
           { label: `Award badge: ${badge.badgeId}` }
         );
       } catch (e) {
