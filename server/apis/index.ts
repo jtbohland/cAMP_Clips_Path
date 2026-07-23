@@ -105,6 +105,7 @@ import CleanupChrisDay9Xp from './v2/cleanup-chris-day9-xp.js';
 import SetupModalTracking from './v2/setup-modal-tracking.js';
 import TrackModalInteraction from './v2/track-modal-interaction.js';
 import GetModalInteractions from './v2/get-modal-interactions.js';
+import FixSwappedVideos from './v2/fix-swapped-videos.js';
 
 
 
@@ -215,6 +216,7 @@ ResetJTSessions,
   SetupModalTracking,
   TrackModalInteraction,
   GetModalInteractions,
+  FixSwappedVideos,
 } as const;
 
 export default apis;
