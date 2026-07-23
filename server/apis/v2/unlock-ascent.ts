@@ -103,13 +103,22 @@ export default api({
     let earnedBadge = false;
     let earnedXp = 0;
 
+    // Use clip at sort 1 as sentinel for approach XP/badge records
+    // (clip_id FK requires a real clip — viewerId is not a valid clip_id)
+    const ClipIdSchema = z.object({ id: z.string() });
+    const sentinelClip = await ctx.integrations.db.query(
+      `SELECT id FROM cliptracker_v2_clips WHERE sort_order = 1 LIMIT 1`,
+      ClipIdSchema, [], { label: "Get sentinel clip for approach XP" }
+    );
+    const approachClipId = sentinelClip[0]?.id ?? viewerId; // fallback just in case
+
     if (withinDeadline) {
       // Award approach_complete badge (on-time only)
       await ctx.integrations.db.execute(
         `INSERT INTO cliptracker_v2_badges (viewer_id, badge_id, clip_id)
-         VALUES ($1, 'approach_complete', $1)
+         VALUES ($1, 'approach_complete', $2)
          ON CONFLICT (viewer_id, badge_id, clip_id) DO NOTHING`,
-        [viewerId],
+        [viewerId, approachClipId],
         { label: "Award approach_complete badge" }
       );
       earnedBadge = true;
@@ -117,9 +126,9 @@ export default api({
       // Award 35 XP (on-time: 5 per module × 3 + 5 for W&D + 15 speed bonus)
       await ctx.integrations.db.execute(
         `INSERT INTO cliptracker_v2_xp_events (viewer_id, clip_id, event_type, source_id, xp_amount)
-         VALUES ($1, $1, 'milestone', 'approach_complete', 35)
+         VALUES ($1, $2, 'milestone', 'approach_complete', 35)
          ON CONFLICT (viewer_id, source_id, clip_id) DO NOTHING`,
-        [viewerId],
+        [viewerId, approachClipId],
         { label: "Award approach XP (on-time)" }
       );
       earnedXp = 35;
@@ -127,9 +136,9 @@ export default api({
       // Late approach: 17 XP (5 per module × 3 + 2 for W&D), no badge
       await ctx.integrations.db.execute(
         `INSERT INTO cliptracker_v2_xp_events (viewer_id, clip_id, event_type, source_id, xp_amount)
-         VALUES ($1, $1, 'milestone', 'approach_complete_late', 17)
+         VALUES ($1, $2, 'milestone', 'approach_complete_late', 17)
          ON CONFLICT (viewer_id, source_id, clip_id) DO NOTHING`,
-        [viewerId],
+        [viewerId, approachClipId],
         { label: "Award approach XP (late)" }
       );
       earnedXp = 17;

@@ -27,6 +27,12 @@ const ViewerWeek1Row = z.object({
   week1_unlock_type: z.string().nullable(),
   clips_completed: z.coerce.number(),
   created_at: z.string(),
+  first_achievement_shown: z.coerce.boolean().default(false),
+});
+
+const ApproachXpRow = z.object({
+  xp_amount: z.coerce.number(),
+  source_id: z.string(),
 });
 
 export default api({
@@ -63,6 +69,9 @@ export default api({
     week1UnlockType: z.string().nullable(),
     isLegacyLearner: z.boolean(),
     createdAt: z.string().nullable(),
+    firstAchievementShown: z.boolean(),
+    approachXp: z.number(),
+    approachBadge: z.boolean(),
   }),
 
   async run(ctx, { viewerId }) {
@@ -73,7 +82,8 @@ export default api({
         week1_unlock_type,
         (SELECT COUNT(*)::int FROM cliptracker_v2_sessions
          WHERE viewer_id = $1 AND completed = true) AS clips_completed,
-        created_at::text
+        created_at::text,
+        COALESCE(first_achievement_shown, false) AS first_achievement_shown
        FROM cliptracker_v2_viewers
        WHERE id = $1`,
       ViewerWeek1Row,
@@ -120,6 +130,19 @@ export default api({
       { label: "Get W&D verification" }
     );
 
+    // Get approach XP event (if any) to populate First Achievement catch-up
+    const approachXpRows = await ctx.integrations.db.query(
+      `SELECT xp_amount, source_id
+       FROM cliptracker_v2_xp_events
+       WHERE viewer_id = $1
+         AND source_id IN ('approach_complete', 'approach_complete_late')
+       LIMIT 1`,
+      ApproachXpRow,
+      [viewerId],
+      { label: "Get approach XP event" }
+    );
+    const approachXpEvent = approachXpRows[0] ?? null;
+
     return {
       moduleSignoffs: signoffs.map((s) => ({
         moduleKey: s.module_key,
@@ -144,6 +167,9 @@ export default api({
       week1UnlockType: viewer?.week1_unlock_type ?? null,
       isLegacyLearner,
       createdAt: viewer?.created_at ?? null,
+      firstAchievementShown: viewer?.first_achievement_shown ?? false,
+      approachXp: approachXpEvent?.xp_amount ?? 0,
+      approachBadge: approachXpEvent?.source_id === 'approach_complete',
     };
   },
 });
