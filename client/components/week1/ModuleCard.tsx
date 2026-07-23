@@ -210,7 +210,7 @@ export default function ModuleCard({
           </p>
           {isSignedOff ? (
             <div className="text-sm text-gray-700 bg-gray-50 rounded-lg px-3 py-2">
-              <p className="text-xs text-gray-500 italic mb-1">{reflectionPrompt}</p>
+              <p className="text-sm font-semibold text-gray-800 mb-2">💬 {reflectionPrompt}</p>
               <p>{signoffData?.reflectionResponse}</p>
             </div>
           ) : isLegacy ? (
@@ -224,7 +224,7 @@ export default function ModuleCard({
             </div>
           ) : (
             <div>
-              <p className="text-xs text-gray-600 italic mb-2">{reflectionPrompt}</p>
+              <p className="text-sm font-semibold text-gray-800 mb-2">💬 {reflectionPrompt}</p>
               <textarea
                 value={reflection}
                 onChange={(e) => setReflection(e.target.value)}

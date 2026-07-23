@@ -168,7 +168,7 @@ export default function ChallengerCard({
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">💭 Reflection</p>
           {isSignedOff ? (
             <div className="text-sm text-gray-700 bg-gray-50 rounded-lg px-3 py-2">
-              <p className="text-xs text-gray-500 italic mb-1">{reflectionPrompt}</p>
+              <p className="text-sm font-semibold text-gray-800 mb-2">💬 {reflectionPrompt}</p>
               <p>{signoffData?.reflectionResponse}</p>
             </div>
           ) : isLegacy ? (
@@ -179,7 +179,7 @@ export default function ChallengerCard({
             </div>
           ) : (
             <div>
-              <p className="text-xs text-gray-600 italic mb-2">{reflectionPrompt}</p>
+              <p className="text-sm font-semibold text-gray-800 mb-2">💬 {reflectionPrompt}</p>
               <textarea value={reflection} onChange={(e) => setReflection(e.target.value)} placeholder="Write your reflection..." rows={3}
                 className="w-full text-sm rounded-lg border border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none" />
             </div>
