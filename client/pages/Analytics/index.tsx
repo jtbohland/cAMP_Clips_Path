@@ -1,56 +1,15 @@
-import { useState, useMemo, useCallback, memo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import PasswordGate from "@/components/PasswordGate";
 import PageHeader from "@/components/PageHeader";
 import { useApiData } from "@/hooks/useApiData";
-import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import Week1AnalyticsSection from "@/components/analytics/Week1AnalyticsSection";
-import JournalsTabsSection from "@/components/analytics/JournalsTabsSection";
-import LearnerReflectionsSection from "@/components/analytics/LearnerReflectionsSection";
+import LearnerTileGrid from "@/components/analytics/LearnerTileGrid";
+import LearnerDetailView from "@/components/analytics/LearnerDetailView";
+import { type LearnerTileData } from "@/components/analytics/LearnerTile";
 import ManagerFeedbackSection from "@/components/analytics/ManagerFeedbackSection";
-import ModalMovementsSection from "@/components/analytics/ModalMovementsSection";
 
-/** Badge ID → display info */
-const BADGE_MAP: Record<string, { name: string; emoji: string }> = {
-  // Per-clip performance
-  perfect_hiker: { name: "Perfect Hiker", emoji: "🌲" },
-  speed_hiker: { name: "Speed Hiker", emoji: "🥾" },
-  search_and_rescue_hero: { name: "S&R Hero", emoji: "🚁" },
-  storm_chaser: { name: "Storm Chaser", emoji: "⛈️" },
-  double_summit: { name: "Double Summit", emoji: "⛰️" },
-  swiss_army_knife: { name: "Swiss Army Knife", emoji: "🪓" },
-  // Engagement streaks
-  no_detours: { name: "No Detours", emoji: "🧭" },
-  leave_no_trace: { name: "Leave No Trace", emoji: "🌱" },
-  // Pacing streaks
-  ridge_runner: { name: "Ridge Runner", emoji: "🥾" },
-  alpine_endurance: { name: "Alpine Endurance", emoji: "🏔️" },
-  iron_legs: { name: "Iron Legs", emoji: "🦿" },
-  mountain_goat: { name: "Mountain Goat", emoji: "🐐" },
-  free_solo: { name: "Free Solo", emoji: "🧗" },
-  // Summit rewards
-  golden_summit: { name: "Golden Summit", emoji: "🌄" },
-  speed_ascent: { name: "Speed Ascent", emoji: "⛷️" },
-  second_wind: { name: "Second Wind", emoji: "💨" },
-  every_step_counts: { name: "Every Step Counts", emoji: "👣" },
-  // Grip Strength
-  grip_strength: { name: "Grip Strength", emoji: "💪" },
-  // Milestones
-  first_step: { name: "First Step", emoji: "🎬" },
-  peak_lift: { name: "Peak Lift", emoji: "🚡" },
-  halfway: { name: "Halfway Up", emoji: "🏔️" },
-  week_4_entry: { name: "Summit Push", emoji: "🪢" },
-  mystery: { name: "Ranger's Secret", emoji: "🌲" },
-  podcast_cast: { name: "The Full Cast", emoji: "🎣" },
-  approach_complete: { name: "The Approach", emoji: "🚡" },
-  // Legacy (no longer awarded)
-  on_the_trail: { name: "On the Trail", emoji: "🗓️" },
-  the_ascent: { name: "The Ascent", emoji: "🧗" },
-  summit: { name: "Summit Reached", emoji: "🏔️✨" },
-};
+// ─── Constants ───────────────────────────────────────────────────────────────
 
 const ROLE_PILL: Record<string, { bg: string; text: string; border: string }> = {
   "SDR":         { bg: "bg-purple-100",  text: "text-purple-500",  border: "border-purple-200" },
@@ -90,19 +49,21 @@ function TimezonePill({ timezone }: { timezone: string | null }) {
   );
 }
 
-const PACING_LABEL: Record<string, { label: string; color: string }> = {
-  summit_bound: { label: "🧗🏻‍♂️ Summit Bound", color: "text-green-600" },
-  off_the_trail: { label: "🧭 Off the Trail", color: "text-amber-600" },
-  lost_in_the_woods: { label: "🌲 Lost in Woods", color: "text-orange-600" },
-  rockslide: { label: "🪨 Rockslide", color: "text-red-600" },
-  avalanche_warning: { label: "❄️ Avalanche", color: "text-blue-800" },
-  anchor_failure: { label: "⛓️‍💥 Anchor Failure", color: "text-red-700" },
-  completed: { label: "🏔️✨ Completed", color: "text-[#4F46E5]" },
-  not_started: { label: "Not Started", color: "text-gray-400" },
-  // Legacy fallbacks
-  on_track: { label: "On Track", color: "text-green-600" },
-  behind: { label: "Behind", color: "text-amber-600" },
-};
+const TIERS = [
+  { tier: 1, name: "Base Camper", emoji: "🏕️", xpMin: 0, xpMax: 149 },
+  { tier: 2, name: "Trailblazer", emoji: "🥾", xpMin: 150, xpMax: 324 },
+  { tier: 3, name: "Summit Seeker", emoji: "🧗🏼", xpMin: 325, xpMax: 499 },
+  { tier: 4, name: "Pinnacle Achiever", emoji: "⛰️", xpMin: 500, xpMax: 699 },
+  { tier: 5, name: "Alpinist All-Star", emoji: "💫", xpMin: 700, xpMax: null },
+];
+
+function getTier(xp: number) {
+  return TIERS.reduce((acc, t) => (xp >= t.xpMin ? t : acc), TIERS[0]);
+}
+
+// ─── Page entry ──────────────────────────────────────────────────────────────
+
+type MainTab = "dashboard" | "clips";
 
 export default function AnalyticsPage() {
   return (
@@ -112,7 +73,7 @@ export default function AnalyticsPage() {
   );
 }
 
-// --- Collapsible section wrapper ---
+// ─── Collapsible section ─────────────────────────────────────────────────────
 function Section({ title, subtitle, emoji, defaultOpen = true, children }: {
   title: string;
   subtitle?: string;
@@ -139,18 +100,30 @@ function Section({ title, subtitle, emoji, defaultOpen = true, children }: {
   );
 }
 
+// ─── Main content ────────────────────────────────────────────────────────────
+
 function AnalyticsContent() {
   const { data, loading, fetching, isError, error } = useApiData("GetAnalyticsV3", {});
+  const [selectedLearnerId, setSelectedLearnerId] = useState<string | null>(null);
+  const [mainTab, setMainTab] = useState<MainTab>("dashboard");
+
+  const handleLearnerClick = useCallback((viewerId: string) => {
+    setSelectedLearnerId(viewerId);
+  }, []);
+
+  const handleBack = useCallback(() => {
+    setSelectedLearnerId(null);
+  }, []);
 
   if (loading) {
     return (
       <div className="flex flex-col h-full" style={{ backgroundColor: "#ECFDF5" }}>
         <PageHeader emoji="📊" title="Analytics" subtitle="Performance data across all learners and clips" />
-        <div className="p-6 max-w-6xl mx-auto space-y-4 w-full">
+        <div className="p-6 max-w-7xl mx-auto space-y-4 w-full">
           <div className="grid grid-cols-5 gap-4">
             {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-24" />)}
           </div>
-          {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20" />)}
+          <Skeleton className="h-48" />
         </div>
       </div>
     );
@@ -169,78 +142,127 @@ function AnalyticsContent() {
 
   const { overview, learners, clipBreakdown, questions, leaderboard } = data ?? {};
 
+  // ─── Learner detail takeover ─────────────────────────────────────
+  if (selectedLearnerId) {
+    return (
+      <div className="flex flex-col h-full overflow-auto" style={{ backgroundColor: "#ECFDF5" }}>
+        <PageHeader emoji="📊" title="Analytics" subtitle="Learner Detail" />
+        <div className="p-6 max-w-7xl mx-auto w-full">
+          <LearnerDetailView viewerId={selectedLearnerId} onBack={handleBack} />
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Transform learners → tile data ──────────────────────────────
+  const tileData: LearnerTileData[] = useMemo(
+    () =>
+      (learners ?? []).map((l: any) => ({
+        viewerId: l.viewerId,
+        name: l.name,
+        email: l.email,
+        role: l.role,
+        timezone: l.timezone,
+        managerName: l.managerName,
+        ascentDay1: l.ascentDay1,
+        clipsCompleted: l.clipsCompleted,
+        totalXp: l.totalXp,
+        pacingStatus: l.pacingStatus,
+        summitDay: l.summitDay,
+        isAnchorFailure: l.isAnchorFailure,
+        lastLogin: l.lastLogin,
+        approachComplete: l.approachComplete,
+        approachCompletedCount: l.approachCompletedCount ?? 0,
+        tier: l.tier ?? getTier(l.totalXp),
+        badges: l.badges ?? [],
+        gearClicks: l.gearClicks ?? 0,
+        wtsCount: l.wtsCount ?? 0,
+        srCount: l.srCount ?? 0,
+        clipScoreAvg: l.clipScoreAvg,
+      })),
+    [learners]
+  );
+
   return (
     <div className="flex flex-col h-full overflow-auto" style={{ backgroundColor: "#ECFDF5" }}>
       <PageHeader emoji="📊" title="Analytics" subtitle="Performance data across all learners and clips" />
 
       {fetching && !loading && <div className="text-xs text-gray-600 px-6 pt-3">Updating…</div>}
 
-      <div className={`p-6 max-w-6xl mx-auto w-full space-y-4 ${fetching && !loading ? "opacity-70" : ""}`}>
+      {/* ─── Main / Clips tab switcher ─── */}
+      <div className="px-6 max-w-7xl mx-auto w-full">
+        <div className="flex gap-1 border-b border-gray-300 mt-2">
+          <button
+            onClick={() => setMainTab("dashboard")}
+            className={`px-5 py-2.5 text-sm font-semibold transition-colors border-b-2 ${
+              mainTab === "dashboard"
+                ? "border-indigo-600 text-indigo-700"
+                : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            📊 Dashboard
+          </button>
+          <button
+            onClick={() => setMainTab("clips")}
+            className={`px-5 py-2.5 text-sm font-semibold transition-colors border-b-2 ${
+              mainTab === "clips"
+                ? "border-indigo-600 text-indigo-700"
+                : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            🎬 Clip Analytics
+          </button>
+        </div>
+      </div>
 
-        {/* 1. Overview */}
-        <Section title="Overview" emoji="📈" defaultOpen>
-          <OverviewSection overview={overview} />
-        </Section>
+      <div className={`p-6 max-w-7xl mx-auto w-full space-y-4 ${fetching && !loading ? "opacity-70" : ""}`}>
 
-        {/* 2. The Approach (Week 1) */}
-        <Section title="The Approach" subtitle="Week 1 onboarding — MEDDPICC, cAMP 101, Challenger, Wheel & Deal" emoji="🚡" defaultOpen={false}>
-          <Week1AnalyticsSection />
-        </Section>
+        {mainTab === "dashboard" ? (
+          <>
+            {/* 1. Overview */}
+            <Section title="Overview" emoji="📈" defaultOpen>
+              <OverviewSection overview={overview} />
+            </Section>
 
-        {/* 3. cAMPers Table */}
-        <Section
-          title="cAMPers"
-          subtitle="Manager view — track each new hire's progress through Ascent"
-          emoji="🏕️"
-          defaultOpen
-        >
-          <CampersSection learners={learners ?? []} totalClips={overview?.totalClips ?? 0} />
-        </Section>
+            {/* 2. cAMPers Tile Grid */}
+            <Section title="cAMPers" subtitle="Click a tile to see full learner snapshot" emoji="🏕️" defaultOpen>
+              <div className="pt-4">
+                <LearnerTileGrid
+                  learners={tileData}
+                  totalClips={overview?.totalClips ?? 0}
+                  onLearnerClick={handleLearnerClick}
+                />
+              </div>
+            </Section>
 
-        {/* 3. XP Leaderboard */}
-        <Section title="XP Leaderboard" emoji="🏆" defaultOpen>
-          <LeaderboardSection leaderboard={leaderboard ?? []} />
-        </Section>
+            {/* 3. XP Leaderboard */}
+            <Section title="XP Leaderboard" emoji="🏆" defaultOpen>
+              <LeaderboardSection leaderboard={leaderboard ?? []} />
+            </Section>
 
-        {/* 4. Clip Performance */}
-        <Section title="Clip Performance" emoji="🎬" defaultOpen>
-          <ClipBreakdownSection clips={clipBreakdown ?? []} />
-        </Section>
+            {/* 4. Sherpa Surveys */}
+            <Section title="Sherpa Surveys" subtitle="Manager feedback & survey responses" emoji="🚩" defaultOpen={false}>
+              <ManagerFeedbackSection />
+            </Section>
+          </>
+        ) : (
+          <>
+            {/* Clip Analytics tab */}
+            <Section title="Clip Performance" emoji="🎬" defaultOpen>
+              <ClipBreakdownSection clips={clipBreakdown ?? []} />
+            </Section>
 
-        {/* 5. Trail Markers (collapsed by default) */}
-        <Section title="Trail Markers" emoji="🪧" defaultOpen={false}>
-          <QuestionsSection questions={questions ?? []} />
-        </Section>
-
-        {/* 6. Journals + Logbooks — learner reflections */}
-        <Section title="Journals + Logbooks" subtitle="Resource day, module & check-in reflections from learners" emoji="📓" defaultOpen={false}>
-          <JournalsTabsSection />
-          <div className="border-t border-gray-200 mt-4 pt-2">
-            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">💭 Check-in Reflections</h4>
-            <LearnerReflectionsSection />
-          </div>
-        </Section>
-
-        {/* 7. cAMP Gear Clicks */}
-        <Section title="cAMP Gear Clicks" subtitle="Elevator pitches · cAMP Gear resources · Wheel & Deal" emoji="🎒" defaultOpen={false}>
-          <PitchClicksSection />
-        </Section>
-
-        {/* 8. Modal Movements — modal interaction tracking */}
-        <Section title="Modal Movements" subtitle="Pacing, anchor, check-in & tier unlock modal events" emoji="🔔" defaultOpen={false}>
-          <ModalMovementsSection />
-        </Section>
-
-        {/* 9. Sherpa Surveys — manager input */}
-        <Section title="Sherpa Surveys" subtitle="Manager feedback & survey responses" emoji="🚩" defaultOpen={false}>
-          <ManagerFeedbackSection />
-        </Section>
+            <Section title="Trail Markers" emoji="🪧" defaultOpen>
+              <QuestionsSection questions={questions ?? []} />
+            </Section>
+          </>
+        )}
       </div>
     </div>
   );
 }
 
-// --- Section components ---
+// ─── Overview ────────────────────────────────────────────────────────────────
 
 function OverviewSection({ overview }: { overview: any }) {
   if (!overview) return <p className="text-sm text-gray-500 py-4">No data</p>;
@@ -279,7 +301,6 @@ function OverviewSection({ overview }: { overview: any }) {
             <div className="text-[9px] text-gray-400 mt-0.5 leading-tight">{s.desc}</div>
           </div>
         ))}
-        {/* Pacing tile */}
         <div className="text-center p-3 rounded-lg border border-gray-100 bg-[#fafafa]">
           <div className="text-lg mb-1">🏁</div>
           <div className="flex items-center justify-center gap-3">
@@ -301,244 +322,46 @@ function OverviewSection({ overview }: { overview: any }) {
   );
 }
 
-function CampersSection({ learners, totalClips }: { learners: any[]; totalClips: number }) {
-  const [search, setSearch] = useState("");
-  const [page, setPage] = useState(0);
-  const PAGE_SIZE = 20;
+// ─── Leaderboard ─────────────────────────────────────────────────────────────
 
-  const filtered = useMemo(() => {
-    let list = learners;
-    if (search) {
-      const q = search.toLowerCase();
-      list = list.filter((l: any) =>
-        l.name.toLowerCase().includes(q) ||
-        l.email.toLowerCase().includes(q) ||
-        l.role.toLowerCase().includes(q)
-      );
-    }
-    // Sort: active learners with soonest summit day first, fully completed at bottom
-    // "Fully completed" = approach complete (7 modules) AND ascent complete (all topics)
-    return [...list].sort((a: any, b: any) => {
-      const aComplete = a.approachComplete && a.pacingStatus === "completed";
-      const bComplete = b.approachComplete && b.pacingStatus === "completed";
-      // Completed learners sink to bottom
-      if (aComplete !== bComplete) return aComplete ? 1 : -1;
-      // Among active: soonest summit day first (no summit day → after those with one)
-      const aDay = a.summitDay ? new Date(a.summitDay + "T00:00:00").getTime() : Infinity;
-      const bDay = b.summitDay ? new Date(b.summitDay + "T00:00:00").getTime() : Infinity;
-      return aDay - bDay;
-    });
-  }, [learners, search, totalClips]);
-
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
-  const pageData = useMemo(() => filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE), [filtered, page]);
-
-  const handleSearch = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.target.value);
-    setPage(0);
-  }, []);
-
+function LeaderboardSection({ leaderboard }: { leaderboard: any[] }) {
   return (
-    <div className="space-y-3 pt-4">
-      <div className="flex items-center gap-3">
-        <input
-          className="flex h-9 w-64 rounded-md border border-gray-200 bg-white px-3 py-1 text-sm text-gray-900"
-          placeholder="Search cAMPers…"
-          value={search}
-          onChange={handleSearch}
-        />
-        <span className="text-xs text-gray-500">{filtered.length} cAMPers</span>
+    <div className="space-y-1 pt-4">
+      <div className="grid grid-cols-[40px_1fr_80px_70px_60px_60px_60px] gap-2 text-[10px] font-semibold text-gray-500 uppercase tracking-wider px-3">
+        <span className="text-center">#</span>
+        <span>Name</span>
+        <span className="text-center">Role</span>
+        <span className="text-center">Timezone</span>
+        <span className="text-center">XP</span>
+        <span className="text-center">Clips</span>
+        <span className="text-center">Badges</span>
       </div>
 
-      {/* Table header */}
-      <div className="grid grid-cols-[1.4fr_70px_70px_70px_80px_60px_60px_90px_80px_1fr] gap-2 text-[10px] font-semibold text-gray-500 uppercase tracking-wider px-3">
-        <span>cAMPer</span>
-        <span className="text-center">XP Earned</span>
-        <span className="text-center">Clip Score</span>
-        <span className="text-center">1st Attempt</span>
-        <span className="text-center">Recovery Score</span>
-        <span className="text-center">⛈️ Storms</span>
-        <span className="text-center">🎒 Gear</span>
-        <span className="text-center">Progress</span>
-        <span className="text-center">On Track?</span>
-        <span>Merit Badges</span>
-      </div>
-
-      <div className="space-y-1">
-        {pageData.map((l: any) => {
-          const pacing = PACING_LABEL[l.pacingStatus] ?? PACING_LABEL.not_started;
-          const progressPct = totalClips > 0 ? Math.round((l.clipsCompleted / totalClips) * 100) : 0;
-          const isFullyComplete = l.approachComplete && l.pacingStatus === "completed";
-
-          return (
-            <div key={l.viewerId} className={`grid grid-cols-[1.4fr_70px_70px_70px_80px_60px_60px_90px_80px_1fr] gap-2 items-center px-3 py-2.5 rounded-md border ${isFullyComplete ? "border-gray-200 bg-gray-50 opacity-50" : "border-gray-100 bg-white"}`}>
-              {/* cAMPer name + tier */}
-              <div className="min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <p className="text-sm font-medium text-gray-900 truncate">{l.name}</p>
-                  <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-gray-100 text-[10px] font-medium text-gray-600 whitespace-nowrap shrink-0">
-                    <span>{l.tier.emoji}</span>
-                    <span>{l.tier.name}</span>
-                  </span>
-                </div>
-                <p className="text-[11px] text-gray-500 truncate">{l.email}</p>
-                <div className="flex flex-wrap items-center gap-1 mt-0.5">
-                  <RolePill role={l.role} />
-                  {l.managerName && l.managerName !== "n/a" && (
-                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-100 text-[10px] font-medium text-indigo-700 whitespace-nowrap">
-                      <span>💼</span>
-                      <span>{l.managerName}</span>
-                    </span>
-                  )}
-                  <TimezonePill timezone={l.timezone} />
-                  {/* Last Login pill */}
-                  {l.lastLogin && (
-                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-sky-50 border border-sky-200 text-[10px] font-medium text-sky-700 whitespace-nowrap" title="Last login">
-                      🔑 {new Date(l.lastLogin).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                    </span>
-                  )}
-                  {/* Check-in email status */}
-                  {(l.approachCheckinSentAt || l.week2CheckinSentAt || l.week3CheckinSentAt) && (
-                    <div className="relative group/checkin inline-flex">
-                      <span
-                        className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-[10px] font-medium text-emerald-700 whitespace-nowrap cursor-default"
-                        title="Check-in emails sent by learner"
-                      >
-                        📧 {[l.approachCheckinSentAt, l.week2CheckinSentAt, l.week3CheckinSentAt].filter(Boolean).length}/4
-                      </span>
-                      <div className="absolute left-0 top-full mt-1 hidden group-hover/checkin:flex flex-col bg-white border border-gray-200 rounded-lg shadow-lg z-10 py-1 min-w-[180px]">
-                        {([
-                          { label: "🚡 Approach", ts: l.approachCheckinSentAt },
-                          { label: "🏕️ Week 2", ts: l.week2CheckinSentAt },
-                          { label: "🧗 Week 3", ts: l.week3CheckinSentAt },
-                          { label: "🏔️ Summit", ts: null },
-                        ] as const).map((item) => (
-                          <div key={item.label} className="flex items-center justify-between px-3 py-1.5 text-xs">
-                            <span className="text-gray-700">{item.label}</span>
-                            {item.ts ? (
-                              <span className="text-emerald-600 font-medium">
-                                ✓ {new Date(item.ts).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                              </span>
-                            ) : (
-                              <span className="text-gray-400">—</span>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* XP Earned */}
-              <div className="text-center text-sm font-bold text-[#4F46E5]">{l.totalXp}</div>
-
-              {/* Clip Score (final engagement avg across all completed) */}
-              <div className="text-center text-sm font-medium text-gray-900">
-                {l.clipScoreAvg != null ? `${l.clipScoreAvg}%` : "—"}
-              </div>
-
-              {/* 1st Attempt (initial engagement before S&R improvement) */}
-              <div className="text-center text-sm font-medium text-gray-900">
-                {l.firstAttemptAvg != null ? `${l.firstAttemptAvg}%` : "—"}
-              </div>
-
-              {/* Recovery Score */}
-              <div className="text-center text-sm font-medium text-gray-900">
-                {l.recoveryAvg != null ? `${l.recoveryAvg}%` : "—"}
-              </div>
-
-              {/* Storms */}
-              <div className="text-center text-sm font-medium text-gray-900">
-                {l.wtsCount > 0 ? (
-                  <span className="text-amber-600 font-semibold">{l.wtsCount}</span>
-                ) : (
-                  <span className="text-gray-400">0</span>
-                )}
-              </div>
-
-              {/* Gear Clicks */}
-              <div className="text-center text-sm font-medium text-gray-900">
-                {l.gearClicks > 0 ? (
-                  <span className="text-indigo-600 font-semibold">{l.gearClicks}</span>
-                ) : (
-                  <span className="text-gray-400">0</span>
-                )}
-              </div>
-
-              {/* Progress */}
-              <div className="flex flex-col items-center gap-0.5">
-                <span className="text-[11px] font-medium text-gray-700">{l.clipsCompleted} / {totalClips}</span>
-                <Progress value={progressPct} className="h-1.5 w-full" />
-              </div>
-
-              {/* Pacing — ascent date, status, summit date */}
-              <div className="text-center space-y-0.5">
-                {l.ascentDay1 && (
-                  <div className="text-[10px] text-gray-500">
-                    🧗 {new Date(l.ascentDay1 + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                  </div>
-                )}
-                <div className={`text-[11px] font-semibold ${pacing.color}`}>{pacing.label}</div>
-                {l.summitDay && (
-                  <div className="text-[10px] text-gray-500">
-                    🏔️ {new Date(l.summitDay + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                  </div>
-                )}
-                {l.isAnchorFailure && l.ascentAdjustmentDay && (
-                  <div className="text-[9px] text-red-500 mt-0.5">
-                    🌄 {new Date(l.ascentAdjustmentDay + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                  </div>
-                )}
-              </div>
-
-              {/* Merit Badges — consolidated with ×N for duplicates */}
-              <div className="flex flex-wrap gap-1 min-w-0">
-                {l.badges.length > 0 ? (() => {
-                  const counts: Record<string, number> = {};
-                  l.badges.forEach((b: any) => { counts[b.badgeId] = (counts[b.badgeId] || 0) + 1; });
-                  return Object.entries(counts).map(([badgeId, count]) => {
-                    const info = BADGE_MAP[badgeId] ?? { name: badgeId, emoji: "🎖️" };
-                    return (
-                      <span
-                        key={badgeId}
-                        className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-100 text-[10px] font-medium text-indigo-700 whitespace-nowrap"
-                        title={count > 1 ? `${info.name} ×${count}` : info.name}
-                      >
-                        <span>{info.emoji}</span>
-                        <span>{info.name}{count > 1 && <span className="ml-0.5 text-[9px] font-bold text-amber-600">×{count}</span>}</span>
-                      </span>
-                    );
-                  });
-                })() : (
-                  <span className="text-[10px] text-gray-400">—</span>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2 pt-2">
-          <Button size="sm" variant="outline" disabled={page === 0} onClick={() => setPage(p => p - 1)}>Previous</Button>
-          <span className="text-xs text-gray-500">Page {page + 1} of {totalPages}</span>
-          <Button size="sm" variant="outline" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>Next</Button>
-        </div>
-      )}
-
-      {filtered.length === 0 && (
-        <p className="text-sm text-gray-500 text-center py-6">No cAMPers found</p>
-      )}
-
+      {leaderboard.map((l: any) => {
+        const isTop3 = l.rank <= 3;
+        const medalEmoji = l.rank === 1 ? "🥇" : l.rank === 2 ? "🥈" : l.rank === 3 ? "🥉" : "";
+        return (
+          <div key={l.viewerId} className={`grid grid-cols-[40px_1fr_80px_70px_60px_60px_60px] gap-2 items-center px-3 py-2 rounded-md border ${isTop3 ? "border-[#4F46E5]/20" : "border-gray-100"}`} style={{ backgroundColor: isTop3 ? "#f5f3ff" : "#ffffff" }}>
+            <div className="text-center text-sm font-bold text-gray-700">{medalEmoji || l.rank}</div>
+            <div className="text-sm font-medium text-gray-900 truncate">{l.name}</div>
+            <div className="text-center"><RolePill role={l.role} /></div>
+            <div className="text-center"><TimezonePill timezone={l.timezone} /></div>
+            <div className="text-center text-sm font-bold text-[#4F46E5]">{l.totalXp}</div>
+            <div className="text-center text-sm text-gray-700">{l.clipsCompleted}</div>
+            <div className="text-center text-sm text-gray-700">{l.badgesEarned}</div>
+          </div>
+        );
+      })}
+      {leaderboard.length === 0 && <p className="text-sm text-gray-500 text-center py-6">No leaderboard data</p>}
     </div>
   );
 }
 
+// ─── Clip Performance ────────────────────────────────────────────────────────
+
 function ClipBreakdownSection({ clips }: { clips: any[] }) {
   return (
     <div className="space-y-2 pt-4">
-      {/* Column header */}
       <div className="grid grid-cols-[32px_1fr_80px_80px_60px_60px_60px_100px] gap-3 text-[10px] font-semibold text-gray-500 uppercase tracking-wider px-3">
         <span>#</span>
         <span>Clip Title</span>
@@ -550,7 +373,7 @@ function ClipBreakdownSection({ clips }: { clips: any[] }) {
         <span className="text-center">Completion</span>
       </div>
 
-      {clips.map(clip => {
+      {clips.map((clip: any) => {
         const completionPct = clip.uniqueViewers > 0 ? Math.round((clip.completedCount / clip.uniqueViewers) * 100) : 0;
         return (
           <div key={clip.clipId} className="grid grid-cols-[32px_1fr_80px_80px_60px_60px_60px_100px] gap-3 items-center p-3 rounded-md border border-gray-100 bg-white">
@@ -562,29 +385,11 @@ function ClipBreakdownSection({ clips }: { clips: any[] }) {
                 <span>{clip.completedCount} completed</span>
               </div>
             </div>
-            <div className="text-center text-sm font-medium text-gray-900">
-              {clip.avgFirstPass != null ? `${clip.avgFirstPass}%` : "—"}
-            </div>
-            <div className="text-center text-sm font-medium text-gray-900">
-              {clip.avgRecovery != null ? `${clip.avgRecovery}%` : "—"}
-            </div>
-            <div className="text-center text-sm font-medium text-gray-900">
-              {clip.avgFocus != null ? `${clip.avgFocus}%` : "—"}
-            </div>
-            <div className="text-center text-sm font-medium">
-              {clip.srTriggered > 0 ? (
-                <span className="text-amber-600 font-semibold">{clip.srTriggered}</span>
-              ) : (
-                <span className="text-gray-400">0</span>
-              )}
-            </div>
-            <div className="text-center text-sm font-medium">
-              {clip.wtsCount > 0 ? (
-                <span className="text-red-500 font-semibold">{clip.wtsCount}</span>
-              ) : (
-                <span className="text-gray-400">0</span>
-              )}
-            </div>
+            <div className="text-center text-sm font-medium text-gray-900">{clip.avgFirstPass != null ? `${clip.avgFirstPass}%` : "—"}</div>
+            <div className="text-center text-sm font-medium text-gray-900">{clip.avgRecovery != null ? `${clip.avgRecovery}%` : "—"}</div>
+            <div className="text-center text-sm font-medium text-gray-900">{clip.avgFocus != null ? `${clip.avgFocus}%` : "—"}</div>
+            <div className="text-center text-sm font-medium">{clip.srTriggered > 0 ? <span className="text-amber-600 font-semibold">{clip.srTriggered}</span> : <span className="text-gray-400">0</span>}</div>
+            <div className="text-center text-sm font-medium">{clip.wtsCount > 0 ? <span className="text-red-500 font-semibold">{clip.wtsCount}</span> : <span className="text-gray-400">0</span>}</div>
             <div className="px-1">
               <Progress value={completionPct} className="h-2" />
               <p className="text-[10px] text-gray-500 text-center mt-0.5">{completionPct}% pass</p>
@@ -596,6 +401,8 @@ function ClipBreakdownSection({ clips }: { clips: any[] }) {
     </div>
   );
 }
+
+// ─── Trail Markers ───────────────────────────────────────────────────────────
 
 function QuestionsSection({ questions }: { questions: any[] }) {
   const grouped = useMemo(() => {
@@ -617,7 +424,7 @@ function QuestionsSection({ questions }: { questions: any[] }) {
             Clip {group.clipSortOrder}: {group.clipTitle}
           </h4>
           <div className="space-y-1.5">
-            {group.items.map(q => {
+            {group.items.map((q: any) => {
               const pct = q.totalAnswers > 0 ? Math.round((q.correctCount / q.totalAnswers) * 100) : 0;
               return (
                 <div key={q.questionId} className="flex items-center gap-3 p-2.5 rounded border border-gray-100 bg-white">
@@ -643,101 +450,3 @@ function QuestionsSection({ questions }: { questions: any[] }) {
     </div>
   );
 }
-
-function LeaderboardSection({ leaderboard }: { leaderboard: any[] }) {
-  return (
-    <div className="space-y-1 pt-4">
-      {/* Header */}
-      <div className="grid grid-cols-[40px_1fr_80px_70px_60px_60px_60px] gap-2 text-[10px] font-semibold text-gray-500 uppercase tracking-wider px-3">
-        <span className="text-center">#</span>
-        <span>Name</span>
-        <span className="text-center">Role</span>
-        <span className="text-center">Timezone</span>
-        <span className="text-center">XP</span>
-        <span className="text-center">Clips</span>
-        <span className="text-center">Badges</span>
-      </div>
-
-      {leaderboard.map(l => {
-        const isTop3 = l.rank <= 3;
-        const medalEmoji = l.rank === 1 ? "🥇" : l.rank === 2 ? "🥈" : l.rank === 3 ? "🥉" : "";
-        return (
-          <div key={l.viewerId} className={`grid grid-cols-[40px_1fr_80px_70px_60px_60px_60px] gap-2 items-center px-3 py-2 rounded-md border ${isTop3 ? "border-[#4F46E5]/20" : "border-gray-100"}`} style={{ backgroundColor: isTop3 ? "#f5f3ff" : "#ffffff" }}>
-            <div className="text-center text-sm font-bold text-gray-700">{medalEmoji || l.rank}</div>
-            <div className="text-sm font-medium text-gray-900 truncate">{l.name}</div>
-            <div className="text-center"><RolePill role={l.role} /></div>
-            <div className="text-center"><TimezonePill timezone={l.timezone} /></div>
-            <div className="text-center text-sm font-bold text-[#4F46E5]">{l.totalXp}</div>
-            <div className="text-center text-sm text-gray-700">{l.clipsCompleted}</div>
-            <div className="text-center text-sm text-gray-700">{l.badgesEarned}</div>
-          </div>
-        );
-      })}
-      {leaderboard.length === 0 && <p className="text-sm text-gray-500 text-center py-6">No leaderboard data</p>}
-    </div>
-  );
-}
-
-// --- 6. Elevator Pitch Clicks ---
-
-const PitchClicksSection = memo(function PitchClicksSection() {
-  const { data, loading } = useApiData("GetPitchClicks", {});
-
-  if (loading) {
-    return <div className="py-4"><Skeleton className="h-32" /></div>;
-  }
-
-  const summary = data?.summary ?? [];
-  const clicks = data?.clicks ?? [];
-
-  if (summary.length === 0 && clicks.length === 0) {
-    return <p className="text-sm text-gray-500 text-center py-6">No clicks recorded yet</p>;
-  }
-
-  return (
-    <div className="space-y-4 pt-4">
-      {/* Summary cards */}
-      {summary.length > 0 && (
-        <div className="grid grid-cols-4 gap-3">
-          {summary.map(s => (
-            <div key={s.pitchName} className="text-center p-3 rounded-lg border border-gray-100 bg-[#fafafa]">
-              <div className="text-lg mb-1">🎒</div>
-              <div className="text-sm font-semibold text-gray-900 truncate">{s.pitchName}</div>
-              <div className="text-xl font-bold text-[#4F46E5] mt-1">{s.clickCount}</div>
-              <div className="text-[10px] text-gray-500">
-                {s.uniqueViewers} unique {s.uniqueViewers === 1 ? "viewer" : "viewers"}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Recent clicks table */}
-      {clicks.length > 0 && (
-        <div>
-          <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Recent Clicks</h4>
-          <div className="rounded-lg border border-gray-200 overflow-hidden">
-            <div className="grid grid-cols-[1fr_1fr_140px] gap-2 px-3 py-2 bg-gray-50 text-[10px] font-semibold text-gray-500 uppercase tracking-wide border-b border-gray-200">
-              <div>cAMPer</div>
-              <div>Pitch</div>
-              <div>When</div>
-            </div>
-            {clicks.slice(0, 20).map((c, i) => (
-              <div key={i} className="grid grid-cols-[1fr_1fr_140px] gap-2 px-3 py-2 border-b border-gray-50 last:border-0">
-                <div className="text-sm text-gray-900 truncate">{c.viewerName}</div>
-                <div className="text-sm text-gray-700 truncate">{c.pitchName}</div>
-                <div className="text-xs text-gray-500">
-                  {new Date(c.clickedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}{" "}
-                  {new Date(c.clickedAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
-                </div>
-              </div>
-            ))}
-          </div>
-          {clicks.length > 20 && (
-            <p className="text-xs text-gray-400 mt-1 text-center">Showing 20 of {clicks.length} clicks</p>
-          )}
-        </div>
-      )}
-    </div>
-  );
-});

@@ -107,6 +107,8 @@ import TrackModalInteraction from './v2/track-modal-interaction.js';
 import GetModalInteractions from './v2/get-modal-interactions.js';
 import FixSwappedVideos from './v2/fix-swapped-videos.js';
 import BackfillApproachXP from './v2/backfill-approach-xp.js';
+import GetLearnerDetail from './v2/get-learner-detail.js';
+import GenerateLearnerSummary from './v2/generate-learner-summary.js';
 
 
 
@@ -219,6 +221,8 @@ ResetJTSessions,
   GetModalInteractions,
   FixSwappedVideos,
   BackfillApproachXP,
+  GetLearnerDetail,
+  GenerateLearnerSummary,
 } as const;
 
 export default apis;
