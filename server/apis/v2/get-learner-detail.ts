@@ -129,6 +129,12 @@ const TrailMarkerRow = z.object({
   correct_trail_markers: z.coerce.number(),
 });
 
+const SrQuizRow = z.object({
+  clip_id: z.string(),
+  sr_total: z.coerce.number(),
+  sr_correct: z.coerce.number(),
+});
+
 const ModuleSignoffRow = z.object({
   module_key: z.string(),
   reflection_prompt: z.string().nullable(),
@@ -271,6 +277,9 @@ export default api({
       firstAttemptEngagement: z.number().nullable(),
       srTriggered: z.boolean(),
       srScore: z.number().nullable(),
+      srQuizCorrect: z.number().nullable(),
+      srQuizTotal: z.number().nullable(),
+      recoveryScore: z.number().nullable(),
       wtsTriggered: z.boolean(),
       sessions: z.array(z.object({
         sessionId: z.string(),
@@ -357,6 +366,7 @@ export default api({
       rankRows,
       liveClipCountRows,
       trailMarkerRows,
+      srQuizRows,
     ] = await Promise.all([
       // 1. Viewer info
       ctx.integrations.db.query(
@@ -562,7 +572,7 @@ export default api({
         { label: "Total live clips" }
       ),
 
-      // 15. Trail markers per clip (non-recovery questions only, first attempt only)
+      // 15. Trail markers per clip (non-recovery questions only, any completed session)
       ctx.integrations.db.query(
         `SELECT q.clip_id::text AS clip_id,
                 COUNT(DISTINCT q.id)::int AS total_trail_markers,
@@ -572,13 +582,32 @@ export default api({
          LEFT JOIN cliptracker_v2_responses r ON r.question_id = q.id
            AND r.session_id IN (
              SELECT s.id FROM cliptracker_v2_sessions s
-             WHERE s.viewer_id = $1 AND s.is_recovery_attempt = false
+             WHERE s.viewer_id = $1
            )
          WHERE c.status = 'live' AND q.is_recovery = false
          GROUP BY q.clip_id`,
         TrailMarkerRow,
         [viewerId],
         { label: "Trail markers per clip" }
+      ),
+
+      // 16. S&R quiz results per clip (recovery questions only, recovery sessions only)
+      ctx.integrations.db.query(
+        `SELECT q.clip_id::text AS clip_id,
+                COUNT(DISTINCT q.id)::int AS sr_total,
+                COUNT(DISTINCT q.id) FILTER (WHERE r.is_correct)::int AS sr_correct
+         FROM cliptracker_v2_questions q
+         JOIN cliptracker_v2_clips c ON c.id = q.clip_id
+         LEFT JOIN cliptracker_v2_responses r ON r.question_id = q.id
+           AND r.session_id IN (
+             SELECT s.id FROM cliptracker_v2_sessions s
+             WHERE s.viewer_id = $1 AND s.is_recovery_attempt = true
+           )
+         WHERE c.status = 'live' AND q.is_recovery = true
+         GROUP BY q.clip_id`,
+        SrQuizRow,
+        [viewerId],
+        { label: "S&R quiz results per clip" }
       ),
     ]);
 
@@ -684,6 +713,12 @@ export default api({
       trailMarkerMap.set(tm.clip_id, { correct: tm.correct_trail_markers, total: tm.total_trail_markers });
     }
 
+    // Build S&R quiz lookup
+    const srQuizMap = new Map<string, { correct: number; total: number }>();
+    for (const sq of srQuizRows) {
+      srQuizMap.set(sq.clip_id, { correct: sq.sr_correct, total: sq.sr_total });
+    }
+
     const clips = Array.from(clipMap.values())
       .sort((a, b) => a.clipSortOrder - b.clipSortOrder)
       .map(c => {
@@ -732,6 +767,9 @@ export default api({
           firstAttemptEngagement,
           srTriggered,
           srScore,
+          srQuizCorrect: srTriggered ? (srQuizMap.get(c.clipId)?.correct ?? null) : null,
+          srQuizTotal: srTriggered ? (srQuizMap.get(c.clipId)?.total ?? null) : null,
+          recoveryScore: srScore,
           wtsTriggered,
           sessions: c.sessions.map(s => ({
             sessionId: s.session_id,

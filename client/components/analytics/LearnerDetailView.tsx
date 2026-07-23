@@ -544,13 +544,14 @@ function AscentTab({ clips }: { clips: any[] }) {
   return (
     <div className="space-y-2">
       {/* Column header */}
-      <div className="grid grid-cols-[32px_1fr_70px_90px_90px_70px_55px] gap-2 text-[10px] font-semibold text-gray-500 uppercase tracking-wider px-3 py-2">
+      <div className="grid grid-cols-[32px_1fr_60px_75px_85px_65px_80px_50px] gap-2 text-[10px] font-semibold text-gray-500 uppercase tracking-wider px-3 py-2">
         <span>#</span>
         <span>Clip</span>
         <span className="text-center">Status</span>
         <span className="text-center">🪧 Markers</span>
-        <span className="text-center">1st Attempt</span>
+        <span className="text-center">Engagement</span>
         <span className="text-center">🚁 S&R</span>
+        <span className="text-center">Recovery</span>
         <span className="text-center">⛈️ WtS</span>
       </div>
 
@@ -560,7 +561,7 @@ function AscentTab({ clips }: { clips: any[] }) {
           <div key={clip.clipId}>
             <button
               onClick={() => setExpandedClip(expanded ? null : clip.clipId)}
-              className={`w-full grid grid-cols-[32px_1fr_70px_90px_90px_70px_55px] gap-2 items-center px-3 py-2.5 rounded-md border text-left transition-colors hover:bg-gray-50 ${
+              className={`w-full grid grid-cols-[32px_1fr_60px_75px_85px_65px_80px_50px] gap-2 items-center px-3 py-2.5 rounded-md border text-left transition-colors hover:bg-gray-50 ${
                 clip.completed ? "border-gray-100 bg-white" : "border-amber-100 bg-amber-50/30"
               }`}
             >
@@ -587,7 +588,7 @@ function AscentTab({ clips }: { clips: any[] }) {
                   <span className="text-gray-400">—</span>
                 )}
               </div>
-              {/* 1st Attempt Engagement */}
+              {/* Engagement Score (1st attempt) */}
               <div className="text-center text-xs font-medium">
                 {clip.firstAttemptEngagement != null ? (
                   <span className={clip.firstAttemptEngagement >= 80 ? "text-emerald-600" : clip.firstAttemptEngagement >= 60 ? "text-amber-600" : "text-red-600"}>
@@ -597,14 +598,22 @@ function AscentTab({ clips }: { clips: any[] }) {
                   <span className="text-gray-400">—</span>
                 )}
               </div>
-              {/* S&R */}
+              {/* S&R Quiz (correct/total) */}
               <div className="text-center text-xs">
                 {clip.srTriggered ? (
-                  <span className="text-amber-600 font-medium">
-                    {clip.srScore != null ? `${clip.srScore}%` : "⚠️"}
+                  <span className={clip.srQuizCorrect != null && clip.srQuizTotal != null && clip.srQuizCorrect === clip.srQuizTotal ? "text-emerald-600 font-semibold" : "text-amber-600 font-medium"}>
+                    {clip.srQuizCorrect != null && clip.srQuizTotal != null ? `${clip.srQuizCorrect}/${clip.srQuizTotal}` : "⚠️"}
                   </span>
-                ) : clip.completed ? (
-                  <span className="text-emerald-500 text-[10px]">✓ None</span>
+                ) : (
+                  <span className="text-gray-400">—</span>
+                )}
+              </div>
+              {/* Recovery Score */}
+              <div className="text-center text-xs font-medium">
+                {clip.srTriggered ? (
+                  <span className={clip.recoveryScore != null ? (clip.recoveryScore >= 80 ? "text-emerald-600" : clip.recoveryScore >= 60 ? "text-amber-600" : "text-red-600") : "text-gray-400"}>
+                    {clip.recoveryScore != null ? `${clip.recoveryScore}%` : "⚠️"}
+                  </span>
                 ) : (
                   <span className="text-gray-400">—</span>
                 )}
@@ -613,8 +622,6 @@ function AscentTab({ clips }: { clips: any[] }) {
               <div className="text-center text-xs">
                 {clip.wtsTriggered ? (
                   <span className="text-red-500 font-semibold">⛈️</span>
-                ) : clip.completed ? (
-                  <span className="text-emerald-500 text-[10px]">✓</span>
                 ) : (
                   <span className="text-gray-400">—</span>
                 )}
