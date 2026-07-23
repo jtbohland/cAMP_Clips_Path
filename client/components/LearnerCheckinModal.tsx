@@ -3,7 +3,7 @@ import { useApiData } from "@/hooks/useApiData.js";
 import { useApi } from "@/hooks/useApi.js";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
-import { countWeekdays, getPacingTier, getSummitDay, PACING_TIERS, type PacingTier } from "@/lib/pacing.js";
+import { countWeekdays, getPacingTier, getApproachPacingTier, getSummitDay, PACING_TIERS, type PacingTier } from "@/lib/pacing.js";
 
 type CheckinType = "approach" | "week2" | "week3" | "summit";
 
@@ -218,7 +218,10 @@ function LearnerCheckinModalInner({ viewerId, checkinType, onClose, onSent, allo
     const weekdaysElapsed = countWeekdays(startDate, today);
     const effectiveWeekdaysElapsed = Math.max(0, weekdaysElapsed - extDays);
     const hasStarted = data.completedTopics > 0;
-    const pacingKey = getPacingTier(data.completedTopics, effectiveWeekdaysElapsed, hasStarted);
+    // Approach checkin uses approach-specific pacing (based on module completion, not clip topics)
+    const pacingKey = checkinType === "approach"
+      ? getApproachPacingTier(data.approachStatus?.completedCount ?? 0, Math.min(effectiveWeekdaysElapsed, 5))
+      : getPacingTier(data.completedTopics, effectiveWeekdaysElapsed, hasStarted);
     const pacingConfig = PACING_TIERS[pacingKey];
     const summitDay = getSummitDay(startDate, extDays);
     const fmtDate = (d: Date) => d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
@@ -291,7 +294,7 @@ function LearnerCheckinModalInner({ viewerId, checkinType, onClose, onSent, allo
         body += `Wheel & Deal:\n`;
         body += `  Product: ${data.wdVerification.product}\n`;
         body += `  Scenario: ${data.wdVerification.scenario}\n`;
-        body += `  Self-score: ${data.wdVerification.score}/10\n`;
+        body += `  Self-score: ${data.wdVerification.score}/12\n`;
       }
 
     // ── TEMPLATE 2: APPROACH (INCOMPLETE / AUTO-UNLOCK) ──
@@ -1067,7 +1070,7 @@ function EmailView({
                   <p>Wheel & Deal:</p>
                   <p>{"  "}Product: {data.wdVerification.product}</p>
                   <p>{"  "}Scenario: {data.wdVerification.scenario}</p>
-                  <p>{"  "}Self-score: {data.wdVerification.score}/10</p>
+                  <p>{"  "}Self-score: {data.wdVerification.score}/12</p>
                 </>
               )}
             </>

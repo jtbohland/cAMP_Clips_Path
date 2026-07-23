@@ -92,9 +92,9 @@ export default function ApproachPacingModal({
 
   const handleBackdropClick = useCallback(
     (e: React.MouseEvent) => {
-      if (e.target === e.currentTarget) onDismiss();
+      // No backdrop dismiss — learner must use the CTA button
     },
-    [onDismiss]
+    []
   );
 
   // Build catch-up list: items from previous days that aren't done yet

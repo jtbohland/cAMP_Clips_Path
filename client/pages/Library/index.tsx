@@ -532,14 +532,11 @@ export default function LibraryPage() {
       !week1Data?.isLegacyLearner &&  // legacy learners exempt from Approach check-in
       (approachStatus?.complete || !!week1Data?.week1UnlockedAt)  // must finish Approach first
     ) {
-      const sessionKey = `checkin_approach_prompted_${viewer!.id}`;
-      if (!sessionStorage.getItem(sessionKey)) {
-        sessionStorage.setItem(sessionKey, "true");
-        checkinTriggeredRef.current = true;
-        setCheckinType("approach");
-        setShowCheckin(true);
-        logModal("checkin_approach", "shown");
-      }
+      // Hard gate — fires every page load until sent (no sessionStorage bypass)
+      checkinTriggeredRef.current = true;
+      setCheckinType("approach");
+      setShowCheckin(true);
+      logModal("checkin_approach", "shown");
       return;
     }
 
@@ -550,14 +547,11 @@ export default function LibraryPage() {
       completed >= 10 &&
       !progressData.week3CheckinSentAt
     ) {
-      const sessionKey = `checkin_week3_prompted_${viewer!.id}`;
-      if (!sessionStorage.getItem(sessionKey)) {
-        sessionStorage.setItem(sessionKey, "true");
-        checkinTriggeredRef.current = true;
-        setCheckinType("week3");
-        setShowCheckin(true);
-        logModal("checkin_week3", "shown");
-      }
+      // Hard gate — fires every page load until sent (no sessionStorage bypass)
+      checkinTriggeredRef.current = true;
+      setCheckinType("week3");
+      setShowCheckin(true);
+      logModal("checkin_week3", "shown");
       return;
     }
 
@@ -577,14 +571,11 @@ export default function LibraryPage() {
       if (week1Data?.isLegacyLearner && completed > 5) {
         return; // skip backlogged Week 2, let Week 3 catch them at 10
       }
-      const sessionKey = `checkin_week2_prompted_${viewer!.id}`;
-      if (!sessionStorage.getItem(sessionKey)) {
-        sessionStorage.setItem(sessionKey, "true");
-        checkinTriggeredRef.current = true;
-        setCheckinType("week2");
-        setShowCheckin(true);
-        logModal("checkin_week2", "shown");
-      }
+      // Hard gate — fires every page load until sent (no sessionStorage bypass)
+      checkinTriggeredRef.current = true;
+      setCheckinType("week2");
+      setShowCheckin(true);
+      logModal("checkin_week2", "shown");
       return;
     }
   }, [dataReady, progressData, showSummit, showFirstAchievement, tierUnlock, showCheckin, viewer, approachStatus, week1Data]);
@@ -615,7 +606,7 @@ export default function LibraryPage() {
     <div className="relative">
       <button
         onClick={() => setPreviewMode(null)}
-        className="fixed top-4 right-4 z-50 w-8 h-8 rounded-full bg-gray-800/80 text-white hover:bg-gray-900 flex items-center justify-center text-lg shadow-lg transition-colors"
+        className="fixed top-4 right-4 z-[60] w-8 h-8 rounded-full bg-gray-800/80 text-white hover:bg-gray-900 flex items-center justify-center text-lg shadow-lg transition-colors"
         title="Close preview"
       >
         ×
