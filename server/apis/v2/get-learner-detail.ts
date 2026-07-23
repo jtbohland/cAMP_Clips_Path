@@ -120,17 +120,28 @@ const ClipSessionRow = z.object({
   completed: z.boolean(),
   started_at: z.string(),
   ended_at: z.string().nullable(),
+  initial_engagement_score: z.string().nullable(),
+});
+
+const TrailMarkerRow = z.object({
+  clip_id: z.string(),
+  total_trail_markers: z.coerce.number(),
+  correct_trail_markers: z.coerce.number(),
 });
 
 const ModuleSignoffRow = z.object({
   module_key: z.string(),
   reflection_prompt: z.string().nullable(),
   reflection_response: z.string().nullable(),
+  screenshot_data: z.string().nullable(),
+  screenshot_filename: z.string().nullable(),
   completed_at: z.string(),
 });
 
 const AcademyRow = z.object({
   course_key: z.string(),
+  screenshot_data: z.string().nullable(),
+  screenshot_filename: z.string().nullable(),
   uploaded_at: z.string(),
 });
 
@@ -255,6 +266,12 @@ export default api({
       totalAttempts: z.number(),
       bestEngagement: z.number().nullable(),
       latestEngagement: z.number().nullable(),
+      trailMarkersCorrect: z.number(),
+      trailMarkersTotal: z.number(),
+      firstAttemptEngagement: z.number().nullable(),
+      srTriggered: z.boolean(),
+      srScore: z.number().nullable(),
+      wtsTriggered: z.boolean(),
       sessions: z.array(z.object({
         sessionId: z.string(),
         attemptNumber: z.number(),
@@ -265,6 +282,7 @@ export default api({
         completed: z.boolean(),
         startedAt: z.string(),
         endedAt: z.string().nullable(),
+        initialEngagementScore: z.number().nullable(),
       })),
     })),
     approach: z.object({
@@ -275,10 +293,14 @@ export default api({
         moduleKey: z.string(),
         reflectionPrompt: z.string().nullable(),
         reflectionResponse: z.string().nullable(),
+        screenshotData: z.string().nullable(),
+        screenshotFilename: z.string().nullable(),
         completedAt: z.string(),
       })),
       academyScreenshots: z.array(z.object({
         courseKey: z.string(),
+        screenshotData: z.string().nullable(),
+        screenshotFilename: z.string().nullable(),
         uploadedAt: z.string(),
       })),
       wdVerifications: z.array(z.object({
@@ -334,6 +356,7 @@ export default api({
       topicsRows,
       rankRows,
       liveClipCountRows,
+      trailMarkerRows,
     ] = await Promise.all([
       // 1. Viewer info
       ctx.integrations.db.query(
@@ -380,7 +403,8 @@ export default api({
                 c.day_label, s.id::text AS session_id,
                 s.attempt_number, s.is_recovery_attempt,
                 s.engagement_score::text, s.question_score::text, s.focus_score::text,
-                s.completed, s.started_at::text, s.ended_at::text
+                s.completed, s.started_at::text, s.ended_at::text,
+                s.initial_engagement_score::text
          FROM cliptracker_v2_sessions s
          JOIN cliptracker_v2_clips c ON c.id = s.clip_id
          WHERE s.viewer_id = $1
@@ -393,7 +417,8 @@ export default api({
 
       // 5. Module signoffs (approach)
       ctx.integrations.db.query(
-        `SELECT module_key, reflection_prompt, reflection_response, completed_at::text
+        `SELECT module_key, reflection_prompt, reflection_response,
+                screenshot_data, screenshot_filename, completed_at::text
          FROM cliptracker_v2_module_signoffs
          WHERE viewer_id = $1
          ORDER BY completed_at ASC`,
@@ -404,7 +429,7 @@ export default api({
 
       // 6. Academy screenshots
       ctx.integrations.db.query(
-        `SELECT course_key, uploaded_at::text
+        `SELECT course_key, screenshot_data, screenshot_filename, uploaded_at::text
          FROM cliptracker_v2_academy_screenshots
          WHERE viewer_id = $1
          ORDER BY uploaded_at ASC`,
@@ -536,6 +561,25 @@ export default api({
         undefined,
         { label: "Total live clips" }
       ),
+
+      // 15. Trail markers per clip (non-recovery questions only, first attempt only)
+      ctx.integrations.db.query(
+        `SELECT q.clip_id::text AS clip_id,
+                COUNT(DISTINCT q.id)::int AS total_trail_markers,
+                COUNT(DISTINCT q.id) FILTER (WHERE r.is_correct)::int AS correct_trail_markers
+         FROM cliptracker_v2_questions q
+         JOIN cliptracker_v2_clips c ON c.id = q.clip_id
+         LEFT JOIN cliptracker_v2_responses r ON r.question_id = q.id
+           AND r.session_id IN (
+             SELECT s.id FROM cliptracker_v2_sessions s
+             WHERE s.viewer_id = $1 AND s.is_recovery_attempt = false
+           )
+         WHERE c.status = 'live' AND q.is_recovery = false
+         GROUP BY q.clip_id`,
+        TrailMarkerRow,
+        [viewerId],
+        { label: "Trail markers per clip" }
+      ),
     ]);
 
     const viewer = viewerRows[0];
@@ -634,6 +678,12 @@ export default api({
       clipMap.get(s.clip_id)!.sessions.push(s);
     }
 
+    // Build trail marker lookup
+    const trailMarkerMap = new Map<string, { correct: number; total: number }>();
+    for (const tm of trailMarkerRows) {
+      trailMarkerMap.set(tm.clip_id, { correct: tm.correct_trail_markers, total: tm.total_trail_markers });
+    }
+
     const clips = Array.from(clipMap.values())
       .sort((a, b) => a.clipSortOrder - b.clipSortOrder)
       .map(c => {
@@ -648,6 +698,26 @@ export default api({
           ? parseFloat(latestCompleted.engagement_score)
           : null;
 
+        // Trail markers for this clip
+        const tm = trailMarkerMap.get(c.clipId) ?? { correct: 0, total: 0 };
+
+        // First (non-recovery) attempt engagement
+        const firstAttemptSession = c.sessions.find(s => !s.is_recovery_attempt && s.completed);
+        const firstAttemptEngagement = firstAttemptSession?.engagement_score
+          ? parseFloat(firstAttemptSession.engagement_score)
+          : null;
+
+        // S&R: was a recovery session triggered?
+        const srSession = c.sessions.find(s => s.is_recovery_attempt);
+        const srTriggered = !!srSession;
+        const srCompletedSession = c.sessions.find(s => s.is_recovery_attempt && s.completed);
+        const srScore = srCompletedSession?.engagement_score
+          ? parseFloat(srCompletedSession.engagement_score)
+          : null;
+
+        // WtS: triggered when attempt_number >= 3
+        const wtsTriggered = c.sessions.some(s => s.attempt_number >= 3);
+
         return {
           clipId: c.clipId,
           clipTitle: c.clipTitle,
@@ -657,6 +727,12 @@ export default api({
           totalAttempts: c.sessions.length,
           bestEngagement,
           latestEngagement,
+          trailMarkersCorrect: tm.correct,
+          trailMarkersTotal: tm.total,
+          firstAttemptEngagement,
+          srTriggered,
+          srScore,
+          wtsTriggered,
           sessions: c.sessions.map(s => ({
             sessionId: s.session_id,
             attemptNumber: s.attempt_number,
@@ -667,6 +743,7 @@ export default api({
             completed: s.completed,
             startedAt: s.started_at,
             endedAt: s.ended_at,
+            initialEngagementScore: s.initial_engagement_score ? parseFloat(s.initial_engagement_score) : null,
           })),
         };
       });
@@ -741,10 +818,14 @@ export default api({
           moduleKey: m.module_key,
           reflectionPrompt: m.reflection_prompt,
           reflectionResponse: m.reflection_response,
+          screenshotData: m.screenshot_data,
+          screenshotFilename: m.screenshot_filename,
           completedAt: m.completed_at,
         })),
         academyScreenshots: academyRows.map(a => ({
           courseKey: a.course_key,
+          screenshotData: a.screenshot_data,
+          screenshotFilename: a.screenshot_filename,
           uploadedAt: a.uploaded_at,
         })),
         wdVerifications: wdRows.map(w => ({

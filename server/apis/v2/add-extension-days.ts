@@ -29,14 +29,15 @@ export default api({
       { label: "Add extension_days column" }
     );
 
-    // Set extension_days = 5 for Kabir Rai and Benjamin Singh
+    // Set extension_days = 5 for Kabir Rai, Benjamin Singh, and Levi Verry (Portland trip July 13-17)
     const result = await ctx.integrations.db.execute(
-      `UPDATE cliptracker_v2_viewers SET extension_days = 5 WHERE id IN ($1, $2)`,
+      `UPDATE cliptracker_v2_viewers SET extension_days = 5 WHERE id IN ($1, $2, $3)`,
       [
         "273867c6-76b7-49af-8b6e-7501e0c5222f",  // Kabir Rai
         "66b8a6ac-3bee-49c5-865c-e187ac73ac02",   // Benjamin Singh
+        "8654b855-1eaf-465c-91b0-2c20f889a33e",   // Levi Verry
       ],
-      { label: "Set extension_days for Kabir & Ben" }
+      { label: "Set extension_days for Kabir, Ben & Levi" }
     );
 
     ctx.log.info("Extension days migration complete", { rowsUpdated: result.rowCount });
