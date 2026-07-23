@@ -395,27 +395,34 @@ export default function LibraryPage() {
     if (!dataReady || !pacingInfo || previewMode === "pacing") return;
     if (pacingShownRef.current) return;
     if (showSummit || tierUnlock !== null) return; // don't stack modals
+    // Don't fire pacing if FirstAchievement catch-up will take over the render
+    // (FirstAchievement is a full-page early return — pacing overlay would never paint)
+    if (week1Data?.week1UnlockedAt && !week1Data?.firstAchievementShown && !week1Data?.isLegacyLearner) return;
 
     const storageKey = `pacing_shown_${viewer!.id}`;
+    const dismissKey = `pacing_dismissed_${viewer!.id}`;
     const todayStr = new Date().toLocaleDateString();
-    const lastShown = localStorage.getItem(storageKey);
+    const lastDismissed = localStorage.getItem(dismissKey);
 
-    if (lastShown !== todayStr) {
+    if (lastDismissed !== todayStr) {
       pacingShownRef.current = true;
-      localStorage.setItem(storageKey, todayStr);
+      // NOTE: localStorage is set on DISMISS, not here — if the modal never renders
+      // (e.g. another modal takes priority), it will retry on next page load
 
       // Ascent done but Approach incomplete → Summit in Sight
       if (ascentComplete && approachStatus?.complete === false) {
         setShowSummitInSight(true);
         logModal("summit_in_sight", "shown");
+        localStorage.setItem(dismissKey, todayStr); // Summit in Sight has its own dismiss tracking
       } else if (pacingInfo.tier === "anchor_failure") {
         showAnchorModal(viewer, pacingInfo);
+        localStorage.setItem(dismissKey, todayStr); // Anchor modals have their own dismiss tracking
       } else {
         setShowPacing(true);
         logModal("pacing", "shown", { tier: pacingInfo.tier });
       }
     }
-  }, [dataReady, pacingInfo, showSummit, tierUnlock, previewMode, viewer, showAnchorModal, ascentComplete, approachStatus]);
+  }, [dataReady, pacingInfo, showSummit, tierUnlock, previewMode, viewer, showAnchorModal, ascentComplete, approachStatus, week1Data]);
 
   // visibilitychange — re-trigger pacing/anchor modal for stale tabs (new day)
   useEffect(() => {
@@ -423,17 +430,19 @@ export default function LibraryPage() {
 
     const handleVisibility = () => {
       if (document.hidden) return;
-      const storageKey = `pacing_shown_${viewer.id}`;
+      // Don't fire if FirstAchievement catch-up will take over
+      if (week1Data?.week1UnlockedAt && !week1Data?.firstAchievementShown && !week1Data?.isLegacyLearner) return;
+      const dismissKey = `pacing_dismissed_${viewer.id}`;
       const todayStr = new Date().toLocaleDateString();
-      const lastShown = localStorage.getItem(storageKey);
-      if (lastShown !== todayStr && pacingInfo && !showSummit && tierUnlock === null) {
-        localStorage.setItem(storageKey, todayStr);
-
+      const lastDismissed = localStorage.getItem(dismissKey);
+      if (lastDismissed !== todayStr && pacingInfo && !showSummit && tierUnlock === null) {
         if (ascentComplete && approachStatus?.complete === false) {
           setShowSummitInSight(true);
           logModal("summit_in_sight", "shown");
+          localStorage.setItem(dismissKey, todayStr);
         } else if (pacingInfo.tier === "anchor_failure") {
           showAnchorModal(viewer, pacingInfo);
+          localStorage.setItem(dismissKey, todayStr);
         } else {
           setShowPacing(true);
           logModal("pacing", "shown", { tier: pacingInfo.tier });
@@ -443,7 +452,7 @@ export default function LibraryPage() {
 
     document.addEventListener("visibilitychange", handleVisibility);
     return () => document.removeEventListener("visibilitychange", handleVisibility);
-  }, [dataReady, viewer, pacingInfo, showSummit, tierUnlock, showAnchorModal, logModal, ascentComplete, approachStatus]);
+  }, [dataReady, viewer, pacingInfo, showSummit, tierUnlock, showAnchorModal, logModal, ascentComplete, approachStatus, week1Data]);
 
   // Auto-trigger Summit — only after all data ready
   useEffect(() => {
@@ -529,7 +538,8 @@ export default function LibraryPage() {
       earnedBadge: week1Data.approachBadge,
     });
     setShowFirstAchievement(true);
-  }, [dataReady, week1Data, showFirstAchievement, showCheckin, showSummit, tierUnlock, viewer]);
+    logModal("first_achievement", "shown", { source: "catch_up" });
+  }, [dataReady, week1Data, showFirstAchievement, showCheckin, showSummit, tierUnlock, viewer, logModal]);
 
   // ── Auto-trigger Anchor Point check-ins (persistent — re-fires on every load until sent) ──
   useEffect(() => {
@@ -771,7 +781,11 @@ export default function LibraryPage() {
         approachCatchUpItems={approachStatus?.catchUpItems}
         patchPills={patchProgress?.pills}
         patchBestCaseXp={patchProgress?.bestCaseXp}
-        onDismiss={() => { logModal("pacing", "dismissed", { tier: pacingInfo.tier }); setShowPacing(false); }}
+        onDismiss={() => {
+          logModal("pacing", "dismissed", { tier: pacingInfo.tier });
+          localStorage.setItem(`pacing_dismissed_${viewer!.id}`, new Date().toLocaleDateString());
+          setShowPacing(false);
+        }}
       />
     )}
     {/* Summit in Sight — Ascent done, Approach incomplete */}

@@ -90,6 +90,13 @@ function fmtShortDate(d: string | null) {
   return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
+function fmtDateTime(d: string | null) {
+  if (!d) return "—";
+  const dt = new Date(d);
+  return dt.toLocaleDateString("en-US", { month: "short", day: "numeric" }) + " " +
+    dt.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+}
+
 // ─── Main component ──────────────────────────────────────────────────────────
 
 interface LearnerDetailViewProps {
@@ -726,17 +733,10 @@ function ActivityTab({ gearClicks, modals }: { gearClicks: any[]; modals: any[] 
       .map(([name, count]) => ({ name, count }));
   }, [gearClicks]);
 
-  // Group modals by type+action
-  const modalSummary = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const m of modals) {
-      const key = `${m.modalType} → ${m.action}`;
-      map.set(key, (map.get(key) ?? 0) + 1);
-    }
-    return Array.from(map.entries())
-      .sort((a, b) => b[1] - a[1])
-      .map(([key, count]) => ({ key, count }));
-  }, [modals]);
+  // Sort modals by date descending for timeline view
+  const sortedModals = useMemo(() =>
+    [...modals].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+  [modals]);
 
   return (
     <div className="space-y-4">
@@ -769,17 +769,36 @@ function ActivityTab({ gearClicks, modals }: { gearClicks: any[]; modals: any[] 
         )}
       </div>
 
-      {/* Modal Interactions */}
+      {/* Modal Interactions — Timeline */}
       <div className="bg-white rounded-lg border border-gray-200 p-4">
         <h4 className="text-xs font-bold text-gray-500 uppercase mb-3">🔔 Modal Movements ({modals.length})</h4>
-        {modalSummary.length > 0 ? (
-          <div className="space-y-1">
-            {modalSummary.map(m => (
-              <div key={m.key} className="flex items-center justify-between px-3 py-2 rounded border border-gray-100 bg-gray-50">
-                <span className="text-xs text-gray-700">{m.key}</span>
-                <span className="text-xs font-bold text-gray-600">{m.count}×</span>
-              </div>
-            ))}
+        {sortedModals.length > 0 ? (
+          <div className="space-y-1.5">
+            {sortedModals.map((m: any, i: number) => {
+              const meta = typeof m.metadata === "string" ? JSON.parse(m.metadata) : m.metadata;
+              const tierLabel = meta?.tier ? `: ${meta.tier.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())}` : "";
+              const sourceLabel = meta?.source ? ` (${meta.source.replace(/_/g, " ")})` : "";
+              const isShown = m.action === "shown";
+              const isDismissed = m.action === "dismissed";
+              return (
+                <div key={i} className="flex items-center gap-2 px-3 py-2 rounded border border-gray-100 bg-gray-50">
+                  <span className={`text-sm ${isDismissed ? "opacity-60" : ""}`}>
+                    {isShown ? "📬" : isDismissed ? "✅" : "⚡"}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-xs font-semibold text-gray-800 capitalize">
+                      {m.modalType.replace(/_/g, " ")}{tierLabel}{sourceLabel}
+                    </span>
+                  </div>
+                  <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
+                    isShown ? "bg-blue-100 text-blue-700" : isDismissed ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"
+                  }`}>
+                    {m.action}
+                  </span>
+                  <span className="text-[10px] text-gray-400 whitespace-nowrap">{fmtDateTime(m.createdAt)}</span>
+                </div>
+              );
+            })}
           </div>
         ) : (
           <p className="text-sm text-gray-400">No modal interactions recorded.</p>
