@@ -382,6 +382,12 @@ function OverviewTab({ viewer, pacing, xp, tier, badges, clipsCompleted, totalLi
 // ─── Approach Tab ────────────────────────────────────────────────────────────
 
 function ApproachTab({ approach }: { approach: any }) {
+  const [enlargedImage, setEnlargedImage] = useState<{ src: string; title: string } | null>(null);
+
+  const handleImageClick = useCallback((src: string, title: string) => {
+    setEnlargedImage({ src, title });
+  }, []);
+
   return (
     <div className="space-y-4">
       {/* Progress */}
@@ -409,9 +415,26 @@ function ApproachTab({ approach }: { approach: any }) {
                   <span className="text-[10px] text-gray-400">{fmtDate(m.completedAt)}</span>
                 </div>
                 {m.reflectionResponse && (
-                  <div className="mt-2 bg-blue-50 rounded px-3 py-2 border border-blue-100">
-                    {m.reflectionPrompt && <p className="text-[10px] text-blue-600 font-medium mb-1">{m.reflectionPrompt}</p>}
-                    <p className="text-xs text-gray-700">{m.reflectionResponse}</p>
+                  <div className="mt-2 bg-blue-50 rounded px-3 py-2.5 border border-blue-200">
+                    {m.reflectionPrompt && (
+                      <p className="text-sm font-semibold text-blue-800 mb-2">💬 {m.reflectionPrompt}</p>
+                    )}
+                    <p className="text-xs text-gray-700 leading-relaxed">{m.reflectionResponse}</p>
+                  </div>
+                )}
+                {m.screenshotData && (
+                  <div className="mt-2">
+                    <p className="text-[10px] text-gray-400 mb-1">📎 Screenshot {m.screenshotFilename ? `(${m.screenshotFilename})` : ""}</p>
+                    <button
+                      onClick={() => handleImageClick(m.screenshotData, MODULE_LABELS[m.moduleKey] ?? m.moduleKey)}
+                      className="block rounded border border-gray-200 overflow-hidden hover:ring-2 hover:ring-indigo-400 transition-shadow cursor-zoom-in"
+                    >
+                      <img
+                        src={m.screenshotData.startsWith("data:") ? m.screenshotData : `data:image/png;base64,${m.screenshotData}`}
+                        alt={`${MODULE_LABELS[m.moduleKey] ?? m.moduleKey} screenshot`}
+                        className="max-h-32 w-auto object-contain"
+                      />
+                    </button>
                   </div>
                 )}
               </div>
@@ -426,14 +449,28 @@ function ApproachTab({ approach }: { approach: any }) {
       <div className="bg-white rounded-lg border border-gray-200 p-4">
         <h4 className="text-xs font-bold text-gray-500 uppercase mb-3">Academy Completions</h4>
         {approach.academyScreenshots.length > 0 ? (
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-3">
             {approach.academyScreenshots.map((a: any, i: number) => (
-              <div key={i} className="flex items-center gap-2 p-2.5 rounded border border-gray-100 bg-gray-50">
-                <span className="text-sm">🎓</span>
-                <div>
-                  <p className="text-xs font-medium text-gray-800">{ACADEMY_LABELS[a.courseKey] ?? a.courseKey}</p>
-                  <p className="text-[10px] text-gray-400">{fmtShortDate(a.uploadedAt)}</p>
+              <div key={i} className="rounded border border-gray-100 bg-gray-50 p-2.5">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-sm">🎓</span>
+                  <div>
+                    <p className="text-xs font-medium text-gray-800">{ACADEMY_LABELS[a.courseKey] ?? a.courseKey}</p>
+                    <p className="text-[10px] text-gray-400">{fmtShortDate(a.uploadedAt)}</p>
+                  </div>
                 </div>
+                {a.screenshotData && (
+                  <button
+                    onClick={() => handleImageClick(a.screenshotData, ACADEMY_LABELS[a.courseKey] ?? a.courseKey)}
+                    className="block rounded border border-gray-200 overflow-hidden hover:ring-2 hover:ring-indigo-400 transition-shadow cursor-zoom-in w-full"
+                  >
+                    <img
+                      src={a.screenshotData.startsWith("data:") ? a.screenshotData : `data:image/png;base64,${a.screenshotData}`}
+                      alt={`${ACADEMY_LABELS[a.courseKey] ?? a.courseKey} screenshot`}
+                      className="max-h-32 w-full object-contain"
+                    />
+                  </button>
+                )}
               </div>
             ))}
           </div>
@@ -463,6 +500,31 @@ function ApproachTab({ approach }: { approach: any }) {
           <p className="text-sm text-gray-400">No Wheel & Deal verifications yet.</p>
         )}
       </div>
+
+      {/* Enlarged screenshot modal */}
+      {enlargedImage && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
+          onClick={() => setEnlargedImage(null)}
+        >
+          <div className="relative max-w-4xl max-h-[90vh] p-2" onClick={e => e.stopPropagation()}>
+            <button
+              onClick={() => setEnlargedImage(null)}
+              className="absolute -top-2 -right-2 z-10 h-8 w-8 flex items-center justify-center rounded-full bg-white shadow-lg text-gray-600 hover:text-gray-900 text-lg font-bold"
+            >
+              ×
+            </button>
+            <div className="bg-white rounded-lg shadow-2xl p-2">
+              <p className="text-xs font-semibold text-gray-700 mb-2 px-1">{enlargedImage.title}</p>
+              <img
+                src={enlargedImage.src.startsWith("data:") ? enlargedImage.src : `data:image/png;base64,${enlargedImage.src}`}
+                alt={enlargedImage.title}
+                className="max-h-[80vh] max-w-full object-contain rounded"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -475,13 +537,14 @@ function AscentTab({ clips }: { clips: any[] }) {
   return (
     <div className="space-y-2">
       {/* Column header */}
-      <div className="grid grid-cols-[32px_1fr_70px_80px_60px_70px] gap-3 text-[10px] font-semibold text-gray-500 uppercase tracking-wider px-3 py-2">
+      <div className="grid grid-cols-[32px_1fr_70px_90px_90px_70px_55px] gap-2 text-[10px] font-semibold text-gray-500 uppercase tracking-wider px-3 py-2">
         <span>#</span>
         <span>Clip</span>
         <span className="text-center">Status</span>
-        <span className="text-center">Best Score</span>
-        <span className="text-center">Attempts</span>
-        <span className="text-center">Day</span>
+        <span className="text-center">🪧 Markers</span>
+        <span className="text-center">1st Attempt</span>
+        <span className="text-center">🚁 S&R</span>
+        <span className="text-center">⛈️ WtS</span>
       </div>
 
       {clips.map(clip => {
@@ -490,7 +553,7 @@ function AscentTab({ clips }: { clips: any[] }) {
           <div key={clip.clipId}>
             <button
               onClick={() => setExpandedClip(expanded ? null : clip.clipId)}
-              className={`w-full grid grid-cols-[32px_1fr_70px_80px_60px_70px] gap-3 items-center px-3 py-2.5 rounded-md border text-left transition-colors hover:bg-gray-50 ${
+              className={`w-full grid grid-cols-[32px_1fr_70px_90px_90px_70px_55px] gap-2 items-center px-3 py-2.5 rounded-md border text-left transition-colors hover:bg-gray-50 ${
                 clip.completed ? "border-gray-100 bg-white" : "border-amber-100 bg-amber-50/30"
               }`}
             >
@@ -502,16 +565,53 @@ function AscentTab({ clips }: { clips: any[] }) {
               </div>
               <div className="text-center">
                 {clip.completed ? (
-                  <span className="text-xs font-bold text-emerald-600">✅ Done</span>
+                  <span className="text-xs font-bold text-emerald-600">✅</span>
                 ) : (
                   <span className="text-xs text-gray-400">—</span>
                 )}
               </div>
-              <div className="text-center text-sm font-medium text-gray-900">
-                {clip.bestEngagement != null ? `${clip.bestEngagement}%` : "—"}
+              {/* Trail Markers */}
+              <div className="text-center text-xs">
+                {clip.trailMarkersTotal > 0 ? (
+                  <span className={clip.trailMarkersCorrect === clip.trailMarkersTotal ? "text-emerald-600 font-semibold" : "text-gray-700"}>
+                    {clip.trailMarkersCorrect}/{clip.trailMarkersTotal}
+                  </span>
+                ) : (
+                  <span className="text-gray-400">—</span>
+                )}
               </div>
-              <div className="text-center text-sm text-gray-700">{clip.totalAttempts}</div>
-              <div className="text-center text-[11px] text-gray-500">{clip.dayLabel ?? "—"}</div>
+              {/* 1st Attempt Engagement */}
+              <div className="text-center text-xs font-medium">
+                {clip.firstAttemptEngagement != null ? (
+                  <span className={clip.firstAttemptEngagement >= 80 ? "text-emerald-600" : clip.firstAttemptEngagement >= 60 ? "text-amber-600" : "text-red-600"}>
+                    {clip.firstAttemptEngagement}%
+                  </span>
+                ) : (
+                  <span className="text-gray-400">—</span>
+                )}
+              </div>
+              {/* S&R */}
+              <div className="text-center text-xs">
+                {clip.srTriggered ? (
+                  <span className="text-amber-600 font-medium">
+                    {clip.srScore != null ? `${clip.srScore}%` : "⚠️"}
+                  </span>
+                ) : clip.completed ? (
+                  <span className="text-emerald-500 text-[10px]">✓ None</span>
+                ) : (
+                  <span className="text-gray-400">—</span>
+                )}
+              </div>
+              {/* WtS */}
+              <div className="text-center text-xs">
+                {clip.wtsTriggered ? (
+                  <span className="text-red-500 font-semibold">⛈️</span>
+                ) : clip.completed ? (
+                  <span className="text-emerald-500 text-[10px]">✓</span>
+                ) : (
+                  <span className="text-gray-400">—</span>
+                )}
+              </div>
             </button>
 
             {/* Expanded: session history */}
