@@ -115,46 +115,9 @@ function AnalyticsContent() {
     setSelectedLearnerId(null);
   }, []);
 
-  if (loading) {
-    return (
-      <div className="flex flex-col h-full" style={{ backgroundColor: "#ECFDF5" }}>
-        <PageHeader emoji="📊" title="Analytics" subtitle="Performance data across all learners and clips" />
-        <div className="p-6 max-w-7xl mx-auto space-y-4 w-full">
-          <div className="grid grid-cols-5 gap-4">
-            {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-24" />)}
-          </div>
-          <Skeleton className="h-48" />
-        </div>
-      </div>
-    );
-  }
-
-  if (isError) {
-    return (
-      <div className="flex flex-col h-full" style={{ backgroundColor: "#ECFDF5" }}>
-        <PageHeader emoji="📊" title="Analytics" subtitle="Performance data across all learners and clips" />
-        <div className="p-6 text-center">
-          <p className="text-red-600">Failed to load analytics: {(error as any)?.message ?? "Unknown error"}</p>
-        </div>
-      </div>
-    );
-  }
-
   const { overview, learners, clipBreakdown, questions, leaderboard } = data ?? {};
 
-  // ─── Learner detail takeover ─────────────────────────────────────
-  if (selectedLearnerId) {
-    return (
-      <div className="flex flex-col h-full overflow-auto" style={{ backgroundColor: "#ECFDF5" }}>
-        <PageHeader emoji="📊" title="Analytics" subtitle="Learner Detail" />
-        <div className="p-6 max-w-7xl mx-auto w-full">
-          <LearnerDetailView viewerId={selectedLearnerId} onBack={handleBack} />
-        </div>
-      </div>
-    );
-  }
-
-  // ─── Transform learners → tile data ──────────────────────────────
+  // Must be before any conditional returns to satisfy React hooks ordering
   const tileData: LearnerTileData[] = useMemo(
     () =>
       (learners ?? []).map((l: any) => ({
@@ -182,6 +145,43 @@ function AnalyticsContent() {
       })),
     [learners]
   );
+
+  if (loading) {
+    return (
+      <div className="flex flex-col h-full" style={{ backgroundColor: "#ECFDF5" }}>
+        <PageHeader emoji="📊" title="Analytics" subtitle="Performance data across all learners and clips" />
+        <div className="p-6 max-w-7xl mx-auto space-y-4 w-full">
+          <div className="grid grid-cols-5 gap-4">
+            {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-24" />)}
+          </div>
+          <Skeleton className="h-48" />
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex flex-col h-full" style={{ backgroundColor: "#ECFDF5" }}>
+        <PageHeader emoji="📊" title="Analytics" subtitle="Performance data across all learners and clips" />
+        <div className="p-6 text-center">
+          <p className="text-red-600">Failed to load analytics: {(error as any)?.message ?? "Unknown error"}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Learner detail takeover ─────────────────────────────────────
+  if (selectedLearnerId) {
+    return (
+      <div className="flex flex-col h-full overflow-auto" style={{ backgroundColor: "#ECFDF5" }}>
+        <PageHeader emoji="📊" title="Analytics" subtitle="Learner Detail" />
+        <div className="p-6 max-w-7xl mx-auto w-full">
+          <LearnerDetailView viewerId={selectedLearnerId} onBack={handleBack} />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full overflow-auto" style={{ backgroundColor: "#ECFDF5" }}>
