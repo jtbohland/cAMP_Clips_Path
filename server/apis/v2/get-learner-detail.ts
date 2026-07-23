@@ -135,6 +135,12 @@ const SrQuizRow = z.object({
   sr_correct: z.coerce.number(),
 });
 
+const UnlockOverrideRow = z.object({
+  clip_id: z.string(),
+  clip_sort_order: z.coerce.number(),
+  reason: z.string(),
+});
+
 const ModuleSignoffRow = z.object({
   module_key: z.string(),
   reflection_prompt: z.string().nullable(),
@@ -367,6 +373,7 @@ export default api({
       liveClipCountRows,
       trailMarkerRows,
       srQuizRows,
+      unlockOverrideRows,
     ] = await Promise.all([
       // 1. Viewer info
       ctx.integrations.db.query(
@@ -609,6 +616,20 @@ export default api({
         [viewerId],
         { label: "S&R quiz results per clip" }
       ),
+
+      // 17. Unlock overrides (source of truth for S&R/WtS completion path)
+      ctx.integrations.db.query(
+        `SELECT uo.clip_id::text AS clip_id,
+                c.sort_order::int AS clip_sort_order,
+                uo.reason
+         FROM cliptracker_v2_unlock_overrides uo
+         JOIN cliptracker_v2_clips c ON c.id = uo.clip_id
+         WHERE uo.viewer_id = $1
+           AND uo.reason IN ('Completed via search_rescue', 'Completed via weather_storm')`,
+        UnlockOverrideRow,
+        [viewerId],
+        { label: "Unlock overrides for S&R/WtS detection" }
+      ),
     ]);
 
     const viewer = viewerRows[0];
@@ -719,6 +740,19 @@ export default api({
       srQuizMap.set(sq.clip_id, { correct: sq.sr_correct, total: sq.sr_total });
     }
 
+    // Build completion-path map from unlock overrides (source of truth for S&R/WtS)
+    // unlock override for sort X means the PREVIOUS clip was completed via that path
+    // so we map: (sort_order - 1) → completion path
+    const completionPathBySort = new Map<number, string>();
+    for (const uo of unlockOverrideRows) {
+      const prevSort = uo.clip_sort_order - 1;
+      if (uo.reason === "Completed via search_rescue") {
+        completionPathBySort.set(prevSort, "search_rescue");
+      } else if (uo.reason === "Completed via weather_storm") {
+        completionPathBySort.set(prevSort, "weather_storm");
+      }
+    }
+
     const clips = Array.from(clipMap.values())
       .sort((a, b) => a.clipSortOrder - b.clipSortOrder)
       .map(c => {
@@ -742,16 +776,21 @@ export default api({
           ? parseFloat(firstAttemptSession.engagement_score)
           : null;
 
-        // S&R: was a recovery session triggered?
-        const srSession = c.sessions.find(s => s.is_recovery_attempt);
-        const srTriggered = !!srSession;
+        // S&R/WtS detection: use unlock overrides as source of truth, fall back to session flags
+        const completionPath = completionPathBySort.get(c.clipSortOrder);
+        const srFromOverride = completionPath === "search_rescue" || completionPath === "weather_storm";
+        const srFromSession = c.sessions.some(s => s.is_recovery_attempt);
+        const srTriggered = srFromOverride || srFromSession;
+
         const srCompletedSession = c.sessions.find(s => s.is_recovery_attempt && s.completed);
         const srScore = srCompletedSession?.engagement_score
           ? parseFloat(srCompletedSession.engagement_score)
           : null;
 
-        // WtS: triggered when attempt_number >= 3
-        const wtsTriggered = c.sessions.some(s => s.attempt_number >= 3);
+        // WtS: from unlock override (primary) or session attempt_number (fallback)
+        const wtsFromOverride = completionPath === "weather_storm";
+        const wtsFromSession = c.sessions.some(s => s.attempt_number >= 3);
+        const wtsTriggered = wtsFromOverride || wtsFromSession;
 
         return {
           clipId: c.clipId,
