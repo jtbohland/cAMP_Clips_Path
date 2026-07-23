@@ -606,7 +606,7 @@ export default function LibraryPage() {
     <div className="relative">
       <button
         onClick={() => setPreviewMode(null)}
-        className="fixed top-4 right-4 z-50 w-8 h-8 rounded-full bg-gray-800/80 text-white hover:bg-gray-900 flex items-center justify-center text-lg shadow-lg transition-colors"
+        className="fixed top-4 right-4 z-[60] w-8 h-8 rounded-full bg-gray-800/80 text-white hover:bg-gray-900 flex items-center justify-center text-lg shadow-lg transition-colors"
         title="Close preview"
       >
         ×
