@@ -52,9 +52,9 @@ export default function PacingModal({
 
   const handleBackdropClick = useCallback(
     (e: React.MouseEvent) => {
-      if (e.target === e.currentTarget) onDismiss();
+      // No backdrop dismiss — learner must use the CTA button
     },
-    [onDismiss]
+    []
   );
 
   const showCatchUpList = missedClips.length > 0 && tier !== "summit_bound" && tier !== "completed" && tier !== "not_started";
