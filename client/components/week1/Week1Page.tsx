@@ -199,7 +199,9 @@ export default function Week1Page({ viewerId, viewerName, isAdmin, onBeginAscent
     if (weekdaysElapsed <= 1) return;
 
     approachPacingShownRef.current = true;
-    localStorage.setItem(storageKey, todayStr);
+    // NOTE: localStorage is set on DISMISS (button click), not here.
+    // If the modal renders but the learner refreshes before clicking,
+    // it will re-fire — matching the Ascent pacing pattern.
 
     // Day 8+: Oh Deer auto-unlock
     if (weekdaysElapsed >= 8) {
@@ -320,7 +322,10 @@ export default function Week1Page({ viewerId, viewerName, isAdmin, onBeginAscent
           completedKeys={completedKeys}
           itemsBehind={approachPacing.itemsBehind}
           summitDay={approachPacing.projectedSummitDay}
-          onDismiss={() => setShowApproachPacing(false)}
+          onDismiss={() => {
+            localStorage.setItem(`approach_pacing_shown_${viewerId}`, new Date().toLocaleDateString());
+            setShowApproachPacing(false);
+          }}
         />
       )}
       {showDeadline && (
@@ -328,13 +333,17 @@ export default function Week1Page({ viewerId, viewerName, isAdmin, onBeginAscent
           variant={showDeadline}
           completedItems={completedItemCount}
           incompleteModules={incompleteModules}
-          onDismiss={() => setShowDeadline(null)}
+          onDismiss={() => {
+            localStorage.setItem(`approach_pacing_shown_${viewerId}`, new Date().toLocaleDateString());
+            setShowDeadline(null);
+          }}
         />
       )}
       {showOhDeer && (
         <OhDeerModal
           completedItems={completedItemCount}
           onDismiss={() => {
+            localStorage.setItem(`approach_pacing_shown_${viewerId}`, new Date().toLocaleDateString());
             setShowOhDeer(false);
             onSwitchToAscent?.();
           }}
