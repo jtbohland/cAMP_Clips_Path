@@ -38,21 +38,24 @@ export default api({
       { label: "Check if checkin already sent" }
     );
 
-    if (existing[0].count > 0) {
-      return { success: true, alreadySent: true };
+    const alreadySent = existing[0].count > 0;
+
+    if (!alreadySent) {
+      // Insert checkin email record
+      await ctx.integrations.db.execute(
+        `INSERT INTO cliptracker_v2_checkin_emails
+          (viewer_id, checkin_type, manager_email, belay_buddy_email, feedback_token, learner_reflection)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         ON CONFLICT (viewer_id, checkin_type) DO NOTHING`,
+        [viewerId, checkinType, managerEmail, belayBuddyEmail, feedbackToken, learnerReflection],
+        { label: "Insert checkin email record" }
+      );
     }
 
-    // Insert checkin email record
-    await ctx.integrations.db.execute(
-      `INSERT INTO cliptracker_v2_checkin_emails
-        (viewer_id, checkin_type, manager_email, belay_buddy_email, feedback_token, learner_reflection)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       ON CONFLICT (viewer_id, checkin_type) DO NOTHING`,
-      [viewerId, checkinType, managerEmail, belayBuddyEmail, feedbackToken, learnerReflection],
-      { label: "Insert checkin email record" }
-    );
-
-    // Update the viewer timestamp for the relevant checkin type
+    // Always ensure the viewer timestamp is set — even when the email record
+    // already exists. This fixes the case where FixPrematureCheckins cleared
+    // the viewer timestamp but left the email record, causing the modal to
+    // re-fire on every page load despite the learner clicking "I've sent it".
     const columnMap: Record<string, string> = {
       approach: "approach_checkin_sent_at",
       week2: "week2_checkin_sent_at",
@@ -62,13 +65,13 @@ export default api({
     const column = columnMap[checkinType];
     if (column) {
       await ctx.integrations.db.execute(
-        `UPDATE cliptracker_v2_viewers SET ${column} = NOW() WHERE id = $1`,
+        `UPDATE cliptracker_v2_viewers SET ${column} = COALESCE(${column}, NOW()) WHERE id = $1`,
         [viewerId],
-        { label: `Set ${column} timestamp` }
+        { label: `Ensure ${column} timestamp is set` }
       );
     }
 
-    ctx.log.info("Check-in email marked as sent", { viewerId, checkinType });
-    return { success: true, alreadySent: false };
+    ctx.log.info("Check-in email marked as sent", { viewerId, checkinType, alreadySent });
+    return { success: true, alreadySent };
   },
 });
