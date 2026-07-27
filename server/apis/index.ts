@@ -110,6 +110,7 @@ import BackfillApproachXP from './v2/backfill-approach-xp.js';
 import FixChrisRecoveryFlags from './v2/fix-chris-recovery-flags.js';
 import GetLearnerDetail from './v2/get-learner-detail.js';
 import GenerateLearnerSummary from './v2/generate-learner-summary.js';
+import FixCheckinTimestamps from './v2/fix-checkin-timestamps.js';
 
 
 
@@ -225,6 +226,7 @@ ResetJTSessions,
   FixChrisRecoveryFlags,
   GetLearnerDetail,
   GenerateLearnerSummary,
+  FixCheckinTimestamps,
 } as const;
 
 export default apis;
