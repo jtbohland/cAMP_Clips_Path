@@ -52,7 +52,7 @@ export default api({
         ce.viewer_id,
         v.name AS viewer_name,
         ce.checkin_type,
-        ce.created_at::text AS email_created_at
+        ce.sent_at::text AS email_created_at
        FROM cliptracker_v2_checkin_emails ce
        JOIN cliptracker_v2_viewers v ON v.id = ce.viewer_id
        WHERE

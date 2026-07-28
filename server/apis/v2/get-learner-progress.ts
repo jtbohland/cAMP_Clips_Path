@@ -58,6 +58,7 @@ export default api({
     approachCheckinSentAt: z.string().nullable(),
     week2CheckinSentAt: z.string().nullable(),
     week3CheckinSentAt: z.string().nullable(),
+    summitCheckinSent: z.boolean(),
     extensionDays: z.number(),
   }),
 
@@ -134,6 +135,19 @@ export default api({
       { label: "Get ascent day 1 + checkin timestamps + extension" }
     );
 
+    // Check if summit checkin email was already sent
+    const SummitSentSchema = z.object({ sent: z.boolean() });
+    const summitSentResult = await ctx.integrations.db.query(
+      `SELECT EXISTS(
+        SELECT 1 FROM cliptracker_v2_checkin_emails
+        WHERE viewer_id = $1 AND checkin_type = 'summit'
+      ) AS sent`,
+      SummitSentSchema,
+      [viewerId],
+      { label: "Check summit checkin sent" }
+    );
+    const summitCheckinSent = summitSentResult[0]?.sent ?? false;
+
     // Leaderboard rank — count non-admin viewers with higher XP + 1
     const RankSchema = z.object({ rank: z.coerce.number() });
     const rankResult = await ctx.integrations.db.query(
@@ -182,6 +196,7 @@ export default api({
       approachCheckinSentAt: viewerDate[0]?.approach_checkin_sent_at ?? null,
       week2CheckinSentAt: viewerDate[0]?.week2_checkin_sent_at ?? null,
       week3CheckinSentAt: viewerDate[0]?.week3_checkin_sent_at ?? null,
+      summitCheckinSent,
       extensionDays: viewerDate[0]?.extension_days ?? 0,
     };
   },
