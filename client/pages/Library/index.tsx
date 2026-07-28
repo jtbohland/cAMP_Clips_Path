@@ -459,17 +459,27 @@ export default function LibraryPage() {
     if (!dataReady || previewMode === "tier") return;
     const key = `summit_dismissed_${viewer!.id}`;
     const stored = localStorage.getItem(key);
-    if (stored === null) {
+
+    // Self-healing: if DB says no summit email was sent but localStorage
+    // says dismissed, reset localStorage so the modal fires again.
+    // This catches edge cases where localStorage was seeded incorrectly
+    // (e.g. first visit after feature deploy with all clips already done).
+    if (stored === "true" && allCompleted && progressData && !progressData.summitCheckinSent) {
+      localStorage.setItem(key, "false");
+      // Fall through to show the modal below
+    } else if (stored === null) {
       // First encounter — seed based on current completion state
       localStorage.setItem(key, allCompleted ? "true" : "false");
       return;
+    } else if (stored === "true") {
+      return; // Already dismissed AND summit email confirmed sent
     }
-    if (stored === "true") return; // Already dismissed
+
     // Not dismissed + all completed = show summit
     if (allCompleted && !showFinalAchievement && !showSummit) {
       setShowFinalAchievement(true);
     }
-  }, [dataReady, allCompleted, showFinalAchievement, showSummit, previewMode, viewer]);
+  }, [dataReady, allCompleted, showFinalAchievement, showSummit, previewMode, viewer, progressData]);
 
   // (Anchor failure detection is now handled by the unified pacing trigger above —
   //  getPacingTier returns "anchor_failure" when past summit day + incomplete)
