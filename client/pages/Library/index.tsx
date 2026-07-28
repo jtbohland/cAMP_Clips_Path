@@ -393,6 +393,7 @@ export default function LibraryPage() {
   // When all Ascent clips are done but Approach is incomplete → Summit in Sight modal.
   useEffect(() => {
     if (!dataReady || !pacingInfo || previewMode === "pacing") return;
+    if (viewer?.isAdmin) return; // Admins bypass pacing entirely
     if (pacingShownRef.current) return;
     if (showSummit || tierUnlock !== null) return; // don't stack modals
     // Don't fire pacing if FirstAchievement catch-up will take over the render
@@ -427,6 +428,7 @@ export default function LibraryPage() {
   // visibilitychange — re-trigger pacing/anchor modal for stale tabs (new day)
   useEffect(() => {
     if (!dataReady || !viewer) return;
+    if (viewer.isAdmin) return; // Admins bypass pacing entirely
 
     const handleVisibility = () => {
       if (document.hidden) return;
