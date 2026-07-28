@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
-import { useParams, useNavigate, useSearchParams } from "react-router";
+import { useParams, useNavigate, useSearchParams, useBlocker } from "react-router";
 import { useApiData } from "@/hooks/useApiData.js";
 import { useApi } from "@/hooks/useApi.js";
 import { executeApi } from "@/lib/executeApi.js";
@@ -27,6 +27,13 @@ type WatchPhase =
   | "search_rescue_passed"
   | "weather_storm"
   | "complete";
+
+/** Phases where the learner is locked in — no exit until they pass or unlock */
+const LOCKED_PHASES: ReadonlySet<WatchPhase> = new Set([
+  "ranger_report",
+  "search_rescue",
+  "weather_storm",
+]);
 
 function getWistiaVideoId(url: string): string | null {
   try {
@@ -457,6 +464,47 @@ export default function WatchPage() {
     };
   }, []); // No phase dependency needed — uses phaseRef
 
+  // ──────────────────────────────────────────────────────────
+  // LOCKDOWN: Once the Ranger Report fires, the learner is
+  // locked in until they pass S&R or complete WtS.
+  // Three layers: React Router blocker, beforeunload, and
+  // history-stack guard (browser back button).
+  // ──────────────────────────────────────────────────────────
+  const isLocked = LOCKED_PHASES.has(phase);
+
+  // 1. React Router navigation blocker — prevents in-app navigation
+  useBlocker(() => {
+    if (LOCKED_PHASES.has(phaseRef.current)) {
+      return true; // block navigation
+    }
+    return false;
+  });
+
+  // 2. beforeunload — warns on tab close / reload during locked phases
+  useEffect(() => {
+    if (!isLocked) return;
+    const warnBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener("beforeunload", warnBeforeUnload);
+    return () => window.removeEventListener("beforeunload", warnBeforeUnload);
+  }, [isLocked]);
+
+  // 3. History-stack guard — traps browser back button
+  useEffect(() => {
+    if (!isLocked) return;
+    // Push a guard entry so pressing back stays on this page
+    window.history.pushState({ locked: true }, "");
+    const trapBack = (e: PopStateEvent) => {
+      if (LOCKED_PHASES.has(phaseRef.current)) {
+        // Re-push to keep them on the page
+        window.history.pushState({ locked: true }, "");
+      }
+    };
+    window.addEventListener("popstate", trapBack);
+    return () => window.removeEventListener("popstate", trapBack);
+  }, [isLocked]);
+
   const handleDismissTabOverlay = useCallback(() => {
     setTabAway(false);
     playerRef.current?.play();
@@ -773,6 +821,7 @@ export default function WatchPage() {
         toast.success(`+${awardRes.xpAwarded} XP — persistence pays off!`);
       }
     }
+    setPhase("complete"); // Release lockdown before navigating
     navigate(getLibraryPath());
   }, [navigate, viewer, clipId, sessionId, clipData, watchedSeconds, correctCount, trailMarkers, searchRescueScore, recoveryQuestions, awardXP, completeClipPath]);
 
@@ -879,13 +928,15 @@ export default function WatchPage() {
             📄 Transcript
           </button>
 
-          {/* Back to Clips — unchanged */}
-          <button
-            onClick={handlePauseAndBack}
-            className="text-sm font-semibold px-4 py-1.5 rounded-lg bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition-colors"
-          >
-            🎞️ Back to Clips
-          </button>
+          {/* Back to Clips — hidden during locked phases (S&R / WtS / Ranger Report) */}
+          {!isLocked && (
+            <button
+              onClick={handlePauseAndBack}
+              className="text-sm font-semibold px-4 py-1.5 rounded-lg bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition-colors"
+            >
+              🎞️ Back to Clips
+            </button>
+          )}
         </div>
       </div>
 
@@ -964,8 +1015,8 @@ export default function WatchPage() {
           correctAnswers={correctCount}
           score={score}
           needsRecovery={score < 80 && recoveryQuestions.length > 0}
-          onBackToClips={() => navigate(getLibraryPath())}
-          onContinueToNext={goToNextClip}
+          onBackToClips={() => { setPhase("complete"); navigate(getLibraryPath()); }}
+          onContinueToNext={goToNextClip ? () => { setPhase("complete"); goToNextClip(); } : undefined}
           nextIsResourceDay={nextIsResourceDay}
           onSearchRescue={() => setPhase("search_rescue")}
           incorrectQuestions={incorrectQuestions}
