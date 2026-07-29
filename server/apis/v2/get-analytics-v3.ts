@@ -37,6 +37,7 @@ const LearnerRow = z.object({
   wts_count: z.coerce.number(),
   sr_count: z.coerce.number(),
   last_active: z.string().nullable(),
+  last_completed_at: z.string().nullable(),
   last_login_at: z.string().nullable(),
 });
 
@@ -214,6 +215,7 @@ export default api({
         COUNT(*) FILTER (WHERE s.attempt_number >= 3)::int AS wts_count,
         COUNT(*) FILTER (WHERE s.is_recovery_attempt = true)::int AS sr_count,
         MAX(s.ended_at)::text AS last_active,
+        MAX(s.ended_at) FILTER (WHERE s.completed = true)::text AS last_completed_at,
         v.last_login_at::text AS last_login_at
        FROM cliptracker_v2_viewers v
        LEFT JOIN cliptracker_v2_sessions s ON s.viewer_id = v.id
@@ -451,8 +453,22 @@ export default api({
 
         if (topicsCompleted >= TOTAL_SESSIONS_SCHEDULE) {
           pacingStatus = "completed";
-          // Count as on-time finisher (all topics done)
-          onTimeFinishers++;
+          // Determine if they finished "on time" based on their tier at completion
+          // On Time = summit_bound (<=0), off_the_trail (<=2), lost_in_the_woods (<=5)
+          // Anchor Failure = rockslide (<=9), avalanche_warning (>9), or past summit
+          const completionDate = l.last_completed_at ? new Date(l.last_completed_at) : now;
+          const completionWeekdays = countWeekdays(start, completionDate);
+          const effectiveCompletionWeekdays = Math.max(0, completionWeekdays - extDays);
+          const daysBehindAtCompletion = getTopicDaysBehind(topicsCompleted, effectiveCompletionWeekdays);
+          const summitNorm = new Date(summit.getFullYear(), summit.getMonth(), summit.getDate());
+          const completionNorm = new Date(completionDate.getFullYear(), completionDate.getMonth(), completionDate.getDate());
+          const finishedAfterSummit = completionNorm > summitNorm;
+
+          if (finishedAfterSummit || daysBehindAtCompletion > 5) {
+            anchorFailureCount++;
+          } else {
+            onTimeFinishers++;
+          }
         } else if (daysBehind <= 0) {
           pacingStatus = "summit_bound";
         } else if (daysBehind <= 2) {
