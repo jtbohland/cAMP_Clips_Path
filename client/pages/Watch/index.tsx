@@ -936,6 +936,16 @@ export default function WatchPage() {
             ⏱ {Math.floor(elapsedSeconds / 60)}:{(elapsedSeconds % 60).toString().padStart(2, "0")}
             {!isVideoPlaying && phase === "watching" && " ⏸"}
           </span>
+          {/* "What's the buzz?" — re-open guide panel after swat-away */}
+          {guideEntry && !showGuide && (
+            <button
+              onClick={() => setShowGuide(true)}
+              className="text-sm font-semibold px-3 py-1.5 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
+            >
+              🦟 What's the buzz?
+            </button>
+          )}
+
           {/* Transcript — blue outlined button */}
           <button
             onClick={() => setShowTranscript((v) => !v)}
