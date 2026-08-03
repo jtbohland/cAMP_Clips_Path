@@ -10,6 +10,8 @@ import SearchRescue from "@/components/SearchRescue";
 import WeatherStorm from "@/components/WeatherStorm";
 import SearchRescuePassPopup from "@/components/SearchRescuePassPopup";
 import ResumePrompt from "@/components/ResumePrompt";
+import AscentGuidePanel from "@/components/AscentGuidePanel";
+import { getGuideEntryForClip } from "@/config/ascentGuide.js";
 
 import { getLibraryPath } from "@/lib/libraryNav";
 
@@ -102,6 +104,24 @@ export default function WatchPage() {
   const lowVolumeSecondsRef = useRef(0);
   const isLowVolumeRef = useRef(false);
   const [showTranscript, setShowTranscript] = useState(false);
+
+  // Ascent Guide panel — summary + learning objectives shown on clip open
+  const guideEntry = useMemo(
+    () => {
+      const sortOrder = clipData?.clip?.sortOrder;
+      return sortOrder ? getGuideEntryForClip(sortOrder) : null;
+    },
+    [clipData?.clip?.sortOrder]
+  );
+  const guideStorageKey = clipId ? `camp_guide_dismissed_${clipId}` : null;
+  const [showGuide, setShowGuide] = useState(() => {
+    if (!guideStorageKey) return false;
+    return localStorage.getItem(guideStorageKey) !== "true";
+  });
+  const handleSwatAway = useCallback(() => {
+    setShowGuide(false);
+    if (guideStorageKey) localStorage.setItem(guideStorageKey, "true");
+  }, [guideStorageKey]);
 
   const [xpData, setXpData] = useState<{
     sessionBreakdown: { base: number; milestones: number; bonuses: number };
@@ -939,6 +959,11 @@ export default function WatchPage() {
           )}
         </div>
       </div>
+
+      {/* Ascent Guide — summary + learning objectives */}
+      {guideEntry && showGuide && (
+        <AscentGuidePanel entry={guideEntry} isOpen={true} onSwatAway={handleSwatAway} />
+      )}
 
       {/* Video + transcript */}
       <div className="flex-1 min-h-0 flex">

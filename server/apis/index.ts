@@ -111,6 +111,7 @@ import FixChrisRecoveryFlags from './v2/fix-chris-recovery-flags.js';
 import GetLearnerDetail from './v2/get-learner-detail.js';
 import GenerateLearnerSummary from './v2/generate-learner-summary.js';
 import FixCheckinTimestamps from './v2/fix-checkin-timestamps.js';
+import UpdateQuestionTimestamps from './v2/update-question-timestamps.js';
 
 
 
@@ -227,6 +228,7 @@ ResetJTSessions,
   GetLearnerDetail,
   GenerateLearnerSummary,
   FixCheckinTimestamps,
+  UpdateQuestionTimestamps,
 } as const;
 
 export default apis;
