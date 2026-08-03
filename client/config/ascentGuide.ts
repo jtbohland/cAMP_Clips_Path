@@ -16,6 +16,7 @@ export type AscentGuideEntry = {
 
 // Full guide data, keyed by session ID
 const GUIDE_SESSIONS: Record<string, AscentGuideEntry> = {
+  // ── Day 1 (sort 1): Understanding Our Verticals ──
   day1_industries: {
     id: "day1_industries",
     summary:
@@ -27,6 +28,8 @@ const GUIDE_SESSIONS: Record<string, AscentGuideEntry> = {
     ],
     smes: [{ name: "Michele Morales", title: "Group Product Marketing Manager" }],
   },
+
+  // ── Day 1 (sort 2): Understanding Our Personas ──
   day1_personas: {
     id: "day1_personas",
     summary:
@@ -38,6 +41,8 @@ const GUIDE_SESSIONS: Record<string, AscentGuideEntry> = {
     ],
     smes: [{ name: "Michele Morales", title: "Group Product Marketing Manager" }],
   },
+
+  // ── Day 2 (sort 3): Top of Funnel ──
   day2: {
     id: "day2",
     summary:
@@ -52,6 +57,8 @@ const GUIDE_SESSIONS: Record<string, AscentGuideEntry> = {
       { name: "Chelsie Cauthon", title: "Sr. Marketing Transformation Manager" },
     ],
   },
+
+  // ── Day 3 (sort 4): GTM Launch Pad ──
   day3: {
     id: "day3",
     summary:
@@ -63,6 +70,8 @@ const GUIDE_SESSIONS: Record<string, AscentGuideEntry> = {
     ],
     smes: [{ name: "Matt Kahan", title: "Sr. Manager, GTM Strategy & Analytics" }],
   },
+
+  // ── Day 4 (sort 5): Prospecting Process ──
   day4: {
     id: "day4",
     summary:
@@ -74,6 +83,25 @@ const GUIDE_SESSIONS: Record<string, AscentGuideEntry> = {
     ],
     smes: [{ name: "JT Bohland", title: "Sr. Enablement Program Manager" }],
   },
+
+  // ── Day 5 (sort 6): Renewal Operations ──
+  day5: {
+    id: "day5",
+    summary:
+      "This session introduces how renewals work at Amplitude, and how AEs plug into the broader revenue and finance motion. Reps will learn renewal stages, roles and responsibilities, and key policies that govern pricing, discounts, and approvals. The goal is to demystify 'who does what when' so renewals feel like a managed process, not one-off fire drills.",
+    learningObjectives: [
+      "Explain the renewal lifecycle, including stages, timelines, and required milestones.",
+      "Identify who owns which parts of the renewal (AE, CS, Renewals, Deal Desk, Finance) and when to engage them.",
+      "Apply guardrails and policies (discount, term, uplift expectations) when shaping renewal strategies.",
+    ],
+    smes: [
+      { name: "Lenora Bennis", title: "Sr. Manager, Renewals Management" },
+      { name: "Megha Sisaudia", title: "Head of Pricing Strategy & Operations (on leave)" },
+      { name: "Katie Helie", title: "VP of Finance" },
+    ],
+  },
+
+  // ── Day 6 (sort 7): The Competitive Landscape ──
   day6: {
     id: "day6",
     summary:
@@ -85,6 +113,8 @@ const GUIDE_SESSIONS: Record<string, AscentGuideEntry> = {
     ],
     smes: [{ name: "Darshil Gandhi", title: "Director, Product Marketing" }],
   },
+
+  // ── Day 7 (sorts 8–9): Account Planning ──
   day7: {
     id: "day7",
     summary:
@@ -99,6 +129,8 @@ const GUIDE_SESSIONS: Record<string, AscentGuideEntry> = {
       { name: "Simon Levinson", title: "Sr. Solutions Lead" },
     ],
   },
+
+    // ── Day 8 (sorts 10–11): Discovery That Accelerates ──
   day8: {
     id: "day8",
     summary:
@@ -108,8 +140,26 @@ const GUIDE_SESSIONS: Record<string, AscentGuideEntry> = {
       "Map discovery findings into MEDDPICC components and CEM stages in Salesforce to drive clear, evidence-based next steps.",
       "Create and use Deal Rooms in Spekit to share discovery recaps, value hypotheses, and mutual action plans with customers and prospects.",
     ],
-    smes: [],
+    smes: [{ name: "YOU 🫵🏼", title: "You are the subject matter expert" }],
   },
+
+  // ── Day 9 (sort 12): Pricing & Packaging 101 ──
+  day9: {
+    id: "day9",
+    summary:
+      "This session introduces Amplitude's 2026 pricing and packaging model and how AEs should use it in real deals. Reps will learn core components (SKUs, tiers, add-ons), how value and usage map to price, and the basics of using the pricing tools. The focus is on enabling confident, value-based pricing conversations rather than tactical discounting.",
+    learningObjectives: [
+      "Explain Amplitude's core pricing and packaging structure in plain language to customers.",
+      "Use the pricing tools/templates to configure a standard offer that aligns with customer use cases.",
+      "Handle common pricing objections by tying back to value, outcomes, and long-term roadmap.",
+    ],
+    smes: [
+      { name: "Megha Sisaudia", title: "Head of Pricing Strategy & Operations (on leave)" },
+      { name: "Katie Helie", title: "VP of Finance" },
+    ],
+  },
+
+  // ── Day 10 (sort 13): Leveraging Partners ──
   day10: {
     id: "day10",
     summary:
@@ -121,6 +171,8 @@ const GUIDE_SESSIONS: Record<string, AscentGuideEntry> = {
     ],
     smes: [{ name: "Nick Iyengar", title: "Head of Global Partnerships" }],
   },
+
+  // ── Day 11 (sorts 14–15): Forecasting ──
   day11: {
     id: "day11",
     summary:
@@ -132,6 +184,8 @@ const GUIDE_SESSIONS: Record<string, AscentGuideEntry> = {
     ],
     smes: [{ name: "Corey Gibbel", title: "Sales Strategy & Operations Manager" }],
   },
+
+  // ── Day 12 (sort 16): Customer Stories ──
   day12: {
     id: "day12",
     summary:
@@ -141,8 +195,10 @@ const GUIDE_SESSIONS: Record<string, AscentGuideEntry> = {
       "Structure a customer story (context, challenge, action, outcome) that reinforces your commercial insight.",
       "Tailor the story to different stakeholders so it lands as 'people like me' rather than generic proof.",
     ],
-    smes: [],
+    smes: [{ name: "YOU 🫵🏼", title: "You are the subject matter expert" }],
   },
+
+  // ── Day 13 (sort 17): Contract Lifecycle Management ──
   day13: {
     id: "day13",
     summary:
@@ -158,6 +214,8 @@ const GUIDE_SESSIONS: Record<string, AscentGuideEntry> = {
       { name: "Sarah Simmons", title: "Legal Operations Manager" },
     ],
   },
+
+  // ── Day 14 (sort 18): Deal Desk & CPQ ──
   day14: {
     id: "day14",
     summary:
@@ -173,17 +231,31 @@ const GUIDE_SESSIONS: Record<string, AscentGuideEntry> = {
       { name: "Katie Helie", title: "VP of Finance" },
     ],
   },
-  day15: {
-    id: "day15",
+
+  // ── Day 15 (sort 19): Leveraging Solution Engineers ──
+  day15_se: {
+    id: "day15_se",
     summary:
-      "This session shows AEs how to orchestrate SEs and Professional Services as part of a winning deal team. Reps will learn when to pull in SEs for discovery, demos, and validation, and how to position Services as a value accelerator rather than a cost line. The emphasis is on pod-based selling and making sure each expert is used intentionally.",
+      "This session shows AEs how to orchestrate Solution Engineers as part of a winning deal team. Reps will learn when to pull in SEs for discovery, demos, and technical validation, and how to brief them so every engagement is targeted and high-impact. The emphasis is on pod-based selling and using your SE intentionally, not reactively.",
     learningObjectives: [
-      "Define the core responsibilities of SEs and Professional Services in the sales cycle.",
-      "Write effective internal briefs and meeting plans so SEs and PS can deliver targeted, high-impact engagements.",
+      "Define the core responsibilities of Solution Engineers in the sales cycle and when to engage them.",
+      "Write effective internal briefs and meeting plans so SEs can deliver targeted, high-impact engagements.",
+      "Collaborate with SEs to co-run discovery, build compelling demos, and validate technical fit.",
+    ],
+    smes: [{ name: "Taylor Wolfe", title: "Enablement Program Manager – SEs" }],
+  },
+
+  // ── Day 15 (sort 20): Leveraging Professional Services ──
+  day15_ps: {
+    id: "day15_ps",
+    summary:
+      "This session teaches AEs how to position Professional Services as a value accelerator rather than a cost line. Reps will learn when and how to bring PS into deals, how to scope engagements, and how to use services to de-risk deployment and accelerate time-to-value for customers.",
+    learningObjectives: [
+      "Define the core offerings and engagement models of Professional Services.",
       "Position Services as a strategic investment that de-risks deployment and accelerates time-to-value for customers.",
+      "Coordinate with PS leadership to scope engagements and incorporate services into deal structures.",
     ],
     smes: [
-      { name: "Taylor Wolfe", title: "Enablement Program Manager – SEs" },
       { name: "Ganit Bar-Dor", title: "Sr. Director, Global Professional Services" },
       { name: "Angela Dunstan", title: "Professional Services Operations Manager" },
     ],
@@ -191,26 +263,29 @@ const GUIDE_SESSIONS: Record<string, AscentGuideEntry> = {
 };
 
 // Map from clip sort order → guide session ID
-// Days without cAMP Clips (Day 5 Renewals, Day 9 Pricing) are not included
+// Every clip in cliptracker_v2_clips must have an entry here.
+// Clips that share a day/topic reuse the same session ID.
 const SORT_ORDER_TO_SESSION_ID: Record<number, string> = {
-  1: "day1_industries",
-  2: "day1_personas",
-  3: "day2",
-  4: "day3",
-  5: "day4",
-  6: "day6",  // clip sort 6 = Competitive Landscape (Day 6 in guide)
-  7: "day7",
-  8: "day7",  // Account Planning (Momentum for Slack) — same guide
-  9: "day8",
-  10: "day8",  // Discovery (Spekit Deal Rooms) — same guide
-  11: "day10",
-  12: "day11",
-  13: "day11", // Forecasting (Intro to Services) — same guide
-  14: "day12",
-  15: "day13",
-  16: "day14",
-  17: "day15",
-  18: "day15", // Leveraging Professional Services — same guide
+  1: "day1_industries",  // Day 1: Understanding Our Verticals
+  2: "day1_personas",    // Day 1: Understanding Our Personas
+  3: "day2",             // Day 2: TOFU – MQLs & Inbounds
+  4: "day3",             // Day 3: GTM Launch Pad
+  5: "day4",             // Day 4: Prospecting Process
+  6: "day5",             // Day 5: Renewal Operations
+  7: "day6",             // Day 6: The Competitive Landscape
+  8: "day7",             // Day 7: Account Planning Best Practices
+  9: "day7",             // Day 7: Account Planning (Momentum for Slack)
+  10: "day8",            // Day 8: Discovery That Accelerates
+  11: "day8",            // Day 8: Discovery (Spekit Deal Rooms)
+  12: "day9",            // Day 9: Pricing & Packaging 101
+  13: "day10",           // Day 10: Leveraging Partners
+  14: "day11",           // Day 11: Forecasting
+  15: "day11",           // Day 11: Forecasting (Intro to Services)
+  16: "day12",           // Day 12: Customer Stories
+  17: "day13",           // Day 13: Contract Lifecycle Management
+  18: "day14",           // Day 14: Deal Desk & CPQ
+  19: "day15_se",        // Day 15: Leveraging Solution Engineers
+  20: "day15_ps",        // Day 15: Leveraging Professional Services
 };
 
 /**
