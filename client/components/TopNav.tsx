@@ -4,6 +4,7 @@ import { useViewer } from "./ViewerContext";
 const NAV_TABS = [
   { path: "/library", label: "Clips", emoji: "🎬" },
   { path: "/xp", label: "XP-lanation", emoji: "🔭" },
+  { path: "/leaderboard", label: "Leaderboard", emoji: "🏆" },
   { path: "/analytics", label: "Analytics", emoji: "📊" },
 ];
 

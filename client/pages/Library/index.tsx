@@ -888,6 +888,7 @@ export default function LibraryPage() {
           <div className="flex items-center gap-2">
             {[
               { path: "/xp", label: "XP-lanation", emoji: "🔭" },
+              { path: "/leaderboard", label: "Leaderboard", emoji: "🏆" },
               { path: "/analytics", label: "Analytics", emoji: "📊" },
             ].map((nav) => (
               <button
