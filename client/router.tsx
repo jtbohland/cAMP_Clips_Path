@@ -74,6 +74,13 @@ export const router = createBrowserRouter([
           })),
       },
       {
+        path: "/leaderboard",
+        lazy: () =>
+          import("./pages/Leaderboard/index.js").then((mod) => ({
+            Component: mod.default,
+          })),
+      },
+      {
         path: "/analytics",
         lazy: () =>
           import("./pages/Analytics/index.js").then((mod) => ({

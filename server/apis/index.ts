@@ -113,7 +113,7 @@ import GenerateLearnerSummary from './v2/generate-learner-summary.js';
 import FixCheckinTimestamps from './v2/fix-checkin-timestamps.js';
 import UpdateQuestionTimestamps from './v2/update-question-timestamps.js';
 import UpdateClipResources from './v2/update-clip-resources.js';
-
+import GetPublicLeaderboard from './v2/get-public-leaderboard.js';
 
 
 
@@ -231,6 +231,7 @@ ResetJTSessions,
   FixCheckinTimestamps,
   UpdateQuestionTimestamps,
   UpdateClipResources,
+  GetPublicLeaderboard,
 } as const;
 
 export default apis;
