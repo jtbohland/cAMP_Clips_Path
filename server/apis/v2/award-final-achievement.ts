@@ -15,14 +15,17 @@ const APPS_DB = "c6e32cf4-ca66-42ae-aeb3-58c84ffae574";
  * of each Ascent weekday.
  */
 
-// ── Pacing schedule: expected cumulative TOPICS by weekday ──
-// Indices 0-20, same as client/lib/pacing.ts EXPECTED_SESSIONS_BY_WEEKDAY.
-const EXPECTED_BY_WEEKDAY = [
-  0, 0, 0, 0, 0, 0, // weekdays 0-5 (Week 1)
-  1, 2, 3, 4, 5,     // weekdays 6-10 (Ascent Days 1-5)
-  6, 7, 8, 9, 10,    // weekdays 11-15 (Ascent Days 6-10)
-  11, 12, 13, 14, 15, // weekdays 16-20 (Ascent Days 11-15)
+// ── Pacing schedule: expected cumulative CLIPS by weekday (clip-level) ──
+// Indices 0-20, matches client/lib/pacing.ts CLIPS_EXPECTED_BY_WEEKDAY.
+const CLIPS_EXPECTED_BY_WEEKDAY = [
+  0, 0, 0, 0, 0, 0,          // weekdays 0-5 (Week 1: approach modules)
+  2, 3, 4, 5, 6,              // weekdays 6-10
+  7, 9, 11, 12, 13,           // weekdays 11-15
+  15, 16, 17, 18, 20,         // weekdays 16-20
 ];
+const WEEK1_EXPECTED_BY_DAY = [0, 2, 4, 5, 6, 7];
+const WEEK1_TOTAL = 7;
+const TOTAL_ASCENT_CLIPS_COUNT = 20;
 
 // Map each sort_order → which Ascent day (1-15) it belongs to.
 // Multi-clip days share the same Ascent day number.
@@ -285,47 +288,62 @@ export default api({
       // Reconstruct daily pacing tiers from completion timestamps.
       // For each Ascent day (1-15), check if learner was summit_bound.
 
-      // Now walk each Ascent weekday and check if learner was summit_bound.
+      // Now walk each Ascent weekday and check clip-level pacing %.
       // Extension days come at the START — during those days, expected = 0 (summit_bound by default).
       // After extension days, normal Ascent schedule resumes.
+      // We use individual clip completion timestamps (not topic-level).
       const ascentStart = new Date(ascentDay1.getFullYear(), ascentDay1.getMonth(), ascentDay1.getDate());
       const totalAscentWithExtension = TOTAL_ASCENT_DAYS + extensionDays;
+
+      // Build per-clip completion date list for clip-level counting
+      const clipCompletionDates: Date[] = [];
+      for (const c of completions) {
+        clipCompletionDates.push(new Date(c.completed_at));
+      }
+      // Add resource day completions (tracked via reflections)
+      for (const r of reflections) {
+        clipCompletionDates.push(new Date(r.submitted_at));
+      }
+
+      // Approach count (static — either done or not by the time we award)
+      const approachDone = approachComplete ? WEEK1_TOTAL : 0;
+
       let consecutiveSummitBound = 0;
       let maxConsecutive = 0;
-      let anyBadTier = false;
 
       for (let ascentDayNum = 1; ascentDayNum <= totalAscentWithExtension; ascentDayNum++) {
         const dayDate = addWeekdays(ascentStart, ascentDayNum - 1);
 
-        // During extension days (first N days), expected topics = 0 → always summit_bound
-        let expectedTopics: number;
+        let clipsExpected: number;
+        let approachExpected: number;
         if (ascentDayNum <= extensionDays) {
-          expectedTopics = 0;
+          clipsExpected = 0;
+          approachExpected = WEEK1_TOTAL; // Approach should be done by Ascent start
         } else {
-          // Effective Ascent day after extension
           const effectiveAscentDay = ascentDayNum - extensionDays;
-          const weekday = effectiveAscentDay + 5; // absolute weekday in program
-          expectedTopics = EXPECTED_BY_WEEKDAY[weekday] ?? 0;
+          const weekday = effectiveAscentDay + 5;
+          clipsExpected = CLIPS_EXPECTED_BY_WEEKDAY[weekday] ?? TOTAL_ASCENT_CLIPS_COUNT;
+          approachExpected = WEEK1_TOTAL;
         }
 
-        let topicsDoneByDay = 0;
-        for (const [, completedDate] of topicCompletedDate) {
-          const compNorm = new Date(completedDate.getFullYear(), completedDate.getMonth(), completedDate.getDate());
+        // Count clips done by this day
+        let clipsDoneByDay = 0;
+        for (const compDate of clipCompletionDates) {
+          const compNorm = new Date(compDate.getFullYear(), compDate.getMonth(), compDate.getDate());
           const dayNorm = new Date(dayDate.getFullYear(), dayDate.getMonth(), dayDate.getDate());
-          if (compNorm <= dayNorm) {
-            topicsDoneByDay++;
-          }
+          if (compNorm <= dayNorm) clipsDoneByDay++;
         }
 
-        const daysBehind = Math.max(0, expectedTopics - topicsDoneByDay);
-        const isSummitBound = daysBehind <= 0;
+        const totalExpected = approachExpected + clipsExpected;
+        const totalDone = Math.min(approachDone, WEEK1_TOTAL) + Math.min(clipsDoneByDay, TOTAL_ASCENT_CLIPS_COUNT);
+        const percent = totalExpected > 0 ? Math.round((totalDone / totalExpected) * 100) : 100;
+        const isSummitBound = percent >= 90;
 
         if (isSummitBound) {
           consecutiveSummitBound++;
           maxConsecutive = Math.max(maxConsecutive, consecutiveSummitBound);
         } else {
           consecutiveSummitBound = 0;
-          anyBadTier = true;
         }
       }
 
@@ -340,49 +358,35 @@ export default api({
         }
       }
 
-      // Free Solo: 0 rockslide/avalanche/anchor failure across ALL 20 Ascent days
-      // This means never more than 2 days behind at any point (off_the_trail and lost_in_the_woods are OK? No.)
-      // Spec: "0 rockslide/avalanche/anchor failure" = never hit daysBehind > 5 (rockslide is 6-9 behind)
-      // Actually re-reading: free solo = no rockslide, avalanche, or anchor failure
-      // rockslide = 6-9 days behind, avalanche = 10+, anchor = past summit day
-      // So free solo = never went beyond lost_in_the_woods (max 5 days behind at any point)
-      // Wait, but spec says "0 rockslide/avalanche/anchor failure across all 20 Ascent days"
-      // Let me re-check: rockslide = daysBehind 6-9, avalanche = daysBehind 10+, anchor = past summit
-      // Re-reading pacing.ts: lost_in_the_woods = 3-5, rockslide = 6-9, avalanche = 10+
-      // Free Solo = never hit rockslide OR worse = maxDaysBehind < 6 across all days
-      // Simpler: !anyBadTier is wrong (lost_in_the_woods is allowed)
-      // Let me recompute by tracking max days behind
-      let maxDaysBehind = 0;
+      // (Free Solo check uses clip-level pacing % computed above)
+
+      // Free Solo: never hit rockslide (< 60%) or worse at ANY point during Ascent.
+      // Uses clip-level pacing %. Rockslide = 60-69%, so Free Solo = never below 70%.
+      let minPercent = 100;
       for (let ascentDayNum = 1; ascentDayNum <= totalAscentWithExtension; ascentDayNum++) {
         const dayDate = addWeekdays(ascentStart, ascentDayNum - 1);
-
-        let expectedTopics: number;
+        let clipsExpected: number;
         if (ascentDayNum <= extensionDays) {
-          expectedTopics = 0;
+          clipsExpected = 0;
         } else {
           const effectiveAscentDay = ascentDayNum - extensionDays;
           const weekday = effectiveAscentDay + 5;
-          expectedTopics = EXPECTED_BY_WEEKDAY[weekday] ?? 0;
+          clipsExpected = CLIPS_EXPECTED_BY_WEEKDAY[weekday] ?? TOTAL_ASCENT_CLIPS_COUNT;
         }
-
-        let topicsDoneByDay = 0;
-        for (const [, completedDate] of topicCompletedDate) {
-          const compNorm = new Date(completedDate.getFullYear(), completedDate.getMonth(), completedDate.getDate());
+        let clipsDoneByDay = 0;
+        for (const compDate of clipCompletionDates) {
+          const compNorm = new Date(compDate.getFullYear(), compDate.getMonth(), compDate.getDate());
           const dayNorm = new Date(dayDate.getFullYear(), dayDate.getMonth(), dayDate.getDate());
-          if (compNorm <= dayNorm) topicsDoneByDay++;
+          if (compNorm <= dayNorm) clipsDoneByDay++;
         }
-
-        const daysBehind = Math.max(0, expectedTopics - topicsDoneByDay);
-        maxDaysBehind = Math.max(maxDaysBehind, daysBehind);
+        const totalExpected = WEEK1_TOTAL + clipsExpected;
+        const totalDone = Math.min(approachDone, WEEK1_TOTAL) + Math.min(clipsDoneByDay, TOTAL_ASCENT_CLIPS_COUNT);
+        const pct = totalExpected > 0 ? Math.round((totalDone / totalExpected) * 100) : 100;
+        minPercent = Math.min(minPercent, pct);
       }
 
-      // Free Solo: never hit rockslide (6+) or worse
-      // But the spec says "0 rockslide/avalanche/anchor failure" which means NEVER had those tiers
-      // rockslide starts at daysBehind > 5, so free solo requires maxDaysBehind <= 5
-      // Actually re-reading pacing.ts: rockslide = daysBehind 6-9 is wrong.
-      // getPacingTier: daysBehind <= 5 = lost_in_the_woods, daysBehind <= 9 = rockslide
-      // So rockslide = daysBehind 6-9. Free Solo = never had daysBehind >= 6.
-      if (maxDaysBehind <= 5) {
+      // Free Solo: never dropped below 70% (never hit rockslide/avalanche/anchor)
+      if (minPercent >= 70) {
         const freeSoloBadge: BadgeEarned = { badgeId: "free_solo", name: "Free Solo", emoji: "🧗", xp: 40 };
         xpEvents.push({ sourceId: "free_solo", eventType: "pacing_streak", xp: 40 });
         badgesAwarded.push(freeSoloBadge);

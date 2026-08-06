@@ -39,8 +39,7 @@ export default api({
     summitDay: z.string().nullable(),
     pacingStatus: z.string(),
     daysBehind: z.number(),
-    topicsCompleted: z.number(),
-    totalTopics: z.number(),
+    clipsDone: z.number(),
     clipsCompleted: z.number(),
     totalClips: z.number(),
     totalXp: z.number(),
@@ -90,7 +89,7 @@ Summit day: ${input.summitDay ?? "TBD"}${input.extensionDays > 0 ? ` (+${input.e
 PACING: ${pacingLabel[input.pacingStatus] ?? input.pacingStatus}${input.daysBehind > 0 ? ` — ${input.daysBehind} day(s) behind` : ""}${input.isAnchorFailure && input.ascentAdjustmentDay ? ` — Adjustment day: ${input.ascentAdjustmentDay}` : ""}
 
 PROGRESS:
-- Ascent topics: ${input.topicsCompleted}/${input.totalTopics} complete
+- Ascent clips done: ${input.clipsDone}/20
 - Clips completed: ${input.clipsCompleted}/${input.totalClips}
 - Approach (Week 1): ${input.approachComplete ? "Complete ✓" : `${input.approachCompletedCount}/8 modules done`}
 

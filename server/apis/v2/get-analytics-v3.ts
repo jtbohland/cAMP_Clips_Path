@@ -304,77 +304,59 @@ export default api({
     }
     const TOTAL_APPROACH_MODULES = 8;
 
-    // 2f. Topics completed per learner (for topic-based pacing).
-    // A topic = a day_label. Complete = ALL clips with that day_label have a completed session
-    // OR (for resource days) a swiss_army_knife XP event exists for that clip.
-    const TopicsCompletedRow = z.object({ viewer_id: z.string(), topics_completed: z.coerce.number() });
-    const topicsRows = await ctx.integrations.db.query(
-      `WITH clip_days AS (
-        SELECT id, day_label FROM cliptracker_v2_clips WHERE status = 'live'
-      ),
-      -- Session-based completions (video clips)
-      session_completions AS (
-        SELECT s.viewer_id, s.clip_id
+    // 2f. Individual clips completed per learner (clip-level pacing).
+    const ClipsDoneRow = z.object({ viewer_id: z.string(), clips_done: z.coerce.number() });
+    const clipsDoneRows = await ctx.integrations.db.query(
+      `WITH session_completions AS (
+        SELECT DISTINCT s.viewer_id, s.clip_id
         FROM cliptracker_v2_sessions s
-        WHERE s.completed = true
-        GROUP BY s.viewer_id, s.clip_id
+        JOIN cliptracker_v2_clips c ON c.id = s.clip_id
+        WHERE s.completed = true AND c.status = 'live'
       ),
-      -- XP-event-based completions (resource days via swiss_army_knife)
       resource_completions AS (
-        SELECT x.viewer_id, x.clip_id
+        SELECT DISTINCT x.viewer_id, x.clip_id
         FROM cliptracker_v2_xp_events x
         JOIN cliptracker_v2_clips c ON c.id = x.clip_id
         WHERE x.event_type = 'swiss_army_knife' AND c.status = 'live'
       ),
-      -- Union both completion types
-      learner_completions AS (
+      all_completions AS (
         SELECT viewer_id, clip_id FROM session_completions
         UNION
         SELECT viewer_id, clip_id FROM resource_completions
-      ),
-      day_totals AS (
-        SELECT day_label, COUNT(*) AS total FROM clip_days GROUP BY day_label
-      ),
-      learner_day_completions AS (
-        SELECT lc.viewer_id, cd.day_label, COUNT(*) AS completed
-        FROM learner_completions lc
-        JOIN clip_days cd ON cd.id = lc.clip_id
-        GROUP BY lc.viewer_id, cd.day_label
       )
-      SELECT ldc.viewer_id, COUNT(*)::int AS topics_completed
-      FROM learner_day_completions ldc
-      JOIN day_totals dt ON dt.day_label = ldc.day_label
-      WHERE ldc.completed >= dt.total
-      GROUP BY ldc.viewer_id
+      SELECT viewer_id, COUNT(*)::int AS clips_done
+      FROM all_completions
+      GROUP BY viewer_id
       LIMIT 500`,
-      TopicsCompletedRow,
+      ClipsDoneRow,
       undefined,
-      { label: "Topics completed per learner (topic-based pacing)" }
+      { label: "Individual clips done per learner (clip-level pacing)" }
     );
 
-    // Build topics map: viewer_id -> topics_completed
-    const topicsMap = new Map<string, number>();
-    for (const t of topicsRows) {
-      topicsMap.set(t.viewer_id, t.topics_completed);
+    // Build clips done map: viewer_id -> clips_done
+    const clipsDoneMap = new Map<string, number>();
+    for (const c of clipsDoneRows) {
+      clipsDoneMap.set(c.viewer_id, c.clips_done);
     }
 
     // Calculate pacing + tier for each learner
     const totalLiveClips = overviewRows[0]?.total_clips ?? 0;
     const now = new Date();
 
-    // Pacing schedule — must match client/lib/pacing.ts exactly.
-    // 20 weekdays: 5 Approach (no clips) + 15 Ascent (15 topic-days).
-    // Pacing counts TOPICS (completed days), not individual clips.
-    // A topic-day is complete when ALL clips for that day_label are done.
-    const EXPECTED_SESSIONS = [
-      0,                        // 0 weekdays elapsed
-      0, 0, 0, 0, 0,            // weekdays 1–5: Approach
-      1, 2, 3, 4, 5,            // weekdays 6–10: Ascent days 1–5
-      6, 7, 8, 9, 10,           // weekdays 11–15: Ascent days 6–10
-      11, 12, 13, 14, 15,       // weekdays 16–20: Ascent days 11–15
+    // Pacing schedule — clip-level. Must match client/lib/pacing.ts CLIPS_EXPECTED_BY_WEEKDAY.
+    // 20 weekdays: 5 Approach (7 modules) + 15 Ascent days (20 individual clips).
+    // Pacing % = (approach_done + clips_done) / (approach_expected + clips_expected) × 100
+    const CLIPS_EXPECTED_BY_WEEKDAY = [
+      0,   // 0 weekdays elapsed
+      0, 0, 0, 0, 0,            // weekdays 1-5: Approach (no clips)
+      2, 3, 4, 5, 6,            // weekdays 6-10
+      7, 9, 11, 12, 13,         // weekdays 11-15
+      15, 16, 17, 18, 20,       // weekdays 16-20
     ];
+    const WEEK1_EXPECTED_BY_DAY = [0, 2, 4, 5, 6, 7];
+    const WEEK1_TOTAL = 7;
     const TOTAL_WEEKDAYS = 20;
-    const TOTAL_SESSIONS_SCHEDULE = 15;
+    const TOTAL_ASCENT_CLIPS = 20;
 
     function getSummitDay(startDate: Date, extensionDays: number = 0): Date {
       const totalDays = TOTAL_WEEKDAYS + extensionDays;
@@ -419,76 +401,80 @@ export default api({
       return count;
     }
 
-    function getTopicDaysBehind(completed: number, weekdaysElapsed: number): number {
-      if (completed >= TOTAL_SESSIONS_SCHEDULE) return 0;
-      let learnerWeekday = 0;
-      for (let i = 1; i < EXPECTED_SESSIONS.length; i++) {
-        if (completed >= EXPECTED_SESSIONS[i]) learnerWeekday = i;
-        else break;
-      }
-      return Math.max(0, Math.min(weekdaysElapsed, TOTAL_WEEKDAYS) - learnerWeekday);
+    function computeClipPacingPercent(
+      weekdaysElapsed: number,
+      approachDone: number,
+      clipsDone: number,
+    ): number {
+      const capped = Math.min(Math.max(weekdaysElapsed, 0), TOTAL_WEEKDAYS);
+      const approachExpected = capped >= 5 ? WEEK1_TOTAL : (WEEK1_EXPECTED_BY_DAY[capped] ?? 0);
+      const clipsExpected = CLIPS_EXPECTED_BY_WEEKDAY[capped] ?? TOTAL_ASCENT_CLIPS;
+      const totalExpected = approachExpected + clipsExpected;
+      if (totalExpected <= 0) return 100;
+      const totalDone = Math.min(approachDone, WEEK1_TOTAL) + Math.min(clipsDone, TOTAL_ASCENT_CLIPS);
+      return Math.round((totalDone / totalExpected) * 100);
+    }
+
+    function getPacingStatusFromPercent(percent: number): string {
+      if (percent >= 90) return "summit_bound";
+      if (percent >= 80) return "off_the_trail";
+      if (percent >= 70) return "lost_in_the_woods";
+      if (percent >= 60) return "rockslide";
+      if (percent >= 50) return "avalanche_warning";
+      return "anchor_failure";
     }
 
     let onTimeFinishers = 0;
     let anchorFailureCount = 0;
 
     const learners = learnerRows.map(l => {
-      // Weekday-based pacing (5-tier)
+      // Clip-level pacing (% brackets)
       let pacingStatus = "not_started";
       let summitDayStr: string | null = null;
       let isAnchorFailure = false;
       let ascentAdjustmentDayStr: string | null = null;
+
+      const clipsDone = clipsDoneMap.get(l.viewer_id) ?? 0;
+      const approachDone = approachMap.get(l.viewer_id) ?? 0;
 
       if (l.ascent_day_1) {
         const start = new Date(l.ascent_day_1);
         const extDays = l.extension_days;
         const weekdaysElapsed = countWeekdays(start, now);
         const effectiveWeekdaysElapsed = Math.max(0, weekdaysElapsed - extDays);
-        // Use topic-based completion for pacing (not raw clip count)
-        const topicsCompleted = topicsMap.get(l.viewer_id) ?? 0;
-        const daysBehind = getTopicDaysBehind(topicsCompleted, effectiveWeekdaysElapsed);
         const summit = getSummitDay(start, extDays);
         summitDayStr = summit.toISOString().split("T")[0];
         const pastSummit = isAfterDate(summit);
+        const allComplete = clipsDone >= TOTAL_ASCENT_CLIPS && approachDone >= WEEK1_TOTAL;
 
-        if (topicsCompleted >= TOTAL_SESSIONS_SCHEDULE) {
+        if (allComplete) {
           pacingStatus = "completed";
-          // Determine if they finished "on time" based on their tier at completion
-          // On Time = summit_bound (<=0), off_the_trail (<=2), lost_in_the_woods (<=5)
-          // Anchor Failure = rockslide (<=9), avalanche_warning (>9), or past summit
+          // Determine on-time vs late: compute % at completion time
           const completionDate = l.last_completed_at ? new Date(l.last_completed_at) : now;
           const completionWeekdays = countWeekdays(start, completionDate);
           const effectiveCompletionWeekdays = Math.max(0, completionWeekdays - extDays);
-          const daysBehindAtCompletion = getTopicDaysBehind(topicsCompleted, effectiveCompletionWeekdays);
           const summitNorm = new Date(summit.getFullYear(), summit.getMonth(), summit.getDate());
           const completionNorm = new Date(completionDate.getFullYear(), completionDate.getMonth(), completionDate.getDate());
           const finishedAfterSummit = completionNorm > summitNorm;
+          const percentAtCompletion = computeClipPacingPercent(effectiveCompletionWeekdays, approachDone, clipsDone);
 
-          if (finishedAfterSummit || daysBehindAtCompletion > 5) {
+          // Anchor failure = finished after summit OR pacing % was < 70 at completion
+          if (finishedAfterSummit || percentAtCompletion < 70) {
             anchorFailureCount++;
           } else {
             onTimeFinishers++;
           }
-        } else if (daysBehind <= 0) {
-          pacingStatus = "summit_bound";
-        } else if (daysBehind <= 2) {
-          pacingStatus = "off_the_trail";
-        } else if (daysBehind <= 5) {
-          pacingStatus = "lost_in_the_woods";
-        } else if (daysBehind <= 9) {
-          pacingStatus = "rockslide";
-        } else {
-          pacingStatus = "avalanche_warning";
-        }
-
-        // Anchor failure: past summit day and not all topics completed
-        if (pastSummit && topicsCompleted < TOTAL_SESSIONS_SCHEDULE) {
+        } else if (pastSummit) {
+          // Past summit day and incomplete → anchor failure
           isAnchorFailure = true;
           pacingStatus = "anchor_failure";
           anchorFailureCount++;
-          const incompleteTopics = TOTAL_SESSIONS_SCHEDULE - topicsCompleted;
-          const adjDay = getAscentAdjustmentDay(summit, incompleteTopics);
+          const incompleteClips = TOTAL_ASCENT_CLIPS - clipsDone;
+          const adjDay = getAscentAdjustmentDay(summit, incompleteClips);
           ascentAdjustmentDayStr = adjDay.toISOString().split("T")[0];
+        } else {
+          const percent = computeClipPacingPercent(effectiveWeekdaysElapsed, approachDone, clipsDone);
+          pacingStatus = getPacingStatusFromPercent(percent);
         }
       }
 

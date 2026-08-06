@@ -114,6 +114,7 @@ import FixCheckinTimestamps from './v2/fix-checkin-timestamps.js';
 import UpdateQuestionTimestamps from './v2/update-question-timestamps.js';
 import UpdateClipResources from './v2/update-clip-resources.js';
 import GetPublicLeaderboard from './v2/get-public-leaderboard.js';
+import GetPacingPerformance from './v2/get-pacing-performance.js';
 
 
 
@@ -232,6 +233,7 @@ ResetJTSessions,
   UpdateQuestionTimestamps,
   UpdateClipResources,
   GetPublicLeaderboard,
+  GetPacingPerformance,
 } as const;
 
 export default apis;

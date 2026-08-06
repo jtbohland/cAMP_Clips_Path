@@ -5,6 +5,7 @@ import {
   PACING_TIERS,
 } from "@/lib/pacing";
 import type { PatchPill } from "@/lib/patchProgress";
+import PacingPerformanceSection, { type PacingLearner } from "@/components/PacingPerformanceSection";
 
 /** Incomplete approach module for catch-up display */
 export interface ApproachCatchUpItem {
@@ -29,6 +30,10 @@ interface PacingModalProps {
   /** Today's Patch Progress — possible badges/XP for today */
   patchPills?: PatchPill[];
   patchBestCaseXp?: number;
+  /** Pacing performance data for inline leaderboard */
+  pacingLearners?: PacingLearner[];
+  pacingLoading?: boolean;
+  currentViewerId?: string;
   onDismiss: () => void;
 }
 
@@ -46,6 +51,9 @@ export default function PacingModal({
   approachCatchUpItems,
   patchPills,
   patchBestCaseXp,
+  pacingLearners,
+  pacingLoading,
+  currentViewerId,
   onDismiss,
 }: PacingModalProps) {
   const config = PACING_TIERS[tier];
@@ -99,7 +107,7 @@ export default function PacingModal({
           </div>
 
           {/* Progress bar */}
-          <div className="h-2 rounded-full overflow-hidden mb-4" style={{ backgroundColor: `${config.headerBg}20` }}>
+          <div className="h-2 rounded-full overflow-hidden mb-3" style={{ backgroundColor: `${config.headerBg}20` }}>
             <div
               className="h-full rounded-full transition-all duration-500"
               style={{
@@ -108,6 +116,17 @@ export default function PacingModal({
               }}
             />
           </div>
+
+          {/* Pacing Performance */}
+          {pacingLearners && currentViewerId && (
+            <div className="mb-4">
+              <PacingPerformanceSection
+                learners={pacingLearners}
+                currentViewerId={currentViewerId}
+                loading={pacingLoading}
+              />
+            </div>
+          )}
 
           {/* On-pace encouragement */}
           {tier === "summit_bound" && (

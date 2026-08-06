@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { PACING_TIERS, type MissedClip } from "@/lib/pacing";
 import type { ApproachCatchUpItem } from "@/components/PacingModal";
+import PacingPerformanceSection, { type PacingLearner } from "@/components/PacingPerformanceSection";
 
 /**
  * Light Anchor Failure Modal — shown daily after the initial Anchor Failure
@@ -25,6 +26,10 @@ interface LightAnchorModalProps {
   approachCatchUpItems?: ApproachCatchUpItem[];
   /** Called when dismissed */
   onDismiss: () => void;
+  /** Pacing performance data for inline leaderboard */
+  pacingLearners?: PacingLearner[];
+  pacingLoading?: boolean;
+  currentViewerId?: string;
 }
 
 function formatDate(d: Date): string {
@@ -41,6 +46,9 @@ export default function LightAnchorModal({
   approachComplete,
   approachCatchUpItems,
   onDismiss,
+  pacingLearners,
+  pacingLoading,
+  currentViewerId,
 }: LightAnchorModalProps) {
   const config = PACING_TIERS.anchor_failure;
 
@@ -93,7 +101,7 @@ export default function LightAnchorModal({
           </div>
 
           {/* Progress bar */}
-          <div className="h-2 rounded-full overflow-hidden mb-4" style={{ backgroundColor: "#1C191720" }}>
+          <div className="h-2 rounded-full overflow-hidden mb-3" style={{ backgroundColor: "#1C191720" }}>
             <div
               className="h-full rounded-full transition-all duration-500"
               style={{
@@ -102,6 +110,17 @@ export default function LightAnchorModal({
               }}
             />
           </div>
+
+          {/* Pacing Performance */}
+          {pacingLearners && currentViewerId && (
+            <div className="mb-4">
+              <PacingPerformanceSection
+                learners={pacingLearners}
+                currentViewerId={currentViewerId}
+                loading={pacingLoading}
+              />
+            </div>
+          )}
 
           {/* Date tiles */}
           <div className="grid grid-cols-2 gap-3 mb-4">
