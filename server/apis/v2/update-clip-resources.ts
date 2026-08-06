@@ -17,6 +17,7 @@ export default api({
         label: z.string(),
         url: z.string(),
         type: z.string(),
+        note: z.string().optional(),
       })
     ),
   }),
