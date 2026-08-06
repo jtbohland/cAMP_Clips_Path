@@ -137,6 +137,13 @@ export default function PacingPerformanceSection({
         <p className="text-xs text-gray-400 italic py-2">No pacing data available.</p>
       ) : (
         <div className="max-h-[200px] overflow-y-auto rounded-lg border border-gray-100 bg-white/50 divide-y divide-gray-50">
+          {/* Column headers */}
+          <div className="flex items-center gap-2 px-2 py-1 text-[9px] font-semibold text-gray-400 uppercase tracking-wider sticky top-0 bg-white/90 backdrop-blur-sm border-b border-gray-100">
+            <span className="w-5 text-right shrink-0">#</span>
+            <span className="flex-1 min-w-0">Name</span>
+            <span>Status</span>
+            <span className="w-9 text-right shrink-0">%</span>
+          </div>
           {sortedLearners.map((learner) => (
             <LearnerRow
               key={learner.viewerId}

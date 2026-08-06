@@ -222,7 +222,7 @@ export default api({
       leaderboard: rows.map((r, i) => {
         const clipsDone = clipsDoneMap.get(r.viewer_id) ?? 0;
         const approachDone = approachMap.get(r.viewer_id) ?? 0;
-        const allComplete = clipsDone >= TOTAL_ASCENT_CLIPS && approachDone >= WEEK1_TOTAL;
+        const allComplete = clipsDone >= TOTAL_ASCENT_CLIPS;
 
         let pacingStatus = "not_started";
         if (r.ascent_day_1 || approachDone > 0 || clipsDone > 0) {

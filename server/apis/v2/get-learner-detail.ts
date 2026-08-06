@@ -682,7 +682,7 @@ export default api({
       const todayNorm = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const summitNorm = new Date(summit.getFullYear(), summit.getMonth(), summit.getDate());
       const pastSummit = todayNorm > summitNorm;
-      const allComplete = clipsDone >= TOTAL_ASCENT_CLIPS && approachCompletedCount >= WEEK1_TOTAL;
+      const allComplete = clipsDone >= TOTAL_ASCENT_CLIPS;
 
       if (allComplete) {
         pacingStatus = "completed";

@@ -238,8 +238,8 @@ export default api({
       const clipsDone = clipsDoneMap.get(l.viewer_id) ?? 0;
       const approachDone = approachMap.get(l.viewer_id) ?? 0;
 
-      // Check completion: all 20 clips + all 7 approach items
-      const allComplete = clipsDone >= TOTAL_ASCENT_CLIPS && approachDone >= WEEK1_TOTAL;
+      // Check completion: all 20 ascent clips done = completed
+      const allComplete = clipsDone >= TOTAL_ASCENT_CLIPS;
 
       // Skip completed learners
       if (allComplete) continue;

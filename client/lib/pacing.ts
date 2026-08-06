@@ -584,6 +584,7 @@ export function getUnifiedPacingTier(
   allComplete: boolean,
   afterSummitDay: boolean,
 ): PacingTier {
+  // allComplete is based on clips only (approach is a pre-req, not a gate)
   if (allComplete) return "completed";
   if (afterSummitDay) return "anchor_failure";
 
