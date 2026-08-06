@@ -443,6 +443,7 @@ export default function Week1Page({ viewerId, viewerName, isAdmin, pacingLearner
         description="Amplitude's qualification framework — the backbone of every deal"
         courseUrl="https://lms.amplitude.com/new/ui/learner/training/programs/2035017193528628430?series=2035017193528628430"
         gearResources={[
+          { emoji: "📞", label: "2026 Q3 - First Call Deck", url: "https://docs.google.com/presentation/d/1yFnrFlH0IsNs_jsB2CtklfUzqEpnLPPOFvi_DVTm5RE/edit?slide=id.g3f95e20dd30_1_0#slide=id.g3f95e20dd30_1_0" },
           { emoji: "📚", label: "Discovery Question Repository", url: "https://docs.google.com/document/d/11po0r9LxK_tiooyYb64bdDeqhIhRX_7k-HSlPppf1A4/edit?tab=t.5c34f94kg7l4" },
         ]}
         screenshotLabel="Upload MindTickle completion screenshot"
@@ -474,12 +475,12 @@ export default function Week1Page({ viewerId, viewerName, isAdmin, pacingLearner
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">🎒 cAMP Gear</p>
             <div className="flex flex-wrap gap-2">
               <a
-                href="https://docs.google.com/presentation/d/1yFnrFlH0IsNs_jsB2CtklfUzqEpnLPPOFvi_DVTm5RE/edit?slide=id.g3f95e20dd30_1_0#slide=id.g3f95e20dd30_1_0"
+                href="https://docs.google.com/document/d/1hTUt9RohKhpwOOoD1q5doU_N5do-NRAP2jYhtlDVoBg/edit?usp=sharing"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-colors"
               >
-                <span>📞</span> 2026 Q3 - First Call Deck ↗
+                <span>📋</span> Discovery Guide for Statsig Lands ↗
               </a>
               <a
                 href="https://app.spekit.co/app/wiki/?&topic=1d04d90d-e516-408c-bab2-837788fed772&tag=Platform%20and%20Products"
