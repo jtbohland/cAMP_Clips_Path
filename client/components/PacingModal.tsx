@@ -74,8 +74,8 @@ export default function PacingModal({
       onClick={handleBackdropClick}
     >
       <div
-        className="w-full max-w-md rounded-2xl overflow-hidden shadow-2xl"
-        style={{ border: `2px solid ${config.borderColor}` }}
+        className="w-full max-w-md rounded-2xl overflow-hidden shadow-2xl flex flex-col"
+        style={{ border: `2px solid ${config.borderColor}`, maxHeight: "90vh" }}
       >
         {/* Header */}
         <div
@@ -87,9 +87,9 @@ export default function PacingModal({
           <p className="text-sm mt-1 opacity-90">{config.message}</p>
         </div>
 
-        {/* Body */}
+        {/* Body — scrollable when content overflows */}
         <div
-          className="px-6 py-5"
+          className="px-6 py-5 overflow-y-auto flex-1 min-h-0"
           style={{ backgroundColor: config.bodyBg, color: config.bodyText }}
         >
           {/* Progress summary */}
@@ -274,7 +274,13 @@ export default function PacingModal({
             </div>
           )}
 
-          {/* CTA Button */}
+        </div>
+
+        {/* CTA Button — pinned at bottom, always visible */}
+        <div
+          className="px-6 py-4 shrink-0"
+          style={{ backgroundColor: config.bodyBg }}
+        >
           <button
             onClick={onDismiss}
             className="w-full py-3 rounded-lg text-sm font-bold transition-opacity hover:opacity-90"
