@@ -92,21 +92,34 @@ export default function ChallengerCard({
       </div>
 
       <div className="bg-white divide-y divide-gray-100">
-        {/* Resources */}
+        {/* Course */}
         <div className="px-5 py-3">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Resources</p>
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Course</p>
+          <a href="https://deeplinks.mindtickle.com/ZSbb3886zTb" target="_blank" rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100 transition-colors shadow-sm">
+            <span className="text-lg">🧠</span> MindTickle Course ↗
+          </a>
+        </div>
+
+        {/* 🎒 cAMP Gear */}
+        <div className="px-5 py-3">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">🎒 cAMP Gear</p>
           <div className="flex flex-wrap gap-2">
-            <a href="https://deeplinks.mindtickle.com/ZSbb3886zTb" target="_blank" rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 transition-colors">
-              <span>🧠</span> MindTickle Course ↗
+            <a href="https://hub.challengerinc.com/learn/dashboard" target="_blank" rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-colors">
+              <span>🚀</span> Challenger Hub ↗
+            </a>
+            <a href="https://drive.google.com/file/d/1yr1Z4GyywQl0GTVTZBzBP11dXhAWWH6X/view?usp=drive_link" target="_blank" rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-colors">
+              <span>📖</span> Challenger Yourself Guide ↗
             </a>
             <a href="https://app.glean.com/chat/agents/ccf97264426040a7841092997a113889?qe=https%3A%2F%2Famplitude-be.glean.com" target="_blank" rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-colors">
-              <span>🔍</span> Glean Agent 1 ↗ <span className="ml-1 text-[10px] opacity-70">⛺ cAMP Gear</span>
+              <span>🔍</span> Glean Agent 1 ↗
             </a>
             <a href="https://app.glean.com/chat/agents/77ad9ce8bbbf424fa3ec467f3f477b5c?qe=https%3A%2F%2Famplitude-be.glean.com" target="_blank" rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-colors">
-              <span>🔍</span> Glean Agent 2 ↗ <span className="ml-1 text-[10px] opacity-70">⛺ cAMP Gear</span>
+              <span>🔍</span> Glean Agent 2 ↗
             </a>
           </div>
         </div>
