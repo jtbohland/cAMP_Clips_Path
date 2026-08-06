@@ -5,7 +5,6 @@ type Resource = {
   emoji: string;
   label: string;
   url: string;
-  isCampGear?: boolean;
 };
 
 type ModuleCardProps = {
@@ -13,7 +12,9 @@ type ModuleCardProps = {
   emoji: string;
   title: string;
   description: string;
-  resources: Resource[];
+  courseUrl: string;
+  courseLabel?: string;
+  gearResources?: Resource[];
   screenshotLabel: string;
   reflectionPrompt: string;
   isSignedOff: boolean;
@@ -33,7 +34,9 @@ export default function ModuleCard({
   emoji,
   title,
   description,
-  resources,
+  courseUrl,
+  courseLabel = "MindTickle Course",
+  gearResources = [],
   screenshotLabel,
   reflectionPrompt,
   isSignedOff,
@@ -126,29 +129,40 @@ export default function ModuleCard({
       </div>
 
       <div className="bg-white divide-y divide-gray-100">
-        {/* Resources */}
+        {/* Course */}
         <div className="px-5 py-3">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Resources</p>
-          <div className="flex flex-wrap gap-2">
-            {resources.map((r) => (
-              <a
-                key={r.url}
-                href={r.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                  r.isCampGear
-                    ? "bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100"
-                    : "bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100"
-                }`}
-              >
-                <span>{r.emoji}</span>
-                {r.label} ↗
-                {r.isCampGear && <span className="ml-1 text-[10px] opacity-70">⛺ cAMP Gear</span>}
-              </a>
-            ))}
-          </div>
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Course</p>
+          <a
+            href={courseUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100 transition-colors shadow-sm"
+          >
+            <span className="text-lg">🧠</span>
+            {courseLabel} ↗
+          </a>
         </div>
+
+        {/* 🎒 cAMP Gear */}
+        {gearResources.length > 0 && (
+          <div className="px-5 py-3">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">🎒 cAMP Gear</p>
+            <div className="flex flex-wrap gap-2">
+              {gearResources.map((r) => (
+                <a
+                  key={r.url}
+                  href={r.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-colors"
+                >
+                  <span>{r.emoji}</span>
+                  {r.label} ↗
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Screenshot Upload */}
         <div className="px-5 py-3">

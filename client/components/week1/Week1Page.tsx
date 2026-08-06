@@ -441,9 +441,9 @@ export default function Week1Page({ viewerId, viewerName, isAdmin, pacingLearner
         emoji="🧱"
         title="MEDDPICC"
         description="Amplitude's qualification framework — the backbone of every deal"
-        resources={[
-          { emoji: "🧠", label: "MindTickle Course", url: "https://lms.amplitude.com/new/ui/learner/training/programs/2035017193528628430?series=2035017193528628430" },
-          { emoji: "📚", label: "Discovery Question Repository", url: "https://docs.google.com/document/d/11po0r9LxK_tiooyYb64bdDeqhIhRX_7k-HSlPppf1A4/edit?tab=t.5c34f94kg7l4", isCampGear: true },
+        courseUrl="https://lms.amplitude.com/new/ui/learner/training/programs/2035017193528628430?series=2035017193528628430"
+        gearResources={[
+          { emoji: "📚", label: "Discovery Question Repository", url: "https://docs.google.com/document/d/11po0r9LxK_tiooyYb64bdDeqhIhRX_7k-HSlPppf1A4/edit?tab=t.5c34f94kg7l4" },
         ]}
         screenshotLabel="Upload MindTickle completion screenshot"
         reflectionPrompt={MEDDPICC_REFLECTION}
@@ -469,17 +469,33 @@ export default function Week1Page({ viewerId, viewerName, isAdmin, pacingLearner
         </div>
 
         <div className="bg-white divide-y divide-gray-100">
-          {/* Resources */}
+          {/* 🎒 cAMP Gear */}
           <div className="px-5 py-3">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Resources</p>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">🎒 cAMP Gear</p>
             <div className="flex flex-wrap gap-2">
+              <a
+                href="https://docs.google.com/presentation/d/1yFnrFlH0IsNs_jsB2CtklfUzqEpnLPPOFvi_DVTm5RE/edit?slide=id.g3f95e20dd30_1_0#slide=id.g3f95e20dd30_1_0"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-colors"
+              >
+                <span>📞</span> 2026 Q3 - First Call Deck ↗
+              </a>
               <a
                 href="https://app.spekit.co/app/wiki/?&topic=1d04d90d-e516-408c-bab2-837788fed772&tag=Platform%20and%20Products"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-colors"
               >
-                <span>🐙</span> Spekit ↗ <span className="ml-1 text-[10px] opacity-70">⛺ cAMP Gear</span>
+                <span>🐙</span> Spekit ↗
+              </a>
+              <a
+                href="https://docs.google.com/presentation/d/1WF9CXT9P5pI8CoxAxvBJKFX8Oe9F1H3S30hDVWeJPgY/edit?slide=id.p1#slide=id.p1"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-colors"
+              >
+                <span>📊</span> Selling Statsig ↗
               </a>
             </div>
           </div>
