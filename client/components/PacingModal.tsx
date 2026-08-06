@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   type PacingTier,
   type MissedClip,
@@ -57,6 +57,24 @@ export default function PacingModal({
   onDismiss,
 }: PacingModalProps) {
   const config = PACING_TIERS[tier];
+
+  // 15-second read timer — Summit Bound skips it
+  const skipTimer = tier === "summit_bound" || tier === "completed";
+  const [secondsLeft, setSecondsLeft] = useState(skipTimer ? 0 : 15);
+
+  useEffect(() => {
+    if (skipTimer) { setSecondsLeft(0); return; }
+    setSecondsLeft(15);
+    const id = setInterval(() => {
+      setSecondsLeft((prev) => {
+        if (prev <= 1) { clearInterval(id); return 0; }
+        return prev - 1;
+      });
+    }, 1_000);
+    return () => clearInterval(id);
+  }, [skipTimer]);
+
+  const timerActive = secondsLeft > 0;
 
   const handleBackdropClick = useCallback(
     (e: React.MouseEvent) => {
@@ -283,13 +301,16 @@ export default function PacingModal({
         >
           <button
             onClick={onDismiss}
-            className="w-full py-3 rounded-lg text-sm font-bold transition-opacity hover:opacity-90"
+            disabled={timerActive}
+            className="w-full py-3 rounded-lg text-sm font-bold transition-all"
             style={{
-              backgroundColor: config.headerBg,
+              backgroundColor: timerActive ? `${config.headerBg}60` : config.headerBg,
               color: config.headerText,
+              cursor: timerActive ? "not-allowed" : "pointer",
+              opacity: timerActive ? 0.6 : 1,
             }}
           >
-            🎞️ Continue to Clips
+            {timerActive ? `⏳ ${secondsLeft}s` : "🎞️ Continue to Clips"}
           </button>
         </div>
       </div>

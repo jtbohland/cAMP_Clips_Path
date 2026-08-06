@@ -474,12 +474,28 @@ export default function Week1Page({ viewerId, viewerName, isAdmin, pacingLearner
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">🎒 cAMP Gear</p>
             <div className="flex flex-wrap gap-2">
               <a
+                href="https://docs.google.com/presentation/d/1yFnrFlH0IsNs_jsB2CtklfUzqEpnLPPOFvi_DVTm5RE/edit?slide=id.g3f95e20dd30_1_0#slide=id.g3f95e20dd30_1_0"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-colors"
+              >
+                <span>📞</span> 2026 Q3 - First Call Deck ↗
+              </a>
+              <a
                 href="https://app.spekit.co/app/wiki/?&topic=1d04d90d-e516-408c-bab2-837788fed772&tag=Platform%20and%20Products"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-colors"
               >
                 <span>🐙</span> Spekit ↗
+              </a>
+              <a
+                href="https://docs.google.com/presentation/d/1WF9CXT9P5pI8CoxAxvBJKFX8Oe9F1H3S30hDVWeJPgY/edit?slide=id.p1#slide=id.p1"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-colors"
+              >
+                <span>📊</span> Selling Statsig ↗
               </a>
             </div>
           </div>

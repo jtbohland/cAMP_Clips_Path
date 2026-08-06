@@ -316,7 +316,7 @@ export default function LeaderboardPage() {
                 <span className="text-center">#</span>
                 <span>Name</span>
                 <span className="text-center">Role</span>
-                <span className="text-center">Timezone</span>
+                <span className="text-center">Geo</span>
                 <span className="text-center">XP</span>
                 <span className="text-center">Clips</span>
                 <span className="text-center">Badges</span>
