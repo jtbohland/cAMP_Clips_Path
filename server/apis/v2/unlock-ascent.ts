@@ -4,7 +4,7 @@ const APPS_DB = "c6e32cf4-ca66-42ae-aeb3-58c84ffae574";
 
 /**
  * Unlocks "The Ascent" for a viewer after completing all Week 1 requirements.
- * Awards the approach_complete badge + 35 XP if completed within 5 weekdays.
+ * Awards the approach_complete badge + 25 XP if completed within 5 weekdays.
  */
 export default api({
   name: "UnlockAscent",
@@ -123,25 +123,25 @@ export default api({
       );
       earnedBadge = true;
 
-      // Award 35 XP (on-time: 5 per module × 3 + 5 for W&D + 15 speed bonus)
+      // Award 25 XP for Peak Lift (on-time approach completion)
       await ctx.integrations.db.execute(
         `INSERT INTO cliptracker_v2_xp_events (viewer_id, clip_id, event_type, source_id, xp_amount)
-         VALUES ($1, $2, 'milestone', 'approach_complete', 35)
+         VALUES ($1, $2, 'milestone', 'approach_complete', 25)
          ON CONFLICT (viewer_id, source_id, clip_id) DO NOTHING`,
         [viewerId, approachClipId],
         { label: "Award approach XP (on-time)" }
       );
-      earnedXp = 35;
+      earnedXp = 25;
     } else {
-      // Late approach: 17 XP (5 per module × 3 + 2 for W&D), no badge
+      // Late approach: 10 XP (reduced — incentivize finishing on time), no badge
       await ctx.integrations.db.execute(
         `INSERT INTO cliptracker_v2_xp_events (viewer_id, clip_id, event_type, source_id, xp_amount)
-         VALUES ($1, $2, 'milestone', 'approach_complete_late', 17)
+         VALUES ($1, $2, 'milestone', 'approach_complete_late', 10)
          ON CONFLICT (viewer_id, source_id, clip_id) DO NOTHING`,
         [viewerId, approachClipId],
         { label: "Award approach XP (late)" }
       );
-      earnedXp = 17;
+      earnedXp = 10;
     }
 
     ctx.log.info("Ascent unlocked", { viewerId, earnedBadge, earnedXp });

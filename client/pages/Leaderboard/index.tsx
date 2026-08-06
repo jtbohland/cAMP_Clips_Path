@@ -122,7 +122,7 @@ export default function LeaderboardPage() {
   const leaderboard = data?.leaderboard ?? [];
 
   return (
-    <div className="flex flex-col size-full overflow-auto" style={{ backgroundColor: "#ECFDF5" }}>
+    <div className="flex flex-col w-full min-h-full" style={{ backgroundColor: "#ECFDF5" }}>
       {/* Header */}
       <div className="border-b border-green-900/20 px-6 py-4" style={{ backgroundColor: "#1B4332" }}>
         <div className="flex items-center justify-between max-w-4xl mx-auto w-full">

@@ -107,6 +107,8 @@ import TrackModalInteraction from './v2/track-modal-interaction.js';
 import GetModalInteractions from './v2/get-modal-interactions.js';
 import FixSwappedVideos from './v2/fix-swapped-videos.js';
 import BackfillApproachXP from './v2/backfill-approach-xp.js';
+import BackfillApproachModuleXP from './v2/backfill-approach-module-xp.js';
+import FixLatePeakLift from './v2/fix-late-peak-lift.js';
 import FixChrisRecoveryFlags from './v2/fix-chris-recovery-flags.js';
 import GetLearnerDetail from './v2/get-learner-detail.js';
 import GenerateLearnerSummary from './v2/generate-learner-summary.js';
@@ -226,6 +228,8 @@ ResetJTSessions,
   GetModalInteractions,
   FixSwappedVideos,
   BackfillApproachXP,
+  BackfillApproachModuleXP,
+  FixLatePeakLift,
   FixChrisRecoveryFlags,
   GetLearnerDetail,
   GenerateLearnerSummary,

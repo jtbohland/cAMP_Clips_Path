@@ -92,7 +92,23 @@ export default api({
       { label: "Insert W&D verification" }
     );
 
-    ctx.log.info("W&D verification submitted", { viewerId, product, scenario, score });
+    // Award 10 XP for Approach Accomplishment (Wheel & Deal module)
+    const ClipIdSchema = z.object({ id: z.string() });
+    const sentinelClip = await ctx.integrations.db.query(
+      `SELECT id FROM cliptracker_v2_clips WHERE sort_order = 1 LIMIT 1`,
+      ClipIdSchema, [], { label: "Get sentinel clip for approach module XP" }
+    );
+    const approachClipId = sentinelClip[0]?.id ?? viewerId;
+
+    await ctx.integrations.db.execute(
+      `INSERT INTO cliptracker_v2_xp_events (viewer_id, clip_id, event_type, source_id, xp_amount)
+       VALUES ($1, $2, 'base', 'approach_module_wheel_deal', 10)
+       ON CONFLICT (viewer_id, source_id, clip_id) DO NOTHING`,
+      [viewerId, approachClipId],
+      { label: "Award approach module XP: wheel_deal" }
+    );
+
+    ctx.log.info("W&D verification submitted + XP awarded", { viewerId, product, scenario, score });
     return { success: true, alreadySubmitted: false, validationError: null };
   },
 });

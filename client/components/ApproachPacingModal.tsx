@@ -207,7 +207,7 @@ export default function ApproachPacingModal({
             <div className="rounded-lg px-4 py-3 mb-4 border border-red-400 bg-red-50">
               <p className="text-sm font-bold text-red-800">⏰ Due Today</p>
               <p className="text-xs text-red-700 mt-1 leading-relaxed">
-                Today is the last day to finish The Approach on time and earn the 🚡 Peak Lift badge (+35 XP). Complete all remaining modules to Begin The Ascent!
+                Today is the last day to finish The Approach on time and earn the 🚡 Peak Lift badge (+25 XP). Complete all remaining modules to Begin The Ascent!
               </p>
             </div>
           )}
