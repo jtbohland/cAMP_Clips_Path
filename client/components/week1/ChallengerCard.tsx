@@ -105,7 +105,7 @@ export default function ChallengerCard({
         <div className="px-5 py-3">
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">🎒 cAMP Gear</p>
           <div className="flex flex-wrap gap-2">
-            <a href="https://hub.challengerinc.com/redeem/68004c18-ca2d-4315-a8f1-24b0c444bcb1osano-learners" target="_blank" rel="noopener noreferrer"
+            <a href="https://hub.challengerinc.com/redeem/1bff9c75-94e3-405f-a673-33f8eb820209amplitude-seller" target="_blank" rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-colors">
               <span>🚀</span> Challenger Hub ↗
             </a>
