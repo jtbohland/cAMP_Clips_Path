@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate } from "react-router";
 import { useApiData } from "@/hooks/useApiData.js";
 import { useViewer } from "@/components/ViewerContext";
@@ -31,15 +32,15 @@ const TOP3_BORDER: Record<number, string> = {
 
 // ─── Pill configs (match LearnerTile + Analytics exactly) ────────────────────
 
-const PACING: Record<string, { label: string; bg: string; text: string }> = {
-  summit_bound:      { label: "Summit Bound",   bg: "bg-green-50",   text: "text-green-700" },
-  off_the_trail:     { label: "Off the Trail",  bg: "bg-amber-50",   text: "text-amber-700" },
-  lost_in_the_woods: { label: "Lost in Woods",  bg: "bg-orange-50",  text: "text-orange-700" },
-  rockslide:         { label: "Rockslide",       bg: "bg-red-50",     text: "text-red-700" },
-  avalanche_warning: { label: "Avalanche",       bg: "bg-blue-50",    text: "text-blue-900" },
-  anchor_failure:    { label: "Anchor Failure",  bg: "bg-red-100",    text: "text-red-800" },
-  completed:         { label: "Completed",       bg: "bg-indigo-50",  text: "text-indigo-700" },
-  not_started:       { label: "Not Started",     bg: "bg-gray-50",    text: "text-gray-500" },
+const PACING: Record<string, { label: string; emoji: string; bg: string; text: string }> = {
+  summit_bound:      { label: "Summit Bound",   emoji: "🧗🏻‍♂️", bg: "bg-green-50",   text: "text-green-700" },
+  off_the_trail:     { label: "Off the Trail",  emoji: "🧭",   bg: "bg-amber-50",   text: "text-amber-700" },
+  lost_in_the_woods: { label: "Lost in Woods",  emoji: "🌲",   bg: "bg-orange-50",  text: "text-orange-700" },
+  rockslide:         { label: "Rockslide",       emoji: "🪨",   bg: "bg-red-50",     text: "text-red-700" },
+  avalanche_warning: { label: "Avalanche",       emoji: "❄️",   bg: "bg-blue-50",    text: "text-blue-900" },
+  anchor_failure:    { label: "Anchor Failure",  emoji: "⛓️‍💥", bg: "bg-red-100",    text: "text-red-800" },
+  completed:         { label: "Completed",       emoji: "🏔️✨", bg: "bg-indigo-50",  text: "text-indigo-700" },
+  not_started:       { label: "Not Started",     emoji: "🏕️",   bg: "bg-gray-50",    text: "text-gray-500" },
 };
 
 const ROLE_PILL: Record<string, { bg: string; text: string; border: string }> = {
@@ -82,9 +83,108 @@ function TimezonePill({ timezone }: { timezone: string | null }) {
 function PacingPill({ status }: { status: string }) {
   const p = PACING[status] ?? PACING.not_started;
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold whitespace-nowrap ${p.bg} ${p.text}`}>
-      {p.label}
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold whitespace-nowrap ${p.bg} ${p.text}`}>
+      {p.emoji} {p.label}
     </span>
+  );
+}
+
+// ─── Status Key (collapsible legend) ─────────────────────────────────────────
+
+const STATUS_KEY: Array<{
+  key: string;
+  emoji: string;
+  label: string;
+  bg: string;
+  text: string;
+  description: string;
+}> = [
+  {
+    key: "summit_bound",
+    emoji: "🧗🏻‍♂️",
+    label: "Summit Bound",
+    bg: "bg-green-50",
+    text: "text-green-700",
+    description: "On pace or ahead — pacing ≥ 90%. Keep climbing!",
+  },
+  {
+    key: "off_the_trail",
+    emoji: "🧭",
+    label: "Off the Trail",
+    bg: "bg-amber-50",
+    text: "text-amber-700",
+    description: "Slightly behind — pacing 80–89%. A clip or two will get you back.",
+  },
+  {
+    key: "lost_in_the_woods",
+    emoji: "🌲",
+    label: "Lost in Woods",
+    bg: "bg-orange-50",
+    text: "text-orange-700",
+    description: "A few days behind — pacing 70–79%. Time to find the trail again.",
+  },
+  {
+    key: "rockslide",
+    emoji: "🪨",
+    label: "Rockslide",
+    bg: "bg-red-50",
+    text: "text-red-700",
+    description: "Significantly behind — pacing 60–69%. Catch-up mode activated.",
+  },
+  {
+    key: "avalanche_warning",
+    emoji: "❄️",
+    label: "Avalanche",
+    bg: "bg-blue-50",
+    text: "text-blue-900",
+    description: "At risk — pacing 50–59%. Urgent action needed to stay in the program.",
+  },
+  {
+    key: "anchor_failure",
+    emoji: "⛓️‍💥",
+    label: "Anchor Failure",
+    bg: "bg-red-100",
+    text: "text-red-800",
+    description: "Past Summit Day deadline or pacing below 50%. Working to get back on track.",
+  },
+  {
+    key: "completed",
+    emoji: "🏔️✨",
+    label: "Completed",
+    bg: "bg-indigo-50",
+    text: "text-indigo-700",
+    description: "Finished all 20 Ascent clips. Summit reached!",
+  },
+];
+
+function StatusKeySection() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="mb-3">
+      <button
+        onClick={() => setOpen(!open)}
+        className="inline-flex items-center gap-1.5 text-xs font-medium text-green-800/70 hover:text-green-900 transition-colors"
+      >
+        <span>{open ? "▾" : "▸"}</span>
+        <span>ℹ️ What do these statuses mean?</span>
+      </button>
+      {open && (
+        <div className="mt-2 rounded-lg border border-green-200/60 bg-white/80 backdrop-blur-sm p-4 space-y-2">
+          {STATUS_KEY.map((s) => (
+            <div key={s.key} className="flex items-start gap-3">
+              <span
+                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold whitespace-nowrap shrink-0 ${s.bg} ${s.text}`}
+              >
+                {s.emoji} {s.label}
+              </span>
+              <span className="text-xs text-gray-600 leading-relaxed pt-0.5">
+                {s.description}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -200,6 +300,8 @@ export default function LeaderboardPage() {
       {/* Content */}
       <div className="flex-1">
         <div className="max-w-4xl mx-auto w-full px-6 py-6">
+          <StatusKeySection />
+
           {loading ? (
             <LeaderboardSkeleton />
           ) : isError ? (
