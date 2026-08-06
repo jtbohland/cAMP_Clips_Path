@@ -118,7 +118,7 @@ export default function ApproachDeadlineModal({
           {/* Catch-up XP note */}
           <div className="rounded-lg px-4 py-2.5 text-center mb-4 bg-amber-50 border border-amber-200">
             <p className="text-xs text-amber-800">
-              Complete The Approach now → +17 XP (no 🚡 Peak Lift badge for late finish)
+              Complete The Approach now → +10 XP (no 🚡 Peak Lift badge for late finish)
             </p>
           </div>
 

@@ -74,13 +74,13 @@ const approachExhibits: MuseumExhibit[] = [
     id: "first-achievement-badge",
     title: "First Achievement (with Badge)",
     trigger: "Begin Ascent click — completed Approach within 5 weekdays",
-    render: () => <FirstAchievementMockup earnedXp={35} earnedBadge={true} />,
+    render: () => <FirstAchievementMockup earnedXp={25} earnedBadge={true} />,
   },
   {
     id: "first-achievement-no-badge",
     title: "First Achievement (no Badge)",
     trigger: "Begin Ascent click — Approach took longer than 5 weekdays",
-    render: () => <FirstAchievementMockup earnedXp={17} earnedBadge={false} />,
+    render: () => <FirstAchievementMockup earnedXp={10} earnedBadge={false} />,
   },
   {
     id: "approach-pacing-summit-bound",
@@ -1099,7 +1099,7 @@ function CheckinMockup({ type }: { type: "approach" | "week2" | "week3" | "summi
                 <div className="p-4 bg-gradient-to-b from-gray-50 to-white">
                   <div className={`grid ${type !== "approach" ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-2"} gap-4`}>
                     <div className="text-center">
-                      <p className="text-xl font-bold text-indigo-600">{type === "summit" ? "485" : type === "week3" ? "340" : type === "week2" ? "210" : "35"}</p>
+                      <p className="text-xl font-bold text-indigo-600">{type === "summit" ? "485" : type === "week3" ? "340" : type === "week2" ? "210" : "25"}</p>
                       <p className="text-xs text-gray-500 mt-0.5">Total XP</p>
                     </div>
                     <div className="text-center">
@@ -1318,7 +1318,7 @@ function CheckinMockup({ type }: { type: "approach" | "week2" | "week3" | "summi
                       <p>I just completed The Approach — the first phase of cAMP Ascent!</p>
                       <div className="pl-3 border-l-2 border-gray-200 space-y-1">
                         <p className="font-semibold text-gray-800">📊 Stats:</p>
-                        <p>• XP: 35 · Tier: 🏕️ Base Camper</p>
+                        <p>• XP: 25 · Tier: 🏕️ Base Camper</p>
                       </div>
                       <div className="pl-3 border-l-2 border-gray-200 space-y-1">
                         <p className="font-semibold text-gray-800">✍🏽 Module Reflections:</p>

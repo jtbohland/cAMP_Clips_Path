@@ -12,6 +12,7 @@ const TIERS = [
 ];
 
 const BASE_XP = [
+  { action: "Approach Accomplishment", xp: 10, emoji: "🏕️", description: "Complete a module in The Approach (MEDDPICC, Challenger, cAMP 101, or Wheel & Deal)" },
   { action: "Watch a clip", xp: 3, emoji: "🎬", description: "Complete any clip session" },
   { action: "Trail Markers: 5/5", xp: 5, emoji: "🪧", description: "Perfect score on in-video questions" },
   { action: "Trail Markers: 4/5", xp: 3, emoji: "🪧", description: "Strong performance on questions" },
@@ -51,8 +52,8 @@ const SUMMIT_REWARDS = [
 ];
 
 const MILESTONE_BONUSES = [
+  { badge: "Peak Lift", xp: 25, emoji: "🚡", condition: "Finish The Approach in 5 days or less — you rode the gondola and you're ready to climb" },
   { badge: "First Step", xp: 5, emoji: "🎬", condition: "Complete Clip 1" },
-  { badge: "Peak Lift", xp: 35, emoji: "🚡", condition: "Finish The Approach in 5 days or less — you rode the gondola and you're ready to climb" },
   { badge: "Halfway Up", xp: 15, emoji: "🏔️", condition: "Complete Day 10 — review all resources + submit reflection" },
   { badge: "Into the Summit Push", xp: 10, emoji: "🪢", condition: "Unlock Week 4 (complete Clip 10)" },
   { badge: "The Ranger's Secret", xp: 20, emoji: "🌲", condition: "Complete all 18 clips without EVER triggering Weather the Storm" },
@@ -119,7 +120,7 @@ export default function XPlanationPage() {
             ))}
           </div>
           <p className="text-xs text-gray-500 mt-3 italic">
-            Max base XP per clip: 12 (watch + 5/5 trail markers + first-pass unlock)
+            Max base XP per clip: 12 (watch + 5/5 trail markers + first-pass unlock). Approach modules: 40 XP total (4 modules × 10 XP each).
           </p>
         </Section>
 

@@ -69,7 +69,24 @@ export default api({
       { label: "Insert module sign-off" }
     );
 
-    ctx.log.info("Module sign-off submitted", { viewerId, moduleKey });
+    // Award 10 XP for Approach Accomplishment
+    // Use clip at sort_order=1 as sentinel (consistent with approach_complete)
+    const ClipIdSchema = z.object({ id: z.string() });
+    const sentinelClip = await ctx.integrations.db.query(
+      `SELECT id FROM cliptracker_v2_clips WHERE sort_order = 1 LIMIT 1`,
+      ClipIdSchema, [], { label: "Get sentinel clip for approach module XP" }
+    );
+    const approachClipId = sentinelClip[0]?.id ?? viewerId;
+
+    await ctx.integrations.db.execute(
+      `INSERT INTO cliptracker_v2_xp_events (viewer_id, clip_id, event_type, source_id, xp_amount)
+       VALUES ($1, $2, 'base', $3, 10)
+       ON CONFLICT (viewer_id, source_id, clip_id) DO NOTHING`,
+      [viewerId, approachClipId, `approach_module_${moduleKey}`],
+      { label: `Award approach module XP: ${moduleKey}` }
+    );
+
+    ctx.log.info("Module sign-off submitted + XP awarded", { viewerId, moduleKey });
     return { success: true, alreadySubmitted: false };
   },
 });
