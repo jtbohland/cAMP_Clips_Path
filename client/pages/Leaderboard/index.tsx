@@ -1,5 +1,33 @@
 import { useNavigate } from "react-router";
 import { useApiData } from "@/hooks/useApiData.js";
+import { useViewer } from "@/components/ViewerContext";
+
+// ─── Pacing row highlight colors (light tinted backgrounds for "you" row) ────
+
+const PACING_ROW_BG: Record<string, string> = {
+  summit_bound:      "#D1FAE520", // green tint
+  off_the_trail:     "#FEF3C740", // amber tint
+  lost_in_the_woods: "#FFEDD540", // orange tint
+  rockslide:         "#FEE2E240", // red tint
+  avalanche_warning: "#DBEAFE40", // blue tint
+  anchor_failure:    "#FEE2E250", // red tint
+  completed:         "#E0E7FF30", // indigo tint
+  not_started:       "#F3F4F630", // gray tint
+};
+
+// ─── Top-3 green spectrum (darkest #1 → lightest #3, fades into white) ───────
+
+const TOP3_BG: Record<number, string> = {
+  1: "#BBF7D0", // richest green (stands out most)
+  2: "#DCFCE7", // medium green
+  3: "#F0FDF4", // lightest mint (fades toward white/grey)
+};
+
+const TOP3_BORDER: Record<number, string> = {
+  1: "#4ADE80", // richest green border
+  2: "#6EE7B7", // medium green border
+  3: "#86EFAC", // softest green border
+};
 
 // ─── Pill configs (match LearnerTile + Analytics exactly) ────────────────────
 
@@ -88,21 +116,45 @@ interface LeaderboardEntry {
   tierEmoji: string;
 }
 
-function LeaderboardRow({ entry }: { entry: LeaderboardEntry }) {
+function LeaderboardRow({ entry, isCurrentUser }: { entry: LeaderboardEntry; isCurrentUser: boolean }) {
   const isTop3 = entry.rank <= 3;
   const medalEmoji = entry.rank === 1 ? "🥇" : entry.rank === 2 ? "🥈" : entry.rank === 3 ? "🥉" : "";
 
+  // Determine row background + border
+  let rowBg: string;
+  let rowBorder: string;
+
+  if (isCurrentUser) {
+    // Current user: tinted with their pacing tier color
+    rowBg = PACING_ROW_BG[entry.pacingStatus] ?? "#F3F4F630";
+    rowBorder = isTop3
+      ? `2px solid ${TOP3_BORDER[entry.rank] ?? "#86EFAC"}`
+      : "2px solid #D1D5DB";
+  } else if (isTop3) {
+    // Top 3: green spectrum
+    rowBg = TOP3_BG[entry.rank] ?? "#F0FDF4";
+    rowBorder = `1px solid ${TOP3_BORDER[entry.rank] ?? "#86EFAC"}`;
+  } else {
+    rowBg = "#ffffff";
+    rowBorder = "1px solid #E5E7EB";
+  }
+
   return (
     <div
-      className={`grid grid-cols-[40px_1fr_80px_70px_60px_60px_60px_110px] gap-2 items-center px-3 py-3 rounded-md border ${
-        isTop3 ? "border-green-300/50" : "border-green-100"
+      className={`grid grid-cols-[40px_1fr_80px_70px_60px_60px_60px_110px] gap-2 items-center px-3 py-3 rounded-md transition-colors ${
+        isCurrentUser ? "font-semibold" : ""
       }`}
-      style={{ backgroundColor: isTop3 ? "#ECFDF5" : "#ffffff" }}
+      style={{ backgroundColor: rowBg, border: rowBorder }}
     >
       <div className="text-center text-sm font-bold text-gray-700">
         {medalEmoji || `#${entry.rank}`}
       </div>
-      <div className="text-sm font-medium text-gray-900 truncate">{entry.name}</div>
+      <div className="text-sm font-medium text-gray-900 truncate flex items-center gap-1.5">
+        {entry.name}
+        {isCurrentUser && (
+          <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full">(you)</span>
+        )}
+      </div>
       <div className="text-center"><RolePill role={entry.role} /></div>
       <div className="text-center"><TimezonePill timezone={entry.timezone} /></div>
       <div className="text-center text-sm font-bold text-[#1B4332]">{entry.totalXp}</div>
@@ -117,12 +169,14 @@ function LeaderboardRow({ entry }: { entry: LeaderboardEntry }) {
 
 export default function LeaderboardPage() {
   const navigate = useNavigate();
+  const { viewer } = useViewer();
   const { data, loading, fetching, isError, error } = useApiData("GetPublicLeaderboard", {});
 
   const leaderboard = data?.leaderboard ?? [];
+  const currentViewerId = viewer?.id ?? "";
 
   return (
-    <div className="flex flex-col w-full min-h-full" style={{ backgroundColor: "#ECFDF5" }}>
+    <div className="flex flex-col w-full" style={{ backgroundColor: "#ECFDF5", minHeight: "100vh" }}>
       {/* Header */}
       <div className="border-b border-green-900/20 px-6 py-4" style={{ backgroundColor: "#1B4332" }}>
         <div className="flex items-center justify-between max-w-4xl mx-auto w-full">
@@ -173,7 +227,11 @@ export default function LeaderboardPage() {
 
               <div className={fetching && !loading ? "opacity-70" : ""}>
                 {leaderboard.map((entry) => (
-                  <LeaderboardRow key={entry.viewerId} entry={entry} />
+                  <LeaderboardRow
+                    key={entry.viewerId}
+                    entry={entry}
+                    isCurrentUser={entry.viewerId === currentViewerId}
+                  />
                 ))}
               </div>
 
