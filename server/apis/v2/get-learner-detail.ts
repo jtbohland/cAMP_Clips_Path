@@ -10,15 +10,18 @@ const TIERS = [
   { tier: 5, name: "Alpinist All-Star", emoji: "💫", xpMin: 700, xpMax: null },
 ];
 
-const EXPECTED_SESSIONS = [
-  0,
-  0, 0, 0, 0, 0,
-  1, 2, 3, 4, 5,
-  6, 7, 8, 9, 10,
-  11, 12, 13, 14, 15,
+// Clip-level pacing constants
+const CLIPS_EXPECTED_BY_WEEKDAY = [
+  0,   // 0 weekdays elapsed
+  0, 0, 0, 0, 0,            // weekdays 1-5: Approach (no clips)
+  2, 3, 4, 5, 6,            // weekdays 6-10
+  7, 9, 11, 12, 13,         // weekdays 11-15
+  15, 16, 17, 18, 20,       // weekdays 16-20
 ];
+const WEEK1_EXPECTED_BY_DAY = [0, 2, 4, 5, 6, 7];
+const WEEK1_TOTAL = 7;
 const TOTAL_WEEKDAYS = 20;
-const TOTAL_SESSIONS_SCHEDULE = 15;
+const TOTAL_ASCENT_CLIPS = 20;
 const TOTAL_APPROACH_MODULES = 8;
 
 function getSummitDay(startDate: Date, extensionDays = 0): Date {
@@ -58,14 +61,27 @@ function countWeekdays(start: Date, end: Date): number {
   return count;
 }
 
-function getTopicDaysBehind(completed: number, weekdaysElapsed: number): number {
-  if (completed >= TOTAL_SESSIONS_SCHEDULE) return 0;
-  let learnerWeekday = 0;
-  for (let i = 1; i < EXPECTED_SESSIONS.length; i++) {
-    if (completed >= EXPECTED_SESSIONS[i]) learnerWeekday = i;
-    else break;
-  }
-  return Math.max(0, Math.min(weekdaysElapsed, TOTAL_WEEKDAYS) - learnerWeekday);
+function computeClipPacingPercent(
+  weekdaysElapsed: number,
+  approachDone: number,
+  clipsDone: number,
+): number {
+  const capped = Math.min(Math.max(weekdaysElapsed, 0), TOTAL_WEEKDAYS);
+  const approachExpected = capped >= 5 ? WEEK1_TOTAL : (WEEK1_EXPECTED_BY_DAY[capped] ?? 0);
+  const clipsExpected = CLIPS_EXPECTED_BY_WEEKDAY[capped] ?? TOTAL_ASCENT_CLIPS;
+  const totalExpected = approachExpected + clipsExpected;
+  if (totalExpected <= 0) return 100;
+  const totalDone = Math.min(approachDone, WEEK1_TOTAL) + Math.min(clipsDone, TOTAL_ASCENT_CLIPS);
+  return Math.round((totalDone / totalExpected) * 100);
+}
+
+function getPacingStatusFromPercent(percent: number): string {
+  if (percent >= 90) return "summit_bound";
+  if (percent >= 80) return "off_the_trail";
+  if (percent >= 70) return "lost_in_the_woods";
+  if (percent >= 60) return "rockslide";
+  if (percent >= 50) return "avalanche_warning";
+  return "anchor_failure";
 }
 
 // ─── Zod schemas for DB rows ─────────────────────────────────────────────────
@@ -191,8 +207,8 @@ const ModalRow = z.object({
   created_at: z.string(),
 });
 
-const TopicsCompletedRow = z.object({
-  topics_completed: z.coerce.number(),
+const ClipsDoneRow = z.object({
+  clips_done: z.coerce.number(),
 });
 
 const LeaderboardRankRow = z.object({
@@ -237,7 +253,7 @@ export default api({
       summitDay: z.string().nullable(),
       isAnchorFailure: z.boolean(),
       ascentAdjustmentDay: z.string().nullable(),
-      topicsCompleted: z.number(),
+      clipsDone: z.number(),
       daysBehind: z.number(),
     }),
     xp: z.object({
@@ -518,43 +534,28 @@ export default api({
         { label: "Fetch modal interactions" }
       ),
 
-      // 12. Topics completed (for pacing)
+      // 12. Individual clips completed (for clip-level pacing)
       ctx.integrations.db.query(
-        `WITH clip_days AS (
-          SELECT id, day_label FROM cliptracker_v2_clips WHERE status = 'live'
-        ),
-        session_completions AS (
-          SELECT clip_id FROM cliptracker_v2_sessions
+        `WITH session_completions AS (
+          SELECT DISTINCT clip_id
+          FROM cliptracker_v2_sessions
           WHERE viewer_id = $1 AND completed = true
-          GROUP BY clip_id
         ),
         resource_completions AS (
-          SELECT x.clip_id
+          SELECT DISTINCT x.clip_id
           FROM cliptracker_v2_xp_events x
           JOIN cliptracker_v2_clips c ON c.id = x.clip_id
           WHERE x.viewer_id = $1 AND x.event_type = 'swiss_army_knife' AND c.status = 'live'
         ),
-        learner_completions AS (
+        all_completions AS (
           SELECT clip_id FROM session_completions
           UNION
           SELECT clip_id FROM resource_completions
-        ),
-        day_totals AS (
-          SELECT day_label, COUNT(*) AS total FROM clip_days GROUP BY day_label
-        ),
-        learner_day_completions AS (
-          SELECT cd.day_label, COUNT(*) AS completed
-          FROM learner_completions lc
-          JOIN clip_days cd ON cd.id = lc.clip_id
-          GROUP BY cd.day_label
         )
-        SELECT COALESCE(COUNT(*)::int, 0) AS topics_completed
-        FROM learner_day_completions ldc
-        JOIN day_totals dt ON dt.day_label = ldc.day_label
-        WHERE ldc.completed >= dt.total`,
-        TopicsCompletedRow,
+        SELECT COUNT(*)::int AS clips_done FROM all_completions`,
+        ClipsDoneRow,
         [viewerId],
-        { label: "Topics completed for pacing" }
+        { label: "Individual clips done for pacing" }
       ),
 
       // 13. Leaderboard rank + total XP check
@@ -653,8 +654,18 @@ export default api({
       progressPercent = Math.min(Math.round(((totalXp - currentTier.xpMin) / range) * 100), 100);
     }
 
-    // ─── Pacing ─────────────────────────────────────────────────────────────
-    const topicsCompleted = topicsRows[0]?.topics_completed ?? 0;
+    // ─── Approach completion count (must be computed before pacing) ────────
+    const approachModuleKeys = new Set(moduleRows.map(m => m.module_key));
+    // Filter to only the 3 valid module keys
+    const validKeys = new Set(["meddpicc", "challenger", "camp101"]);
+    const uniqueModuleKeys = new Set([...approachModuleKeys].filter(k => validKeys.has(k)));
+    const validAcademyCourses = new Set(["analytics", "experiment", "session_replay", "guides_surveys"]);
+    const uniqueAcademyKeys = new Set(academyRows.map(a => a.course_key).filter(k => validAcademyCourses.has(k)));
+    const hasWd = wdRows.length > 0;
+    const approachCompletedCount = uniqueModuleKeys.size + uniqueAcademyKeys.size + (hasWd ? 1 : 0);
+
+    // ─── Pacing (clip-level % brackets) ─────────────────────────────────────
+    const clipsDone = topicsRows[0]?.clips_done ?? 0;
     let pacingStatus = "not_started";
     let summitDayStr: string | null = null;
     let isAnchorFailure = false;
@@ -666,45 +677,30 @@ export default api({
       const extDays = viewer.extension_days;
       const weekdaysElapsed = countWeekdays(start, now);
       const effectiveWeekdaysElapsed = Math.max(0, weekdaysElapsed - extDays);
-      daysBehind = getTopicDaysBehind(topicsCompleted, effectiveWeekdaysElapsed);
       const summit = getSummitDay(start, extDays);
       summitDayStr = summit.toISOString().split("T")[0];
       const todayNorm = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const summitNorm = new Date(summit.getFullYear(), summit.getMonth(), summit.getDate());
       const pastSummit = todayNorm > summitNorm;
+      const allComplete = clipsDone >= TOTAL_ASCENT_CLIPS && approachCompletedCount >= WEEK1_TOTAL;
 
-      if (topicsCompleted >= TOTAL_SESSIONS_SCHEDULE) {
+      if (allComplete) {
         pacingStatus = "completed";
-      } else if (daysBehind <= 0) {
-        pacingStatus = "summit_bound";
-      } else if (daysBehind <= 2) {
-        pacingStatus = "off_the_trail";
-      } else if (daysBehind <= 5) {
-        pacingStatus = "lost_in_the_woods";
-      } else if (daysBehind <= 9) {
-        pacingStatus = "rockslide";
-      } else {
-        pacingStatus = "avalanche_warning";
-      }
-
-      if (pastSummit && topicsCompleted < TOTAL_SESSIONS_SCHEDULE) {
+      } else if (pastSummit) {
         isAnchorFailure = true;
         pacingStatus = "anchor_failure";
-        const incompleteTopics = TOTAL_SESSIONS_SCHEDULE - topicsCompleted;
-        const adjDay = getAscentAdjustmentDay(summit, incompleteTopics);
+        const incompleteClips = TOTAL_ASCENT_CLIPS - clipsDone;
+        const adjDay = getAscentAdjustmentDay(summit, incompleteClips);
         ascentAdjustmentDayStr = adjDay.toISOString().split("T")[0];
+      } else {
+        const percent = computeClipPacingPercent(effectiveWeekdaysElapsed, approachCompletedCount, clipsDone);
+        pacingStatus = getPacingStatusFromPercent(percent);
       }
-    }
 
-    // ─── Approach completion count ──────────────────────────────────────────
-    const approachModuleKeys = new Set(moduleRows.map(m => m.module_key));
-    // Filter to only the 3 valid module keys
-    const validKeys = new Set(["meddpicc", "challenger", "camp101"]);
-    const uniqueModuleKeys = new Set([...approachModuleKeys].filter(k => validKeys.has(k)));
-    const validAcademyCourses = new Set(["analytics", "experiment", "session_replay", "guides_surveys"]);
-    const uniqueAcademyKeys = new Set(academyRows.map(a => a.course_key).filter(k => validAcademyCourses.has(k)));
-    const hasWd = wdRows.length > 0;
-    const approachCompletedCount = uniqueModuleKeys.size + uniqueAcademyKeys.size + (hasWd ? 1 : 0);
+      // daysBehind for backward compat
+      const percent = computeClipPacingPercent(effectiveWeekdaysElapsed, approachCompletedCount, clipsDone);
+      daysBehind = percent >= 90 ? 0 : Math.max(1, Math.round((100 - percent) / 5));
+    }
 
     // ─── Clips: group sessions by clip ─────────────────────────────────────
     const clipMap = new Map<string, {
@@ -861,7 +857,7 @@ export default api({
         summitDay: summitDayStr,
         isAnchorFailure,
         ascentAdjustmentDay: ascentAdjustmentDayStr,
-        topicsCompleted,
+        clipsDone,
         daysBehind,
       },
       xp: {

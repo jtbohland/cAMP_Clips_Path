@@ -4,6 +4,7 @@ import {
   PACING_TIERS,
   WEEK1_TOTAL_ITEMS,
 } from "@/lib/pacing";
+import PacingPerformanceSection, { type PacingLearner } from "@/components/PacingPerformanceSection";
 
 /**
  * Prescriptive daily to-do lists for Approach Week 1.
@@ -75,6 +76,10 @@ interface ApproachPacingModalProps {
   itemsBehind: number;
   /** Learner's summit day date — shown as footer for urgency/context */
   summitDay?: Date;
+  /** Pacing performance data for inline leaderboard */
+  pacingLearners?: PacingLearner[];
+  pacingLoading?: boolean;
+  currentViewerId?: string;
   onDismiss: () => void;
 }
 
@@ -85,6 +90,9 @@ export default function ApproachPacingModal({
   completedKeys,
   itemsBehind,
   summitDay,
+  pacingLearners,
+  pacingLoading,
+  currentViewerId,
   onDismiss,
 }: ApproachPacingModalProps) {
   const config = PACING_TIERS[tier];
@@ -151,7 +159,7 @@ export default function ApproachPacingModal({
           </div>
 
           {/* Progress bar */}
-          <div className="h-2 rounded-full overflow-hidden mb-4" style={{ backgroundColor: `${config.headerBg}20` }}>
+          <div className="h-2 rounded-full overflow-hidden mb-3" style={{ backgroundColor: `${config.headerBg}20` }}>
             <div
               className="h-full rounded-full transition-all duration-500"
               style={{
@@ -160,6 +168,17 @@ export default function ApproachPacingModal({
               }}
             />
           </div>
+
+          {/* Pacing Performance */}
+          {pacingLearners && currentViewerId && (
+            <div className="mb-4">
+              <PacingPerformanceSection
+                learners={pacingLearners}
+                currentViewerId={currentViewerId}
+                loading={pacingLoading}
+              />
+            </div>
+          )}
 
           {/* On-pace encouragement */}
           {tier === "summit_bound" && (

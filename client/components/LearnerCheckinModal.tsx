@@ -3,7 +3,7 @@ import { useApiData } from "@/hooks/useApiData.js";
 import { useApi } from "@/hooks/useApi.js";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
-import { countWeekdays, getPacingTier, getApproachPacingTier, getSummitDay, PACING_TIERS, type PacingTier } from "@/lib/pacing.js";
+import { countWeekdays, getPacingTier, getApproachPacingTier, getSummitDay, PACING_TIERS, type PacingTier, computeUnifiedPacingPercent, getPacingStatusFromPercent } from "@/lib/pacing.js";
 
 type CheckinType = "approach" | "week2" | "week3" | "summit";
 
@@ -218,10 +218,11 @@ function LearnerCheckinModalInner({ viewerId, checkinType, onClose, onSent, allo
     const weekdaysElapsed = countWeekdays(startDate, today);
     const effectiveWeekdaysElapsed = Math.max(0, weekdaysElapsed - extDays);
     const hasStarted = data.completedTopics > 0;
-    // Approach checkin uses approach-specific pacing (based on module completion, not clip topics)
-    const pacingKey = checkinType === "approach"
-      ? getApproachPacingTier(data.approachStatus?.completedCount ?? 0, Math.min(effectiveWeekdaysElapsed, 5))
-      : getPacingTier(data.completedTopics, effectiveWeekdaysElapsed, hasStarted);
+    // Unified clip-level pacing % across all checkin types
+    const clipsDone = data.completedClipCount ?? 0;
+    const approachItemsDone = data.approachStatus?.completedCount ?? 0;
+    const unifiedPercent = computeUnifiedPacingPercent(effectiveWeekdaysElapsed, approachItemsDone, clipsDone);
+    const pacingKey = !hasStarted ? "not_started" as PacingTier : getPacingStatusFromPercent(unifiedPercent) as PacingTier;
     const pacingConfig = PACING_TIERS[pacingKey];
     const summitDay = getSummitDay(startDate, extDays);
     const fmtDate = (d: Date) => d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
@@ -744,7 +745,10 @@ function StatsView({ data, checkinType }: { data: any; checkinType: CheckinType 
         const weekdaysElapsed = countWeekdays(startDate, today);
         const effectiveWeekdaysElapsed = Math.max(0, weekdaysElapsed - extDays);
         const hasStarted = data.completedTopics > 0;
-        const pacingKey = getPacingTier(data.completedTopics, effectiveWeekdaysElapsed, hasStarted);
+        const clipsDone2 = data.completedClipCount ?? 0;
+        const approachDone2 = data.approachStatus?.completedCount ?? 0;
+        const pct2 = computeUnifiedPacingPercent(effectiveWeekdaysElapsed, approachDone2, clipsDone2);
+        const pacingKey = hasStarted ? getPacingStatusFromPercent(pct2) as PacingTier : "not_started" as PacingTier;
         const pacingConfig = PACING_TIERS[pacingKey];
         const summitDay = getSummitDay(startDate, extDays);
         const fmtDate = (d: Date) => d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
@@ -1021,7 +1025,10 @@ function EmailView({
   const weekdaysElapsed = countWeekdays(startDate, new Date());
   const effectiveWeekdaysElapsed = Math.max(0, weekdaysElapsed - extDays);
   const hasStarted = data.completedTopics > 0;
-  const pacingKey = getPacingTier(data.completedTopics, effectiveWeekdaysElapsed, hasStarted);
+  const clipsDone3 = data.completedClipCount ?? 0;
+  const approachDone3 = data.approachStatus?.completedCount ?? 0;
+  const pct3 = computeUnifiedPacingPercent(effectiveWeekdaysElapsed, approachDone3, clipsDone3);
+  const pacingKey = hasStarted ? getPacingStatusFromPercent(pct3) as PacingTier : "not_started" as PacingTier;
   const pacingConfig = PACING_TIERS[pacingKey];
   const summitDay = getSummitDay(startDate, extDays);
   const fmtDate = (d: Date) => d.toLocaleDateString("en-US", { month: "short", day: "numeric" });

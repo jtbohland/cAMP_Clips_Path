@@ -464,4 +464,131 @@ export function isSameDay(date: Date): boolean {
   return todayNorm.getTime() === dateNorm.getTime();
 }
 
+// ─── Clip-Level Pacing (Unified Formula) ─────────────────────────────
+// New unified pacing: counts INDIVIDUAL clips done (not topics), plus Approach items.
+// 27 total items = 7 Approach + 20 Ascent clips across 20 weekdays from registration.
+// Pacing % = (approach_done + clips_done) / (approach_expected + clips_expected) × 100
+
+/**
+ * Cumulative CLIPS expected by each weekday (indices 0–20).
+ * Approach (weekdays 1-5): 0 clips (modules tracked separately).
+ * Ascent (weekdays 6-20): individual clips, not topics.
+ *
+ *   Weekday 6  → Day 1  → 2 clips (sorts 1-2)
+ *   Weekday 7  → Day 2  → 1 clip  (sort 3)       = 3 total
+ *   Weekday 8  → Day 3  → 1 clip  (sort 4)       = 4
+ *   Weekday 9  → Day 4  → 1 clip  (sort 5)       = 5
+ *   Weekday 10 → Day 5  → 1 "clip" (resource day) = 6
+ *   Weekday 11 → Day 6  → 1 clip  (sort 7)       = 7
+ *   Weekday 12 → Day 7  → 2 clips (sorts 8-9)    = 9
+ *   Weekday 13 → Day 8  → 2 clips (sorts 10-11)  = 11
+ *   Weekday 14 → Day 9  → 1 "clip" (resource day) = 12
+ *   Weekday 15 → Day 10 → 1 clip  (sort 13)      = 13
+ *   Weekday 16 → Day 11 → 2 clips (sorts 14-15)  = 15
+ *   Weekday 17 → Day 12 → 1 clip  (sort 16)      = 16
+ *   Weekday 18 → Day 13 → 1 clip  (sort 17)      = 17
+ *   Weekday 19 → Day 14 → 1 clip  (sort 18)      = 18
+ *   Weekday 20 → Day 15 → 2 clips (sorts 19-20)  = 20
+ */
+export const CLIPS_EXPECTED_BY_WEEKDAY = [
+  0,   // 0 weekdays elapsed
+  0,   // weekday 1  → Week 1 (Approach — no clips)
+  0,   // weekday 2  → Week 1
+  0,   // weekday 3  → Week 1
+  0,   // weekday 4  → Week 1
+  0,   // weekday 5  → Week 1
+  2,   // weekday 6  → Day 1  (2 clips)
+  3,   // weekday 7  → Day 2  (1 clip)
+  4,   // weekday 8  → Day 3  (1 clip)
+  5,   // weekday 9  → Day 4  (1 clip)
+  6,   // weekday 10 → Day 5  (1 resource "clip")
+  7,   // weekday 11 → Day 6  (1 clip)
+  9,   // weekday 12 → Day 7  (2 clips)
+  11,  // weekday 13 → Day 8  (2 clips)
+  12,  // weekday 14 → Day 9  (1 resource "clip")
+  13,  // weekday 15 → Day 10 (1 clip)
+  15,  // weekday 16 → Day 11 (2 clips)
+  16,  // weekday 17 → Day 12 (1 clip)
+  17,  // weekday 18 → Day 13 (1 clip)
+  18,  // weekday 19 → Day 14 (1 clip)
+  20,  // weekday 20 → Day 15 (2 clips)
+];
+
+export const TOTAL_ASCENT_CLIPS = 20;
+export const TOTAL_UNIFIED_ITEMS = WEEK1_TOTAL_ITEMS + TOTAL_ASCENT_CLIPS; // 27
+
+/**
+ * Compute the unified pacing percentage (clip-level).
+ * Pacing % = (approach_done + clips_done) / (approach_expected + clips_expected) × 100
+ *
+ * @param weekdaysElapsed  Effective weekdays elapsed (after subtracting extensions)
+ * @param approachDone     Number of Approach items completed (0-7)
+ * @param clipsDone        Number of individual Ascent clips completed (0-20)
+ * @returns Pacing percentage (0-100+, uncapped — can exceed 100 if ahead)
+ */
+export function computeUnifiedPacingPercent(
+  weekdaysElapsed: number,
+  approachDone: number,
+  clipsDone: number,
+): number {
+  const capped = Math.min(Math.max(weekdaysElapsed, 0), TOTAL_WEEKDAYS);
+
+  // Approach expected: ramp over weekdays 1-5
+  const approachExpected = capped >= 5 ? WEEK1_TOTAL_ITEMS : (WEEK1_EXPECTED_BY_DAY[capped] ?? 0);
+
+  // Clips expected by this weekday
+  const clipsExpected = CLIPS_EXPECTED_BY_WEEKDAY[capped] ?? TOTAL_ASCENT_CLIPS;
+
+  const totalExpected = approachExpected + clipsExpected;
+  const totalDone = Math.min(approachDone, WEEK1_TOTAL_ITEMS) + Math.min(clipsDone, TOTAL_ASCENT_CLIPS);
+
+  if (totalExpected <= 0) {
+    // Before weekday 1 or at day 0 — if they've done anything, 100%; otherwise 100% (nothing expected yet)
+    return 100;
+  }
+
+  return Math.round((totalDone / totalExpected) * 100);
+}
+
+/**
+ * Determine pacing status from a percentage using the new bracket system.
+ * Does NOT handle the Summit Day deadline gate — caller must check that separately.
+ *
+ * Brackets:
+ *   ≥90% → summit_bound
+ *   80-89% → off_the_trail
+ *   70-79% → lost_in_the_woods
+ *   60-69% → rockslide
+ *   50-59% → avalanche_warning
+ *   <50% → anchor_failure
+ */
+export function getPacingStatusFromPercent(percent: number): PacingTier {
+  if (percent >= 90) return "summit_bound";
+  if (percent >= 80) return "off_the_trail";
+  if (percent >= 70) return "lost_in_the_woods";
+  if (percent >= 60) return "rockslide";
+  if (percent >= 50) return "avalanche_warning";
+  return "anchor_failure";
+}
+
+/**
+ * Full unified pacing tier determination (clip-level + Summit Day gate).
+ * Combines % brackets with the dual Anchor Failure trigger:
+ *   1. Pacing % < 50%
+ *   2. Past Summit Day + incomplete
+ */
+export function getUnifiedPacingTier(
+  weekdaysElapsed: number,
+  approachDone: number,
+  clipsDone: number,
+  allComplete: boolean,
+  afterSummitDay: boolean,
+): PacingTier {
+  if (allComplete) return "completed";
+  if (afterSummitDay) return "anchor_failure";
+
+  const percent = computeUnifiedPacingPercent(weekdaysElapsed, approachDone, clipsDone);
+  return getPacingStatusFromPercent(percent);
+}
+
 export { TOTAL_CLIPS, TOTAL_SESSIONS, TOTAL_WEEKDAYS, WEEK1_WEEKDAYS, EXPECTED_SESSIONS_BY_WEEKDAY };

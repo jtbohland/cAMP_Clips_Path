@@ -94,7 +94,7 @@ function LeaderboardRow({ entry }: { entry: LeaderboardEntry }) {
 
   return (
     <div
-      className={`grid grid-cols-[40px_1fr_80px_70px_60px_60px_60px_110px] gap-2 items-center px-3 py-2 rounded-md border ${
+      className={`grid grid-cols-[40px_1fr_80px_70px_60px_60px_60px_110px] gap-2 items-center px-3 py-3 rounded-md border ${
         isTop3 ? "border-green-300/50" : "border-green-100"
       }`}
       style={{ backgroundColor: isTop3 ? "#ECFDF5" : "#ffffff" }}
@@ -122,7 +122,7 @@ export default function LeaderboardPage() {
   const leaderboard = data?.leaderboard ?? [];
 
   return (
-    <div className="flex flex-col h-full overflow-hidden" style={{ backgroundColor: "#ECFDF5" }}>
+    <div className="flex flex-col min-h-full" style={{ backgroundColor: "#ECFDF5" }}>
       {/* Header */}
       <div className="border-b border-green-900/20 px-6 py-4" style={{ backgroundColor: "#1B4332" }}>
         <div className="flex items-center justify-between max-w-4xl mx-auto w-full">
@@ -144,7 +144,7 @@ export default function LeaderboardPage() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1">
         <div className="max-w-4xl mx-auto w-full px-6 py-6">
           {loading ? (
             <LeaderboardSkeleton />

@@ -33,6 +33,10 @@ import {
   isDayBeforeSummitDay,
   isSameDay,
   TOTAL_SESSIONS,
+  computeUnifiedPacingPercent,
+  getPacingStatusFromPercent,
+  CLIPS_EXPECTED_BY_WEEKDAY,
+  WEEK1_TOTAL_ITEMS,
 } from "@/lib/pacing";
 import type { ApproachCatchUpItem } from "@/components/PacingModal";
 import { calculatePatchProgress } from "@/lib/patchProgress";
@@ -228,6 +232,14 @@ export default function LibraryPage() {
     { enabled: !!viewer?.id }
   );
 
+  // Pacing performance — shown on all daily modals
+  const { data: pacingPerfData, loading: pacingPerfLoading } = useApiData(
+    "GetPacingPerformance",
+    {},
+    { staleTime: 60_000 }
+  );
+  const pacingLearners = pacingPerfData?.learners ?? [];
+
   const rawClips = useMemo(() => data?.clips ?? [], [data]);
 
   // In ascent test mode, reset all clips to fresh state (only clip 1 unlocked, none completed)
@@ -263,7 +275,29 @@ export default function LibraryPage() {
     );
     const summitDay = getSummitDay(startDate, extensionDays);
     const afterSummitDay = isAfterDate(summitDay);
-    const tier = getPacingTier(sessionsCompleted, effectiveWeekdaysElapsed, true, afterSummitDay);
+    // Clip-level pacing: count individual completed clips
+    const clipsDone = clips.filter((c: any) => c.completed).length;
+    // Approach items done
+    const approachDone = (() => {
+      if (!week1Data) return 0;
+      const signoffs = new Set(week1Data.moduleSignoffs.map((s) => s.moduleKey));
+      const screenshots = new Set(week1Data.academyScreenshots.map((s) => s.courseKey));
+      const validSignoffs = ['meddpicc', 'challenger'].filter(k => signoffs.has(k)).length;
+      const validAcademies = ['analytics', 'experiment', 'session_replay', 'guides_surveys'].filter(k => screenshots.has(k)).length;
+      const wdDone = week1Data.wdVerification ? 1 : 0;
+      return validSignoffs + validAcademies + wdDone;
+    })();
+    const unifiedPercent = computeUnifiedPacingPercent(effectiveWeekdaysElapsed, approachDone, clipsDone);
+    // Determine tier: past summit + incomplete → anchor_failure, all done → completed, else %-based
+    let tier: ReturnType<typeof getPacingTier>;
+    const allClipsDone = clipsDone >= 20 && approachDone >= WEEK1_TOTAL_ITEMS;
+    if (allClipsDone) {
+      tier = "completed";
+    } else if (afterSummitDay) {
+      tier = "anchor_failure";
+    } else {
+      tier = getPacingStatusFromPercent(unifiedPercent);
+    }
     const daysBehind = getTopicDaysBehind(sessionsCompleted, effectiveWeekdaysElapsed);
     const missedClips = getMissedClips(
       clips.map((c: any) => ({
@@ -675,6 +709,9 @@ export default function LibraryPage() {
           approachCatchUpItems={approachStatus?.catchUpItems}
           patchPills={patchProgress?.pills}
           patchBestCaseXp={patchProgress?.bestCaseXp}
+          pacingLearners={pacingLearners}
+          pacingLoading={pacingPerfLoading}
+          currentViewerId={viewer.id}
           onDismiss={() => setShowPacing(false)}
         />
       </div>
@@ -793,6 +830,9 @@ export default function LibraryPage() {
         approachCatchUpItems={approachStatus?.catchUpItems}
         patchPills={patchProgress?.pills}
         patchBestCaseXp={patchProgress?.bestCaseXp}
+        pacingLearners={pacingLearners}
+        pacingLoading={pacingPerfLoading}
+        currentViewerId={viewer!.id}
         onDismiss={() => {
           logModal("pacing", "dismissed", { tier: pacingInfo.tier });
           localStorage.setItem(`pacing_dismissed_${viewer!.id}`, new Date().toLocaleDateString());
@@ -821,6 +861,9 @@ export default function LibraryPage() {
         missedClips={pacingInfo.missedClips}
         approachComplete={approachStatus?.complete}
         approachCatchUpItems={approachStatus?.catchUpItems}
+        pacingLearners={pacingLearners}
+        pacingLoading={pacingPerfLoading}
+        currentViewerId={viewer.id}
         onDismiss={() => {
           localStorage.setItem(`anchor_failure_slack_sent_${viewer.id}`, "true");
           if (!localStorage.getItem(`anchor_adjustment_deadline_${viewer.id}`)) {
@@ -847,6 +890,9 @@ export default function LibraryPage() {
         isEscalated
         approachComplete={approachStatus?.complete}
         approachCatchUpItems={approachStatus?.catchUpItems}
+        pacingLearners={pacingLearners}
+        pacingLoading={pacingPerfLoading}
+        currentViewerId={viewer.id}
         onDismiss={() => {
           localStorage.setItem(`anchor_adjustment_slack_sent_${viewer.id}`, "true");
           logModal("anchor_escalated", "dismissed");
@@ -871,6 +917,9 @@ export default function LibraryPage() {
         missedClips={pacingInfo.missedClips}
         approachComplete={approachStatus?.complete}
         approachCatchUpItems={approachStatus?.catchUpItems}
+        pacingLearners={pacingLearners}
+        pacingLoading={pacingPerfLoading}
+        currentViewerId={viewer.id}
         onDismiss={() => { logModal("light_anchor", "dismissed"); setShowLightAnchor(false); }}
       />
     )}
@@ -937,6 +986,8 @@ export default function LibraryPage() {
             viewerId={viewer.id}
             viewerName={viewer.name}
             isAdmin={viewer.isAdmin}
+            pacingLearners={pacingLearners}
+            pacingLoading={pacingPerfLoading}
             onOpenRegistration={() => setPreviewMode("register")}
             onTestCheckin={(type, approachOverride) => {
               setCheckinType(type);

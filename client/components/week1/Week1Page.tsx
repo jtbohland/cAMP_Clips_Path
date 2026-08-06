@@ -10,12 +10,14 @@ import ChallengerCard from "./ChallengerCard";
 import WheelDealCard from "./WheelDealCard";
 import ApproachManifesto from "./ApproachManifesto";
 import ApproachPacingModal from "@/components/ApproachPacingModal";
+import type { PacingLearner } from "@/components/PacingPerformanceSection";
 import ApproachDeadlineModal from "@/components/ApproachDeadlineModal";
 import OhDeerModal from "@/components/OhDeerModal";
 import {
   countWeekdays,
-  getApproachPacingTier,
   getApproachItemsBehind,
+  computeUnifiedPacingPercent,
+  getPacingStatusFromPercent,
 } from "@/lib/pacing";
 
 // Reflection prompts
@@ -55,6 +57,9 @@ type Week1PageProps = {
   viewerId: string;
   viewerName: string;
   isAdmin?: boolean;
+  /** Pacing performance data from parent for inline leaderboard */
+  pacingLearners?: PacingLearner[];
+  pacingLoading?: boolean;
   onBeginAscent: (unlockResult?: UnlockResult) => void;
   /** Switch to Ascent tab (used by Oh Deer auto-unlock) */
   onSwitchToAscent?: () => void;
@@ -64,7 +69,7 @@ type Week1PageProps = {
   onTestCheckin?: (type: "approach" | "week2" | "week3" | "summit", approachOverride?: boolean) => void;
 };
 
-export default function Week1Page({ viewerId, viewerName, isAdmin, onBeginAscent, onSwitchToAscent, onOpenRegistration, onTestCheckin }: Week1PageProps) {
+export default function Week1Page({ viewerId, viewerName, isAdmin, pacingLearners, pacingLoading, onBeginAscent, onSwitchToAscent, onOpenRegistration, onTestCheckin }: Week1PageProps) {
   const navigate = useNavigate();
   // Admin "Test as New Learner" toggle — resets view to fresh state
   const [testMode, setTestMode] = useState(false);
@@ -157,7 +162,8 @@ export default function Week1Page({ viewerId, viewerName, isAdmin, onBeginAscent
     const startDate = new Date(data.createdAt);
     const today = new Date();
     const weekdaysElapsed = countWeekdays(startDate, today);
-    const tier = getApproachPacingTier(completedItemCount, weekdaysElapsed);
+    const pacingPercent = computeUnifiedPacingPercent(weekdaysElapsed, completedItemCount, 0);
+    const tier = getPacingStatusFromPercent(pacingPercent);
     const itemsBehind = getApproachItemsBehind(completedItemCount, weekdaysElapsed);
     // Projected summit day = createdAt + 25 weekdays (5 approach + 20 ascent)
     const projectedSummitDay = (() => {
@@ -322,6 +328,9 @@ export default function Week1Page({ viewerId, viewerName, isAdmin, onBeginAscent
           completedKeys={completedKeys}
           itemsBehind={approachPacing.itemsBehind}
           summitDay={approachPacing.projectedSummitDay}
+          pacingLearners={pacingLearners}
+          pacingLoading={pacingLoading}
+          currentViewerId={viewerId}
           onDismiss={() => {
             localStorage.setItem(`approach_pacing_shown_${viewerId}`, new Date().toLocaleDateString());
             setShowApproachPacing(false);

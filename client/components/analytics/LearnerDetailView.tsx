@@ -131,8 +131,7 @@ function LearnerDetailView({ viewerId, onBack }: LearnerDetailViewProps) {
       summitDay: d.pacing.summitDay,
       pacingStatus: d.pacing.status,
       daysBehind: d.pacing.daysBehind,
-      topicsCompleted: d.pacing.topicsCompleted,
-      totalTopics: 15,
+      clipsDone: d.pacing.clipsDone,
       clipsCompleted: d.clipsCompleted,
       totalClips: d.totalLiveClips,
       totalXp: d.xp.total,
@@ -299,7 +298,7 @@ function OverviewTab({ viewer, pacing, xp, tier, badges, clipsCompleted, totalLi
         </div>
         <Progress value={progressPct} className="h-2.5" />
         <div className="flex justify-between mt-2 text-[10px] text-gray-400">
-          <span>Topics: {pacing.topicsCompleted}/15</span>
+          <span>Clips: {pacing.clipsDone}/20</span>
           {pacing.daysBehind > 0 && <span className="text-red-500 font-semibold">{pacing.daysBehind} day(s) behind</span>}
         </div>
       </div>

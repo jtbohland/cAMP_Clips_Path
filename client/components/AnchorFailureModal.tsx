@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { PACING_TIERS, type MissedClip } from "@/lib/pacing";
 import type { ApproachCatchUpItem } from "@/components/PacingModal";
+import PacingPerformanceSection, { type PacingLearner } from "@/components/PacingPerformanceSection";
 
 /**
  * Anchor Failure Modal — first occurrence after missing Summit Day.
@@ -40,6 +41,10 @@ interface AnchorFailureModalProps {
   approachCatchUpItems?: ApproachCatchUpItem[];
   /** Pre-select a reason (for museum/demo previews) */
   defaultReason?: string;
+  /** Pacing performance data for inline leaderboard */
+  pacingLearners?: PacingLearner[];
+  pacingLoading?: boolean;
+  currentViewerId?: string;
 }
 
 function formatDate(d: Date): string {
@@ -59,6 +64,9 @@ export default function AnchorFailureModal({
   approachComplete,
   approachCatchUpItems,
   defaultReason,
+  pacingLearners,
+  pacingLoading,
+  currentViewerId,
 }: AnchorFailureModalProps) {
   const config = PACING_TIERS.anchor_failure;
   const [selectedReason, setSelectedReason] = useState<string | null>(defaultReason ?? null);
@@ -125,6 +133,17 @@ export default function AnchorFailureModal({
           className="px-6 py-5"
           style={{ backgroundColor: config.bodyBg, color: config.bodyText }}
         >
+          {/* Pacing Performance */}
+          {pacingLearners && currentViewerId && (
+            <div className="mb-4">
+              <PacingPerformanceSection
+                learners={pacingLearners}
+                currentViewerId={currentViewerId}
+                loading={pacingLoading}
+              />
+            </div>
+          )}
+
           {/* Date tiles */}
           <div className={`grid ${isEscalated ? "grid-cols-2" : "grid-cols-2"} gap-3 mb-4`}>
             <div className="rounded-lg px-4 py-2.5 text-center" style={{ backgroundColor: "#1C191712" }}>
