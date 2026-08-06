@@ -118,6 +118,7 @@ export default function LightAnchorModal({
                 learners={pacingLearners}
                 currentViewerId={currentViewerId}
                 loading={pacingLoading}
+                headerBg={config.headerBg}
               />
             </div>
           )}

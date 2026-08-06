@@ -140,6 +140,7 @@ export default function AnchorFailureModal({
                 learners={pacingLearners}
                 currentViewerId={currentViewerId}
                 loading={pacingLoading}
+                headerBg={config.headerBg}
               />
             </div>
           )}

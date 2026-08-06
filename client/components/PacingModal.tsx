@@ -124,6 +124,7 @@ export default function PacingModal({
                 learners={pacingLearners}
                 currentViewerId={currentViewerId}
                 loading={pacingLoading}
+                headerBg={config.headerBg}
               />
             </div>
           )}
