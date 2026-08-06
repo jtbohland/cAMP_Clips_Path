@@ -30,6 +30,7 @@ const ApproachCountRow = z.object({
 // Weekday 1-5 = Approach (7 modules), Weekday 6-20 = Ascent (20 individual clips)
 const WEEK1_EXPECTED_BY_DAY = [0, 2, 4, 5, 6, 7]; // indices 0-5
 const WEEK1_TOTAL = 7;
+const TOTAL_APPROACH_MODULES = 8; // meddpicc + camp101 + challenger + 4 academies + W&D
 
 // Cumulative CLIPS expected by weekday (individual clips, not topics)
 const CLIPS_EXPECTED_BY_WEEKDAY = [
@@ -238,8 +239,9 @@ export default api({
       const clipsDone = clipsDoneMap.get(l.viewer_id) ?? 0;
       const approachDone = approachMap.get(l.viewer_id) ?? 0;
 
-      // Check completion: all 20 clips + all 7 approach items
-      const allComplete = clipsDone >= TOTAL_ASCENT_CLIPS && approachDone >= WEEK1_TOTAL;
+      // Completed = all 20 clips + approach done (legacy learners have approachDone=0, exempt)
+      const allComplete = clipsDone >= TOTAL_ASCENT_CLIPS
+        && (approachDone >= TOTAL_APPROACH_MODULES || approachDone === 0);
 
       // Skip completed learners
       if (allComplete) continue;

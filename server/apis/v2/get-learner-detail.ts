@@ -682,7 +682,9 @@ export default api({
       const todayNorm = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const summitNorm = new Date(summit.getFullYear(), summit.getMonth(), summit.getDate());
       const pastSummit = todayNorm > summitNorm;
-      const allComplete = clipsDone >= TOTAL_ASCENT_CLIPS && approachCompletedCount >= WEEK1_TOTAL;
+      // Completed = all 20 clips + approach done (legacy learners have approachCompletedCount=0, exempt)
+      const allComplete = clipsDone >= TOTAL_ASCENT_CLIPS
+        && (approachCompletedCount >= TOTAL_APPROACH_MODULES || approachCompletedCount === 0);
 
       if (allComplete) {
         pacingStatus = "completed";

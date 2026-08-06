@@ -445,7 +445,9 @@ export default api({
         const summit = getSummitDay(start, extDays);
         summitDayStr = summit.toISOString().split("T")[0];
         const pastSummit = isAfterDate(summit);
-        const allComplete = clipsDone >= TOTAL_ASCENT_CLIPS && approachDone >= WEEK1_TOTAL;
+        // Completed = all 20 clips + approach done (legacy learners have approachDone=0, exempt)
+        const allComplete = clipsDone >= TOTAL_ASCENT_CLIPS
+          && (approachDone >= TOTAL_APPROACH_MODULES || approachDone === 0);
 
         if (allComplete) {
           pacingStatus = "completed";

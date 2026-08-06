@@ -46,6 +46,7 @@ const CLIPS_EXPECTED_BY_WEEKDAY = [
 ];
 const WEEK1_EXPECTED_BY_DAY = [0, 2, 4, 5, 6, 7];
 const WEEK1_TOTAL = 7;
+const TOTAL_APPROACH_MODULES = 8; // meddpicc + camp101 + challenger + 4 academies + W&D
 const TOTAL_WEEKDAYS = 20;
 const TOTAL_ASCENT_CLIPS = 20;
 
@@ -222,7 +223,9 @@ export default api({
       leaderboard: rows.map((r, i) => {
         const clipsDone = clipsDoneMap.get(r.viewer_id) ?? 0;
         const approachDone = approachMap.get(r.viewer_id) ?? 0;
-        const allComplete = clipsDone >= TOTAL_ASCENT_CLIPS && approachDone >= WEEK1_TOTAL;
+        // Completed = all 20 clips + approach done (legacy learners have approachDone=0, exempt)
+        const allComplete = clipsDone >= TOTAL_ASCENT_CLIPS
+          && (approachDone >= TOTAL_APPROACH_MODULES || approachDone === 0);
 
         let pacingStatus = "not_started";
         if (r.ascent_day_1 || approachDone > 0 || clipsDone > 0) {
