@@ -42,6 +42,8 @@ interface PacingPerformanceSectionProps {
   learners: PacingLearner[];
   currentViewerId: string;
   loading?: boolean;
+  /** Hex color from the parent modal's header (e.g. config.headerBg) */
+  headerBg?: string;
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -115,6 +117,7 @@ export default function PacingPerformanceSection({
   learners,
   currentViewerId,
   loading,
+  headerBg,
 }: PacingPerformanceSectionProps) {
   // Ensure current viewer's row is always visible — if they're beyond
   // the initial viewport, the scrollable list lets them find themselves
@@ -138,7 +141,12 @@ export default function PacingPerformanceSection({
       ) : (
         <div className="max-h-[200px] overflow-y-auto rounded-lg border border-gray-100 bg-white/50 divide-y divide-gray-50">
           {/* Column headers */}
-          <div className="flex items-center gap-2 px-2 py-1 text-[9px] font-semibold text-gray-400 uppercase tracking-wider sticky top-0 bg-white/90 backdrop-blur-sm border-b border-gray-100">
+          <div
+            className={`flex items-center gap-2 px-2 py-1 text-[9px] font-semibold uppercase tracking-wider sticky top-0 border-b ${
+              headerBg ? "text-white/90" : "text-gray-400 bg-white/90 backdrop-blur-sm border-gray-100"
+            }`}
+            style={headerBg ? { backgroundColor: headerBg, borderColor: `${headerBg}40` } : undefined}
+          >
             <span className="w-5 text-right shrink-0">#</span>
             <span className="flex-1 min-w-0">Name</span>
             <span>Status</span>
