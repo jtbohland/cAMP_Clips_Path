@@ -64,6 +64,7 @@ import FixGabiDate from './v2/fix-gabi-date.js';
 import FixKabirDate from './v2/fix-kabir-date.js';
 import FixBenChrisDates from './v2/fix-ben-chris-dates.js';
 import FixTylerDate from './v2/fix-tyler-date.js';
+import FixCpqTimestamps from './v2/fix-cpq-timestamps.js';
 import AddBelayBuddyColumn from './v2/add-belay-buddy-column.js';
 import RemoveDealDeskZoomClips from './v2/remove-deal-desk-zoom-clips.js';
 import SetupTopicDays from './v2/setup-topic-days.js';
@@ -185,6 +186,7 @@ ResetJTSessions,
   FixKabirDate,
   FixBenChrisDates,
   FixTylerDate,
+  FixCpqTimestamps,
   AddBelayBuddyColumn,
   RemoveDealDeskZoomClips,
   SetupTopicDays,
