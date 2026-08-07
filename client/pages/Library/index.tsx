@@ -262,7 +262,7 @@ export default function LibraryPage() {
 
   // ── Pacing calculation ──
   const pacingInfo = useMemo(() => {
-    if (!progressData?.ascentDay1 || clips.length === 0) return null;
+    if (!progressData?.ascentDay1 || clips.length === 0 || !week1Data) return null;
     const startDate = new Date(progressData.ascentDay1 + "T00:00:00");
     const today = new Date();
     const extensionDays = progressData.extensionDays ?? 0;
@@ -319,7 +319,7 @@ export default function LibraryPage() {
       startDate, adjustmentDay, afterSummitDay, afterAdjustmentDay, dayBeforeSummit,
       summitDayIsToday, incompleteSessions,
     };
-  }, [progressData, clips]);
+  }, [progressData, clips, week1Data]);
 
   // --- Approach completion status for Ascent pacing modals ---
   const approachStatus = useMemo(() => {
@@ -371,7 +371,7 @@ export default function LibraryPage() {
   const allCompleted = ascentComplete && approachStatus?.complete === true;
 
   // Gate: ALL data must be loaded before any modal logic runs
-  const dataReady = !!viewer && !!data && !!progressData;
+  const dataReady = !!viewer && !!data && !!progressData && !!week1Data;
 
   // Auto-trigger Tier Unlock — only after all data ready
   useEffect(() => {
