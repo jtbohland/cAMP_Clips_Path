@@ -92,9 +92,18 @@ export default function ChallengerCard({
       </div>
 
       <div className="bg-white divide-y divide-gray-100">
+        {/* Register */}
+        <div className="px-5 py-3">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Step 1 — Register</p>
+          <a href="https://hub.challengerinc.com/redeem/1bff9c75-94e3-405f-a673-33f8eb820209amplitude-seller" target="_blank" rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold bg-red-50 text-red-800 border border-red-300 hover:bg-red-100 transition-colors shadow-sm">
+            <span className="text-lg">🚀</span> Register for Challenger ↗
+          </a>
+        </div>
+
         {/* Course */}
         <div className="px-5 py-3">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Course</p>
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Step 2 — Course</p>
           <a href="https://deeplinks.mindtickle.com/ZSbb3886zTb" target="_blank" rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100 transition-colors shadow-sm">
             <span className="text-lg">🧠</span> MindTickle Course ↗
@@ -103,7 +112,7 @@ export default function ChallengerCard({
 
         {/* 🎒 cAMP Gear */}
         <div className="px-5 py-3">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">🎒 cAMP Gear</p>
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Step 3 — 🎒 cAMP Gear</p>
           <div className="flex flex-wrap gap-2">
             <a href="https://hub.challengerinc.com/redeem/1bff9c75-94e3-405f-a673-33f8eb820209amplitude-seller" target="_blank" rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-colors">
