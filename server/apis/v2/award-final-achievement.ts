@@ -154,7 +154,7 @@ export default api({
 
       const ScreenshotSchema = z.object({ course_key: z.string() });
       const screenshots = await ctx.integrations.db.query(
-        `SELECT course_key FROM cliptracker_v2_academy_screenshots WHERE viewer_id = $1`,
+        `SELECT course_key FROM cliptracker_v2_academy_screenshots WHERE viewer_id = $1 AND course_key IN ('analytics', 'experiment', 'session_replay', 'guides_surveys')`,
         ScreenshotSchema, [viewerId], { label: "Fetch academy screenshots" }
       );
       const screenshotKeys = new Set(screenshots.map(s => s.course_key));

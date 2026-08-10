@@ -8,6 +8,8 @@ const ITEM_LABELS: Record<string, { emoji: string; name: string }> = {
   experiment: { emoji: "🧪", name: "Academy: Experiment" },
   session_replay: { emoji: "🔁", name: "Academy: Session Replay" },
   guides_surveys: { emoji: "📋", name: "Academy: Guides & Surveys" },
+  challenger_why: { emoji: "🚀", name: "Challenger: Why Challenger" },
+  challenger_intro: { emoji: "🚀", name: "Challenger: Intro to Skills" },
   meddpicc: { emoji: "📘", name: "MEDDPICC" },
   camp101: { emoji: "🏕️", name: "cAMP 101" },
   challenger: { emoji: "⚔️", name: "Challenger" },

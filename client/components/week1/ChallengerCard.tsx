@@ -1,6 +1,19 @@
 import { useState, useCallback, useRef } from "react";
 import { toast } from "sonner";
 
+const CHALLENGER_COURSES = [
+  {
+    key: "challenger_why",
+    label: "Why Challenger",
+    url: "https://hub.challengerinc.com/learn/course/why-challenger/why-challenger/what-it-means-to-be-a-high-performer",
+  },
+  {
+    key: "challenger_intro",
+    label: "Intro to Challenger Skills",
+    url: "https://hub.challengerinc.com/learn/learning-path/intro-to-challenger-skills",
+  },
+] as const;
+
 type ChallengerCardProps = {
   isSignedOff: boolean;
   signoffData?: { reflectionResponse: string; signature: string; completedAt: string };
@@ -10,6 +23,12 @@ type ChallengerCardProps = {
   onAccountChange: (v: string) => void;
   onContactChange: (v: string) => void;
   reflectionPrompt: string;
+  challengerScreenshots: Record<string, boolean>;
+  onChallengerUpload: (courseKey: string, data: {
+    screenshotData: string;
+    screenshotFilename: string;
+    screenshotHash: string;
+  }) => Promise<void>;
   onSignOff: (data: {
     screenshotData: string;
     screenshotFilename: string;
@@ -28,44 +47,81 @@ export default function ChallengerCard({
   onAccountChange,
   onContactChange,
   reflectionPrompt,
+  challengerScreenshots,
+  onChallengerUpload,
   onSignOff,
 }: ChallengerCardProps) {
-  const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
-  const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
-  const [screenshotHash, setScreenshotHash] = useState<string | null>(null);
+  const [uploading, setUploading] = useState<string | null>(null);
+  const [previews, setPreviews] = useState<Record<string, string>>({});
   const [reflection, setReflection] = useState("");
   const [signature, setSignature] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
-  const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = useCallback(async (courseKey: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith("image/")) { toast.error("Please upload an image file"); return; }
-    if (file.size > 5 * 1024 * 1024) { toast.error("Screenshot must be under 5MB"); return; }
 
-    setScreenshotFile(file);
-    const reader = new FileReader();
-    reader.onload = () => setScreenshotPreview(reader.result as string);
-    reader.readAsDataURL(file);
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload an image file");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Screenshot must be under 5MB");
+      return;
+    }
 
-    const buffer = await file.arrayBuffer();
-    const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
-    const hashHex = Array.from(new Uint8Array(hashBuffer)).map((b) => b.toString(16).padStart(2, "0")).join("");
-    setScreenshotHash(hashHex);
-  }, []);
+    setUploading(courseKey);
+    try {
+      const dataUrl = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.readAsDataURL(file);
+      });
+
+      const buffer = await file.arrayBuffer();
+      const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
+      const hashHex = Array.from(new Uint8Array(hashBuffer))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
+
+      setPreviews((prev) => ({ ...prev, [courseKey]: dataUrl }));
+
+      await onChallengerUpload(courseKey, {
+        screenshotData: dataUrl,
+        screenshotFilename: file.name,
+        screenshotHash: hashHex,
+      });
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to upload screenshot");
+      setPreviews((prev) => {
+        const next = { ...prev };
+        delete next[courseKey];
+        return next;
+      });
+    } finally {
+      setUploading(null);
+    }
+  }, [onChallengerUpload]);
+
+  const bothScreenshotsUploaded = CHALLENGER_COURSES.every(
+    (c) => challengerScreenshots[c.key] || previews[c.key]
+  );
+  const screenshotsReady = bothScreenshotsUploaded || isSignedOff;
+  const completedCount = CHALLENGER_COURSES.filter(
+    (c) => challengerScreenshots[c.key] || previews[c.key]
+  ).length;
 
   const handleSubmit = useCallback(async () => {
-    if (!screenshotFile || !screenshotPreview || !screenshotHash) { toast.error("Upload screenshot first"); return; }
     if (!reflection.trim()) { toast.error("Write your reflection"); return; }
     if (!signature.trim()) { toast.error("Sign your name"); return; }
 
     setSubmitting(true);
     try {
       await onSignOff({
-        screenshotData: screenshotPreview,
-        screenshotFilename: screenshotFile.name,
-        screenshotHash,
+        screenshotData: "challenger_screenshots_complete",
+        screenshotFilename: "challenger_2_of_2.png",
+        screenshotHash: "challenger_all_screenshots_uploaded",
         reflectionResponse: reflection.trim(),
         signature: signature.trim(),
       });
@@ -74,10 +130,7 @@ export default function ChallengerCard({
     } finally {
       setSubmitting(false);
     }
-  }, [screenshotFile, screenshotPreview, screenshotHash, reflection, signature, onSignOff]);
-
-  const screenshotUploaded = !!screenshotFile || isSignedOff;
-  const disabled = isLegacy || isSignedOff;
+  }, [reflection, signature, onSignOff]);
 
   return (
     <div className="rounded-xl border border-gray-200 shadow-sm overflow-hidden">
@@ -92,7 +145,7 @@ export default function ChallengerCard({
       </div>
 
       <div className="bg-white divide-y divide-gray-100">
-        {/* Register */}
+        {/* Step 1 — Register */}
         <div className="px-5 py-3">
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Step 1 — Register</p>
           <a href="https://hub.challengerinc.com/redeem/1bff9c75-94e3-405f-a673-33f8eb820209amplitude-seller" target="_blank" rel="noopener noreferrer"
@@ -101,16 +154,67 @@ export default function ChallengerCard({
           </a>
         </div>
 
-        {/* Course */}
+        {/* Step 2 — Courses (2 tiles with screenshot upload) */}
         <div className="px-5 py-3">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Step 2 — Course</p>
-          <a href="https://deeplinks.mindtickle.com/ZSbb3886zTb" target="_blank" rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100 transition-colors shadow-sm">
-            <span className="text-lg">🧠</span> MindTickle Course ↗
-          </a>
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+            Step 2 — Courses ({isSignedOff ? 2 : completedCount}/2)
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            {CHALLENGER_COURSES.map((course) => {
+              const isUploaded = challengerScreenshots[course.key] || !!previews[course.key];
+              const isUploading = uploading === course.key;
+
+              return (
+                <div
+                  key={course.key}
+                  className={`rounded-lg border p-3 ${
+                    isUploaded || isSignedOff
+                      ? "border-green-300 bg-green-50"
+                      : "border-gray-200 bg-white"
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xs font-semibold text-gray-900">{course.label}</span>
+                    {(isUploaded || isSignedOff) && <span className="text-green-600 text-xs">✅</span>}
+                  </div>
+                  <a
+                    href={course.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 mb-2 px-2 py-1 rounded text-[10px] font-medium bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition-colors"
+                  >
+                    🚀 Go to Course ↗
+                  </a>
+
+                  {isUploaded || isSignedOff ? (
+                    <p className="text-[10px] text-green-700">Screenshot uploaded</p>
+                  ) : isLegacy ? (
+                    <p className="text-[10px] text-gray-400 italic">Not required</p>
+                  ) : (
+                    <>
+                      <input
+                        ref={(el) => { fileInputRefs.current[course.key] = el; }}
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleFileChange(course.key, e)}
+                        className="hidden"
+                      />
+                      <button
+                        onClick={() => fileInputRefs.current[course.key]?.click()}
+                        disabled={isUploading}
+                        className="w-full py-2 rounded border border-dashed border-gray-300 text-gray-400 text-[10px] hover:border-emerald-400 hover:text-emerald-600 transition-colors disabled:opacity-50"
+                      >
+                        {isUploading ? "Uploading..." : "📷 Upload"}
+                      </button>
+                    </>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
 
-        {/* 🎒 cAMP Gear */}
+        {/* Step 3 — 🎒 cAMP Gear */}
         <div className="px-5 py-3">
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Step 3 — 🎒 cAMP Gear</p>
           <div className="flex flex-wrap gap-2">
@@ -154,38 +258,7 @@ export default function ChallengerCard({
           </div>
         )}
 
-        {/* Screenshot Upload */}
-        <div className="px-5 py-3">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-            📸 Upload MindTickle completion screenshot
-          </p>
-          {isSignedOff ? (
-            <div className="text-xs text-green-700 bg-green-50 rounded-lg px-3 py-2">✅ Screenshot uploaded</div>
-          ) : isLegacy ? (
-            <div className="text-xs text-gray-400 bg-gray-50 rounded-lg px-3 py-2 italic">
-              Sign-off not required — you started before Week 1 was introduced
-            </div>
-          ) : (
-            <div>
-              <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
-              {screenshotPreview ? (
-                <div className="relative">
-                  <img src={screenshotPreview} alt="Screenshot preview" className="w-full max-h-48 object-contain rounded-lg border border-gray-200" />
-                  <button
-                    onClick={() => { setScreenshotFile(null); setScreenshotPreview(null); setScreenshotHash(null); if (fileInputRef.current) fileInputRef.current.value = ""; }}
-                    className="absolute top-2 right-2 bg-white/90 rounded-full p-1 text-xs hover:bg-white shadow"
-                  >✕</button>
-                </div>
-              ) : (
-                <button onClick={() => fileInputRef.current?.click()} className="w-full py-4 rounded-lg border-2 border-dashed border-gray-300 text-gray-400 text-sm hover:border-emerald-400 hover:text-emerald-600 transition-colors">
-                  📷 Click to upload screenshot
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Reflection — locked until screenshot uploaded */}
+        {/* Reflection — locked until both screenshots uploaded */}
         <div className="px-5 py-3">
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">💭 Reflection</p>
           {isSignedOff ? (
@@ -195,9 +268,9 @@ export default function ChallengerCard({
             </div>
           ) : isLegacy ? (
             <div className="text-xs text-gray-400 bg-gray-50 rounded-lg px-3 py-2 italic">Sign-off not required</div>
-          ) : !screenshotUploaded ? (
+          ) : !screenshotsReady ? (
             <div className="text-xs text-gray-400 bg-gray-50 rounded-lg px-3 py-2 flex items-center gap-2">
-              <span>🔒</span> Upload your screenshot to unlock the reflection
+              <span>🔒</span> Upload both course screenshots to unlock the reflection
             </div>
           ) : (
             <div>
@@ -209,7 +282,7 @@ export default function ChallengerCard({
         </div>
 
         {/* Signature + Submit */}
-        {!isSignedOff && !isLegacy && screenshotUploaded && (
+        {!isSignedOff && !isLegacy && screenshotsReady && (
           <div className="px-5 py-3">
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">✍️ Signature</p>
             <input value={signature} onChange={(e) => setSignature(e.target.value)} placeholder="Type your full name to sign off"

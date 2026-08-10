@@ -195,7 +195,7 @@ export default api({
 
     const AcademyScreenshotRow = z.object({ course_key: z.string() });
     const academyRows = await ctx.integrations.db.query(
-      `SELECT DISTINCT course_key FROM cliptracker_v2_academy_screenshots WHERE viewer_id = $1`,
+      `SELECT DISTINCT course_key FROM cliptracker_v2_academy_screenshots WHERE viewer_id = $1 AND course_key IN ('analytics', 'experiment', 'session_replay', 'guides_surveys')`,
       AcademyScreenshotRow,
       [viewerId],
       { label: "Get academy screenshots for approach status" }

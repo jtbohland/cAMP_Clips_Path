@@ -73,7 +73,7 @@ export default api({
            WHERE ms.viewer_id = v.id AND ms.module_key IN ('meddpicc', 'challenger'))
           +
           (SELECT COUNT(*)::int FROM cliptracker_v2_academy_screenshots acs
-           WHERE acs.viewer_id = v.id)
+           WHERE acs.viewer_id = v.id AND acs.course_key IN ('analytics', 'experiment', 'session_replay', 'guides_surveys'))
           +
           (SELECT LEAST(COUNT(*)::int, 1) FROM cliptracker_v2_module_signoffs ms2
            WHERE ms2.viewer_id = v.id AND ms2.module_key = 'camp101')
