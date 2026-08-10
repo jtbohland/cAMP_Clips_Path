@@ -65,6 +65,7 @@ import FixKabirDate from './v2/fix-kabir-date.js';
 import FixBenChrisDates from './v2/fix-ben-chris-dates.js';
 import FixTylerDate from './v2/fix-tyler-date.js';
 import FixCpqTimestamps from './v2/fix-cpq-timestamps.js';
+import FixRoleConstraint from './v2/fix-role-constraint.js';
 import AddBelayBuddyColumn from './v2/add-belay-buddy-column.js';
 import RemoveDealDeskZoomClips from './v2/remove-deal-desk-zoom-clips.js';
 import SetupTopicDays from './v2/setup-topic-days.js';
@@ -119,6 +120,7 @@ import UpdateQuestionTimestamps from './v2/update-question-timestamps.js';
 import UpdateClipResources from './v2/update-clip-resources.js';
 import GetPublicLeaderboard from './v2/get-public-leaderboard.js';
 import GetPacingPerformance from './v2/get-pacing-performance.js';
+import UpdateChallengerConstraint from './v2/update-challenger-constraint.js';
 
 
 
@@ -187,6 +189,7 @@ ResetJTSessions,
   FixBenChrisDates,
   FixTylerDate,
   FixCpqTimestamps,
+  FixRoleConstraint,
   AddBelayBuddyColumn,
   RemoveDealDeskZoomClips,
   SetupTopicDays,
@@ -242,6 +245,7 @@ ResetJTSessions,
   UpdateClipResources,
   GetPublicLeaderboard,
   GetPacingPerformance,
+  UpdateChallengerConstraint,
 } as const;
 
 export default apis;

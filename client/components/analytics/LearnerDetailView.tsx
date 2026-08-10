@@ -61,6 +61,8 @@ const ACADEMY_LABELS: Record<string, string> = {
   experiment: "Experiment Academy",
   session_replay: "Session Replay Academy",
   guides_surveys: "Guides & Surveys Academy",
+  challenger_why: "Challenger: Why Challenger",
+  challenger_intro: "Challenger: Intro to Skills",
 };
 
 const CHECKIN_LABELS: Record<string, { emoji: string; label: string }> = {
@@ -428,7 +430,7 @@ function ApproachTab({ approach }: { approach: any }) {
                     <p className="text-xs text-gray-700 leading-relaxed">{m.reflectionResponse}</p>
                   </div>
                 )}
-                {m.screenshotData && (
+                {m.screenshotData && m.screenshotData.length > 100 && (
                   <div className="mt-2">
                     <p className="text-[10px] text-gray-400 mb-1">📎 Screenshot {m.screenshotFilename ? `(${m.screenshotFilename})` : ""}</p>
                     <button

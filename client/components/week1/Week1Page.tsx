@@ -138,7 +138,7 @@ export default function Week1Page({ viewerId, viewerName, isAdmin, pacingLearner
     let count = 0;
     if (signoffMap.meddpicc) count++;
     if (signoffMap.challenger) count++;
-    count += Object.keys(screenshotMap).length; // 4 academy screenshots
+    count += Object.keys(screenshotMap).filter(k => ['analytics','experiment','session_replay','guides_surveys'].includes(k)).length; // 4 academy screenshots
     if (wdVerified) count++;
     return count;
   }, [signoffMap, screenshotMap, wdVerified]);
@@ -522,7 +522,7 @@ export default function Week1Page({ viewerId, viewerName, isAdmin, pacingLearner
               completedAt: signoffMap.camp101.completedAt,
             } : undefined}
             isLegacy={isLegacy}
-            allScreenshotsUploaded={Object.keys(screenshotMap).length >= 4}
+            allScreenshotsUploaded={Object.keys(screenshotMap).filter(k => ['analytics','experiment','session_replay','guides_surveys'].includes(k)).length >= 4}
             reflectionPrompt={camp101Prompt}
             onSignOff={async (d) => handleModuleSignoff("camp101", d, camp101Prompt)}
           />
@@ -543,6 +543,11 @@ export default function Week1Page({ viewerId, viewerName, isAdmin, pacingLearner
         onAccountChange={setChallengerAccount}
         onContactChange={setChallengerContact}
         reflectionPrompt={challengerPrompt}
+        challengerScreenshots={{
+          challenger_why: !!screenshotMap.challenger_why,
+          challenger_intro: !!screenshotMap.challenger_intro,
+        }}
+        onChallengerUpload={handleAcademyUpload}
         onSignOff={async (d) => handleModuleSignoff("challenger", d, challengerPrompt)}
       />
 

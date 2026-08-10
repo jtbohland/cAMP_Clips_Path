@@ -15,7 +15,7 @@ const ROLES = [
   "Velocity AE",
   "Emerging AE",
   "Majors AE",
-  "Strat AE",
+  "Strategic AE",
   "PSM",
   "Renewals",
   "Admin",
