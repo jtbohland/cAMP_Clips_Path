@@ -295,7 +295,7 @@ function LearnerCheckinModalInner({ viewerId, checkinType, onClose, onSent, allo
         body += `Wheel & Deal:\n`;
         body += `  Product: ${data.wdVerification.product}\n`;
         body += `  Scenario: ${data.wdVerification.scenario}\n`;
-        body += `  Self-score: ${data.wdVerification.score}/12\n`;
+        body += `  Self-score: ${data.wdVerification.score}/15\n`;
       }
 
     // ── TEMPLATE 2: APPROACH (INCOMPLETE / AUTO-UNLOCK) ──
@@ -1077,7 +1077,7 @@ function EmailView({
                   <p>Wheel & Deal:</p>
                   <p>{"  "}Product: {data.wdVerification.product}</p>
                   <p>{"  "}Scenario: {data.wdVerification.scenario}</p>
-                  <p>{"  "}Self-score: {data.wdVerification.score}/12</p>
+                  <p>{"  "}Self-score: {data.wdVerification.score}/15</p>
                 </>
               )}
             </>

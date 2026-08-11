@@ -67,7 +67,7 @@ export default api({
         viewer_id UUID NOT NULL REFERENCES cliptracker_v2_viewers(id),
         product TEXT NOT NULL,
         scenario TEXT NOT NULL,
-        score INT NOT NULL CHECK (score >= 4 AND score <= 12),
+        score INT NOT NULL CHECK (score >= 4 AND score <= 15),
         completed_at TIMESTAMPTZ NOT NULL DEFAULT now(),
         UNIQUE (viewer_id)
       )`,

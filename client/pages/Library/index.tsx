@@ -112,7 +112,7 @@ export default function LibraryPage() {
     window.open(WHEEL_AND_DEAL_URL, "_blank");
   }, [viewer?.id, logClick]);
 
-  const CAMP_QUIZ_URL = "https://app.superblocks.com/code-mode/applications/11b66d3d-da48-45dd-b8fa-9f686d4ec72a/?v=1786039301040";
+  const CAMP_QUIZ_URL = "https://app.superblocks.com/code-mode/applications/11b66d3d-da48-45dd-b8fa-9f686d4ec72a";
   const handleCampQuiz = useCallback(() => {
     if (viewer?.id) logClick({ viewerId: viewer.id, pitchName: "cAMP Quiz" });
     window.open(CAMP_QUIZ_URL, "_blank");

@@ -42,7 +42,14 @@ const CHALLENGER_REFLECTION_INTRO = "Describe one commercial insight you could b
 // Academy courses
 const ACADEMY_COURSES = [
   { key: "analytics", label: "Analytics", url: "https://academy.amplitude.com/amplitude-getting-started-with-analytics" },
-  { key: "experiment", label: "Experiment", url: "https://academy.amplitude.com/getting-started-with-amplitude-experiment-learning-path" },
+  {
+    key: "experiment",
+    label: "Experiment & Statsig",
+    url: "https://academy.amplitude.com/getting-started-with-amplitude-experiment-learning-path",
+    subCourses: [
+      { key: "statsig", label: "Statsig Overview", url: "https://academy.amplitude.com/statsig-overview" },
+    ],
+  },
   { key: "session_replay", label: "Session Replay", url: "https://academy.amplitude.com/contextualize-user-experience-with-session-replay" },
   { key: "guides_surveys", label: "Guides & Surveys", url: "https://academy.amplitude.com/engage-your-users-with-guides-and-surveys" },
 ];
@@ -138,7 +145,9 @@ export default function Week1Page({ viewerId, viewerName, isAdmin, pacingLearner
     let count = 0;
     if (signoffMap.meddpicc) count++;
     if (signoffMap.challenger) count++;
-    count += Object.keys(screenshotMap).filter(k => ['analytics','experiment','session_replay','guides_surveys'].includes(k)).length; // 4 academy screenshots
+    // Academy tiles: experiment tile requires BOTH experiment + statsig to count as 1
+    const expDone = screenshotMap.experiment && screenshotMap.statsig;
+    count += ['analytics','session_replay','guides_surveys'].filter(k => screenshotMap[k]).length + (expDone ? 1 : 0);
     if (wdVerified) count++;
     return count;
   }, [signoffMap, screenshotMap, wdVerified]);
@@ -149,7 +158,7 @@ export default function Week1Page({ viewerId, viewerName, isAdmin, pacingLearner
     if (signoffMap.meddpicc) keys.add("module:meddpicc");
     if (signoffMap.challenger) keys.add("module:challenger");
     if (screenshotMap.analytics) keys.add("academy:analytics");
-    if (screenshotMap.experiment) keys.add("academy:experiment");
+    if (screenshotMap.experiment && screenshotMap.statsig) keys.add("academy:experiment");
     if (screenshotMap.session_replay) keys.add("academy:session_replay");
     if (screenshotMap.guides_surveys) keys.add("academy:guides_surveys");
     if (wdVerified) keys.add("wd");
@@ -180,7 +189,7 @@ export default function Week1Page({ viewerId, viewerName, isAdmin, pacingLearner
     const items: Array<{ emoji: string; label: string; done: boolean }> = [];
     items.push({ emoji: "✍🏽", label: "MEDDPICC sign-off", done: !!signoffMap.meddpicc });
     items.push({ emoji: "🎓", label: "Academy: Analytics", done: !!screenshotMap.analytics });
-    items.push({ emoji: "🎓", label: "Academy: Experiment", done: !!screenshotMap.experiment });
+    items.push({ emoji: "🎓", label: "Academy: Experiment & Statsig", done: !!(screenshotMap.experiment && screenshotMap.statsig) });
     items.push({ emoji: "🎓", label: "Academy: Session Replay", done: !!screenshotMap.session_replay });
     items.push({ emoji: "🎓", label: "Academy: Guides & Surveys", done: !!screenshotMap.guides_surveys });
     items.push({ emoji: "✍🏽", label: "Challenger sign-off", done: !!signoffMap.challenger });
@@ -498,6 +507,14 @@ export default function Week1Page({ viewerId, viewerName, isAdmin, pacingLearner
               >
                 <span>📊</span> Selling Statsig ↗
               </a>
+              <a
+                href="https://docs.google.com/document/d/1ty44HjkNk3Wxc4UqO9yfmuErq-aaZcwwcN22qAf7A5o/edit?tab=t.0"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-colors"
+              >
+                <span>🔄</span> Statsig Migration Guide ↗
+              </a>
             </div>
           </div>
 
@@ -508,6 +525,14 @@ export default function Week1Page({ viewerId, viewerName, isAdmin, pacingLearner
               label: c.label,
               url: c.url,
               uploaded: !!screenshotMap[c.key],
+              ...("subCourses" in c && c.subCourses ? {
+                subCourses: c.subCourses.map((sc) => ({
+                  key: sc.key,
+                  label: sc.label,
+                  url: sc.url,
+                  uploaded: !!screenshotMap[sc.key],
+                })),
+              } : {}),
             }))}
             isLegacy={isLegacy}
             onUpload={handleAcademyUpload}
@@ -522,7 +547,7 @@ export default function Week1Page({ viewerId, viewerName, isAdmin, pacingLearner
               completedAt: signoffMap.camp101.completedAt,
             } : undefined}
             isLegacy={isLegacy}
-            allScreenshotsUploaded={Object.keys(screenshotMap).filter(k => ['analytics','experiment','session_replay','guides_surveys'].includes(k)).length >= 4}
+            allScreenshotsUploaded={['analytics','session_replay','guides_surveys'].every(k => screenshotMap[k]) && !!(screenshotMap.experiment && screenshotMap.statsig)}
             reflectionPrompt={camp101Prompt}
             onSignOff={async (d) => handleModuleSignoff("camp101", d, camp101Prompt)}
           />
