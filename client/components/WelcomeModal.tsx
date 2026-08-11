@@ -80,7 +80,7 @@ export default function WelcomeModal({ viewerId, onDismiss }: WelcomeModalProps)
             <div className="flex items-start gap-3 rounded-lg bg-gray-50 px-4 py-3">
               <span className="text-lg mt-0.5 shrink-0">🧠</span>
               <div>
-                <a href="https://app.superblocks.com/code-mode/applications/303818de-7c76-409c-a430-4404529ab864" target="_blank" rel="noopener noreferrer" className="font-semibold text-indigo-600 underline decoration-indigo-300 hover:text-indigo-800">cAMP Quizzes</a> are your content-retention checks after each session.
+                <a href="https://app.superblocks.com/code-mode/applications/11b66d3d-da48-45dd-b8fa-9f686d4ec72a/?v=1786039301040" target="_blank" rel="noopener noreferrer" className="font-semibold text-indigo-600 underline decoration-indigo-300 hover:text-indigo-800">cAMP Quizzes</a> are your content-retention checks after each session.
               </div>
             </div>
             <div className="flex items-start gap-3 rounded-lg bg-gray-50 px-4 py-3">
