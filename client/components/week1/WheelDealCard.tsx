@@ -87,7 +87,7 @@ export default function WheelDealCard({ isVerified, verificationData, isLegacy, 
               </div>
               <div>
                 <p className="text-[10px] font-semibold text-gray-500 uppercase">Score</p>
-                <p className="text-gray-800 font-medium">{verificationData.score}/12</p>
+                <p className="text-gray-800 font-medium">{verificationData.score}/15</p>
               </div>
             </div>
             <p className="text-xs text-green-700 mt-2">

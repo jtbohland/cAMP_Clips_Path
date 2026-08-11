@@ -62,7 +62,7 @@ export default api({
     const CountSchema = z.object({ count: z.coerce.number() });
 
     // Validate score range
-    if (score < 4 || score > 12) {
+    if (score < 4 || score > 15) {
       return {
         success: false,
         alreadySubmitted: false,

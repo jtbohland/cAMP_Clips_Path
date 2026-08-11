@@ -1,12 +1,20 @@
 import { useState, useCallback, useRef } from "react";
 import { toast } from "sonner";
 
+type SubCourse = {
+  key: string;
+  label: string;
+  url: string;
+  uploaded: boolean;
+};
+
 type CourseSlot = {
   key: string;
   label: string;
   url: string;
   uploaded: boolean;
-  filename?: string;
+  /** Optional additional courses within the same tile (e.g. Statsig alongside Experiment) */
+  subCourses?: SubCourse[];
 };
 
 type AcademyScreenshotSlotsProps = {
@@ -73,7 +81,13 @@ export default function AcademyScreenshotSlots({ slots, isLegacy, onUpload }: Ac
     }
   }, [onUpload]);
 
-  const completedCount = slots.filter((s) => s.uploaded || previews[s.key]).length;
+  /** Count completed tiles (a tile with subCourses requires ALL to be uploaded) */
+  const completedCount = slots.filter((s) => {
+    const primaryDone = s.uploaded || !!previews[s.key];
+    if (!s.subCourses || s.subCourses.length === 0) return primaryDone;
+    const allSubsDone = s.subCourses.every((sc) => sc.uploaded || !!previews[sc.key]);
+    return primaryDone && allSubsDone;
+  }).length;
 
   return (
     <div className="px-5 py-3">
@@ -82,53 +96,77 @@ export default function AcademyScreenshotSlots({ slots, isLegacy, onUpload }: Ac
       </p>
       <div className="grid grid-cols-2 gap-3">
         {slots.map((slot) => {
-          const isUploaded = slot.uploaded || !!previews[slot.key];
-          const isUploading = uploading === slot.key;
+          // For multi-course tiles, collect all course items to render
+          const allCourses: SubCourse[] = [
+            { key: slot.key, label: slot.label, url: slot.url, uploaded: slot.uploaded },
+            ...(slot.subCourses ?? []),
+          ];
+          const isMultiCourse = allCourses.length > 1;
+          const allDone = allCourses.every((c) => c.uploaded || !!previews[c.key]);
 
           return (
             <div
               key={slot.key}
               className={`rounded-lg border p-3 ${
-                isUploaded
+                allDone
                   ? "border-green-300 bg-green-50"
                   : "border-gray-200 bg-white"
               }`}
             >
+              {/* Tile header */}
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-xs font-semibold text-gray-900">{slot.label}</span>
-                {isUploaded && <span className="text-green-600 text-xs">✅</span>}
+                {allDone && <span className="text-green-600 text-xs">✅</span>}
               </div>
-              <a
-                href={slot.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 mb-2 px-2 py-1 rounded text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors"
-              >
-                🎓 Go to Academy Course ↗
-              </a>
 
-              {isUploaded ? (
-                <p className="text-[10px] text-green-700">Screenshot uploaded</p>
-              ) : isLegacy ? (
-                <p className="text-[10px] text-gray-400 italic">Not required</p>
-              ) : (
-                <>
-                  <input
-                    ref={(el) => { fileInputRefs.current[slot.key] = el; }}
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => handleFileChange(slot.key, e)}
-                    className="hidden"
-                  />
-                  <button
-                    onClick={() => fileInputRefs.current[slot.key]?.click()}
-                    disabled={isUploading}
-                    className="w-full py-2 rounded border border-dashed border-gray-300 text-gray-400 text-[10px] hover:border-emerald-400 hover:text-emerald-600 transition-colors disabled:opacity-50"
-                  >
-                    {isUploading ? "Uploading..." : "📷 Upload"}
-                  </button>
-                </>
-              )}
+              {/* Render each course's button + upload */}
+              {allCourses.map((course, idx) => {
+                const isDone = course.uploaded || !!previews[course.key];
+                const isUploading = uploading === course.key;
+
+                return (
+                  <div key={course.key} className={idx > 0 ? "mt-2.5 pt-2.5 border-t border-gray-100" : ""}>
+                    {/* Course label (only shown for multi-course tiles) */}
+                    {isMultiCourse && (
+                      <p className="text-[10px] font-medium text-gray-500 mb-1">{course.label}</p>
+                    )}
+
+                    {/* Course link button */}
+                    <a
+                      href={course.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 mb-2 px-2 py-1 rounded text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors"
+                    >
+                      🎓 Go to Academy Course ↗
+                    </a>
+
+                    {/* Upload / status */}
+                    {isDone ? (
+                      <p className="text-[10px] text-green-700">Screenshot uploaded</p>
+                    ) : isLegacy ? (
+                      <p className="text-[10px] text-gray-400 italic">Not required</p>
+                    ) : (
+                      <>
+                        <input
+                          ref={(el) => { fileInputRefs.current[course.key] = el; }}
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleFileChange(course.key, e)}
+                          className="hidden"
+                        />
+                        <button
+                          onClick={() => fileInputRefs.current[course.key]?.click()}
+                          disabled={isUploading}
+                          className="w-full py-2 rounded border border-dashed border-gray-300 text-gray-400 text-[10px] hover:border-emerald-400 hover:text-emerald-600 transition-colors disabled:opacity-50"
+                        >
+                          {isUploading ? "Uploading..." : "📷 Upload"}
+                        </button>
+                      </>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           );
         })}

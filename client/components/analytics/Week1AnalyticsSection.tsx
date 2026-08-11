@@ -76,7 +76,7 @@ export default function Week1AnalyticsSection() {
                 <td className="px-3 py-2 text-center"><StatusDot done={l.challengerSigned} /></td>
                 <td className="px-3 py-2 text-center">
                   {l.wdScore !== null ? (
-                    <span className="font-semibold text-gray-800">{l.wdScore}/12</span>
+                    <span className="font-semibold text-gray-800">{l.wdScore}/15</span>
                   ) : (
                     <span className="text-gray-300">—</span>
                   )}

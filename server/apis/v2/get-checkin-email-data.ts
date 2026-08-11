@@ -218,7 +218,7 @@ export default api({
     const APPROACH_MODULES = [
       { key: "meddpicc", label: "MEDDPICC", type: "signoff" },
       { key: "analytics", label: "Academy: Analytics", type: "screenshot" },
-      { key: "experiment", label: "Academy: Experiment", type: "screenshot" },
+      { key: "experiment", label: "Academy: Experiment & Statsig", type: "screenshot" },
       { key: "session_replay", label: "Academy: Session Replay", type: "screenshot" },
       { key: "guides_surveys", label: "Academy: Guides & Surveys", type: "screenshot" },
       { key: "challenger", label: "Challenger", type: "signoff" },
