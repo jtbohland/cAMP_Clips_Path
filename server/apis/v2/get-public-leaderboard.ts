@@ -196,7 +196,7 @@ export default api({
         v.id AS viewer_id,
         (
           (SELECT COUNT(*)::int FROM cliptracker_v2_module_signoffs ms
-           WHERE ms.viewer_id = v.id AND ms.module_key IN ('meddpicc', 'challenger'))
+           WHERE ms.viewer_id = v.id AND ms.module_key IN ('meddpicc', 'challenger', 'camp101'))
           +
           (SELECT COUNT(*)::int FROM cliptracker_v2_academy_screenshots acs
            WHERE acs.viewer_id = v.id AND acs.course_key IN ('analytics', 'experiment', 'session_replay', 'guides_surveys'))
