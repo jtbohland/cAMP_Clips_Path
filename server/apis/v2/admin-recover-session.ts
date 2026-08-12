@@ -27,10 +27,26 @@ export default api({
         xpAmount: z.number(),
       })
     ),
+    responses: z.array(
+      z.object({
+        questionId: z.string().uuid(),
+        selectedOption: z.number(),
+        isCorrect: z.boolean(),
+        timeToAnswerSeconds: z.number(),
+        answeredAt: z.string(),
+      })
+    ).optional(),
+    badges: z.array(
+      z.object({
+        badgeId: z.string(),
+      })
+    ).optional(),
   }),
   output: z.object({
     sessionUpdated: z.boolean(),
     xpEventsInserted: z.number(),
+    responsesInserted: z.number(),
+    badgesInserted: z.number(),
   }),
   async run(ctx, input) {
     // Admin gate: verify the calling user is an admin
@@ -81,9 +97,36 @@ export default api({
       );
     }
 
+    // Step 3: Insert trail marker responses (if provided)
+    if (input.responses && input.responses.length > 0) {
+      for (const resp of input.responses) {
+        await ctx.integrations.db.execute(
+          `INSERT INTO cliptracker_v2_responses (id, session_id, question_id, selected_option, is_correct, time_to_answer_seconds, answered_at)
+           VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6)`,
+          [input.sessionId, resp.questionId, resp.selectedOption, resp.isCorrect, resp.timeToAnswerSeconds, resp.answeredAt],
+          { label: `Insert response for question ${resp.questionId.slice(0, 8)}` }
+        );
+      }
+    }
+
+    // Step 4: Insert badges (if provided)
+    if (input.badges && input.badges.length > 0) {
+      for (const badge of input.badges) {
+        await ctx.integrations.db.execute(
+          `INSERT INTO cliptracker_v2_badges (id, viewer_id, clip_id, badge_id, earned_at)
+           VALUES (gen_random_uuid(), $1, $2, $3, NOW())
+           ON CONFLICT DO NOTHING`,
+          [input.viewerId, input.clipId, badge.badgeId],
+          { label: `Insert badge: ${badge.badgeId}` }
+        );
+      }
+    }
+
     return {
       sessionUpdated: true,
       xpEventsInserted: input.xpEvents.length,
+      responsesInserted: input.responses?.length ?? 0,
+      badgesInserted: input.badges?.length ?? 0,
     };
   },
 });
