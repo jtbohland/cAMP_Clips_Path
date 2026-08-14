@@ -105,6 +105,19 @@ export default function WatchPage() {
   const isLowVolumeRef = useRef(false);
   const [showTranscript, setShowTranscript] = useState(false);
 
+  // ─── Play-start fade toast ─────────────────────────────────────────────────
+  // Shows a brief reminder on first play, then fades out automatically.
+  const hasShownPlayToastRef = useRef(false);
+  const [playToastVisible, setPlayToastVisible] = useState(false);
+  const [playToastFading, setPlayToastFading] = useState(false);
+
+  // ─── Backward seek detection ───────────────────────────────────────────────
+  // Detects when a learner seeks backward and shows a warning modal.
+  const [showSeekWarning, setShowSeekWarning] = useState(false);
+  const showSeekWarningRef = useRef(false);
+  const seekSnapbackTimeRef = useRef<number | null>(null);
+  const highWaterMarkRef = useRef(0);
+
   // Ascent Guide panel — summary + learning objectives shown on clip open
   const guideEntry = useMemo(
     () => {
@@ -193,7 +206,18 @@ export default function WatchPage() {
   // ─── WistiaPlayer event handlers (React props, not addEventListener) ────────
   // These callbacks are passed as props to <WistiaPlayer> so they work reliably
   // regardless of web component lifecycle timing. They use refs for stale-closure safety.
-  const handleWistiaPlay = useCallback(() => setIsVideoPlaying(true), []);
+  const handleWistiaPlay = useCallback(() => {
+    setIsVideoPlaying(true);
+    // Show fade toast on first play only (not on resume from pause modal)
+    if (!hasShownPlayToastRef.current && phaseRef.current === "watching") {
+      hasShownPlayToastRef.current = true;
+      setPlayToastVisible(true);
+      setPlayToastFading(false);
+      // Start fade-out after 3s, then hide after animation completes
+      setTimeout(() => setPlayToastFading(true), 3000);
+      setTimeout(() => { setPlayToastVisible(false); setPlayToastFading(false); }, 4000);
+    }
+  }, []);
   const handleWistiaPause = useCallback(() => setIsVideoPlaying(false), []);
   const handleWistiaEnded = useCallback(() => {
     setIsVideoPlaying(false);
@@ -216,12 +240,48 @@ export default function WatchPage() {
     }
   }, []);
 
+
+
+  const handleSeekWarningKeepWatching = useCallback(() => {
+    showSeekWarningRef.current = false;
+    setShowSeekWarning(false);
+    // Snap back to where they were before seeking backward
+    if (seekSnapbackTimeRef.current !== null) {
+      const p = playerRef.current;
+      if (p) p.currentTime = seekSnapbackTimeRef.current;
+      seekSnapbackTimeRef.current = null;
+    }
+    playerRef.current?.play();
+  }, []);
+
+  const handleSeekWarningRewindAnyway = useCallback(() => {
+    showSeekWarningRef.current = false;
+    setShowSeekWarning(false);
+    seekSnapbackTimeRef.current = null;
+    // Let the seek stand — player is already at the rewound position
+    playerRef.current?.play();
+  }, []);
+
   const handleWistiaSecondChange = useCallback((e: any) => {
     const t: number = typeof e?.detail?.second === "number"
       ? e.detail.second
       : Math.floor(playerRef.current?.currentTime ?? 0);
 
     if (t === lastTimeRef.current) return;
+
+    // ── Backward seek detection ──
+    // If the current time drops well below the high-water mark, the learner rewound.
+    // A delta of -5 or more (allowing for small jitter) signals a deliberate backward seek.
+    if (highWaterMarkRef.current > 5 && t < highWaterMarkRef.current - 5 && !showSeekWarningRef.current) {
+      if (phaseRef.current === "watching") {
+        playerRef.current?.pause();
+        seekSnapbackTimeRef.current = highWaterMarkRef.current;
+        showSeekWarningRef.current = true;
+        setShowSeekWarning(true);
+      }
+    }
+    // Track high-water mark
+    if (t > highWaterMarkRef.current) highWaterMarkRef.current = t;
 
     // ── Seek/scrub protection ──
     // Only count time that advances organically (≤ 3s delta covers up to ~2x speed).
@@ -315,6 +375,13 @@ export default function WatchPage() {
     tabAwayCountRef.current = 0;
     lowVolumeSecondsRef.current = 0;
     isLowVolumeRef.current = false;
+    hasShownPlayToastRef.current = false;
+    setPlayToastVisible(false);
+    setPlayToastFading(false);
+    showSeekWarningRef.current = false;
+    setShowSeekWarning(false);
+    seekSnapbackTimeRef.current = null;
+    highWaterMarkRef.current = 0;
 
     executeApi("GetPausedSession", { clipId, viewerId: viewer.id })
       .then((result: any) => {
@@ -926,6 +993,8 @@ export default function WatchPage() {
             {durationFormatted && <><span>⏱️ {durationFormatted}</span><span className="mx-1.5 text-gray-300">·</span></>}
             <span>🪧 {trailMarkers.length} Trail Markers</span>
             <span className="mx-1.5 text-gray-300">·</span>
+            <span>🎯 Watch start to finish — rewatch unlocks after completion</span>
+            <span className="mx-1.5 text-gray-300">·</span>
             <span>💬 CC available — click CC on the video for captions & auto-translation</span>
           </p>
         </div>
@@ -994,6 +1063,7 @@ export default function WatchPage() {
                 onEnded={handleWistiaEnded}
                 onSecondChange={handleWistiaSecondChange}
                 onVolumeChange={handleWistiaVolumeChange}
+
                 style={{ width: "100%", height: "100%", position: "absolute", top: 0, left: 0 }}
               />
             </div>
@@ -1004,6 +1074,51 @@ export default function WatchPage() {
               <p className="text-xs text-white/40">
                 Clip will be available once the admin adds the video link
               </p>
+            </div>
+          )}
+
+          {/* Play-start fade toast — non-blocking reminder */}
+          {playToastVisible && (
+            <div
+              className={`absolute top-4 left-1/2 -translate-x-1/2 z-10 pointer-events-none transition-opacity duration-1000 ${
+                playToastFading ? "opacity-0" : "opacity-100"
+              }`}
+            >
+              <div className="bg-black/80 backdrop-blur-sm text-white text-sm font-medium px-5 py-2.5 rounded-full shadow-lg">
+                🎬 Watch straight through — trail markers are synced to the video
+              </div>
+            </div>
+          )}
+
+          {/* Backward seek warning modal */}
+          {showSeekWarning && (
+            <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-20">
+              <div className="bg-white rounded-2xl p-6 max-w-sm mx-4 text-center shadow-2xl">
+                <p className="text-2xl mb-2">⏪</p>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">
+                  Heads up!
+                </h3>
+                <p className="text-sm text-gray-600 mb-1">
+                  Rewinding may cause trail markers to appear out of order.
+                </p>
+                <p className="text-sm text-gray-500 mb-5">
+                  After you finish, <span className="font-semibold text-indigo-600">Rewatch Clip</span> lets you review freely with no trail markers.
+                </p>
+                <div className="flex flex-col gap-2.5">
+                  <button
+                    onClick={handleSeekWarningKeepWatching}
+                    className="w-full py-2.5 rounded-lg text-sm font-bold bg-indigo-600 hover:bg-indigo-700 text-white transition-colors shadow-md"
+                  >
+                    ▶ Keep Watching
+                  </button>
+                  <button
+                    onClick={handleSeekWarningRewindAnyway}
+                    className="w-full py-2 rounded-lg text-sm font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+                  >
+                    Rewind Anyway
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 

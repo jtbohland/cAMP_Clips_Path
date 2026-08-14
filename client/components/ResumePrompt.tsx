@@ -84,6 +84,11 @@ export default function ResumePrompt({
             🌬️ Start Fresh
           </button>
         </div>
+
+        {/* Reminder subtext */}
+        <p className="text-xs text-gray-400 text-center mt-4">
+          🎯 Avoid rewinding — trail markers are synced to your progress. Rewatch is available after completion.
+        </p>
       </div>
     </div>
   );
