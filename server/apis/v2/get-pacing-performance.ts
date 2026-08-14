@@ -239,9 +239,8 @@ export default api({
       const clipsDone = clipsDoneMap.get(l.viewer_id) ?? 0;
       const approachDone = approachMap.get(l.viewer_id) ?? 0;
 
-      // Completed = all 20 clips + approach done (legacy learners have approachDone=0, exempt)
-      const allComplete = clipsDone >= TOTAL_ASCENT_CLIPS
-        && (approachDone >= TOTAL_APPROACH_MODULES || approachDone === 0);
+      // Completed = all 20 clips done (approach count irrelevant — clips are the definitive signal)
+      const allComplete = clipsDone >= TOTAL_ASCENT_CLIPS;
 
       // Skip completed learners
       if (allComplete) continue;
