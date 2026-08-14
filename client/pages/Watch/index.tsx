@@ -993,7 +993,7 @@ export default function WatchPage() {
             {durationFormatted && <><span>⏱️ {durationFormatted}</span><span className="mx-1.5 text-gray-300">·</span></>}
             <span>🪧 {trailMarkers.length} Trail Markers</span>
             <span className="mx-1.5 text-gray-300">·</span>
-            <span>🎯 Watch start to finish — rewatch unlocks after completion</span>
+            <span>⏮️ Rewatch unlocks after completion</span>
             <span className="mx-1.5 text-gray-300">·</span>
             <span>💬 CC available — click CC on the video for captions & auto-translation</span>
           </p>
