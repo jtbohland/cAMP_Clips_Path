@@ -63,6 +63,7 @@ type UnlockResult = {
 type Week1PageProps = {
   viewerId: string;
   viewerName: string;
+  viewerRole?: string;
   isAdmin?: boolean;
   /** Pacing performance data from parent for inline leaderboard */
   pacingLearners?: PacingLearner[];
@@ -76,7 +77,7 @@ type Week1PageProps = {
   onTestCheckin?: (type: "approach" | "week2" | "week3" | "summit", approachOverride?: boolean) => void;
 };
 
-export default function Week1Page({ viewerId, viewerName, isAdmin, pacingLearners, pacingLoading, onBeginAscent, onSwitchToAscent, onOpenRegistration, onTestCheckin }: Week1PageProps) {
+export default function Week1Page({ viewerId, viewerName, viewerRole, isAdmin, pacingLearners, pacingLoading, onBeginAscent, onSwitchToAscent, onOpenRegistration, onTestCheckin }: Week1PageProps) {
   const navigate = useNavigate();
   // Admin "Test as New Learner" toggle — resets view to fresh state
   const [testMode, setTestMode] = useState(false);
@@ -450,6 +451,7 @@ export default function Week1Page({ viewerId, viewerName, isAdmin, pacingLearner
         emoji="🧱"
         title="MEDDPICC"
         description="Amplitude's qualification framework — the backbone of every deal"
+        introVideoId={viewerRole === "SDR" ? "977xyqsokm" : undefined}
         courseUrl="https://lms.amplitude.com/new/ui/learner/training/programs/2035017193528628430?series=2035017193528628430"
         gearResources={[
           { emoji: "📞", label: "2026 Q3 - First Call Deck", url: "https://docs.google.com/presentation/d/1yFnrFlH0IsNs_jsB2CtklfUzqEpnLPPOFvi_DVTm5RE/edit?slide=id.g3f95e20dd30_1_0#slide=id.g3f95e20dd30_1_0" },

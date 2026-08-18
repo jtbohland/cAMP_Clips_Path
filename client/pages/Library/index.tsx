@@ -985,6 +985,7 @@ export default function LibraryPage() {
           <Week1Page
             viewerId={viewer.id}
             viewerName={viewer.name}
+            viewerRole={viewer.role}
             isAdmin={viewer.isAdmin}
             pacingLearners={pacingLearners}
             pacingLoading={pacingPerfLoading}
