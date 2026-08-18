@@ -57,7 +57,7 @@ function LoadingSkeleton() {
 export default function LibraryPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { viewer, isLoading: viewerLoading, lookupError } = useViewer();
+  const { viewer, setViewer, isLoading: viewerLoading, lookupError } = useViewer();
   const [showFinalAchievement, setShowFinalAchievement] = useState(false);
   const [showSummit, setShowSummit] = useState(false);
   const [tierUnlock, setTierUnlock] = useState<number | null>(null);
@@ -87,6 +87,10 @@ export default function LibraryPage() {
 
   // Admin "Test as New Learner" toggle for The Ascent tab
   const [ascentTestMode, setAscentTestMode] = useState(false);
+
+  // Admin "Test as New SDR" — swaps viewer to a fresh SDR identity
+  const [sdrTestMode, setSdrTestMode] = useState(false);
+  const savedAdminViewer = useRef<import("@/components/ViewerContext").Viewer | null>(null);
 
   const { run: logClick } = useApi("LogPitchClick");
   const { run: trackLogin } = useApi("TrackLogin");
@@ -1026,7 +1030,11 @@ export default function LibraryPage() {
               <span className="text-sm">🔧</span>
               <span className="text-sm font-semibold text-purple-900">Admin View</span>
               <span className="text-xs text-purple-600">
-                {ascentTestMode ? "Showing fresh learner view" : "Showing your real progress"}
+                {sdrTestMode
+                  ? "Showing fresh SDR view"
+                  : ascentTestMode
+                    ? "Showing fresh learner view"
+                    : "Showing your real progress"}
               </span>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
@@ -1077,6 +1085,38 @@ export default function LibraryPage() {
                 }`}
               >
                 {ascentTestMode ? "👁️ Show My Progress" : "🧪 Test as New Learner"}
+              </button>
+              <button
+                onClick={() => {
+                  if (sdrTestMode) {
+                    // Restore original admin viewer
+                    if (savedAdminViewer.current) {
+                      setViewer(savedAdminViewer.current);
+                      savedAdminViewer.current = null;
+                    }
+                    setSdrTestMode(false);
+                    setAscentTestMode(false);
+                  } else {
+                    // Save current viewer and swap to SDR test identity
+                    savedAdminViewer.current = viewer;
+                    setViewer({
+                      id: "c618622d-0a80-45c4-980b-8490331327ae",
+                      email: "sdr-test@test.local",
+                      name: "SDR Test Viewer",
+                      role: "SDR",
+                      isAdmin: true,
+                    });
+                    setSdrTestMode(true);
+                    setAscentTestMode(true);
+                  }
+                }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                  sdrTestMode
+                    ? "bg-teal-600 text-white hover:bg-teal-700"
+                    : "bg-white text-teal-700 border border-teal-300 hover:bg-teal-100"
+                }`}
+              >
+                {sdrTestMode ? "↩️ Back to Admin" : "🧪 Test as New SDR"}
               </button>
             </div>
           </div>
