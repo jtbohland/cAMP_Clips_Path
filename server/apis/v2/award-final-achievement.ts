@@ -19,13 +19,13 @@ const APPS_DB = "c6e32cf4-ca66-42ae-aeb3-58c84ffae574";
 // Indices 0-20, matches client/lib/pacing.ts CLIPS_EXPECTED_BY_WEEKDAY.
 const CLIPS_EXPECTED_BY_WEEKDAY = [
   0, 0, 0, 0, 0, 0,          // weekdays 0-5 (Week 1: approach modules)
-  2, 3, 4, 5, 6,              // weekdays 6-10
-  7, 9, 11, 12, 13,           // weekdays 11-15
-  15, 16, 17, 18, 20,         // weekdays 16-20
+  2, 3, 5, 6, 7,              // weekdays 6-10 (Day 3 has 2 clips: GTM LP + Pod Tower)
+  8, 10, 12, 13, 14,          // weekdays 11-15
+  16, 17, 18, 19, 21,         // weekdays 16-20
 ];
 const WEEK1_EXPECTED_BY_DAY = [0, 2, 4, 5, 6, 7];
 const WEEK1_TOTAL = 7;
-const TOTAL_ASCENT_CLIPS_COUNT = 20;
+const TOTAL_ASCENT_CLIPS_COUNT = 21;
 
 // Map each sort_order → which Ascent day (1-15) it belongs to.
 // Multi-clip days share the same Ascent day number.
@@ -395,7 +395,7 @@ export default api({
     }
 
     // ── 3. GRIP STRENGTH ──
-    // Average engagement score ≥85% across all 18 clips (all learners eligible)
+    // Average engagement score ≥85% across all 19 clips (all learners eligible)
     const EngagementSchema = z.object({
       avg_engagement: z.coerce.number(),
       session_count: z.coerce.number(),
@@ -408,7 +408,7 @@ export default api({
        WHERE viewer_id = $1 AND completed = true AND engagement_score IS NOT NULL`,
       EngagementSchema, [viewerId], { label: "Calculate average engagement" }
     );
-    if (engData[0] && engData[0].session_count >= 18 && engData[0].avg_engagement >= 85) {
+    if (engData[0] && engData[0].session_count >= 19 && engData[0].avg_engagement >= 85) {
       gripStrength = { badgeId: "grip_strength", name: "Grip Strength", emoji: "💪", xp: 35 };
       xpEvents.push({ sourceId: "grip_strength", eventType: "performance", xp: 35 });
       badgesAwarded.push(gripStrength);

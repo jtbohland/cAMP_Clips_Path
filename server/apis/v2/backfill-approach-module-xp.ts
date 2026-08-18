@@ -54,7 +54,7 @@ export default api({
     }
 
     // Constants for total clips (to identify completed learners)
-    const TOTAL_ASCENT_CLIPS = 20;
+    const TOTAL_ASCENT_CLIPS = 21;
     const TOTAL_APPROACH_MODULES = 8;
 
     // Get all non-admin learners with their approach data + completion status

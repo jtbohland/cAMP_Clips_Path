@@ -466,7 +466,7 @@ export function isSameDay(date: Date): boolean {
 
 // ─── Clip-Level Pacing (Unified Formula) ─────────────────────────────
 // New unified pacing: counts INDIVIDUAL clips done (not topics), plus Approach items.
-// 27 total items = 7 Approach + 20 Ascent clips across 20 weekdays from registration.
+// 28 total items = 7 Approach + 21 Ascent clips across 20 weekdays from registration.
 // Pacing % = (approach_done + clips_done) / (approach_expected + clips_expected) × 100
 
 /**
@@ -476,19 +476,19 @@ export function isSameDay(date: Date): boolean {
  *
  *   Weekday 6  → Day 1  → 2 clips (sorts 1-2)
  *   Weekday 7  → Day 2  → 1 clip  (sort 3)       = 3 total
- *   Weekday 8  → Day 3  → 1 clip  (sort 4)       = 4
- *   Weekday 9  → Day 4  → 1 clip  (sort 5)       = 5
- *   Weekday 10 → Day 5  → 1 "clip" (resource day) = 6
- *   Weekday 11 → Day 6  → 1 clip  (sort 7)       = 7
- *   Weekday 12 → Day 7  → 2 clips (sorts 8-9)    = 9
- *   Weekday 13 → Day 8  → 2 clips (sorts 10-11)  = 11
- *   Weekday 14 → Day 9  → 1 "clip" (resource day) = 12
- *   Weekday 15 → Day 10 → 1 clip  (sort 13)      = 13
- *   Weekday 16 → Day 11 → 2 clips (sorts 14-15)  = 15
- *   Weekday 17 → Day 12 → 1 clip  (sort 16)      = 16
- *   Weekday 18 → Day 13 → 1 clip  (sort 17)      = 17
- *   Weekday 19 → Day 14 → 1 clip  (sort 18)      = 18
- *   Weekday 20 → Day 15 → 2 clips (sorts 19-20)  = 20
+ *   Weekday 8  → Day 3  → 2 clips (sorts 4-4b)  = 5
+ *   Weekday 9  → Day 4  → 1 clip  (sort 5)       = 6
+ *   Weekday 10 → Day 5  → 1 "clip" (resource day) = 7
+ *   Weekday 11 → Day 6  → 1 clip  (sort 7)       = 8
+ *   Weekday 12 → Day 7  → 2 clips (sorts 8-9)    = 10
+ *   Weekday 13 → Day 8  → 2 clips (sorts 10-11)  = 12
+ *   Weekday 14 → Day 9  → 1 "clip" (resource day) = 13
+ *   Weekday 15 → Day 10 → 1 clip  (sort 13)      = 14
+ *   Weekday 16 → Day 11 → 2 clips (sorts 14-15)  = 16
+ *   Weekday 17 → Day 12 → 1 clip  (sort 16)      = 17
+ *   Weekday 18 → Day 13 → 1 clip  (sort 17)      = 18
+ *   Weekday 19 → Day 14 → 1 clip  (sort 18)      = 19
+ *   Weekday 20 → Day 15 → 2 clips (sorts 19-20)  = 21
  */
 export const CLIPS_EXPECTED_BY_WEEKDAY = [
   0,   // 0 weekdays elapsed
@@ -499,23 +499,23 @@ export const CLIPS_EXPECTED_BY_WEEKDAY = [
   0,   // weekday 5  → Week 1
   2,   // weekday 6  → Day 1  (2 clips)
   3,   // weekday 7  → Day 2  (1 clip)
-  4,   // weekday 8  → Day 3  (1 clip)
-  5,   // weekday 9  → Day 4  (1 clip)
-  6,   // weekday 10 → Day 5  (1 resource "clip")
-  7,   // weekday 11 → Day 6  (1 clip)
-  9,   // weekday 12 → Day 7  (2 clips)
-  11,  // weekday 13 → Day 8  (2 clips)
-  12,  // weekday 14 → Day 9  (1 resource "clip")
-  13,  // weekday 15 → Day 10 (1 clip)
-  15,  // weekday 16 → Day 11 (2 clips)
-  16,  // weekday 17 → Day 12 (1 clip)
-  17,  // weekday 18 → Day 13 (1 clip)
-  18,  // weekday 19 → Day 14 (1 clip)
-  20,  // weekday 20 → Day 15 (2 clips)
+  5,   // weekday 8  → Day 3  (2 clips: GTM Launch Pad + Pod Tower)
+  6,   // weekday 9  → Day 4  (1 clip)
+  7,   // weekday 10 → Day 5  (1 resource "clip")
+  8,   // weekday 11 → Day 6  (1 clip)
+  10,  // weekday 12 → Day 7  (2 clips)
+  12,  // weekday 13 → Day 8  (2 clips)
+  13,  // weekday 14 → Day 9  (1 resource "clip")
+  14,  // weekday 15 → Day 10 (1 clip)
+  16,  // weekday 16 → Day 11 (2 clips)
+  17,  // weekday 17 → Day 12 (1 clip)
+  18,  // weekday 18 → Day 13 (1 clip)
+  19,  // weekday 19 → Day 14 (1 clip)
+  21,  // weekday 20 → Day 15 (2 clips)
 ];
 
-export const TOTAL_ASCENT_CLIPS = 20;
-export const TOTAL_UNIFIED_ITEMS = WEEK1_TOTAL_ITEMS + TOTAL_ASCENT_CLIPS; // 27
+export const TOTAL_ASCENT_CLIPS = 21;
+export const TOTAL_UNIFIED_ITEMS = WEEK1_TOTAL_ITEMS + TOTAL_ASCENT_CLIPS; // 28
 
 /**
  * Compute the unified pacing percentage (clip-level).

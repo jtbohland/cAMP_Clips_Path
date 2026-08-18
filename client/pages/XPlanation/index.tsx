@@ -28,7 +28,7 @@ const PERFORMANCE_BONUSES = [
   { badge: "Storm Chaser", xp: 3, emoji: "⛈️", condition: "Hit Weather Storm on previous clip, then pass the next clip first try" },
   { badge: "Double Summit", xp: 5, emoji: "⛰️", condition: "Complete 2 clips in one calendar day" },
   { badge: "Swiss Army Knife", xp: 10, emoji: "🪓", condition: "All tools. All terrain. You're ready for anything. (Review all resources + submit reflection on a topic day — ×2 available: Day 5, Day 9)" },
-  { badge: "Grip Strength", xp: 35, emoji: "💪", condition: "Average ≥85% engagement score across all 18 Ascent clips" },
+  { badge: "Grip Strength", xp: 35, emoji: "💪", condition: "Average ≥85% engagement score across all 19 Ascent clips" },
 ];
 
 const ENGAGEMENT_STREAK_BONUSES = [
@@ -56,7 +56,7 @@ const MILESTONE_BONUSES = [
   { badge: "First Step", xp: 5, emoji: "🎬", condition: "Complete Clip 1" },
   { badge: "Halfway Up", xp: 15, emoji: "🏔️", condition: "Complete Day 10 — review all resources + submit reflection" },
   { badge: "Into the Summit Push", xp: 10, emoji: "🪢", condition: "Unlock Week 4 (complete Clip 10)" },
-  { badge: "The Ranger's Secret", xp: 20, emoji: "🌲", condition: "Complete all 18 clips without EVER triggering Weather the Storm" },
+  { badge: "The Ranger's Secret", xp: 20, emoji: "🌲", condition: "Complete all 19 clips without EVER triggering Weather the Storm" },
   { badge: "The Full Cast", xp: 50, emoji: "🎣", condition: "Listen to 80%+ of all 4 PODcast episodes" },
 ];
 
@@ -120,7 +120,7 @@ export default function XPlanationPage() {
             ))}
           </div>
           <p className="text-xs text-gray-500 mt-3 italic">
-            Max base XP per clip: 12 (watch + 5/5 trail markers + first-pass unlock). Approach modules: 40 XP total (4 modules × 10 XP each).
+            Max base XP per clip: 8 (watch + 5/5 trail markers). Approach modules: 40 XP total (4 modules × 10 XP each).
           </p>
         </Section>
 
@@ -253,7 +253,7 @@ export default function XPlanationPage() {
         {/* Max Possible XP */}
         <div className="rounded-xl bg-white border border-gray-200 shadow-[0_1px_3px_rgba(0,0,0,0.08)] p-5 text-center space-y-2">
           <p className="text-lg font-bold text-gray-900">
-            🏆 Theoretical Maximum: ~954 XP
+            🏆 Theoretical Maximum: ~963 XP
           </p>
           <p className="text-sm text-gray-500">
             A strong, engaged learner typically lands around <span className="font-semibold text-gray-900">400–500 XP</span> (Summit Seeker).

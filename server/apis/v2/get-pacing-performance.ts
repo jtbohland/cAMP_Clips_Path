@@ -36,12 +36,12 @@ const TOTAL_APPROACH_MODULES = 8; // meddpicc + camp101 + challenger + 4 academi
 const CLIPS_EXPECTED_BY_WEEKDAY = [
   0,   // 0 weekdays elapsed
   0, 0, 0, 0, 0,            // weekdays 1-5: Approach (no clips)
-  2, 3, 4, 5, 6,            // weekdays 6-10 (Day 1=2, Day 2-4=1 each, Day 5=1 resource)
-  7, 9, 11, 12, 13,         // weekdays 11-15 (Day 6=1, Day 7=2, Day 8=2, Day 9=1 resource, Day 10=1)
-  15, 16, 17, 18, 20,       // weekdays 16-20 (Day 11=2, Day 12-14=1 each, Day 15=2)
+  2, 3, 5, 6, 7,            // weekdays 6-10 (Day 1=2, Day 2=1, Day 3=2 GTM LP+Pod Tower, Day 4=1, Day 5=1 resource)
+  8, 10, 12, 13, 14,        // weekdays 11-15 (Day 6=1, Day 7=2, Day 8=2, Day 9=1 resource, Day 10=1)
+  16, 17, 18, 19, 21,       // weekdays 16-20 (Day 11=2, Day 12-14=1 each, Day 15=2)
 ];
 const TOTAL_WEEKDAYS = 20;
-const TOTAL_ASCENT_CLIPS = 20;
+const TOTAL_ASCENT_CLIPS = 21;
 
 function countWeekdays(start: Date, end: Date): number {
   const s = new Date(start.getFullYear(), start.getMonth(), start.getDate());

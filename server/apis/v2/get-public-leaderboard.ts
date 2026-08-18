@@ -40,15 +40,15 @@ const ApproachCountRow = z.object({
 const CLIPS_EXPECTED_BY_WEEKDAY = [
   0,   // 0 weekdays elapsed
   0, 0, 0, 0, 0,            // weekdays 1-5: Approach (no clips)
-  2, 3, 4, 5, 6,            // weekdays 6-10
-  7, 9, 11, 12, 13,         // weekdays 11-15
-  15, 16, 17, 18, 20,       // weekdays 16-20
+  2, 3, 5, 6, 7,            // weekdays 6-10 (Day 3 has 2 clips: GTM LP + Pod Tower)
+  8, 10, 12, 13, 14,        // weekdays 11-15
+  16, 17, 18, 19, 21,       // weekdays 16-20
 ];
 const WEEK1_EXPECTED_BY_DAY = [0, 2, 4, 5, 6, 7];
 const WEEK1_TOTAL = 7;
 const TOTAL_APPROACH_MODULES = 8; // meddpicc + camp101 + challenger + 4 academies + W&D
 const TOTAL_WEEKDAYS = 20;
-const TOTAL_ASCENT_CLIPS = 20;
+const TOTAL_ASCENT_CLIPS = 21;
 
 function countWeekdays(start: Date, end: Date): number {
   const s = new Date(start.getFullYear(), start.getMonth(), start.getDate());

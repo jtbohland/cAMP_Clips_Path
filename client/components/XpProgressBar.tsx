@@ -72,7 +72,7 @@ export default function XpProgressBar() {
       {/* Subtext row */}
       <div className="flex items-center justify-between mb-3">
         <p className="text-xs text-gray-500">
-          {clipsCompleted}/18 clips completed
+          {clipsCompleted}/19 clips completed
         </p>
         {nextTier ? (
           <p className="text-xs text-gray-500">
