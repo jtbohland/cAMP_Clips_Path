@@ -437,7 +437,7 @@ export default function Week1Page({ viewerId, viewerName, viewerRole, isAdmin, p
                 {testMode ? "👁️ Show My Progress" : "🧪 Test as New Learner"}
               </button>
             )}
-            {!testMode && onToggleSdrTest && (
+            {(!testMode || sdrTestMode) && onToggleSdrTest && (
               <button
                 onClick={onToggleSdrTest}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${

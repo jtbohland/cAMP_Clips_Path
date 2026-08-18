@@ -86,7 +86,10 @@ export default function LibraryPage() {
   }, [activeTab]);
 
   // Admin "Test as New Learner" toggle for The Ascent tab
-  const [ascentTestMode, setAscentTestMode] = useState(false);
+  // Initialize to true if SDR test mode is persisted (SDR mode sets ascentTestMode=true)
+  const [ascentTestMode, setAscentTestMode] = useState(() => {
+    return sessionStorage.getItem("sdr_test_saved_viewer") !== null;
+  });
 
   // Admin "Test as New SDR" — swaps viewer to a fresh SDR identity
   // Persist saved viewer in sessionStorage so HMR/code edits can't lose it
@@ -1120,7 +1123,7 @@ export default function LibraryPage() {
                   {ascentTestMode ? "👁️ Show My Progress" : "🧪 Test as New Learner"}
                 </button>
               )}
-              {!ascentTestMode && (
+              {(!ascentTestMode || sdrTestMode) && (
                 <button
                   onClick={handleToggleSdrTest}
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
