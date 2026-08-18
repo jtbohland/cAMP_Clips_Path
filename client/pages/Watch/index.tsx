@@ -944,7 +944,7 @@ export default function WatchPage() {
   const goToNextClip = nextClip
     ? () => {
         if (nextIsResourceDay) {
-          const topicKey = nextClip.sortOrder === 6 ? "day5" : "day9";
+          const topicKey = nextClip.sortOrder === 60 ? "day5" : "day9";
           navigate(`/topic-gear/${topicKey}/${nextClip.id}`);
         } else {
           navigate(`/watch/${nextClip.id}`);

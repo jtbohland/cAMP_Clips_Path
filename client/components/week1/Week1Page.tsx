@@ -425,17 +425,19 @@ export default function Week1Page({ viewerId, viewerName, viewerRole, isAdmin, p
                 📝 Registration
               </button>
             )}
-            <button
-              onClick={() => setTestMode((prev) => !prev)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                testMode
-                  ? "bg-purple-600 text-white hover:bg-purple-700"
-                  : "bg-white text-purple-700 border border-purple-300 hover:bg-purple-100"
-              }`}
-            >
-              {testMode ? "👁️ Show My Progress" : "🧪 Test as New Learner"}
-            </button>
-            {onToggleSdrTest && (
+            {!sdrTestMode && (
+              <button
+                onClick={() => setTestMode((prev) => !prev)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                  testMode
+                    ? "bg-purple-600 text-white hover:bg-purple-700"
+                    : "bg-white text-purple-700 border border-purple-300 hover:bg-purple-100"
+                }`}
+              >
+                {testMode ? "👁️ Show My Progress" : "🧪 Test as New Learner"}
+              </button>
+            )}
+            {!testMode && onToggleSdrTest && (
               <button
                 onClick={onToggleSdrTest}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${

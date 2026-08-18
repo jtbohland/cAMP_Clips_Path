@@ -89,21 +89,27 @@ export default function LibraryPage() {
   const [ascentTestMode, setAscentTestMode] = useState(false);
 
   // Admin "Test as New SDR" — swaps viewer to a fresh SDR identity
-  const [sdrTestMode, setSdrTestMode] = useState(false);
-  const savedAdminViewer = useRef<import("@/components/ViewerContext").Viewer | null>(null);
+  // Persist saved viewer in sessionStorage so HMR/code edits can't lose it
+  const SDR_SAVED_KEY = "sdr_test_saved_viewer";
+  const [sdrTestMode, setSdrTestMode] = useState(() => {
+    return sessionStorage.getItem(SDR_SAVED_KEY) !== null;
+  });
 
   const handleToggleSdrTest = useCallback(() => {
     if (sdrTestMode) {
-      // Restore original admin viewer
-      if (savedAdminViewer.current) {
-        setViewer(savedAdminViewer.current);
-        savedAdminViewer.current = null;
+      // Restore original admin viewer from sessionStorage
+      const saved = sessionStorage.getItem(SDR_SAVED_KEY);
+      if (saved) {
+        try { setViewer(JSON.parse(saved)); } catch {}
+        sessionStorage.removeItem(SDR_SAVED_KEY);
       }
       setSdrTestMode(false);
       setAscentTestMode(false);
     } else {
-      // Save current viewer and swap to SDR test identity
-      savedAdminViewer.current = viewer;
+      // If "Test as New Learner" is on, turn it off first
+      if (ascentTestMode) setAscentTestMode(false);
+      // Save current viewer to sessionStorage and swap to SDR test identity
+      sessionStorage.setItem(SDR_SAVED_KEY, JSON.stringify(viewer));
       setViewer({
         id: "c618622d-0a80-45c4-980b-8490331327ae",
         email: "sdr-test@test.local",
@@ -114,7 +120,7 @@ export default function LibraryPage() {
       setSdrTestMode(true);
       setAscentTestMode(true);
     }
-  }, [sdrTestMode, viewer, setViewer]);
+  }, [sdrTestMode, ascentTestMode, viewer, setViewer]);
 
   const { run: logClick } = useApi("LogPitchClick");
   const { run: trackLogin } = useApi("TrackLogin");
@@ -283,9 +289,9 @@ export default function LibraryPage() {
   }, [rawClips, ascentTestMode]);
   const ascentComplete = clips.length >= TOTAL_SESSIONS && clips.every((c: any) => c.completed);
 
-  // A/B pair sort orders — updated after Day 1 ICP split (20 clips total)
-  // Pairs: sorts 1+2 (Day 1), 8+9 (Day 7), 10+11 (Day 8), 14+15 (Day 11), 19+20 (Day 15)
-  const AB_PAIRS: [number, number][] = [[1, 2], [8, 9], [10, 11], [14, 15], [19, 20]];
+  // A/B pair sort orders — updated after Phase 1 migration (×10 spacing)
+  // Pairs: sorts 10+20 (Day 1), 80+90 (Day 7), 100+110 (Day 8), 140+150 (Day 11), 190+200 (Day 15)
+  const AB_PAIRS: [number, number][] = [[10, 20], [80, 90], [100, 110], [140, 150], [190, 200]];
   const pairedSortOrders = new Set(AB_PAIRS.flat());
 
   // ── Pacing calculation ──
@@ -1102,26 +1108,30 @@ export default function LibraryPage() {
               >
                 📝 Registration
               </button>
-              <button
-                onClick={() => setAscentTestMode((prev) => !prev)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                  ascentTestMode
-                    ? "bg-purple-600 text-white hover:bg-purple-700"
-                    : "bg-white text-purple-700 border border-purple-300 hover:bg-purple-100"
-                }`}
-              >
-                {ascentTestMode ? "👁️ Show My Progress" : "🧪 Test as New Learner"}
-              </button>
-              <button
-                onClick={handleToggleSdrTest}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                  sdrTestMode
-                    ? "bg-teal-600 text-white hover:bg-teal-700"
-                    : "bg-white text-teal-700 border border-teal-300 hover:bg-teal-100"
-                }`}
-              >
-                {sdrTestMode ? "↩️ Back to Admin" : "🧪 Test as New SDR"}
-              </button>
+              {!sdrTestMode && (
+                <button
+                  onClick={() => setAscentTestMode((prev) => !prev)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                    ascentTestMode
+                      ? "bg-purple-600 text-white hover:bg-purple-700"
+                      : "bg-white text-purple-700 border border-purple-300 hover:bg-purple-100"
+                  }`}
+                >
+                  {ascentTestMode ? "👁️ Show My Progress" : "🧪 Test as New Learner"}
+                </button>
+              )}
+              {!ascentTestMode && (
+                <button
+                  onClick={handleToggleSdrTest}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                    sdrTestMode
+                      ? "bg-teal-600 text-white hover:bg-teal-700"
+                      : "bg-white text-teal-700 border border-teal-300 hover:bg-teal-100"
+                  }`}
+                >
+                  {sdrTestMode ? "↩️ Back to Admin" : "🧪 Test as New SDR"}
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -1299,19 +1309,19 @@ export default function LibraryPage() {
                           onCampQuiz={handleCampQuiz}
                           onViewGear={
                             clip.isTopicDay
-                              ? () => navigate(`/topic-gear/${clip.sortOrder === 6 ? "day5" : "day9"}/${clip.id}`)
+                              ? () => navigate(`/topic-gear/${clip.sortOrder === 60 ? "day5" : "day9"}/${clip.id}`)
                               : undefined
                           }
-                          onZoomClipWatch={clip.sortOrder === 5 ? handleReachdeskWatch : undefined}
-                          onZoomClipReview={clip.sortOrder === 5 ? () => navigate(`/report/reachdesk`) : undefined}
-                          zoomClipWatched={clip.sortOrder === 5 ? reachdeskWatched : undefined}
-                          onPodcasts={clip.sortOrder === 16 ? () => navigate("/podcasts") : undefined}
-                          onBonusClip1Watch={clip.sortOrder === 18 ? handleBonusClip1Watch : undefined}
-                          onBonusClip1Review={clip.sortOrder === 18 ? handleBonusClip1Review : undefined}
-                          bonusClip1Watched={clip.sortOrder === 18 ? bonus1Watched : undefined}
-                          onBonusClip2Watch={clip.sortOrder === 18 ? handleBonusClip2Watch : undefined}
-                          onBonusClip2Review={clip.sortOrder === 18 ? handleBonusClip2Review : undefined}
-                          bonusClip2Watched={clip.sortOrder === 18 ? bonus2Watched : undefined}
+                          onZoomClipWatch={clip.sortOrder === 50 ? handleReachdeskWatch : undefined}
+                          onZoomClipReview={clip.sortOrder === 50 ? () => navigate(`/report/reachdesk`) : undefined}
+                          zoomClipWatched={clip.sortOrder === 50 ? reachdeskWatched : undefined}
+                          onPodcasts={clip.sortOrder === 160 ? () => navigate("/podcasts") : undefined}
+                          onBonusClip1Watch={clip.sortOrder === 180 ? handleBonusClip1Watch : undefined}
+                          onBonusClip1Review={clip.sortOrder === 180 ? handleBonusClip1Review : undefined}
+                          bonusClip1Watched={clip.sortOrder === 180 ? bonus1Watched : undefined}
+                          onBonusClip2Watch={clip.sortOrder === 180 ? handleBonusClip2Watch : undefined}
+                          onBonusClip2Review={clip.sortOrder === 180 ? handleBonusClip2Review : undefined}
+                          bonusClip2Watched={clip.sortOrder === 180 ? bonus2Watched : undefined}
                         />
                       );
                     });

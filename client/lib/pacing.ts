@@ -66,22 +66,22 @@ const EXPECTED_SESSIONS_BY_WEEKDAY = [
  * Example: 7 topics done → all clips through sort_order 8 should be complete.
  */
 const TOPIC_TO_MAX_SORT: number[] = [
-  0,   // 0 topics → nothing expected
-  2,   // 1 topic  (Day 1)  → sorts 1-2  (Industries + Personas)
-  3,   // 2 topics (Day 2)  → sort 3
-  4,   // 3 topics (Day 3)  → sort 4
-  5,   // 4 topics (Day 4)  → sort 5
-  6,   // 5 topics (Day 5)  → sort 6  (resource day)
-  7,   // 6 topics (Day 6)  → sort 7
-  9,   // 7 topics (Day 7)  → sorts 8-9
-  11,  // 8 topics (Day 8)  → sorts 10-11
-  12,  // 9 topics (Day 9)  → sort 12 (resource day)
-  13,  // 10 topics (Day 10) → sort 13
-  15,  // 11 topics (Day 11) → sorts 14-15
-  16,  // 12 topics (Day 12) → sort 16
-  17,  // 13 topics (Day 13) → sort 17
-  18,  // 14 topics (Day 14) → sort 18
-  20,  // 15 topics (Day 15) → sorts 19-20
+  0,    // 0 topics → nothing expected
+  20,   // 1 topic  (Day 1)  → sorts 10-20  (Industries + Personas)
+  30,   // 2 topics (Day 2)  → sort 30
+  40,   // 3 topics (Day 3)  → sort 40
+  50,   // 4 topics (Day 4)  → sort 50
+  60,   // 5 topics (Day 5)  → sort 60  (resource day)
+  70,   // 6 topics (Day 6)  → sort 70
+  90,   // 7 topics (Day 7)  → sorts 80-90
+  110,  // 8 topics (Day 8)  → sorts 100-110
+  120,  // 9 topics (Day 9)  → sort 120 (resource day)
+  130,  // 10 topics (Day 10) → sort 130
+  150,  // 11 topics (Day 11) → sorts 140-150
+  160,  // 12 topics (Day 12) → sort 160
+  170,  // 13 topics (Day 13) → sort 170
+  180,  // 14 topics (Day 14) → sort 180
+  200,  // 15 topics (Day 15) → sorts 190-200
 ];
 
 const TOTAL_WEEKDAYS = 20;
@@ -241,7 +241,7 @@ export function getExpectedSessions(weekdaysElapsed: number): number {
  */
 export function getExpectedMaxSortOrder(weekdaysElapsed: number): number {
   const expectedTopics = getExpectedSessions(weekdaysElapsed);
-  return TOPIC_TO_MAX_SORT[expectedTopics] ?? 20;
+  return TOPIC_TO_MAX_SORT[expectedTopics] ?? 200;
 }
 
 /**

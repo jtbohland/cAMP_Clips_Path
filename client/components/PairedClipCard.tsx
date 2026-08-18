@@ -41,9 +41,9 @@ type PairedClipCardProps = {
 };
 
 // Clips that show the cAMP Quiz button
-const CAMP_QUIZ_SORT_ORDERS = new Set([1, 2, 3, 4, 5, 6, 7, 9, 11, 12, 13, 15, 16, 17, 18, 20]);
+const CAMP_QUIZ_SORT_ORDERS = new Set([10, 20, 30, 40, 50, 60, 70, 90, 110, 120, 130, 150, 160, 170, 180, 200]);
 // Clips that show the Wheel & Deal practice button
-const WHEEL_AND_DEAL_SORT_ORDERS = new Set([4, 8, 11, 15, 18]);
+const WHEEL_AND_DEAL_SORT_ORDERS = new Set([40, 80, 110, 150, 180]);
 
 type ButtonState = "watch" | "resume" | "report" | "locked";
 
@@ -60,8 +60,8 @@ function getButtonState(
 
 function getWeekLabel(weekNumber: number | null, sortOrder: number): string {
   if (weekNumber != null) return `WEEK ${weekNumber}`;
-  if (sortOrder <= 5) return "WEEK 2";
-  if (sortOrder <= 11) return "WEEK 3";
+  if (sortOrder <= 50) return "WEEK 2";
+  if (sortOrder <= 110) return "WEEK 3";
   return "WEEK 4";
 }
 
@@ -72,16 +72,16 @@ function getDayLabel(dayLabel: string | null, sortOrder: number): string {
 
 /** For paired cards, map sort orders to the clean day number (no A/B suffix) */
 const PAIRED_DAY_MAP: Record<number, number> = {
-  1: 1, 2: 1,
-  8: 7, 9: 7,
-  10: 8, 11: 8,
-  14: 11, 15: 11,
-  19: 15, 20: 15,
+  10: 1, 20: 1,
+  80: 7, 90: 7,
+  100: 8, 110: 8,
+  140: 11, 150: 11,
+  190: 15, 200: 15,
 };
 
 /** Custom merged title overrides for specific pairs (keyed by clip A sort order) */
 const PAIRED_TITLE_OVERRIDE: Record<number, { emoji: string; text: string }> = {
-  1: { emoji: "🔎", text: "Understanding Our Verticals & Personas" },
+  10: { emoji: "🔎", text: "Understanding Our Verticals & Personas" },
 };
 
 function getPairedDayLabel(sortOrder: number): string {
