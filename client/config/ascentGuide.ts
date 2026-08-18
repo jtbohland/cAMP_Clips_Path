@@ -71,6 +71,19 @@ const GUIDE_SESSIONS: Record<string, AscentGuideEntry> = {
     smes: [{ name: "Matt Kahan", title: "Sr. Manager, GTM Strategy & Analytics" }],
   },
 
+  // ── Day 3 (sort 45): Pod Tower ──
+  day3_pod_tower: {
+    id: "day3_pod_tower",
+    summary:
+      "This session introduces the GTM Tower — Amplitude's AI-powered prospecting, revenue actions, and customer intelligence platform. Reps will learn how to activate their Tower agents, navigate the three core modules (Prospecting Actions, Revenue Actions, and Customer Intelligence), and use AI-generated artifacts like email sequences, mutual action plans, and customer health alerts to drive their daily workflow.",
+    learningObjectives: [
+      "Activate and configure the GTM Tower connector agents and understand when to re-run them.",
+      "Navigate the three core modules — Prospecting Actions, Revenue Actions, and Customer Intelligence — and identify the key workflows in each.",
+      "Review, approve, and provide feedback on AI-generated artifacts (email sequences, mutual action plans, pricing proposals) to accelerate deal progression.",
+    ],
+    smes: [{ name: "Simon Levinson", title: "Sr. Solutions Lead" }],
+  },
+
   // ── Day 4 (sort 5): Prospecting Process ──
   day4: {
     id: "day4",
@@ -266,26 +279,29 @@ const GUIDE_SESSIONS: Record<string, AscentGuideEntry> = {
 // Every clip in cliptracker_v2_clips must have an entry here.
 // Clips that share a day/topic reuse the same session ID.
 const SORT_ORDER_TO_SESSION_ID: Record<number, string> = {
-  1: "day1_industries",  // Day 1: Understanding Our Verticals
-  2: "day1_personas",    // Day 1: Understanding Our Personas
-  3: "day2",             // Day 2: TOFU – MQLs & Inbounds
-  4: "day3",             // Day 3: GTM Launch Pad
-  5: "day4",             // Day 4: Prospecting Process
-  6: "day5",             // Day 5: Renewal Operations
-  7: "day6",             // Day 6: The Competitive Landscape
-  8: "day7",             // Day 7: Account Planning Best Practices
-  9: "day7",             // Day 7: Account Planning (Momentum for Slack)
-  10: "day8",            // Day 8: Discovery That Accelerates
-  11: "day8",            // Day 8: Discovery (Spekit Deal Rooms)
-  12: "day9",            // Day 9: Pricing & Packaging 101
-  13: "day10",           // Day 10: Leveraging Partners
-  14: "day11",           // Day 11: Forecasting
-  15: "day11",           // Day 11: Forecasting (Intro to Services)
-  16: "day12",           // Day 12: Customer Stories
-  17: "day13",           // Day 13: Contract Lifecycle Management
-  18: "day14",           // Day 14: Deal Desk & CPQ
-  19: "day15_se",        // Day 15: Leveraging Solution Engineers
-  20: "day15_ps",        // Day 15: Leveraging Professional Services
+  10: "day1_industries",  // Day 1: Understanding Our Verticals
+  20: "day1_personas",    // Day 1: Understanding Our Personas
+  30: "day2",             // Day 2: TOFU – MQLs & Inbounds
+  40: "day3",             // Day 3: GTM Launch Pad
+  45: "day3_pod_tower",   // Day 3: Pod Tower
+  50: "day4",             // Day 4: Prospecting Process
+  55: "day4",             // Day 5: Cold Calling in an AI World (SDR)
+  56: "day4",             // Day 5: Making Calls with Nooks (SDR)
+  60: "day5",             // Day 5: Renewal Operations
+  70: "day6",             // Day 6: The Competitive Landscape
+  80: "day7",             // Day 7: Account Planning Best Practices
+  90: "day7",             // Day 7: Account Planning (Momentum for Slack)
+  100: "day8",            // Day 8: Discovery That Accelerates
+  110: "day8",            // Day 8: Discovery (Spekit Deal Rooms)
+  120: "day9",            // Day 9: Pricing & Packaging 101
+  130: "day10",           // Day 10: Leveraging Partners
+  140: "day11",           // Day 11: Forecasting
+  150: "day11",           // Day 11: Forecasting (Intro to Services)
+  160: "day12",           // Day 12: Customer Stories
+  170: "day13",           // Day 13: Contract Lifecycle Management
+  180: "day14",           // Day 14: Deal Desk & CPQ
+  190: "day15_se",        // Day 15: Leveraging Solution Engineers
+  200: "day15_ps",        // Day 15: Leveraging Professional Services
 };
 
 /**
