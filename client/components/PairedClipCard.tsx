@@ -73,6 +73,7 @@ function getDayLabel(dayLabel: string | null, sortOrder: number): string {
 /** For paired cards, map sort orders to the clean day number (no A/B suffix) */
 const PAIRED_DAY_MAP: Record<number, number> = {
   10: 1, 20: 1,
+  40: 3, 45: 3,
   80: 7, 90: 7,
   100: 8, 110: 8,
   140: 11, 150: 11,
@@ -82,6 +83,7 @@ const PAIRED_DAY_MAP: Record<number, number> = {
 /** Custom merged title overrides for specific pairs (keyed by clip A sort order) */
 const PAIRED_TITLE_OVERRIDE: Record<number, { emoji: string; text: string }> = {
   10: { emoji: "🔎", text: "Understanding Our Verticals & Personas" },
+  40: { emoji: "📈", text: "GTM Launch Pad & Pod Tower" },
 };
 
 function getPairedDayLabel(sortOrder: number): string {
