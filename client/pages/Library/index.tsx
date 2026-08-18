@@ -564,7 +564,7 @@ export default function LibraryPage() {
     2: {
       emoji: "🥾",
       title: "Building Your Revenue Engine Foundations",
-      time: "⏱ Total: 7h 18m | Daily average: ~1h 28m per day",
+      time: "⏱ Total: 7h 33m | Daily average: ~1h 31m per day",
       note: "These times are approximate and reflect course + video durations, plus ~20 minutes per day for quizzes. They do not include any extra time you spend reading or reviewing linked resources.",
     },
     3: {

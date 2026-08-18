@@ -12,6 +12,9 @@ export type AscentGuideEntry = {
   summary: string;
   learningObjectives: string[];
   smes: AscentGuideSme[];
+  /** Optional "Follow Along" link — opens the tool being demo'd in the clip */
+  followAlongUrl?: string;
+  followAlongLabel?: string;
 };
 
 // Full guide data, keyed by session ID
@@ -69,6 +72,8 @@ const GUIDE_SESSIONS: Record<string, AscentGuideEntry> = {
       "Use Launch Pad insights to build a daily/weekly action plan for accounts and opportunities.",
     ],
     smes: [{ name: "Matt Kahan", title: "Sr. Manager, GTM Strategy & Analytics" }],
+    followAlongUrl: "https://amplitude.lightning.force.com/analytics/dashboard/0FKUw0000000gLpOAI",
+    followAlongLabel: "GTM Launch Pad (SFDC)",
   },
 
   // ── Day 3 (sort 45): Pod Tower ──
@@ -82,6 +87,8 @@ const GUIDE_SESSIONS: Record<string, AscentGuideEntry> = {
       "Review, approve, and provide feedback on AI-generated artifacts (email sequences, mutual action plans, pricing proposals) to accelerate deal progression.",
     ],
     smes: [{ name: "Simon Levinson", title: "Sr. Solutions Lead" }],
+    followAlongUrl: "https://app.amplitude.com/customer-intel/amplitude/dashboard?source=left+nav",
+    followAlongLabel: "GTM Tower",
   },
 
   // ── Day 4 (sort 5): Prospecting Process ──

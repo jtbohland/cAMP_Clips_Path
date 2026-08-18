@@ -272,7 +272,7 @@ export default api({
       { label: "Get clip stats (distinct clips)" }
     );
 
-    const clipStats = clipStatsRows[0] ?? { total_clips: 18, completed_clips: 0, avg_score: 0 };
+    const clipStats = clipStatsRows[0] ?? { total_clips: 19, completed_clips: 0, avg_score: 0 };
 
     // Get topic-level progress for pacing context (item #8)
     const TopicProgressRow = z.object({

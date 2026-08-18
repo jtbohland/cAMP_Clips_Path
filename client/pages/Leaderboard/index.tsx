@@ -153,7 +153,7 @@ const STATUS_KEY: Array<{
     label: "Completed",
     bg: "bg-indigo-50",
     text: "text-indigo-700",
-    description: "Finished all 20 Ascent clips. Summit reached!",
+    description: "Finished all 19 Ascent clips. Summit reached!",
   },
 ];
 

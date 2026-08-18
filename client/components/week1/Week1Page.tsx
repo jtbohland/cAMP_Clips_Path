@@ -479,6 +479,7 @@ export default function Week1Page({ viewerId, viewerName, viewerRole, isAdmin, p
         gearResources={[
           { emoji: "📞", label: "2026 Q3 - First Call Deck", url: "https://docs.google.com/presentation/d/1yFnrFlH0IsNs_jsB2CtklfUzqEpnLPPOFvi_DVTm5RE/edit?slide=id.g3f95e20dd30_1_0#slide=id.g3f95e20dd30_1_0" },
           { emoji: "📚", label: "Discovery Question Repository", url: "https://docs.google.com/document/d/11po0r9LxK_tiooyYb64bdDeqhIhRX_7k-HSlPppf1A4/edit?tab=t.5c34f94kg7l4" },
+          { emoji: "🧗", label: "Where are you on the Maturity Curve?", url: "https://claude.ai/design/p/11187613-4ecd-453b-936b-f92fdf832019?file=Maturity%20Assessment.dc.html&present=1" },
         ]}
         screenshotLabel="Upload MindTickle completion screenshot"
         reflectionPrompt={MEDDPICC_REFLECTION}
@@ -509,14 +510,6 @@ export default function Week1Page({ viewerId, viewerName, viewerRole, isAdmin, p
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">🎒 cAMP Gear</p>
             <div className="flex flex-wrap gap-2">
               <a
-                href="https://docs.google.com/document/d/1hTUt9RohKhpwOOoD1q5doU_N5do-NRAP2jYhtlDVoBg/edit?usp=sharing"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-colors"
-              >
-                <span>📋</span> Discovery Guide for Statsig Lands ↗
-              </a>
-              <a
                 href="https://app.spekit.co/app/wiki/?&topic=1d04d90d-e516-408c-bab2-837788fed772&tag=Platform%20and%20Products"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -524,21 +517,27 @@ export default function Week1Page({ viewerId, viewerName, viewerRole, isAdmin, p
               >
                 <span>🐙</span> Spekit ↗
               </a>
-              <a
-                href="https://docs.google.com/presentation/d/1WF9CXT9P5pI8CoxAxvBJKFX8Oe9F1H3S30hDVWeJPgY/edit?slide=id.p1#slide=id.p1"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-colors"
-              >
+            </div>
+            {/* Statsig-specific resources */}
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mt-3 mb-2">🧪 Statsig Resources</p>
+            <div className="flex flex-wrap gap-2">
+              <a href="https://app.spekit.co/app/wiki/asset/8a45c361-c2a2-4f57-95ec-6c09a93e8d0d?type=asset&expanded=true" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-colors">
+                <span>🔍</span> Discovery & Prospecting Guide ↗
+              </a>
+              <a href="https://app.spekit.co/app/wiki/asset/a36c9b70-dfb7-440d-be25-b2b7060b1728?type=asset&expanded=true" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-colors">
+                <span>📘</span> Discovery + Sales Playbook ↗
+              </a>
+              <a href="https://docs.google.com/document/d/1ty44HjkNk3Wxc4UqO9yfmuErq-aaZcwwcN22qAf7A5o/edit?tab=t.0" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-colors">
+                <span>🔄</span> Statsig Migration Field Guide ↗
+              </a>
+              <a href="https://app.spekit.co/app/wiki/asset/fdc1993a-7446-457d-881c-5ed1069f42ef?type=asset&expanded=true" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-colors">
+                <span>📞</span> Statsig - First Call Pitch Deck ↗
+              </a>
+              <a href="https://docs.google.com/presentation/d/1WF9CXT9P5pI8CoxAxvBJKFX8Oe9F1H3S30hDVWeJPgY/edit?slide=id.p1#slide=id.p1" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-colors">
                 <span>📊</span> Selling Statsig ↗
               </a>
-              <a
-                href="https://docs.google.com/document/d/1ty44HjkNk3Wxc4UqO9yfmuErq-aaZcwwcN22qAf7A5o/edit?tab=t.0"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-colors"
-              >
-                <span>🔄</span> Statsig Migration Guide ↗
+              <a href="https://app.spekit.co/app/wiki/asset/5044cec5-ccef-45b4-9ad8-27e7fe81b7ce?type=asset&expanded=true" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-colors">
+                <span>📧</span> Statsig Outreach Sequences (for Land) ↗
               </a>
             </div>
           </div>

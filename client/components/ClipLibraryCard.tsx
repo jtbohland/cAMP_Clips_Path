@@ -247,6 +247,15 @@ export default function ClipLibraryCard({
               <span className="text-gray-300">·</span>
               <span>👀 View tracked in Zoom</span>
             </p>
+            <a
+              href="https://app.reachdesk.com/engages/new/campaign?auto_teams=true&team_ids=8622"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="block text-xs text-orange-600 hover:text-orange-700 font-medium mb-2"
+            >
+              🖥️ Open Reachdesk on a 2nd screen to follow along →
+            </a>
             {zoomClipWatched ? (
               <button
                 onClick={(e) => { e.stopPropagation(); onZoomClipReview ? onZoomClipReview() : onZoomClipWatch(); }}

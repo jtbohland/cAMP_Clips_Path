@@ -136,6 +136,20 @@ export default function WatchPage() {
     if (guideStorageKey) localStorage.setItem(guideStorageKey, "true");
   }, [guideStorageKey]);
 
+  // Follow Along popover — tool link for clips with a hands-on demo
+  const [showFollowAlong, setShowFollowAlong] = useState(false);
+  const followAlongRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!showFollowAlong) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (followAlongRef.current && !followAlongRef.current.contains(e.target as Node)) {
+        setShowFollowAlong(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showFollowAlong]);
+
   const [xpData, setXpData] = useState<{
     sessionBreakdown: { base: number; milestones: number; bonuses: number };
     totalXp: number;
@@ -1013,6 +1027,40 @@ export default function WatchPage() {
             >
               🦟 What's the buzz?
             </button>
+          )}
+
+          {/* Follow Along — open the demo'd tool on a 2nd screen */}
+          {guideEntry?.followAlongUrl && (
+            <div className="relative" ref={followAlongRef}>
+              <button
+                onClick={() => setShowFollowAlong((v) => !v)}
+                className={`text-sm font-semibold px-3 py-1.5 rounded-lg transition-colors ${
+                  showFollowAlong
+                    ? "bg-orange-500 text-white"
+                    : "bg-orange-100 text-orange-700 hover:bg-orange-200"
+                }`}
+              >
+                🖥️ Follow Along
+              </button>
+              {showFollowAlong && (
+                <div className="absolute top-full right-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-gray-200 p-4 z-30">
+                  <p className="text-sm text-gray-700 font-medium mb-1.5">
+                    Open <span className="font-bold">{guideEntry.followAlongLabel}</span> on a second monitor to follow along.
+                  </p>
+                  <p className="text-xs text-amber-600 mb-3">
+                    ⚠️ Switching tabs will pause the video and affect your engagement score.
+                  </p>
+                  <a
+                    href={guideEntry.followAlongUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block w-full text-center py-2 rounded-lg text-sm font-semibold bg-orange-500 hover:bg-orange-600 text-white transition-colors"
+                  >
+                    Open {guideEntry.followAlongLabel} ↗
+                  </a>
+                </div>
+              )}
+            </div>
           )}
 
           {/* Transcript — blue outlined button */}

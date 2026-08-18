@@ -344,19 +344,19 @@ export default api({
     const now = new Date();
 
     // Pacing schedule — clip-level. Must match client/lib/pacing.ts CLIPS_EXPECTED_BY_WEEKDAY.
-    // 20 weekdays: 5 Approach (7 modules) + 15 Ascent days (20 individual clips).
+    // 20 weekdays: 5 Approach (7 modules) + 15 Ascent days (21 individual clips).
     // Pacing % = (approach_done + clips_done) / (approach_expected + clips_expected) × 100
     const CLIPS_EXPECTED_BY_WEEKDAY = [
       0,   // 0 weekdays elapsed
       0, 0, 0, 0, 0,            // weekdays 1-5: Approach (no clips)
-      2, 3, 4, 5, 6,            // weekdays 6-10
-      7, 9, 11, 12, 13,         // weekdays 11-15
-      15, 16, 17, 18, 20,       // weekdays 16-20
+      2, 3, 5, 6, 7,            // weekdays 6-10 (Day 3 has 2 clips: GTM LP + Pod Tower)
+      8, 10, 12, 13, 14,        // weekdays 11-15
+      16, 17, 18, 19, 21,       // weekdays 16-20
     ];
     const WEEK1_EXPECTED_BY_DAY = [0, 2, 4, 5, 6, 7];
     const WEEK1_TOTAL = 7;
     const TOTAL_WEEKDAYS = 20;
-    const TOTAL_ASCENT_CLIPS = 20;
+    const TOTAL_ASCENT_CLIPS = 21;
 
     function getSummitDay(startDate: Date, extensionDays: number = 0): Date {
       const totalDays = TOTAL_WEEKDAYS + extensionDays;
