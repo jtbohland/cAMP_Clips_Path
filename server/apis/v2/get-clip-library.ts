@@ -57,15 +57,16 @@ export default api({
   }),
 
   async run(ctx, { viewerId }) {
-    // Check if viewer is admin
-    const AdminCheckSchema = z.object({ is_admin: z.boolean() });
-    const adminCheck = await ctx.integrations.db.query(
-      "SELECT COALESCE(is_admin, false) as is_admin FROM cliptracker_v2_viewers WHERE id = $1",
-      AdminCheckSchema,
+    // Look up viewer role and admin status
+    const ViewerInfoSchema = z.object({ is_admin: z.boolean(), role: z.string().nullable() });
+    const viewerInfo = await ctx.integrations.db.query(
+      "SELECT COALESCE(is_admin, false) as is_admin, role FROM cliptracker_v2_viewers WHERE id = $1",
+      ViewerInfoSchema,
       [viewerId],
-      { label: "Check if viewer is admin" }
+      { label: "Get viewer info (role + admin)" }
     );
-    const isAdmin = adminCheck[0]?.is_admin ?? false;
+    const isAdmin = viewerInfo[0]?.is_admin ?? false;
+    const viewerRole = viewerInfo[0]?.role ?? null;
 
     const clips = await ctx.integrations.db.query(
       `SELECT 
@@ -104,11 +105,30 @@ export default api({
         COALESCE(jsonb_array_length(c.resources), 0)::int as resource_count
       FROM cliptracker_v2_clips c
       WHERE c.status = 'live'
+        AND (c.roles IS NULL OR c.roles @> to_jsonb($2::text))
       ORDER BY c.sort_order ASC`,
       ClipWithProgressSchema,
-      [viewerId],
+      [viewerId, viewerRole],
       { label: "Get clip library with progress" }
     );
+
+    // Build dynamic day label map for SDRs:
+    // SDRs see fewer clips so their day numbering is renumbered.
+    // We derive the mapping from the ordered DB day_labels of the
+    // clips they actually receive.
+    const dayLabelMap = new Map<string, string>();
+    if (viewerRole === 'SDR') {
+      const seenDays: string[] = [];
+      for (const clip of clips) {
+        if (clip.day_label && !seenDays.includes(clip.day_label)) {
+          seenDays.push(clip.day_label);
+        }
+      }
+      // Renumber: seenDays[0] -> "Day 1", seenDays[1] -> "Day 2", etc.
+      seenDays.forEach((originalDay, i) => {
+        dayLabelMap.set(originalDay, `Day ${i + 1}`);
+      });
+    }
 
     // Check for unlock overrides
     const OverrideSchema = z.object({ clip_id: z.string() });
@@ -177,7 +197,7 @@ export default api({
         durationSeconds: clip.duration_seconds,
         sortOrder: clip.sort_order,
         weekNumber: clip.week_number,
-        dayLabel: clip.day_label,
+        dayLabel: viewerRole === 'SDR' && clip.day_label ? (dayLabelMap.get(clip.day_label) ?? clip.day_label) : clip.day_label,
         bestScore: bestScore,
         attempts: clip.attempts ? parseInt(clip.attempts) : 0,
         completed: isCompleted,

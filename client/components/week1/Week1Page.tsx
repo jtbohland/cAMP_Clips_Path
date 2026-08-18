@@ -63,6 +63,7 @@ type UnlockResult = {
 type Week1PageProps = {
   viewerId: string;
   viewerName: string;
+  viewerRole?: string;
   isAdmin?: boolean;
   /** Pacing performance data from parent for inline leaderboard */
   pacingLearners?: PacingLearner[];
@@ -74,9 +75,13 @@ type Week1PageProps = {
   onOpenRegistration?: () => void;
   /** Admin: trigger a test check-in modal */
   onTestCheckin?: (type: "approach" | "week2" | "week3" | "summit", approachOverride?: boolean) => void;
+  /** Admin: SDR test mode state (controlled by Library page) */
+  sdrTestMode?: boolean;
+  /** Admin: toggle SDR test mode */
+  onToggleSdrTest?: () => void;
 };
 
-export default function Week1Page({ viewerId, viewerName, isAdmin, pacingLearners, pacingLoading, onBeginAscent, onSwitchToAscent, onOpenRegistration, onTestCheckin }: Week1PageProps) {
+export default function Week1Page({ viewerId, viewerName, viewerRole, isAdmin, pacingLearners, pacingLoading, onBeginAscent, onSwitchToAscent, onOpenRegistration, onTestCheckin, sdrTestMode, onToggleSdrTest }: Week1PageProps) {
   const navigate = useNavigate();
   // Admin "Test as New Learner" toggle — resets view to fresh state
   const [testMode, setTestMode] = useState(false);
@@ -376,7 +381,11 @@ export default function Week1Page({ viewerId, viewerName, isAdmin, pacingLearner
             <span className="text-sm">🔧</span>
             <span className="text-sm font-semibold text-purple-900">Admin View</span>
             <span className="text-xs text-purple-600">
-              {testMode ? "Showing fresh learner view" : "Showing your real progress"}
+              {sdrTestMode
+                ? "Showing fresh SDR view"
+                : testMode
+                  ? "Showing fresh learner view"
+                  : "Showing your real progress"}
             </span>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
@@ -416,16 +425,30 @@ export default function Week1Page({ viewerId, viewerName, isAdmin, pacingLearner
                 📝 Registration
               </button>
             )}
-            <button
-              onClick={() => setTestMode((prev) => !prev)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                testMode
-                  ? "bg-purple-600 text-white hover:bg-purple-700"
-                  : "bg-white text-purple-700 border border-purple-300 hover:bg-purple-100"
-              }`}
-            >
-              {testMode ? "👁️ Show My Progress" : "🧪 Test as New Learner"}
-            </button>
+            {!sdrTestMode && (
+              <button
+                onClick={() => setTestMode((prev) => !prev)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                  testMode
+                    ? "bg-purple-600 text-white hover:bg-purple-700"
+                    : "bg-white text-purple-700 border border-purple-300 hover:bg-purple-100"
+                }`}
+              >
+                {testMode ? "👁️ Show My Progress" : "🧪 Test as New Learner"}
+              </button>
+            )}
+            {(!testMode || sdrTestMode) && onToggleSdrTest && (
+              <button
+                onClick={onToggleSdrTest}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                  sdrTestMode
+                    ? "bg-teal-600 text-white hover:bg-teal-700"
+                    : "bg-white text-teal-700 border border-teal-300 hover:bg-teal-100"
+                }`}
+              >
+                {sdrTestMode ? "↩️ Back to Admin" : "🧪 Test as New SDR"}
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -450,6 +473,8 @@ export default function Week1Page({ viewerId, viewerName, isAdmin, pacingLearner
         emoji="🧱"
         title="MEDDPICC"
         description="Amplitude's qualification framework — the backbone of every deal"
+        introVideoId={viewerRole === "SDR" ? "977xyqsokm" : undefined}
+        introVideoDescription={viewerRole === "SDR" ? "Learn MEDDPIC, the framework you'll use to qualify every opportunity. This 6-minute walkthrough covers each criterion and shows how to apply them in your pipeline." : undefined}
         courseUrl="https://lms.amplitude.com/new/ui/learner/training/programs/2035017193528628430?series=2035017193528628430"
         gearResources={[
           { emoji: "📞", label: "2026 Q3 - First Call Deck", url: "https://docs.google.com/presentation/d/1yFnrFlH0IsNs_jsB2CtklfUzqEpnLPPOFvi_DVTm5RE/edit?slide=id.g3f95e20dd30_1_0#slide=id.g3f95e20dd30_1_0" },

@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef } from "react";
 import { toast } from "sonner";
+import { WistiaPlayer } from "@wistia/wistia-player-react";
 
 type Resource = {
   emoji: string;
@@ -20,6 +21,10 @@ type ModuleCardProps = {
   isSignedOff: boolean;
   signoffData?: { reflectionResponse: string; signature: string; completedAt: string };
   isLegacy: boolean;
+  /** Optional Wistia media ID for an intro video above the Course link */
+  introVideoId?: string;
+  /** Optional description shown below the intro video label */
+  introVideoDescription?: string;
   onSignOff: (data: {
     screenshotData: string;
     screenshotFilename: string;
@@ -42,6 +47,8 @@ export default function ModuleCard({
   isSignedOff,
   signoffData,
   isLegacy,
+  introVideoId,
+  introVideoDescription,
   onSignOff,
 }: ModuleCardProps) {
   const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
@@ -129,6 +136,25 @@ export default function ModuleCard({
       </div>
 
       <div className="bg-white divide-y divide-gray-100">
+        {/* Intro Video (e.g. SDR-only MEDDPICC intro) */}
+        {introVideoId && (
+          <div className="px-5 py-3">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">📺 Intro Video</p>
+            {introVideoDescription && (
+              <p className="text-xs text-gray-500 mb-2">{introVideoDescription}</p>
+            )}
+            <div style={{ position: "relative", width: "100%", aspectRatio: "16 / 9" }}>
+              <WistiaPlayer
+                mediaId={introVideoId}
+                playerColor="1B4332"
+                autoplay={false}
+                silentAutoplay={false}
+                style={{ width: "100%", height: "100%", position: "absolute", top: 0, left: 0 }}
+              />
+            </div>
+          </div>
+        )}
+
         {/* Course */}
         <div className="px-5 py-3">
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Course</p>

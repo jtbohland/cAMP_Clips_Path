@@ -121,6 +121,7 @@ import UpdateClipResources from './v2/update-clip-resources.js';
 import GetPublicLeaderboard from './v2/get-public-leaderboard.js';
 import GetPacingPerformance from './v2/get-pacing-performance.js';
 import UpdateChallengerConstraint from './v2/update-challenger-constraint.js';
+import SetupRolePaths from './v2/setup-role-paths.js';
 
 
 
@@ -246,6 +247,7 @@ ResetJTSessions,
   GetPublicLeaderboard,
   GetPacingPerformance,
   UpdateChallengerConstraint,
+  SetupRolePaths,
 } as const;
 
 export default apis;
