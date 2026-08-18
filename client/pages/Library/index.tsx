@@ -92,6 +92,30 @@ export default function LibraryPage() {
   const [sdrTestMode, setSdrTestMode] = useState(false);
   const savedAdminViewer = useRef<import("@/components/ViewerContext").Viewer | null>(null);
 
+  const handleToggleSdrTest = useCallback(() => {
+    if (sdrTestMode) {
+      // Restore original admin viewer
+      if (savedAdminViewer.current) {
+        setViewer(savedAdminViewer.current);
+        savedAdminViewer.current = null;
+      }
+      setSdrTestMode(false);
+      setAscentTestMode(false);
+    } else {
+      // Save current viewer and swap to SDR test identity
+      savedAdminViewer.current = viewer;
+      setViewer({
+        id: "c618622d-0a80-45c4-980b-8490331327ae",
+        email: "sdr-test@test.local",
+        name: "SDR Test Viewer",
+        role: "SDR",
+        isAdmin: true,
+      });
+      setSdrTestMode(true);
+      setAscentTestMode(true);
+    }
+  }, [sdrTestMode, viewer, setViewer]);
+
   const { run: logClick } = useApi("LogPitchClick");
   const { run: trackLogin } = useApi("TrackLogin");
   const { run: trackModal } = useApi("TrackModalInteraction");
@@ -993,6 +1017,8 @@ export default function LibraryPage() {
             isAdmin={viewer.isAdmin}
             pacingLearners={pacingLearners}
             pacingLoading={pacingPerfLoading}
+            sdrTestMode={sdrTestMode}
+            onToggleSdrTest={handleToggleSdrTest}
             onOpenRegistration={() => setPreviewMode("register")}
             onTestCheckin={(type, approachOverride) => {
               setCheckinType(type);
@@ -1087,29 +1113,7 @@ export default function LibraryPage() {
                 {ascentTestMode ? "👁️ Show My Progress" : "🧪 Test as New Learner"}
               </button>
               <button
-                onClick={() => {
-                  if (sdrTestMode) {
-                    // Restore original admin viewer
-                    if (savedAdminViewer.current) {
-                      setViewer(savedAdminViewer.current);
-                      savedAdminViewer.current = null;
-                    }
-                    setSdrTestMode(false);
-                    setAscentTestMode(false);
-                  } else {
-                    // Save current viewer and swap to SDR test identity
-                    savedAdminViewer.current = viewer;
-                    setViewer({
-                      id: "c618622d-0a80-45c4-980b-8490331327ae",
-                      email: "sdr-test@test.local",
-                      name: "SDR Test Viewer",
-                      role: "SDR",
-                      isAdmin: true,
-                    });
-                    setSdrTestMode(true);
-                    setAscentTestMode(true);
-                  }
-                }}
+                onClick={handleToggleSdrTest}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
                   sdrTestMode
                     ? "bg-teal-600 text-white hover:bg-teal-700"
