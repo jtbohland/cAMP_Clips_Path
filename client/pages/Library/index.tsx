@@ -86,15 +86,19 @@ export default function LibraryPage() {
   }, [activeTab]);
 
   // Admin "Test as New Learner" toggle for The Ascent tab
-  // Initialize to true if SDR test mode is persisted (SDR mode sets ascentTestMode=true)
-  const [ascentTestMode, setAscentTestMode] = useState(() => {
-    return sessionStorage.getItem("sdr_test_saved_viewer") !== null;
-  });
+  const [ascentTestMode, setAscentTestMode] = useState(false);
 
   // Admin "Test as New SDR" — swaps viewer to a fresh SDR identity
   // Persist saved viewer in sessionStorage so HMR/code edits can't lose it
+  // Use a code-mode-scoped key so it never bleeds into the deployed app
+  const isEditorPreview = window.location.pathname.includes("code-mode");
   const SDR_SAVED_KEY = "sdr_test_saved_viewer";
   const [sdrTestMode, setSdrTestMode] = useState(() => {
+    if (!isEditorPreview) {
+      // Deployed app: clear any stale SDR test state and never activate
+      sessionStorage.removeItem(SDR_SAVED_KEY);
+      return false;
+    }
     return sessionStorage.getItem(SDR_SAVED_KEY) !== null;
   });
 
@@ -121,7 +125,6 @@ export default function LibraryPage() {
         isAdmin: true,
       });
       setSdrTestMode(true);
-      setAscentTestMode(true);
     }
   }, [sdrTestMode, ascentTestMode, viewer, setViewer]);
 
