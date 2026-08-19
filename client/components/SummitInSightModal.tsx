@@ -10,6 +10,8 @@ interface SummitInSightModalProps {
   catchUpItems: ApproachCatchUpItem[];
   /** Learner's summit day date */
   summitDay?: Date;
+  /** Total number of Ascent topic-days (role-aware) */
+  totalTopicDays?: number;
   /** Navigate to the Approach tab */
   onGoToApproach: () => void;
   onDismiss: () => void;
@@ -23,6 +25,7 @@ interface SummitInSightModalProps {
 export default function SummitInSightModal({
   catchUpItems,
   summitDay,
+  totalTopicDays = 15,
   onGoToApproach,
   onDismiss,
 }: SummitInSightModalProps) {
@@ -56,7 +59,7 @@ export default function SummitInSightModal({
         <div className="px-6 py-5 bg-amber-50 text-amber-900">
           {/* Congratulations message */}
           <div className="rounded-lg px-4 py-3 text-sm mb-4 border border-green-300 bg-green-50">
-            <p className="font-semibold text-green-800">🧗 All 15 Ascent days complete!</p>
+            <p className="font-semibold text-green-800">🧗 All {totalTopicDays} Ascent days complete!</p>
             <p className="mt-1 text-green-700 leading-relaxed">
               You've finished every clip in The Ascent. Just a few Approach items left
               before you officially reach the summit.

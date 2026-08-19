@@ -32,7 +32,6 @@ import {
   isAfterDate,
   isDayBeforeSummitDay,
   isSameDay,
-  TOTAL_SESSIONS,
   computeUnifiedPacingPercent,
   getPacingStatusFromPercent,
   CLIPS_EXPECTED_BY_WEEKDAY,
@@ -295,11 +294,15 @@ export default function LibraryPage() {
       pausedElapsedSeconds: 0,
     }));
   }, [rawClips, ascentTestMode]);
-  const ascentComplete = clips.length >= TOTAL_SESSIONS && clips.every((c: any) => c.completed);
+  const totalTopicDays = useMemo(() => {
+    const days = new Set(clips.map((c: any) => c.dayLabel).filter(Boolean));
+    return days.size;
+  }, [clips]);
+  const ascentComplete = clips.length > 0 && clips.every((c: any) => c.completed);
 
   // A/B pair sort orders — updated after Phase 1 migration (×10 spacing)
   // Pairs: sorts 10+20 (Day 1), 80+90 (Day 7), 100+110 (Day 8), 140+150 (Day 11), 190+200 (Day 15)
-  const AB_PAIRS: [number, number][] = [[10, 20], [40, 45], [80, 90], [100, 110], [140, 150], [190, 200]];
+  const AB_PAIRS: [number, number][] = [[10, 20], [40, 45], [55, 56], [80, 90], [100, 110], [140, 150], [190, 200]];
   const pairedSortOrders = new Set(AB_PAIRS.flat());
 
   // ── Pacing calculation ──
@@ -357,7 +360,7 @@ export default function LibraryPage() {
       })),
       effectiveWeekdaysElapsed
     );
-    const incompleteSessions = TOTAL_SESSIONS - sessionsCompleted;
+    const incompleteSessions = totalTopicDays - sessionsCompleted;
     const adjustmentDay = getAscentAdjustmentDay(summitDay, incompleteSessions);
     const afterAdjustmentDay = isAfterDate(adjustmentDay);
     const dayBeforeSummit = isDayBeforeSummitDay(summitDay);
@@ -367,7 +370,7 @@ export default function LibraryPage() {
       startDate, adjustmentDay, afterSummitDay, afterAdjustmentDay, dayBeforeSummit,
       summitDayIsToday, incompleteSessions,
     };
-  }, [progressData, clips, week1Data]);
+  }, [progressData, clips, week1Data, totalTopicDays]);
 
   // --- Approach completion status for Ascent pacing modals ---
   const approachStatus = useMemo(() => {
@@ -568,26 +571,60 @@ export default function LibraryPage() {
   // (Anchor failure detection is now handled by the unified pacing trigger above —
   //  getPacingTier returns "anchor_failure" when past summit day + incomplete)
 
-  const WEEK_META: Record<number, { emoji: string; title: string; time: string; note: string }> = {
-    2: {
-      emoji: "🥾",
-      title: "Building Your Revenue Engine Foundations",
-      time: "⏱ Total: 7h 33m | Daily average: ~1h 31m per day",
-      note: "These times are approximate and reflect course + video durations, plus ~20 minutes per day for quizzes. They do not include any extra time you spend reading or reviewing linked resources.",
-    },
-    3: {
-      emoji: "🏞️",
-      title: "Designing & Winning Strategic Deals",
-      time: "⏱ Total: 7h 16m | Daily average: ~1h 27m per day",
-      note: "These times are approximate and reflect course + video durations, plus ~20 minutes per day for quizzes. They do not include any extra time you spend reading or reviewing linked resources.",
-    },
-    4: {
-      emoji: "🧗🏻‍♂️",
-      title: "Executing, Governing & Scaling Deals",
-      time: "⏱ Total: 9h 55m | Daily average: ~2h per day",
-      note: "These times are approximate and reflect course + video durations, plus ~20 minutes per day for quizzes. They do not include any extra time you spend reading or reviewing linked resources.",
-    },
-  };
+  // ── Role-aware Wheel & Deal sort orders ──
+  // AE Days 3, 6, 9, 11 → sorts 40, 70, 120, 140
+  // SDR Days 3, 6, 9, 11 → sorts 40, 70, 120, 160 (SDR Day 11 = Customer Stories)
+  const wheelAndDealSortOrders = useMemo(() => {
+    const role = viewer?.role ?? "AE";
+    return role === "SDR"
+      ? new Set([40, 70, 120, 160])
+      : new Set([40, 70, 120, 140]);
+  }, [viewer?.role]);
+
+  const TIME_NOTE = "These times are approximate and reflect course + video durations, plus ~20 minutes per day for quizzes. They do not include any extra time you spend reading or reviewing linked resources.";
+  const isSDRViewer = viewer?.role === "SDR";
+
+  const WEEK_META: Record<number, { emoji: string; title: string; time: string; note: string }> = isSDRViewer
+    ? {
+        2: {
+          emoji: "🥾",
+          title: "Building Your Pipeline Foundations",
+          time: "⏱ Total: 7h 40m | Daily average: ~1h 32m per day",
+          note: TIME_NOTE,
+        },
+        3: {
+          emoji: "🏞️",
+          title: "Sharpening Your Competitive & Discovery Skills",
+          time: "⏱ Total: 6h 21m | Daily average: ~1h 16m per day",
+          note: TIME_NOTE,
+        },
+        4: {
+          emoji: "🧗🏻‍♂️",
+          title: "Telling the Customer Story",
+          time: "⏱ Total: ~1h 11m | 1 session day",
+          note: TIME_NOTE,
+        },
+      }
+    : {
+        2: {
+          emoji: "🥾",
+          title: "Building Your Revenue Engine Foundations",
+          time: "⏱ Total: 7h 33m | Daily average: ~1h 31m per day",
+          note: TIME_NOTE,
+        },
+        3: {
+          emoji: "🏞️",
+          title: "Designing & Winning Strategic Deals",
+          time: "⏱ Total: 7h 16m | Daily average: ~1h 27m per day",
+          note: TIME_NOTE,
+        },
+        4: {
+          emoji: "🧗🏻‍♂️",
+          title: "Executing, Governing & Scaling Deals",
+          time: "⏱ Total: 9h 55m | Daily average: ~2h per day",
+          note: TIME_NOTE,
+        },
+      };
 
   const weekGroups = useMemo(() => {
     const grouped = new Map<number, typeof clips>();
@@ -747,7 +784,7 @@ export default function LibraryPage() {
           tier={pacingInfo.tier}
           daysBehind={pacingInfo.daysBehind}
           clipsCompleted={pacingInfo.clipsCompleted}
-          totalClips={TOTAL_SESSIONS}
+          totalClips={totalTopicDays}
           weekdaysElapsed={pacingInfo.weekdaysElapsed}
           missedClips={pacingInfo.missedClips}
           summitDay={pacingInfo.summitDay}
@@ -868,7 +905,7 @@ export default function LibraryPage() {
         tier={pacingInfo.tier}
         daysBehind={pacingInfo.daysBehind}
         clipsCompleted={pacingInfo.clipsCompleted}
-        totalClips={TOTAL_SESSIONS}
+        totalClips={totalTopicDays}
         weekdaysElapsed={pacingInfo.weekdaysElapsed}
         missedClips={pacingInfo.missedClips}
         summitDay={pacingInfo.summitDay}
@@ -893,6 +930,7 @@ export default function LibraryPage() {
       <SummitInSightModal
         catchUpItems={approachStatus.catchUpItems}
         summitDay={pacingInfo?.summitDay}
+        totalTopicDays={totalTopicDays}
         onGoToApproach={() => setActiveTab("approach")}
         onDismiss={() => { logModal("summit_in_sight", "dismissed"); setShowSummitInSight(false); }}
       />
@@ -961,7 +999,7 @@ export default function LibraryPage() {
           return stored ? isAfterDate(new Date(stored)) : false;
         })()}
         clipsCompleted={pacingInfo.clipsCompleted}
-        totalClips={TOTAL_SESSIONS}
+        totalClips={totalTopicDays}
         missedClips={pacingInfo.missedClips}
         approachComplete={approachStatus?.complete}
         approachCatchUpItems={approachStatus?.catchUpItems}
@@ -1294,6 +1332,7 @@ export default function LibraryPage() {
                               onReviewB={() => navigate(`/report/${clipB.id}`)}
                               onWheelAndDeal={handleWheelAndDeal}
                               onCampQuiz={handleCampQuiz}
+                              wheelAndDealSortOrders={wheelAndDealSortOrders}
                             />
                           );
                         }
@@ -1321,6 +1360,7 @@ export default function LibraryPage() {
                           onReview={() => navigate(`/report/${clip.id}`)}
                           onWheelAndDeal={handleWheelAndDeal}
                           onCampQuiz={handleCampQuiz}
+                          wheelAndDealSortOrders={wheelAndDealSortOrders}
                           onViewGear={
                             clip.isTopicDay
                               ? () => navigate(`/topic-gear/${clip.sortOrder === 60 ? "day5" : "day9"}/${clip.id}`)

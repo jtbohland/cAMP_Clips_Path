@@ -5,6 +5,7 @@
 export type AscentGuideSme = {
   name: string;
   title: string;
+  emoji?: string;
 };
 
 export type AscentGuideEntry = {
@@ -36,7 +37,7 @@ const GUIDE_SESSIONS: Record<string, AscentGuideEntry> = {
   day1_personas: {
     id: "day1_personas",
     summary:
-      "This session digs into the buyer personas AEs will engage across Amplitude's target accounts. Reps will learn how to identify decision-makers, influencers, and end-users, understand their goals, challenges, and success metrics, and map Amplitude value drivers to specific persona needs. The emphasis is on seeing ICPs as a filter for focus and qualification.",
+      "This session digs into the buyer personas reps will engage across Amplitude's target accounts. Reps will learn how to identify decision-makers, influencers, and end-users, understand their goals, challenges, and success metrics, and map Amplitude value drivers to specific persona needs. The emphasis is on seeing ICPs as a filter for focus and qualification.",
     learningObjectives: [
       "Identify core buyer personas at target accounts, including their top priorities and pain points.",
       "Map Amplitude value drivers to specific persona needs and buying motivations.",
@@ -49,7 +50,7 @@ const GUIDE_SESSIONS: Record<string, AscentGuideEntry> = {
   day2: {
     id: "day2",
     summary:
-      "This session explains how top-of-funnel demand gets generated, scored, and routed to AEs. Reps will learn how MQLs are defined, how inbounds move through the funnel, and what 'good' follow-up looks like. Emphasis is on speed-to-lead, context-rich outreach, and clean Salesforce hygiene.",
+      "This session explains how top-of-funnel demand gets generated, scored, and routed to reps. Reps will learn how MQLs are defined, how inbounds move through the funnel, and what 'good' follow-up looks like. Emphasis is on speed-to-lead, context-rich outreach, and clean Salesforce hygiene.",
     learningObjectives: [
       "Explain how MQLs and inbounds are created, scored, and assigned in our GTM system.",
       "Interpret key TOFU dashboards/fields to understand lead source, intent, and next best action.",
@@ -65,7 +66,7 @@ const GUIDE_SESSIONS: Record<string, AscentGuideEntry> = {
   day3: {
     id: "day3",
     summary:
-      "This day orients AEs around the GTM Launch Pad as their 'single pane of glass' for managing pipeline and priorities. Reps will learn how to navigate the dashboard, interpret core metrics, and use it to drive their daily workflow. The focus is on turning data into action: which accounts to touch, which deals to progress, and what risks to mitigate.",
+      "This day orients reps around the GTM Launch Pad as their 'single pane of glass' for managing pipeline and priorities. Reps will learn how to navigate the dashboard, interpret core metrics, and use it to drive their daily workflow. The focus is on turning data into action: which accounts to touch, which deals to progress, and what risks to mitigate.",
     learningObjectives: [
       "Navigate the GTM Launch Pad dashboard and locate key views for pipeline, coverage, and activity.",
       "Interpret core metrics (e.g., coverage, stage distribution, conversion rates) to assess territory health.",
@@ -104,6 +105,32 @@ const GUIDE_SESSIONS: Record<string, AscentGuideEntry> = {
     smes: [{ name: "JT Bohland", title: "Sr. Enablement Program Manager" }],
   },
 
+  // ── Day 5 (sort 55): Cold Calling in an AI World (SDR) ──
+  day5_cold_calling: {
+    id: "day5_cold_calling",
+    summary:
+      "This session is a hands-on cold calling masterclass led by Giulio, covering why reps fear cold calling (evolutionary biology of social rejection), how to build habits that reduce call anxiety, and how to gamify rejection to stay motivated. Giulio walks through three proven opener formulas \u2014 cheeky, neutral time-bound, and flattery-based \u2014 and explains the psychology behind each. The session also covers tone and delivery, getting past AI gatekeepers, and the PACE framework (Pause, Acknowledge, Challenge, Educate) for handling any objection on the spot.",
+    learningObjectives: [
+      "Understand why cold calling triggers fear of rejection and how to manage it through preparation and habit-building.",
+      "Apply three opener formulas to immediately level the playing field with prospects.",
+      "Use the PACE framework to handle any objection without over-talking or losing control of the call.",
+    ],
+    smes: [{ name: "Talk to your Mentor or a Teammate", title: "", emoji: "\ud83d\udc65" }],
+  },
+
+  // ── Day 5 (sort 56): Making Calls with Nooks (SDR) ──
+  day5_nooks: {
+    id: "day5_nooks",
+    summary:
+      "This session is a hands-on Nooks onboarding led by Kate that walks reps through setting up the AI-powered parallel dialer, choosing between power and parallel dialing modes, and using Smart Lists, Smart Presence, and phone type filters to maximize live conversations per calling session.",
+    learningObjectives: [
+      "Set up Nooks correctly by connecting Outreach and installing the Chrome extension for automatic prospect context.",
+      "Choose the right dialing mode — parallel for volume, power for hot leads — and configure voicemail drops for unanswered calls.",
+      "Use Smart Lists, phone type filters, and phone number rotation to increase connect rates and maximize daily at-bats.",
+    ],
+    smes: [{ name: "Talk to your Mentor or a Teammate", title: "", emoji: "👥" }],
+  },
+
   // ── Day 5 (sort 6): Renewal Operations ──
   day5: {
     id: "day5",
@@ -125,7 +152,7 @@ const GUIDE_SESSIONS: Record<string, AscentGuideEntry> = {
   day6: {
     id: "day6",
     summary:
-      "This day equips AEs with a practical understanding of our competitive landscape and how to position Amplitude. Reps will explore our main competitors, where we win/lose, and the narratives that resonate with different buyers. The emphasis is on confident, honest positioning and using competitive intel to guide discovery and strategy, not trash talk.",
+      "This day equips reps with a practical understanding of our competitive landscape and how to position Amplitude. Reps will explore our main competitors, where we win/lose, and the narratives that resonate with different buyers. The emphasis is on confident, honest positioning and using competitive intel to guide discovery and strategy, not trash talk.",
     learningObjectives: [
       "Identify our primary competitors and articulate their typical strengths and weaknesses.",
       "Position Amplitude clearly and credibly against competitors for key use cases and segments.",
@@ -138,7 +165,7 @@ const GUIDE_SESSIONS: Record<string, AscentGuideEntry> = {
   day7: {
     id: "day7",
     summary:
-      "This session teaches AEs how to think like owners of their territories and strategic accounts. They'll learn how to build an account plan that covers stakeholders, whitespace, risk, and multi-threading strategies. The goal is to move from reactive 'opportunity management' to proactive account orchestration.",
+      "This session teaches reps how to think like owners of their territories and strategic accounts. They'll learn how to build an account plan that covers stakeholders, whitespace, risk, and multi-threading strategies. The goal is to move from reactive 'opportunity management' to proactive account orchestration.",
     learningObjectives: [
       "Build a basic account plan that includes customer goals, org map, whitespace, and risk areas.",
       "Identify and prioritize strategic plays within an account (expansion, retention, new business).",
@@ -167,7 +194,7 @@ const GUIDE_SESSIONS: Record<string, AscentGuideEntry> = {
   day9: {
     id: "day9",
     summary:
-      "This session introduces Amplitude's 2026 pricing and packaging model and how AEs should use it in real deals. Reps will learn core components (SKUs, tiers, add-ons), how value and usage map to price, and the basics of using the pricing tools. The focus is on enabling confident, value-based pricing conversations rather than tactical discounting.",
+      "This session introduces Amplitude's 2026 pricing and packaging model and how reps should use it in real deals. Reps will learn core components (SKUs, tiers, add-ons), how value and usage map to price, and the basics of using the pricing tools. The focus is on enabling confident, value-based pricing conversations rather than tactical discounting.",
     learningObjectives: [
       "Explain Amplitude's core pricing and packaging structure in plain language to customers.",
       "Use the pricing tools/templates to configure a standard offer that aligns with customer use cases.",
@@ -183,7 +210,7 @@ const GUIDE_SESSIONS: Record<string, AscentGuideEntry> = {
   day10: {
     id: "day10",
     summary:
-      "This day shows AEs how to use partners as a force multiplier throughout the deal cycle. Reps will learn partner types, when to bring them in, and how to co-create value with them for customers. The emphasis is on practical scenarios: influence, co-sell, implementation support, and expansion.",
+      "This day shows reps how to use partners as a force multiplier throughout the deal cycle. Reps will learn partner types, when to bring them in, and how to co-create value with them for customers. The emphasis is on practical scenarios: influence, co-sell, implementation support, and expansion.",
     learningObjectives: [
       "Identify which partner types (SIs, tech partners, agencies) are most relevant for a given account.",
       "Describe where in the deal cycle partners can add the most value (discovery, validation, implementation, success).",
@@ -209,7 +236,7 @@ const GUIDE_SESSIONS: Record<string, AscentGuideEntry> = {
   day12: {
     id: "day12",
     summary:
-      "This day equips AEs with a library of real customer stories and the skills to use them effectively. Reps will learn how to select the right story for the audience, frame it in a Teach–Tailor–Take Control narrative, and connect outcomes back to the prospect's world. The focus is on storytelling as a sales tool, not just name-dropping logos.",
+      "This day equips reps with a library of real customer stories and the skills to use them effectively. Reps will learn how to select the right story for the audience, frame it in a Teach–Tailor–Take Control narrative, and connect outcomes back to the prospect's world. The focus is on storytelling as a sales tool, not just name-dropping logos.",
     learningObjectives: [
       "Recall several relevant Amplitude customer stories across priority industries and use cases.",
       "Structure a customer story (context, challenge, action, outcome) that reinforces your commercial insight.",
@@ -292,8 +319,8 @@ const SORT_ORDER_TO_SESSION_ID: Record<number, string> = {
   40: "day3",             // Day 3: GTM Launch Pad
   45: "day3_pod_tower",   // Day 3: Pod Tower
   50: "day4",             // Day 4: Prospecting Process
-  55: "day4",             // Day 5: Cold Calling in an AI World (SDR)
-  56: "day4",             // Day 5: Making Calls with Nooks (SDR)
+  55: "day5_cold_calling", // Day 5: Cold Calling in an AI World (SDR)
+  56: "day5_nooks",        // Day 5: Making Calls with Nooks (SDR)
   60: "day5",             // Day 5: Renewal Operations
   70: "day6",             // Day 6: The Competitive Landscape
   80: "day7",             // Day 7: Account Planning Best Practices
