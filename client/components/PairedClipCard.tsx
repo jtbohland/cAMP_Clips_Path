@@ -333,12 +333,22 @@ export default function PairedClipCard({
         {/* Reachdesk Zoom clip — Day 4 sort 50 pair */}
         {onZoomClipWatch && buttonStateA !== "locked" && (
           <div className="border-t border-gray-100 pt-3 mt-1">
-            <p className="text-xs text-gray-500 flex items-center gap-1.5 flex-wrap mb-1">
+            <p className="text-xs text-gray-500 flex items-center gap-1.5 flex-wrap mb-2">
               <span>⏱️ 44m</span>
               <span className="text-gray-300">·</span>
               <span>🪧 0 Trail Markers</span>
+              <span className="text-gray-300">·</span>
+              <span>👀 View tracked in Zoom</span>
             </p>
-            <p className="text-xs text-gray-500 mb-2">👀 View tracked in Zoom</p>
+            <a
+              href="https://app.reachdesk.com/engages/new/campaign?auto_teams=true&team_ids=8622"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="block text-xs text-orange-600 hover:text-orange-700 font-medium mb-2"
+            >
+              🖥️ Open Reachdesk on a 2nd screen to follow along →
+            </a>
             {zoomClipWatched ? (
               <button
                 onClick={(e) => { e.stopPropagation(); onZoomClipReview?.(); }}
