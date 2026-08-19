@@ -38,12 +38,14 @@ type PairedClipCardProps = {
   onReviewB?: () => void;
   onWheelAndDeal?: () => void;
   onCampQuiz?: () => void;
+  /** Role-aware sort orders that show the W&D button (passed from Library) */
+  wheelAndDealSortOrders?: Set<number>;
 };
 
 // Clips that show the cAMP Quiz button
 const CAMP_QUIZ_SORT_ORDERS = new Set([10, 20, 30, 40, 50, 60, 70, 90, 110, 120, 130, 150, 160, 170, 180, 200]);
-// Clips that show the Wheel & Deal practice button
-const WHEEL_AND_DEAL_SORT_ORDERS = new Set([40, 80, 110, 150, 180]);
+// Default Wheel & Deal sort orders (AE path — Days 3, 6, 9, 11)
+const DEFAULT_WD_SORT_ORDERS = new Set([40, 70, 120, 140]);
 
 type ButtonState = "watch" | "resume" | "report" | "locked";
 
@@ -155,6 +157,7 @@ export default function PairedClipCard({
   onReviewB,
   onWheelAndDeal,
   onCampQuiz,
+  wheelAndDealSortOrders,
 }: PairedClipCardProps) {
   const buttonStateA = getButtonState(stateA.isLocked, stateA.isCompleted, stateA.pausedElapsedSeconds);
   const buttonStateB = getButtonState(stateB.isLocked, stateB.isCompleted, stateB.pausedElapsedSeconds);
@@ -187,7 +190,8 @@ export default function PairedClipCard({
 
   // Determine which quiz/W&D belongs to this pair (use either clip's sort order)
   const showCampQuiz = CAMP_QUIZ_SORT_ORDERS.has(clipA.sortOrder) || CAMP_QUIZ_SORT_ORDERS.has(clipB.sortOrder);
-  const showWheelAndDeal = WHEEL_AND_DEAL_SORT_ORDERS.has(clipA.sortOrder) || WHEEL_AND_DEAL_SORT_ORDERS.has(clipB.sortOrder);
+  const wdSet = wheelAndDealSortOrders ?? DEFAULT_WD_SORT_ORDERS;
+  const showWheelAndDeal = wdSet.has(clipA.sortOrder) || wdSet.has(clipB.sortOrder);
 
   const isLocked = overallStatus === "locked";
 

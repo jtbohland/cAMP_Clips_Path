@@ -206,6 +206,7 @@ export default function Week1Page({ viewerId, viewerName, viewerRole, isAdmin, p
   useEffect(() => {
     if (!data || isLegacy || isUnlocked || !approachPacing) return;
     if (approachPacingShownRef.current) return;
+    if (isAdmin) return; // Admins bypass pacing entirely
     if (testMode) return; // don't fire during admin test mode
 
     const storageKey = `approach_pacing_shown_${viewerId}`;
@@ -237,7 +238,7 @@ export default function Week1Page({ viewerId, viewerName, viewerRole, isAdmin, p
 
     // Day 2-5: regular pacing modal
     setShowApproachPacing(true);
-  }, [data, isLegacy, isUnlocked, approachPacing, viewerId, testMode]);
+  }, [data, isLegacy, isUnlocked, approachPacing, viewerId, testMode, isAdmin]);
 
   // Handlers
   const handleModuleSignoff = useCallback(async (moduleKey: string, signoffData: {

@@ -25,6 +25,8 @@ type ClipLibraryCardProps = {
   onViewGear?: () => void;
   onWheelAndDeal?: () => void;
   onCampQuiz?: () => void;
+  /** Role-aware sort orders that show the W&D button (passed from Library) */
+  wheelAndDealSortOrders?: Set<number>;
   onZoomClipWatch?: () => void;
   onZoomClipReview?: () => void;
   zoomClipWatched?: boolean;
@@ -88,8 +90,8 @@ function getButtonState(
 const TOPIC_DAY_SORT_ORDERS = new Set([60, 120]);
 // Clips that show the cAMP Quiz button (includes topic days 60, 120)
 const CAMP_QUIZ_SORT_ORDERS = new Set([10, 20, 30, 40, 50, 60, 70, 90, 110, 120, 130, 150, 160, 170, 180, 200]);
-// Clips that show the Wheel & Deal practice button
-const WHEEL_AND_DEAL_SORT_ORDERS = new Set([40, 80, 110, 150, 180]);
+// Default Wheel & Deal sort orders (AE path — Days 3, 6, 9, 11)
+const DEFAULT_WD_SORT_ORDERS = new Set([40, 70, 120, 140]);
 // Sort order 50 has an additional Zoom clip (Reachdesk) — shows extra button
 const REACHDESK_SORT_ORDER = 50;
 // Sort order 180 (Deal Desk & CPQ) has two bonus Wistia clips
@@ -107,6 +109,7 @@ export default function ClipLibraryCard({
   onViewGear,
   onWheelAndDeal,
   onCampQuiz,
+  wheelAndDealSortOrders,
   onZoomClipWatch,
   onZoomClipReview,
   zoomClipWatched,
@@ -120,6 +123,7 @@ export default function ClipLibraryCard({
 }: ClipLibraryCardProps) {
   const isTopicDay = clip.isTopicDay ?? false;
   const buttonState = getButtonState(isLocked, isCompleted, pausedElapsedSeconds);
+  const wdSet = wheelAndDealSortOrders ?? DEFAULT_WD_SORT_ORDERS;
 
   const handleShare = useCallback(
     (e: React.MouseEvent) => {
@@ -345,7 +349,7 @@ export default function ClipLibraryCard({
         )}
 
         {/* Wheel & Deal button — always visible on qualifying tiles */}
-        {WHEEL_AND_DEAL_SORT_ORDERS.has(clip.sortOrder) && onWheelAndDeal && (
+        {wdSet.has(clip.sortOrder) && onWheelAndDeal && (
           <button
             onClick={(e) => { e.stopPropagation(); onWheelAndDeal(); }}
             className="w-full py-2.5 rounded-lg text-sm font-semibold bg-[#7C3AED] hover:bg-[#6D28D9] text-white transition-colors"
@@ -353,7 +357,7 @@ export default function ClipLibraryCard({
             🎡 Wheel & Deal
           </button>
         )}
-        {WHEEL_AND_DEAL_SORT_ORDERS.has(clip.sortOrder) && onWheelAndDeal && (
+        {wdSet.has(clip.sortOrder) && onWheelAndDeal && (
           <p className="text-[11px] text-gray-400 text-center -mt-1">
             REMEMBER: product-fluency practice — solo or multiplayer — as prep for cAMP 201.
           </p>
