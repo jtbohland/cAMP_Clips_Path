@@ -1,4 +1,5 @@
 import { api, z, postgres } from "@superblocksteam/sdk-api";
+import { getEffectiveClipTotal } from "./pacing-helpers.js";
 
 const APPS_DB = "c6e32cf4-ca66-42ae-aeb3-58c84ffae574";
 
@@ -42,30 +43,31 @@ export default api({
       peakLiftDelta: number;
     }> = [];
 
-    // Sentinel clip for approach XP events (sort_order = 1)
+    // Sentinel clip for approach XP events (lowest sort_order live clip)
     const ClipIdSchema = z.object({ id: z.string() });
     const sentinelClip = await ctx.integrations.db.query(
-      `SELECT id FROM cliptracker_v2_clips WHERE sort_order = 1 LIMIT 1`,
+      `SELECT id FROM cliptracker_v2_clips WHERE status = 'live' ORDER BY sort_order ASC LIMIT 1`,
       ClipIdSchema, [], { label: "Get sentinel clip" }
     );
     const approachClipId = sentinelClip[0]?.id;
     if (!approachClipId) {
-      throw new Error("No clip with sort_order=1 found");
+      throw new Error("No live clip found for approach XP sentinel");
     }
 
     // Constants for total clips (to identify completed learners)
-    const TOTAL_ASCENT_CLIPS = 21;
     const TOTAL_APPROACH_MODULES = 8;
 
     // Get all non-admin learners with their approach data + completion status
     const LearnerSchema = z.object({
       id: z.string(),
       name: z.string(),
+      role: z.string(),
       clips_done: z.coerce.number(),
       approach_done: z.coerce.number(),
+      max_sort_done: z.coerce.number(),
     });
     const learners = await ctx.integrations.db.query(
-      `SELECT v.id, v.name,
+      `SELECT v.id, v.name, v.role,
         (SELECT COUNT(DISTINCT xe.clip_id)::int FROM cliptracker_v2_xp_events xe
          WHERE xe.viewer_id = v.id AND xe.source_id = 'watch') AS clips_done,
         (
@@ -80,7 +82,8 @@ export default api({
           +
           (SELECT LEAST(COUNT(*)::int, 1) FROM cliptracker_v2_wd_verifications wd
            WHERE wd.viewer_id = v.id)
-        ) AS approach_done
+        ) AS approach_done,
+        COALESCE((SELECT MAX(c.sort_order)::int FROM cliptracker_v2_sessions s JOIN cliptracker_v2_clips c ON c.id = s.clip_id WHERE s.viewer_id = v.id AND s.completed = true AND c.status = 'live'), 0) AS max_sort_done
       FROM cliptracker_v2_viewers v
       WHERE v.is_admin IS NOT TRUE
       ORDER BY v.name
@@ -90,7 +93,8 @@ export default api({
 
     // Filter to active learners only (not completed)
     const activeLearners = learners.filter(l => {
-      const allComplete = l.clips_done >= TOTAL_ASCENT_CLIPS &&
+      const effectiveTotal = getEffectiveClipTotal(l.role, l.max_sort_done);
+      const allComplete = l.clips_done >= effectiveTotal &&
         (l.approach_done >= TOTAL_APPROACH_MODULES || l.approach_done === 0);
       return !allComplete;
     });

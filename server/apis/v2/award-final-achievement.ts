@@ -1,4 +1,10 @@
 import { api, z, postgres } from "@superblocksteam/sdk-api";
+import {
+  getClipsExpectedByWeekday,
+  getEffectiveClipTotal,
+  getTotalWeekdays,
+  isSDR,
+} from "./pacing-helpers.js";
 
 const APPS_DB = "c6e32cf4-ca66-42ae-aeb3-58c84ffae574";
 
@@ -15,17 +21,8 @@ const APPS_DB = "c6e32cf4-ca66-42ae-aeb3-58c84ffae574";
  * of each Ascent weekday.
  */
 
-// ── Pacing schedule: expected cumulative CLIPS by weekday (clip-level) ──
-// Indices 0-20, matches client/lib/pacing.ts CLIPS_EXPECTED_BY_WEEKDAY.
-const CLIPS_EXPECTED_BY_WEEKDAY = [
-  0, 0, 0, 0, 0, 0,          // weekdays 0-5 (Week 1: approach modules)
-  2, 3, 5, 6, 7,              // weekdays 6-10 (Day 3 has 2 clips: GTM LP + Pod Tower)
-  8, 10, 12, 13, 14,          // weekdays 11-15
-  16, 17, 18, 19, 21,         // weekdays 16-20
-];
 const WEEK1_EXPECTED_BY_DAY = [0, 2, 4, 5, 6, 7];
 const WEEK1_TOTAL = 7;
-const TOTAL_ASCENT_CLIPS_COUNT = 21;
 
 // Map each sort_order → which Ascent day (1-15) it belongs to.
 // Multi-clip days share the same Ascent day number.
@@ -111,14 +108,18 @@ export default api({
     const ViewerSchema = z.object({
       ascent_day_1: z.string().nullable(),
       week1_unlock_type: z.string().nullable(),
+      role: z.string(),
       clips_completed: z.coerce.number(),
       extension_days: z.coerce.number(),
+      max_sort_done: z.coerce.number(),
     });
     const viewers = await ctx.integrations.db.query(
       `SELECT v.ascent_day_1::text,
               v.week1_unlock_type,
+              v.role,
               COALESCE((SELECT COUNT(DISTINCT s.clip_id)::int FROM cliptracker_v2_sessions s WHERE s.viewer_id = v.id AND s.completed = true), 0) as clips_completed,
-              COALESCE(v.extension_days, 0)::int as extension_days
+              COALESCE(v.extension_days, 0)::int as extension_days,
+              COALESCE((SELECT MAX(c2.sort_order)::int FROM cliptracker_v2_sessions s2 JOIN cliptracker_v2_clips c2 ON c2.id = s2.clip_id WHERE s2.viewer_id = v.id AND s2.completed = true AND c2.status = 'live'), 0) as max_sort_done
        FROM cliptracker_v2_viewers v WHERE v.id = $1`,
       ViewerSchema, [viewerId], { label: "Fetch viewer data" }
     );
@@ -128,6 +129,9 @@ export default api({
     const isLegacy = viewer.clips_completed > 0 && viewer.week1_unlock_type === null;
     const ascentDay1 = viewer.ascent_day_1 ? new Date(viewer.ascent_day_1) : null;
     const extensionDays = viewer.extension_days;
+    const learnerRole = viewer.role;
+    const effectiveTotal = getEffectiveClipTotal(learnerRole, viewer.max_sort_done);
+    const schedule = getClipsExpectedByWeekday(learnerRole);
 
     const xpEvents: Array<{ sourceId: string; eventType: string; xp: number }> = [];
     const badgesAwarded: BadgeEarned[] = [];
@@ -322,7 +326,7 @@ export default api({
         } else {
           const effectiveAscentDay = ascentDayNum - extensionDays;
           const weekday = effectiveAscentDay + 5;
-          clipsExpected = CLIPS_EXPECTED_BY_WEEKDAY[weekday] ?? TOTAL_ASCENT_CLIPS_COUNT;
+          clipsExpected = schedule[weekday] ?? effectiveTotal;
           approachExpected = WEEK1_TOTAL;
         }
 
@@ -335,7 +339,7 @@ export default api({
         }
 
         const totalExpected = approachExpected + clipsExpected;
-        const totalDone = Math.min(approachDone, WEEK1_TOTAL) + Math.min(clipsDoneByDay, TOTAL_ASCENT_CLIPS_COUNT);
+        const totalDone = Math.min(approachDone, WEEK1_TOTAL) + Math.min(clipsDoneByDay, effectiveTotal);
         const percent = totalExpected > 0 ? Math.round((totalDone / totalExpected) * 100) : 100;
         const isSummitBound = percent >= 90;
 
@@ -371,7 +375,7 @@ export default api({
         } else {
           const effectiveAscentDay = ascentDayNum - extensionDays;
           const weekday = effectiveAscentDay + 5;
-          clipsExpected = CLIPS_EXPECTED_BY_WEEKDAY[weekday] ?? TOTAL_ASCENT_CLIPS_COUNT;
+          clipsExpected = schedule[weekday] ?? effectiveTotal;
         }
         let clipsDoneByDay = 0;
         for (const compDate of clipCompletionDates) {
@@ -380,7 +384,7 @@ export default api({
           if (compNorm <= dayNorm) clipsDoneByDay++;
         }
         const totalExpected = WEEK1_TOTAL + clipsExpected;
-        const totalDone = Math.min(approachDone, WEEK1_TOTAL) + Math.min(clipsDoneByDay, TOTAL_ASCENT_CLIPS_COUNT);
+        const totalDone = Math.min(approachDone, WEEK1_TOTAL) + Math.min(clipsDoneByDay, effectiveTotal);
         const pct = totalExpected > 0 ? Math.round((totalDone / totalExpected) * 100) : 100;
         minPercent = Math.min(minPercent, pct);
       }

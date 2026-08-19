@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router";
 import { useApiData } from "@/hooks/useApiData.js";
 import { useViewer } from "@/components/ViewerContext";
@@ -57,6 +57,15 @@ const TZ_PILL: Record<string, { emoji: string; label: string; bg: string; text: 
   NAMER: { emoji: "🌎", label: "NAMER", bg: "bg-blue-50",   text: "text-blue-700",   border: "border-blue-200" },
   EMEA:  { emoji: "🌍", label: "EMEA",  bg: "bg-red-50",    text: "text-red-700",    border: "border-red-200" },
   AAPJ:  { emoji: "🌏", label: "AAPJ",  bg: "bg-yellow-50", text: "text-yellow-700", border: "border-yellow-300" },
+};
+
+// ─── Role group display config ───────────────────────────────────────────────
+
+const ROLE_GROUP_CONFIG: Record<string, { label: string; emoji: string; headerBg: string; headerText: string }> = {
+  AE:       { label: "Account Executives", emoji: "💰", headerBg: "#3B82F6",  headerText: "#EFF6FF" },
+  SDR:      { label: "SDRs",               emoji: "📞", headerBg: "#8B5CF6",  headerText: "#F5F3FF" },
+  PSM:      { label: "PSMs",               emoji: "🤝", headerBg: "#F97316",  headerText: "#FFF7ED" },
+  Renewals: { label: "Renewals",           emoji: "🔄", headerBg: "#EAB308",  headerText: "#FEFCE8" },
 };
 
 function RolePill({ role }: { role: string }) {
@@ -153,7 +162,7 @@ const STATUS_KEY: Array<{
     label: "Completed",
     bg: "bg-indigo-50",
     text: "text-indigo-700",
-    description: "Finished all 19 Ascent clips. Summit reached!",
+    description: "Finished all Ascent clips. Summit reached!",
   },
 ];
 
@@ -207,8 +216,11 @@ interface LeaderboardEntry {
   viewerId: string;
   name: string;
   role: string;
+  roleGroup: string;
   timezone: string | null;
   totalXp: number;
+  xpPct: number;
+  maxXp: number;
   clipsCompleted: number;
   badgesEarned: number;
   pacingStatus: string;
@@ -216,7 +228,7 @@ interface LeaderboardEntry {
   tierEmoji: string;
 }
 
-function LeaderboardRow({ entry, isCurrentUser }: { entry: LeaderboardEntry; isCurrentUser: boolean }) {
+function MainLeaderboardRow({ entry, isCurrentUser }: { entry: LeaderboardEntry; isCurrentUser: boolean }) {
   const isTop3 = entry.rank <= 3;
   const medalEmoji = entry.rank === 1 ? "🥇" : entry.rank === 2 ? "🥈" : entry.rank === 3 ? "🥉" : "";
 
@@ -225,13 +237,11 @@ function LeaderboardRow({ entry, isCurrentUser }: { entry: LeaderboardEntry; isC
   let rowBorder: string;
 
   if (isCurrentUser) {
-    // Current user: tinted with their pacing tier color
     rowBg = PACING_ROW_BG[entry.pacingStatus] ?? "#F3F4F630";
     rowBorder = isTop3
       ? `2px solid ${TOP3_BORDER[entry.rank] ?? "#86EFAC"}`
       : "2px solid #D1D5DB";
   } else if (isTop3) {
-    // Top 3: green spectrum
     rowBg = TOP3_BG[entry.rank] ?? "#F0FDF4";
     rowBorder = `1px solid ${TOP3_BORDER[entry.rank] ?? "#86EFAC"}`;
   } else {
@@ -241,7 +251,7 @@ function LeaderboardRow({ entry, isCurrentUser }: { entry: LeaderboardEntry; isC
 
   return (
     <div
-      className={`grid grid-cols-[40px_1fr_80px_70px_60px_60px_60px_110px] gap-2 items-center px-3 py-3 rounded-md transition-colors ${
+      className={`grid grid-cols-[40px_1fr_80px_70px_70px_60px_60px_110px] gap-2 items-center px-3 py-3 rounded-md transition-colors ${
         isCurrentUser ? "font-semibold" : ""
       }`}
       style={{ backgroundColor: rowBg, border: rowBorder }}
@@ -257,10 +267,121 @@ function LeaderboardRow({ entry, isCurrentUser }: { entry: LeaderboardEntry; isC
       </div>
       <div className="text-center"><RolePill role={entry.role} /></div>
       <div className="text-center"><TimezonePill timezone={entry.timezone} /></div>
-      <div className="text-center text-sm font-bold text-[#1B4332]">{entry.totalXp}</div>
+      {/* XP column: earned XP + "of ~max" subtext */}
+      <div className="text-center">
+        <div className="text-sm font-bold text-[#1B4332]">{entry.totalXp}</div>
+        <div className="text-[9px] text-gray-400 leading-none">of ~{entry.maxXp}</div>
+      </div>
       <div className="text-center text-sm text-gray-700">{entry.clipsCompleted}</div>
       <div className="text-center text-sm text-gray-700">{entry.badgesEarned}</div>
       <div className="text-center"><PacingPill status={entry.pacingStatus} /></div>
+    </div>
+  );
+}
+
+// ─── Role Board Row (compact — no geo/pacing, shows role sub-type) ───────────
+
+function RoleBoardRow({ entry, rank, isCurrentUser }: { entry: LeaderboardEntry; rank: number; isCurrentUser: boolean }) {
+  const isTop3 = rank <= 3;
+  const medalEmoji = rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : "";
+
+  let rowBg: string;
+  let rowBorder: string;
+
+  if (isCurrentUser) {
+    rowBg = PACING_ROW_BG[entry.pacingStatus] ?? "#F3F4F630";
+    rowBorder = isTop3 ? `2px solid ${TOP3_BORDER[rank] ?? "#86EFAC"}` : "2px solid #D1D5DB";
+  } else if (isTop3) {
+    rowBg = TOP3_BG[rank] ?? "#F0FDF4";
+    rowBorder = `1px solid ${TOP3_BORDER[rank] ?? "#86EFAC"}`;
+  } else {
+    rowBg = "#ffffff";
+    rowBorder = "1px solid #E5E7EB";
+  }
+
+  return (
+    <div
+      className={`grid grid-cols-[36px_1fr_80px_60px_50px_50px_100px] gap-2 items-center px-3 py-2.5 rounded-md text-sm ${
+        isCurrentUser ? "font-semibold" : ""
+      }`}
+      style={{ backgroundColor: rowBg, border: rowBorder }}
+    >
+      <div className="text-center font-bold text-gray-700 text-xs">
+        {medalEmoji || `#${rank}`}
+      </div>
+      <div className="font-medium text-gray-900 truncate flex items-center gap-1.5">
+        {entry.name}
+        {isCurrentUser && (
+          <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full">(you)</span>
+        )}
+      </div>
+      <div className="text-center"><RolePill role={entry.role} /></div>
+      <div className="text-center font-bold text-[#1B4332]">{entry.totalXp}</div>
+      <div className="text-center text-gray-600 text-xs">{entry.clipsCompleted}</div>
+      <div className="text-center text-gray-600 text-xs">{entry.badgesEarned}</div>
+      <div className="text-center"><PacingPill status={entry.pacingStatus} /></div>
+    </div>
+  );
+}
+
+// ─── Role Board Section (collapsible) ────────────────────────────────────────
+
+function RoleBoardSection({
+  roleGroup,
+  entries,
+  currentViewerId,
+}: {
+  roleGroup: string;
+  entries: LeaderboardEntry[];
+  currentViewerId: string;
+}) {
+  const [open, setOpen] = useState(true);
+  const config = ROLE_GROUP_CONFIG[roleGroup] ?? { label: roleGroup, emoji: "📋", headerBg: "#374151", headerText: "#F3F4F6" };
+
+  // Sort by raw XP within this role group
+  const sorted = useMemo(() =>
+    [...entries].sort((a, b) => b.totalXp - a.totalXp),
+    [entries],
+  );
+
+  if (sorted.length === 0) return null;
+
+  return (
+    <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between px-4 py-3 text-left"
+        style={{ backgroundColor: config.headerBg, color: config.headerText }}
+      >
+        <div className="flex items-center gap-2">
+          <span className="text-lg">{config.emoji}</span>
+          <span className="font-bold text-sm">{config.label}</span>
+          <span className="text-xs opacity-75">({sorted.length})</span>
+        </div>
+        <span className="text-sm">{open ? "▾" : "▸"}</span>
+      </button>
+      {open && (
+        <div className="bg-white p-3 space-y-1">
+          {/* Header row */}
+          <div className="grid grid-cols-[36px_1fr_80px_60px_50px_50px_100px] gap-2 text-[10px] font-semibold text-gray-500 uppercase tracking-wider px-3 pb-1">
+            <span className="text-center">#</span>
+            <span>Name</span>
+            <span className="text-center">Role</span>
+            <span className="text-center">XP</span>
+            <span className="text-center">Clips</span>
+            <span className="text-center">Bdgs</span>
+            <span className="text-center">Pacing</span>
+          </div>
+          {sorted.map((entry, i) => (
+            <RoleBoardRow
+              key={entry.viewerId}
+              entry={entry}
+              rank={i + 1}
+              isCurrentUser={entry.viewerId === currentViewerId}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -275,6 +396,20 @@ export default function LeaderboardPage() {
   const leaderboard = data?.leaderboard ?? [];
   const currentViewerId = viewer?.id ?? "";
 
+  // Group entries by roleGroup for role boards
+  const roleGroups = useMemo(() => {
+    const groups: Record<string, LeaderboardEntry[]> = {};
+    for (const entry of leaderboard) {
+      const rg = entry.roleGroup;
+      if (!groups[rg]) groups[rg] = [];
+      groups[rg].push(entry);
+    }
+    return groups;
+  }, [leaderboard]);
+
+  // Ordered role groups
+  const ROLE_GROUP_ORDER = ["AE", "SDR", "PSM", "Renewals"];
+
   return (
     <div className="flex flex-col w-full" style={{ backgroundColor: "#ECFDF5", minHeight: "100vh" }}>
       {/* Header */}
@@ -284,7 +419,7 @@ export default function LeaderboardPage() {
             <span className="text-2xl">🏆</span>
             <div>
               <h1 className="text-xl font-bold text-white leading-tight">Leaderboard</h1>
-              <p className="text-sm text-green-200 mt-0.5">See how you stack up against your fellow campers</p>
+              <p className="text-sm text-green-200 mt-0.5">Ranked by % of max possible XP for your role</p>
             </div>
           </div>
           <button
@@ -310,35 +445,67 @@ export default function LeaderboardPage() {
               <p className="text-sm text-gray-500 mt-1">{String(error)}</p>
             </div>
           ) : (
-            <div className="space-y-1">
-              {/* Header row */}
-              <div className="grid grid-cols-[40px_1fr_80px_70px_60px_60px_60px_110px] gap-2 text-[10px] font-semibold text-gray-500 uppercase tracking-wider px-3 pb-1">
-                <span className="text-center">#</span>
-                <span>Name</span>
-                <span className="text-center">Role</span>
-                <span className="text-center">Geo</span>
-                <span className="text-center">XP</span>
-                <span className="text-center">Clips</span>
-                <span className="text-center">Badges</span>
-                <span className="text-center">Pacing</span>
+            <div className="space-y-8">
+              {/* ─── Main Board ─── */}
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-lg">🌍</span>
+                  <h2 className="text-base font-bold text-gray-900">All Campers</h2>
+                  <span className="text-xs text-gray-500">Ranked by % of max XP</span>
+                </div>
+
+                <div className="space-y-1">
+                  {/* Header row */}
+                  <div className="grid grid-cols-[40px_1fr_80px_70px_70px_60px_60px_110px] gap-2 text-[10px] font-semibold text-gray-500 uppercase tracking-wider px-3 pb-1">
+                    <span className="text-center">#</span>
+                    <span>Name</span>
+                    <span className="text-center">Role</span>
+                    <span className="text-center">Geo</span>
+                    <span className="text-center">XP</span>
+                    <span className="text-center">Clips</span>
+                    <span className="text-center">Badges</span>
+                    <span className="text-center">Pacing</span>
+                  </div>
+
+                  {fetching && !loading && (
+                    <div className="text-xs text-green-700/60 text-center pb-1">Updating…</div>
+                  )}
+
+                  <div className={fetching && !loading ? "opacity-70" : ""}>
+                    {leaderboard.map((entry) => (
+                      <MainLeaderboardRow
+                        key={entry.viewerId}
+                        entry={entry}
+                        isCurrentUser={entry.viewerId === currentViewerId}
+                      />
+                    ))}
+                  </div>
+
+                  {leaderboard.length === 0 && (
+                    <p className="text-sm text-gray-500 text-center py-6">No leaderboard data yet</p>
+                  )}
+                </div>
               </div>
 
-              {fetching && !loading && (
-                <div className="text-xs text-green-700/60 text-center pb-1">Updating…</div>
-              )}
-
-              <div className={fetching && !loading ? "opacity-70" : ""}>
-                {leaderboard.map((entry) => (
-                  <LeaderboardRow
-                    key={entry.viewerId}
-                    entry={entry}
-                    isCurrentUser={entry.viewerId === currentViewerId}
-                  />
-                ))}
-              </div>
-
-              {leaderboard.length === 0 && (
-                <p className="text-sm text-gray-500 text-center py-6">No leaderboard data yet</p>
+              {/* ─── Role Boards ─── */}
+              {leaderboard.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-lg">👥</span>
+                    <h2 className="text-base font-bold text-gray-900">By Role</h2>
+                    <span className="text-xs text-gray-500">Ranked by XP within role</span>
+                  </div>
+                  <div className="space-y-4">
+                    {ROLE_GROUP_ORDER.map((rg) => (
+                      <RoleBoardSection
+                        key={rg}
+                        roleGroup={rg}
+                        entries={roleGroups[rg] ?? []}
+                        currentViewerId={currentViewerId}
+                      />
+                    ))}
+                  </div>
+                </div>
               )}
             </div>
           )}

@@ -37,6 +37,8 @@ import {
   getPacingStatusFromPercent,
   CLIPS_EXPECTED_BY_WEEKDAY,
   WEEK1_TOTAL_ITEMS,
+  getEffectiveClipTotal,
+  getRoleTotalClips,
 } from "@/lib/pacing";
 import type { ApproachCatchUpItem } from "@/components/PacingModal";
 import { calculatePatchProgress } from "@/lib/patchProgress";
@@ -313,10 +315,16 @@ export default function LibraryPage() {
     const sessionsCompleted = countCompletedTopics(
       clips.map((c: any) => ({ dayLabel: c.dayLabel, completed: c.completed }))
     );
-    const summitDay = getSummitDay(startDate, extensionDays);
+    const role = viewer?.role ?? "AE";
+    const summitDay = getSummitDay(startDate, extensionDays, role);
     const afterSummitDay = isAfterDate(summitDay);
     // Clip-level pacing: count individual completed clips
     const clipsDone = clips.filter((c: any) => c.completed).length;
+    // Max sort order completed (for legacy exemptions)
+    const maxSortDone = clips
+      .filter((c: any) => c.completed)
+      .reduce((max: number, c: any) => Math.max(max, c.sortOrder ?? 0), 0);
+    const effectiveTotal = getEffectiveClipTotal(role, maxSortDone);
     // Approach items done
     const approachDone = (() => {
       if (!week1Data) return 0;
@@ -327,10 +335,10 @@ export default function LibraryPage() {
       const wdDone = week1Data.wdVerification ? 1 : 0;
       return validSignoffs + validAcademies + wdDone;
     })();
-    const unifiedPercent = computeUnifiedPacingPercent(effectiveWeekdaysElapsed, approachDone, clipsDone);
+    const unifiedPercent = computeUnifiedPacingPercent(effectiveWeekdaysElapsed, approachDone, clipsDone, role, effectiveTotal);
     // Determine tier: past summit + incomplete → anchor_failure, all done → completed, else %-based
     let tier: ReturnType<typeof getPacingTier>;
-    const allClipsDone = clipsDone >= 20 && approachDone >= WEEK1_TOTAL_ITEMS;
+    const allClipsDone = clipsDone >= effectiveTotal && approachDone >= WEEK1_TOTAL_ITEMS;
     if (allClipsDone) {
       tier = "completed";
     } else if (afterSummitDay) {

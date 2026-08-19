@@ -1,4 +1,9 @@
 import { api, z, postgres } from "@superblocksteam/sdk-api";
+import {
+  getEffectiveClipTotal,
+  getClipsExpectedByWeekday,
+  getTotalWeekdays,
+} from "./pacing-helpers.js";
 
 const APPS_DB = "c6e32cf4-ca66-42ae-aeb3-58c84ffae574";
 
@@ -25,23 +30,17 @@ const ApproachCountRow = z.object({
   approach_items: z.coerce.number(),
 });
 
+const MaxSortRow = z.object({
+  viewer_id: z.string(),
+  max_sort_done: z.coerce.number(),
+});
+
 // ─── Pacing helpers ───────────────────────────────────────────────────────────
 
 // Weekday 1-5 = Approach (7 modules), Weekday 6-20 = Ascent (20 individual clips)
 const WEEK1_EXPECTED_BY_DAY = [0, 2, 4, 5, 6, 7]; // indices 0-5
 const WEEK1_TOTAL = 7;
 const TOTAL_APPROACH_MODULES = 8; // meddpicc + camp101 + challenger + 4 academies + W&D
-
-// Cumulative CLIPS expected by weekday (individual clips, not topics)
-const CLIPS_EXPECTED_BY_WEEKDAY = [
-  0,   // 0 weekdays elapsed
-  0, 0, 0, 0, 0,            // weekdays 1-5: Approach (no clips)
-  2, 3, 5, 6, 7,            // weekdays 6-10 (Day 1=2, Day 2=1, Day 3=2 GTM LP+Pod Tower, Day 4=1, Day 5=1 resource)
-  8, 10, 12, 13, 14,        // weekdays 11-15 (Day 6=1, Day 7=2, Day 8=2, Day 9=1 resource, Day 10=1)
-  16, 17, 18, 19, 21,       // weekdays 16-20 (Day 11=2, Day 12-14=1 each, Day 15=2)
-];
-const TOTAL_WEEKDAYS = 20;
-const TOTAL_ASCENT_CLIPS = 21;
 
 function countWeekdays(start: Date, end: Date): number {
   const s = new Date(start.getFullYear(), start.getMonth(), start.getDate());
@@ -57,8 +56,8 @@ function countWeekdays(start: Date, end: Date): number {
   return count;
 }
 
-function getSummitDay(startDate: Date, extensionDays: number = 0): Date {
-  const totalDays = TOTAL_WEEKDAYS + extensionDays;
+function getSummitDay(startDate: Date, totalWeekdays: number, extensionDays: number = 0): Date {
+  const totalDays = totalWeekdays + extensionDays;
   const cursor = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
   let weekdaysCounted = 0;
   while (weekdaysCounted < totalDays) {
@@ -83,19 +82,23 @@ function computeClipPacingPercent(
   weekdaysElapsed: number,
   approachItemsDone: number,
   clipsDone: number,
+  role: string,
+  effectiveTotal: number,
 ): number {
-  const capped = Math.min(Math.max(weekdaysElapsed, 0), TOTAL_WEEKDAYS);
+  const totalWeekdays = getTotalWeekdays(role);
+  const schedule = getClipsExpectedByWeekday(role);
+  const capped = Math.min(Math.max(weekdaysElapsed, 0), totalWeekdays);
 
   // Approach expected: ramp over weekdays 1-5, then always 7
   const approachExpected = capped >= 5 ? WEEK1_TOTAL : (WEEK1_EXPECTED_BY_DAY[capped] ?? 0);
 
   // Clips expected by this weekday (individual clips, not topics)
-  const clipsExpected = CLIPS_EXPECTED_BY_WEEKDAY[capped] ?? TOTAL_ASCENT_CLIPS;
+  const clipsExpected = schedule[capped] ?? effectiveTotal;
 
   const totalExpected = approachExpected + clipsExpected;
   if (totalExpected <= 0) return 100; // Day 0: nothing expected yet
 
-  const totalDone = Math.min(approachItemsDone, WEEK1_TOTAL) + Math.min(clipsDone, TOTAL_ASCENT_CLIPS);
+  const totalDone = Math.min(approachItemsDone, WEEK1_TOTAL) + Math.min(clipsDone, effectiveTotal);
   return Math.round((totalDone / totalExpected) * 100);
 }
 
@@ -164,7 +167,23 @@ export default api({
       { label: "All non-admin learners" }
     );
 
-    // 2. Individual clips completed per viewer (clip-level pacing)
+    // 2. Max sort_order completed per viewer (for legacy exemptions)
+    const maxSortRows = await ctx.integrations.apps_database.query(
+      `SELECT s.viewer_id, MAX(c.sort_order)::int AS max_sort_done
+       FROM cliptracker_v2_sessions s
+       JOIN cliptracker_v2_clips c ON c.id = s.clip_id
+       WHERE s.completed = true AND c.status = 'live'
+       GROUP BY s.viewer_id
+       LIMIT 500`,
+      MaxSortRow,
+      undefined,
+      { label: "Max sort_order completed per learner" }
+    );
+
+    const maxSortMap = new Map<string, number>();
+    for (const m of maxSortRows) maxSortMap.set(m.viewer_id, m.max_sort_done);
+
+    // 3. Individual clips completed per viewer (clip-level pacing)
     const clipsDoneRows = await ctx.integrations.apps_database.query(
       `WITH session_completions AS (
         SELECT DISTINCT s.viewer_id, s.clip_id
@@ -192,7 +211,7 @@ export default api({
       { label: "Individual clips completed per learner" }
     );
 
-    // 3. Approach items completed per viewer (modules + academies + W&D)
+    // 4. Approach items completed per viewer (modules + academies + W&D)
     //    7 items: 2 sign-offs (meddpicc, challenger) + 4 academies + 1 W&D
     const approachRows = await ctx.integrations.apps_database.query(
       `SELECT
@@ -223,7 +242,7 @@ export default api({
 
     const now = new Date();
 
-    // 4. Calculate pacing for each learner, filter out completed
+    // 5. Calculate pacing for each learner, filter out completed
     const results: Array<{
       viewerId: string;
       name: string;
@@ -238,9 +257,14 @@ export default api({
     for (const l of learners) {
       const clipsDone = clipsDoneMap.get(l.viewer_id) ?? 0;
       const approachDone = approachMap.get(l.viewer_id) ?? 0;
+      const maxSortDone = maxSortMap.get(l.viewer_id) ?? 0;
 
-      // Completed = all 20 clips done (approach count irrelevant — clips are the definitive signal)
-      const allComplete = clipsDone >= TOTAL_ASCENT_CLIPS;
+      // Role-aware effective clip total (accounts for legacy exemptions)
+      const effectiveTotal = getEffectiveClipTotal(l.role, maxSortDone);
+      const totalWeekdays = getTotalWeekdays(l.role);
+
+      // Completed = all clips done for this role (with exemptions applied)
+      const allComplete = clipsDone >= effectiveTotal;
 
       // Skip completed learners
       if (allComplete) continue;
@@ -252,11 +276,11 @@ export default api({
 
       // Check Summit Day deadline gate
       const pastSummitDay = l.ascent_day_1
-        ? isAfterDate(getSummitDay(new Date(l.ascent_day_1), l.extension_days), now)
+        ? isAfterDate(getSummitDay(new Date(l.ascent_day_1), totalWeekdays, l.extension_days), now)
         : false;
 
       // Unified pacing % (clip-level)
-      const pacingPercent = computeClipPacingPercent(effectiveWeekdays, approachDone, clipsDone);
+      const pacingPercent = computeClipPacingPercent(effectiveWeekdays, approachDone, clipsDone, l.role, effectiveTotal);
 
       // Pacing status from % brackets + Summit Day gate
       const pacingStatus = l.ascent_day_1 || approachDone > 0 || clipsDone > 0

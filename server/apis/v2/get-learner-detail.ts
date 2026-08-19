@@ -1,4 +1,9 @@
 import { api, z, postgres } from "@superblocksteam/sdk-api";
+import {
+  getEffectiveClipTotal,
+  getClipsExpectedByWeekday,
+  getTotalWeekdays,
+} from "./pacing-helpers.js";
 
 const APPS_DB = "c6e32cf4-ca66-42ae-aeb3-58c84ffae574";
 
@@ -11,21 +16,12 @@ const TIERS = [
 ];
 
 // Clip-level pacing constants
-const CLIPS_EXPECTED_BY_WEEKDAY = [
-  0,   // 0 weekdays elapsed
-  0, 0, 0, 0, 0,            // weekdays 1-5: Approach (no clips)
-  2, 3, 5, 6, 7,            // weekdays 6-10 (Day 3 has 2 clips: GTM LP + Pod Tower)
-  8, 10, 12, 13, 14,        // weekdays 11-15
-  16, 17, 18, 19, 21,       // weekdays 16-20
-];
 const WEEK1_EXPECTED_BY_DAY = [0, 2, 4, 5, 6, 7];
 const WEEK1_TOTAL = 7;
-const TOTAL_WEEKDAYS = 20;
-const TOTAL_ASCENT_CLIPS = 21;
 const TOTAL_APPROACH_MODULES = 8;
 
-function getSummitDay(startDate: Date, extensionDays = 0): Date {
-  const totalDays = TOTAL_WEEKDAYS + extensionDays;
+function getSummitDay(startDate: Date, totalWeekdays: number, extensionDays = 0): Date {
+  const totalDays = totalWeekdays + extensionDays;
   const cursor = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
   let weekdaysCounted = 0;
   while (weekdaysCounted < totalDays) {
@@ -65,13 +61,17 @@ function computeClipPacingPercent(
   weekdaysElapsed: number,
   approachDone: number,
   clipsDone: number,
+  role: string,
+  effectiveTotal: number,
 ): number {
-  const capped = Math.min(Math.max(weekdaysElapsed, 0), TOTAL_WEEKDAYS);
+  const totalWeekdays = getTotalWeekdays(role);
+  const schedule = getClipsExpectedByWeekday(role);
+  const capped = Math.min(Math.max(weekdaysElapsed, 0), totalWeekdays);
   const approachExpected = capped >= 5 ? WEEK1_TOTAL : (WEEK1_EXPECTED_BY_DAY[capped] ?? 0);
-  const clipsExpected = CLIPS_EXPECTED_BY_WEEKDAY[capped] ?? TOTAL_ASCENT_CLIPS;
+  const clipsExpected = schedule[capped] ?? effectiveTotal;
   const totalExpected = approachExpected + clipsExpected;
   if (totalExpected <= 0) return 100;
-  const totalDone = Math.min(approachDone, WEEK1_TOTAL) + Math.min(clipsDone, TOTAL_ASCENT_CLIPS);
+  const totalDone = Math.min(approachDone, WEEK1_TOTAL) + Math.min(clipsDone, effectiveTotal);
   return Math.round((totalDone / totalExpected) * 100);
 }
 
@@ -390,6 +390,7 @@ export default api({
       trailMarkerRows,
       srQuizRows,
       unlockOverrideRows,
+      maxSortRows,
     ] = await Promise.all([
       // 1. Viewer info
       ctx.integrations.db.query(
@@ -631,6 +632,17 @@ export default api({
         [viewerId],
         { label: "Unlock overrides for S&R/WtS detection" }
       ),
+
+      // 18. Max sort_order completed (for legacy exemptions)
+      ctx.integrations.db.query(
+        `SELECT MAX(c.sort_order)::int AS max_sort_done
+         FROM cliptracker_v2_sessions s
+         JOIN cliptracker_v2_clips c ON c.id = s.clip_id
+         WHERE s.viewer_id = $1 AND s.completed = true AND c.status = 'live'`,
+        z.object({ max_sort_done: z.coerce.number().nullable() }),
+        [viewerId],
+        { label: "Max sort_order for legacy exemption" }
+      ),
     ]);
 
     const viewer = viewerRows[0];
@@ -666,24 +678,29 @@ export default api({
 
     // ─── Pacing (clip-level % brackets) ─────────────────────────────────────
     const clipsDone = topicsRows[0]?.clips_done ?? 0;
+    const maxSortDone = maxSortRows[0]?.max_sort_done ?? 0;
     let pacingStatus = "not_started";
     let summitDayStr: string | null = null;
     let isAnchorFailure = false;
     let ascentAdjustmentDayStr: string | null = null;
     let daysBehind = 0;
 
+    // Role-aware effective clip total (accounts for legacy exemptions)
+    const effectiveTotal = getEffectiveClipTotal(viewer.role, maxSortDone);
+    const totalWeekdays = getTotalWeekdays(viewer.role);
+
     if (viewer.ascent_day_1) {
       const start = new Date(viewer.ascent_day_1);
       const extDays = viewer.extension_days;
       const weekdaysElapsed = countWeekdays(start, now);
       const effectiveWeekdaysElapsed = Math.max(0, weekdaysElapsed - extDays);
-      const summit = getSummitDay(start, extDays);
+      const summit = getSummitDay(start, totalWeekdays, extDays);
       summitDayStr = summit.toISOString().split("T")[0];
       const todayNorm = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const summitNorm = new Date(summit.getFullYear(), summit.getMonth(), summit.getDate());
       const pastSummit = todayNorm > summitNorm;
-      // Completed = all 20 clips + approach done (legacy learners have approachCompletedCount=0, exempt)
-      const allComplete = clipsDone >= TOTAL_ASCENT_CLIPS
+      // Completed = all clips done for this role (with exemptions applied)
+      const allComplete = clipsDone >= effectiveTotal
         && (approachCompletedCount >= TOTAL_APPROACH_MODULES || approachCompletedCount === 0);
 
       if (allComplete) {
@@ -691,16 +708,16 @@ export default api({
       } else if (pastSummit) {
         isAnchorFailure = true;
         pacingStatus = "anchor_failure";
-        const incompleteClips = TOTAL_ASCENT_CLIPS - clipsDone;
+        const incompleteClips = effectiveTotal - clipsDone;
         const adjDay = getAscentAdjustmentDay(summit, incompleteClips);
         ascentAdjustmentDayStr = adjDay.toISOString().split("T")[0];
       } else {
-        const percent = computeClipPacingPercent(effectiveWeekdaysElapsed, approachCompletedCount, clipsDone);
+        const percent = computeClipPacingPercent(effectiveWeekdaysElapsed, approachCompletedCount, clipsDone, viewer.role, effectiveTotal);
         pacingStatus = getPacingStatusFromPercent(percent);
       }
 
       // daysBehind for backward compat
-      const percent = computeClipPacingPercent(effectiveWeekdaysElapsed, approachCompletedCount, clipsDone);
+      const percent = computeClipPacingPercent(effectiveWeekdaysElapsed, approachCompletedCount, clipsDone, viewer.role, effectiveTotal);
       daysBehind = percent >= 90 ? 0 : Math.max(1, Math.round((100 - percent) / 5));
     }
 
