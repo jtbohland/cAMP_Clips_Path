@@ -849,7 +849,8 @@ export default api({
     );
     const clipsCompleted = new Set([...sessionCompletedClips, ...resourceDayClips]).size;
 
-    const totalLiveClips = liveClipCountRows[0]?.topics_completed ?? 0;
+    // Use role-aware effective total instead of raw live clip count
+    const totalLiveClips = effectiveTotal;
 
     return {
       viewer: {

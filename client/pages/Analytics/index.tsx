@@ -129,6 +129,7 @@ function AnalyticsContent() {
         managerName: l.managerName,
         ascentDay1: l.ascentDay1,
         clipsCompleted: l.clipsCompleted,
+        effectiveTotal: l.effectiveTotal ?? 21,
         totalXp: l.totalXp,
         pacingStatus: l.pacingStatus,
         summitDay: l.summitDay,
@@ -229,7 +230,6 @@ function AnalyticsContent() {
               <div className="pt-4">
                 <LearnerTileGrid
                   learners={tileData}
-                  totalClips={overview?.totalClips ?? 0}
                   onLearnerClick={handleLearnerClick}
                 />
               </div>

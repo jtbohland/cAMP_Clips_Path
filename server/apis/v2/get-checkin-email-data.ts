@@ -1,4 +1,5 @@
 import { api, z, postgres } from "@superblocksteam/sdk-api";
+import { getEffectiveClipTotal } from "./pacing-helpers.js";
 
 const APPS_DB = "c6e32cf4-ca66-42ae-aeb3-58c84ffae574";
 
@@ -24,6 +25,7 @@ const WdRow = z.object({
 const ViewerStatsRow = z.object({
   name: z.string(),
   email: z.string(),
+  role: z.string(),
   manager_email: z.string().nullable(),
   belay_buddy: z.string().nullable(),
   total_xp: z.coerce.number(),
@@ -158,7 +160,7 @@ export default api({
     // Get viewer info with XP computed from xp_events
     const viewerRows = await ctx.integrations.db.query(
       `SELECT
-        v.name, v.email,
+        v.name, v.email, v.role,
         COALESCE(v.manager_email, '') AS manager_email,
         COALESCE(v.belay_buddy, '') AS belay_buddy,
         COALESCE((SELECT SUM(xp_amount)::int FROM cliptracker_v2_xp_events x WHERE x.viewer_id = v.id), 0) AS total_xp,
@@ -272,7 +274,22 @@ export default api({
       { label: "Get clip stats (distinct clips)" }
     );
 
-    const clipStats = clipStatsRows[0] ?? { total_clips: 19, completed_clips: 0, avg_score: 0 };
+    // Get max sort_order for legacy exemptions
+    const maxSortRows = await ctx.integrations.db.query(
+      `SELECT MAX(c.sort_order)::int AS max_sort_done
+       FROM cliptracker_v2_sessions s
+       JOIN cliptracker_v2_clips c ON c.id = s.clip_id
+       WHERE s.viewer_id = $1 AND s.completed = true AND c.status = 'live'`,
+      z.object({ max_sort_done: z.coerce.number().nullable() }),
+      [viewerId],
+      { label: "Max sort_order for legacy exemption (checkin)" }
+    );
+    const maxSortDone = maxSortRows[0]?.max_sort_done ?? 0;
+    const effectiveTotal = getEffectiveClipTotal(viewer.role, maxSortDone);
+
+    const clipStatsRaw = clipStatsRows[0] ?? { total_clips: 19, completed_clips: 0, avg_score: 0 };
+    // Override total_clips with role-aware effective total
+    const clipStats = { ...clipStatsRaw, total_clips: effectiveTotal };
 
     // Get topic-level progress for pacing context (item #8)
     const TopicProgressRow = z.object({

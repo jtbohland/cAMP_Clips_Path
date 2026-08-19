@@ -11,6 +11,7 @@ export interface LearnerTileData {
   managerName: string | null;
   ascentDay1: string | null;
   clipsCompleted: number;
+  effectiveTotal: number;
   totalXp: number;
   pacingStatus: string;
   summitDay: string | null;
@@ -28,7 +29,6 @@ export interface LearnerTileData {
 
 interface LearnerTileProps {
   learner: LearnerTileData;
-  totalClips: number;
   onClick: (viewerId: string) => void;
 }
 
@@ -70,8 +70,9 @@ function avatarColor(name: string): string {
   return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
 }
 
-const LearnerTile = memo(function LearnerTile({ learner, totalClips, onClick }: LearnerTileProps) {
+const LearnerTile = memo(function LearnerTile({ learner, onClick }: LearnerTileProps) {
   const pacing = PACING[learner.pacingStatus] ?? PACING.not_started;
+  const totalClips = learner.effectiveTotal;
   const progressPct = totalClips > 0 ? Math.round((learner.clipsCompleted / totalClips) * 100) : 0;
   const isComplete = learner.pacingStatus === "completed" && learner.approachComplete;
   const tz = learner.timezone ? TZ_EMOJI[learner.timezone] : null;
