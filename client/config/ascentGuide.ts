@@ -105,6 +105,32 @@ const GUIDE_SESSIONS: Record<string, AscentGuideEntry> = {
     smes: [{ name: "JT Bohland", title: "Sr. Enablement Program Manager" }],
   },
 
+  // ── Day 5 (sort 55): Cold Calling in an AI World (SDR) ──
+  day5_cold_calling: {
+    id: "day5_cold_calling",
+    summary:
+      "This session is a hands-on cold calling masterclass led by Giulio, covering why reps fear cold calling (evolutionary biology of social rejection), how to build habits that reduce call anxiety, and how to gamify rejection to stay motivated. Giulio walks through three proven opener formulas \u2014 cheeky, neutral time-bound, and flattery-based \u2014 and explains the psychology behind each. The session also covers tone and delivery, getting past AI gatekeepers, and the PACE framework (Pause, Acknowledge, Challenge, Educate) for handling any objection on the spot.",
+    learningObjectives: [
+      "Understand why cold calling triggers fear of rejection and how to manage it through preparation and habit-building.",
+      "Apply three opener formulas to immediately level the playing field with prospects.",
+      "Use the PACE framework to handle any objection without over-talking or losing control of the call.",
+    ],
+    smes: [{ name: "Talk to your Mentor or a Teammate", title: "", emoji: "\ud83d\udc65" }],
+  },
+
+  // ── Day 5 (sort 56): Making Calls with Nooks (SDR) ──
+  day5_nooks: {
+    id: "day5_nooks",
+    summary:
+      "This session introduces Nooks \u2014 our AI-powered parallel dialer and virtual sales floor. Reps will learn how to set up calling sessions, leverage parallel dialing to maximize live conversations, and use the virtual sales floor for real-time coaching and collaboration. The focus is on turning Nooks into a daily habit that multiplies your cold calling output.",
+    learningObjectives: [
+      "Set up and run an effective Nooks calling session using parallel dialing and smart lists.",
+      "Use the virtual sales floor for real-time collaboration, coaching, and call shadowing.",
+      "Build a daily Nooks routine that maximizes live conversations per hour.",
+    ],
+    smes: [{ name: "Talk to your Mentor or a Teammate", title: "", emoji: "\ud83d\udc65" }],
+  },
+
   // ── Day 5 (sort 6): Renewal Operations ──
   day5: {
     id: "day5",
@@ -293,8 +319,8 @@ const SORT_ORDER_TO_SESSION_ID: Record<number, string> = {
   40: "day3",             // Day 3: GTM Launch Pad
   45: "day3_pod_tower",   // Day 3: Pod Tower
   50: "day4",             // Day 4: Prospecting Process
-  55: "day4",             // Day 5: Cold Calling in an AI World (SDR)
-  56: "day4",             // Day 5: Making Calls with Nooks (SDR)
+  55: "day5_cold_calling", // Day 5: Cold Calling in an AI World (SDR)
+  56: "day5_nooks",        // Day 5: Making Calls with Nooks (SDR)
   60: "day5",             // Day 5: Renewal Operations
   70: "day6",             // Day 6: The Competitive Landscape
   80: "day7",             // Day 7: Account Planning Best Practices
