@@ -122,13 +122,13 @@ const GUIDE_SESSIONS: Record<string, AscentGuideEntry> = {
   day5_nooks: {
     id: "day5_nooks",
     summary:
-      "This session introduces Nooks \u2014 our AI-powered parallel dialer and virtual sales floor. Reps will learn how to set up calling sessions, leverage parallel dialing to maximize live conversations, and use the virtual sales floor for real-time coaching and collaboration. The focus is on turning Nooks into a daily habit that multiplies your cold calling output.",
+      "This session is a hands-on Nooks onboarding led by Kate that walks reps through setting up the AI-powered parallel dialer, choosing between power and parallel dialing modes, and using Smart Lists, Smart Presence, and phone type filters to maximize live conversations per calling session.",
     learningObjectives: [
-      "Set up and run an effective Nooks calling session using parallel dialing and smart lists.",
-      "Use the virtual sales floor for real-time collaboration, coaching, and call shadowing.",
-      "Build a daily Nooks routine that maximizes live conversations per hour.",
+      "Set up Nooks correctly by connecting Outreach and installing the Chrome extension for automatic prospect context.",
+      "Choose the right dialing mode — parallel for volume, power for hot leads — and configure voicemail drops for unanswered calls.",
+      "Use Smart Lists, phone type filters, and phone number rotation to increase connect rates and maximize daily at-bats.",
     ],
-    smes: [{ name: "Talk to your Mentor or a Teammate", title: "", emoji: "\ud83d\udc65" }],
+    smes: [{ name: "Talk to your Mentor or a Teammate", title: "", emoji: "👥" }],
   },
 
   // ── Day 5 (sort 6): Renewal Operations ──
