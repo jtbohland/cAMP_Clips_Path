@@ -299,7 +299,7 @@ export default function LibraryPage() {
 
   // A/B pair sort orders — updated after Phase 1 migration (×10 spacing)
   // Pairs: sorts 10+20 (Day 1), 80+90 (Day 7), 100+110 (Day 8), 140+150 (Day 11), 190+200 (Day 15)
-  const AB_PAIRS: [number, number][] = [[10, 20], [40, 45], [80, 90], [100, 110], [140, 150], [190, 200]];
+  const AB_PAIRS: [number, number][] = [[10, 20], [40, 45], [55, 56], [80, 90], [100, 110], [140, 150], [190, 200]];
   const pairedSortOrders = new Set(AB_PAIRS.flat());
 
   // ── Pacing calculation ──
