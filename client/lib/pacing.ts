@@ -345,11 +345,11 @@ export function getMissedClips(
 
 /**
  * Calculate a learner's Summit Day — the date they should finish by.
- * Summit Day = start date + (20 + extensionDays) weekdays.
+ * Summit Day = start date + (totalWeekdays + extensionDays) weekdays.
  * extensionDays shifts the entire Ascent deadline forward.
  */
-export function getSummitDay(startDate: Date, extensionDays: number = 0): Date {
-  const totalDays = TOTAL_WEEKDAYS + extensionDays;
+export function getSummitDay(startDate: Date, extensionDays: number = 0, role: string = "AE"): Date {
+  const totalDays = getRoleTotalWeekdays(role) + extensionDays;
   const cursor = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
   let weekdaysCounted = 0;
   while (weekdaysCounted < totalDays) {
@@ -490,7 +490,8 @@ export function isSameDay(date: Date): boolean {
  *   Weekday 19 → Day 14 → 1 clip  (sort 18)      = 19
  *   Weekday 20 → Day 15 → 2 clips (sorts 19-20)  = 21
  */
-export const CLIPS_EXPECTED_BY_WEEKDAY = [
+// ─── AE / PSM / Renewals clip schedule ──────────────────────────────
+export const CLIPS_EXPECTED_BY_WEEKDAY_AE = [
   0,   // 0 weekdays elapsed
   0,   // weekday 1  → Week 1 (Approach — no clips)
   0,   // weekday 2  → Week 1
@@ -514,8 +515,78 @@ export const CLIPS_EXPECTED_BY_WEEKDAY = [
   21,  // weekday 20 → Day 15 (2 clips)
 ];
 
-export const TOTAL_ASCENT_CLIPS = 21;
-export const TOTAL_UNIFIED_ITEMS = WEEK1_TOTAL_ITEMS + TOTAL_ASCENT_CLIPS; // 28
+// ─── SDR clip schedule ──────────────────────────────────────────────
+// SDR has 13 Ascent days (vs 15 for AE) → 18 total weekdays
+export const CLIPS_EXPECTED_BY_WEEKDAY_SDR = [
+  0,   // 0 weekdays elapsed
+  0, 0, 0, 0, 0,            // weekdays 1-5: Approach (no clips)
+  2,   // weekday 6  → Day 1  (Verticals + Personas)
+  3,   // weekday 7  → Day 2  (TOFU)
+  5,   // weekday 8  → Day 3  (GTM LP + Pod Tower)
+  6,   // weekday 9  → Day 4  (Prospecting)
+  8,   // weekday 10 → Day 5  (Cold Calling + Nooks)
+  9,   // weekday 11 → Day 6  (resource day)
+  10,  // weekday 12 → Day 7  (Competitive Landscape)
+  12,  // weekday 13 → Day 8  (Account Planning × 2)
+  14,  // weekday 14 → Day 9  (Discovery × 2)
+  15,  // weekday 15 → Day 10 (resource day)
+  16,  // weekday 16 → Day 11 (Pricing & Packaging)
+  16,  // weekday 17 → (SDR done after Day 13/weekday 18)
+  16,  // weekday 18 → (padding — SDR finishes at weekday 18)
+];
+
+/** Legacy alias — AE schedule */
+export const CLIPS_EXPECTED_BY_WEEKDAY = CLIPS_EXPECTED_BY_WEEKDAY_AE;
+
+export const TOTAL_ASCENT_CLIPS_AE = 21;
+export const TOTAL_ASCENT_CLIPS_SDR = 16;
+export const TOTAL_WEEKDAYS_AE = 20;
+export const TOTAL_WEEKDAYS_SDR = 18;
+
+/** Legacy alias */
+export const TOTAL_ASCENT_CLIPS = TOTAL_ASCENT_CLIPS_AE;
+export const TOTAL_UNIFIED_ITEMS = WEEK1_TOTAL_ITEMS + TOTAL_ASCENT_CLIPS_AE; // 28
+
+// ─── Exempt clip sort orders (newly added clips) ────────────────────
+const EXEMPT_CLIP_SORT_ORDERS = [45, 55, 56] as const;
+
+const SDR_ROLES = ["SDR"];
+function isSDR(role: string): boolean {
+  return SDR_ROLES.includes(role);
+}
+
+/** Get the schedule for a role. */
+export function getClipsExpectedByWeekday(role: string): readonly number[] {
+  return isSDR(role) ? CLIPS_EXPECTED_BY_WEEKDAY_SDR : CLIPS_EXPECTED_BY_WEEKDAY_AE;
+}
+
+/** Get total weekdays for a role's path. */
+export function getRoleTotalWeekdays(role: string): number {
+  return isSDR(role) ? TOTAL_WEEKDAYS_SDR : TOTAL_WEEKDAYS_AE;
+}
+
+/** Get base clip total for a role. */
+export function getRoleTotalClips(role: string): number {
+  return isSDR(role) ? TOTAL_ASCENT_CLIPS_SDR : TOTAL_ASCENT_CLIPS_AE;
+}
+
+/**
+ * Get the effective clip total for a role, accounting for legacy exemptions.
+ * Mirrors server/apis/v2/pacing-helpers.ts getEffectiveClipTotal.
+ */
+export function getEffectiveClipTotal(role: string, maxSortDone: number): number {
+  const baseTotal = getRoleTotalClips(role);
+  if (maxSortDone <= 0) return baseTotal;
+
+  let exemptions = 0;
+  for (const sortOrder of EXEMPT_CLIP_SORT_ORDERS) {
+    if (maxSortDone > sortOrder) {
+      if (sortOrder === 45) exemptions++;
+      else if ((sortOrder === 55 || sortOrder === 56) && isSDR(role)) exemptions++;
+    }
+  }
+  return baseTotal - exemptions;
+}
 
 /**
  * Compute the unified pacing percentage (clip-level).
@@ -523,27 +594,33 @@ export const TOTAL_UNIFIED_ITEMS = WEEK1_TOTAL_ITEMS + TOTAL_ASCENT_CLIPS; // 28
  *
  * @param weekdaysElapsed  Effective weekdays elapsed (after subtracting extensions)
  * @param approachDone     Number of Approach items completed (0-7)
- * @param clipsDone        Number of individual Ascent clips completed (0-20)
+ * @param clipsDone        Number of individual Ascent clips completed
+ * @param role             Learner's role (for role-aware schedule)
+ * @param effectiveTotal   Role-aware effective clip total (from getEffectiveClipTotal)
  * @returns Pacing percentage (0-100+, uncapped — can exceed 100 if ahead)
  */
 export function computeUnifiedPacingPercent(
   weekdaysElapsed: number,
   approachDone: number,
   clipsDone: number,
+  role: string = "AE",
+  effectiveTotal?: number,
 ): number {
-  const capped = Math.min(Math.max(weekdaysElapsed, 0), TOTAL_WEEKDAYS);
+  const totalWeekdays = getRoleTotalWeekdays(role);
+  const schedule = getClipsExpectedByWeekday(role);
+  const total = effectiveTotal ?? getRoleTotalClips(role);
+  const capped = Math.min(Math.max(weekdaysElapsed, 0), totalWeekdays);
 
   // Approach expected: ramp over weekdays 1-5
   const approachExpected = capped >= 5 ? WEEK1_TOTAL_ITEMS : (WEEK1_EXPECTED_BY_DAY[capped] ?? 0);
 
   // Clips expected by this weekday
-  const clipsExpected = CLIPS_EXPECTED_BY_WEEKDAY[capped] ?? TOTAL_ASCENT_CLIPS;
+  const clipsExpected = schedule[capped] ?? total;
 
   const totalExpected = approachExpected + clipsExpected;
-  const totalDone = Math.min(approachDone, WEEK1_TOTAL_ITEMS) + Math.min(clipsDone, TOTAL_ASCENT_CLIPS);
+  const totalDone = Math.min(approachDone, WEEK1_TOTAL_ITEMS) + Math.min(clipsDone, total);
 
   if (totalExpected <= 0) {
-    // Before weekday 1 or at day 0 — if they've done anything, 100%; otherwise 100% (nothing expected yet)
     return 100;
   }
 
@@ -583,12 +660,14 @@ export function getUnifiedPacingTier(
   clipsDone: number,
   allComplete: boolean,
   afterSummitDay: boolean,
+  role: string = "AE",
+  effectiveTotal?: number,
 ): PacingTier {
   // allComplete is based on clips only (approach is a pre-req, not a gate)
   if (allComplete) return "completed";
   if (afterSummitDay) return "anchor_failure";
 
-  const percent = computeUnifiedPacingPercent(weekdaysElapsed, approachDone, clipsDone);
+  const percent = computeUnifiedPacingPercent(weekdaysElapsed, approachDone, clipsDone, role, effectiveTotal);
   return getPacingStatusFromPercent(percent);
 }
 
