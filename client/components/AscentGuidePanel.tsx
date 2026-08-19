@@ -35,13 +35,13 @@ export default function AscentGuidePanel({ entry, isOpen, onSwatAway }: AscentGu
       {entry.smes.length > 0 && (
         <div className="mt-2.5">
           <p className="text-xs font-semibold text-green-800 uppercase tracking-wide mb-1">
-            🧢 Subject Matter Expert{entry.smes.length > 1 ? "s" : ""}
+            {entry.smes[0]?.emoji || "🧢"} Subject Matter Expert{entry.smes.length > 1 ? "s" : ""}
           </p>
           <div className="flex flex-wrap gap-x-4 gap-y-0.5">
             {entry.smes.map((sme, i) => (
               <span key={i} className="text-sm text-gray-700">
                 <span className="font-medium">{sme.name}</span>
-                <span className="text-gray-500"> · {sme.title}</span>
+                {sme.title ? <span className="text-gray-500"> · {sme.title}</span> : null}
               </span>
             ))}
           </div>

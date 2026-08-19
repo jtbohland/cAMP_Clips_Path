@@ -5,6 +5,7 @@
 export type AscentGuideSme = {
   name: string;
   title: string;
+  emoji?: string;
 };
 
 export type AscentGuideEntry = {
