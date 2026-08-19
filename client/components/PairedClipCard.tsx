@@ -300,9 +300,11 @@ export default function PairedClipCard({
               </>
             ) : null}
             <span>🪧 {clipB.questionCount} Trail Markers</span>
-            {!isLiteB && (
+            <span className="text-gray-300">·</span>
+            {isLiteB ? (
+              <span>engagement required</span>
+            ) : (
               <>
-                <span className="text-gray-300">·</span>
                 <span>80% engagement required</span>
                 <span className="text-gray-300">·</span>
                 <span>📋 Ranger Report</span>
@@ -331,13 +333,12 @@ export default function PairedClipCard({
         {/* Reachdesk Zoom clip — Day 4 sort 50 pair */}
         {onZoomClipWatch && buttonStateA !== "locked" && (
           <div className="border-t border-gray-100 pt-3 mt-1">
-            <p className="text-xs text-gray-500 flex items-center gap-1.5 flex-wrap mb-2">
+            <p className="text-xs text-gray-500 flex items-center gap-1.5 flex-wrap mb-1">
               <span>⏱️ 44m</span>
               <span className="text-gray-300">·</span>
               <span>🪧 0 Trail Markers</span>
-              <span className="text-gray-300">·</span>
-              <span>View tracked in Zoom</span>
             </p>
+            <p className="text-xs text-gray-500 mb-2">👀 View tracked in Zoom</p>
             {zoomClipWatched ? (
               <button
                 onClick={(e) => { e.stopPropagation(); onZoomClipReview?.(); }}
