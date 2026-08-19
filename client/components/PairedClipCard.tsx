@@ -40,6 +40,12 @@ type PairedClipCardProps = {
   onCampQuiz?: () => void;
   /** Role-aware sort orders that show the W&D button (passed from Library) */
   wheelAndDealSortOrders?: Set<number>;
+  /** Clip B is a lite clip (no engagement/markers/Ranger Report) */
+  isLiteB?: boolean;
+  /** Reachdesk Zoom clip handler (for Day 4 sort 50 pair) */
+  onZoomClipWatch?: () => void;
+  onZoomClipReview?: () => void;
+  zoomClipWatched?: boolean;
 };
 
 // Clips that show the cAMP Quiz button
@@ -76,6 +82,7 @@ function getDayLabel(dayLabel: string | null, sortOrder: number): string {
 const PAIRED_DAY_MAP: Record<number, number> = {
   10: 1, 20: 1,
   40: 3, 45: 3,
+  50: 4, 51: 4,
   80: 7, 90: 7,
   100: 8, 110: 8,
   55: 5, 56: 5,
@@ -87,6 +94,7 @@ const PAIRED_DAY_MAP: Record<number, number> = {
 const PAIRED_TITLE_OVERRIDE: Record<number, { emoji: string; text: string }> = {
   10: { emoji: "🔎", text: "Understanding Our Verticals & Personas" },
   40: { emoji: "📈", text: "GTM Launch Pad & Pod Tower" },
+  50: { emoji: "📇", text: "Prospecting Process" },
 };
 
 function getPairedDayLabel(sortOrder: number): string {
@@ -158,6 +166,10 @@ export default function PairedClipCard({
   onWheelAndDeal,
   onCampQuiz,
   wheelAndDealSortOrders,
+  isLiteB,
+  onZoomClipWatch,
+  onZoomClipReview,
+  zoomClipWatched,
 }: PairedClipCardProps) {
   const buttonStateA = getButtonState(stateA.isLocked, stateA.isCompleted, stateA.pausedElapsedSeconds);
   const buttonStateB = getButtonState(stateB.isLocked, stateB.isCompleted, stateB.pausedElapsedSeconds);
@@ -289,20 +301,71 @@ export default function PairedClipCard({
             ) : null}
             <span>🪧 {clipB.questionCount} Trail Markers</span>
             <span className="text-gray-300">·</span>
-            <span>80% engagement required</span>
-            <span className="text-gray-300">·</span>
-            <span>📋 Ranger Report</span>
+            {isLiteB ? (
+              <span>engagement required</span>
+            ) : (
+              <>
+                <span>80% engagement required</span>
+                <span className="text-gray-300">·</span>
+                <span>📋 Ranger Report</span>
+              </>
+            )}
           </p>
 
-          {/* Clip B button */}
-          <ClipButton
-            label="Clip 2"
-            buttonState={buttonStateB}
-            previousClipTitle={stateA.isCompleted ? undefined : getSessionTitle(clipA.title)}
-            onWatch={onWatchB}
-            onReview={onReviewB}
-          />
+          {/* Clip B button — lite clips show ✅ Watched when completed (no Ranger Report) */}
+          {isLiteB ? (
+            <LiteClipButton
+              buttonState={buttonStateB}
+              previousClipTitle={stateA.isCompleted ? undefined : getSessionTitle(clipA.title)}
+              onWatch={onWatchB}
+            />
+          ) : (
+            <ClipButton
+              label="Clip 2"
+              buttonState={buttonStateB}
+              previousClipTitle={stateA.isCompleted ? undefined : getSessionTitle(clipA.title)}
+              onWatch={onWatchB}
+              onReview={onReviewB}
+            />
+          )}
         </div>
+
+        {/* Reachdesk Zoom clip — Day 4 sort 50 pair */}
+        {onZoomClipWatch && buttonStateA !== "locked" && (
+          <div className="border-t border-gray-100 pt-3 mt-1">
+            <p className="text-xs text-gray-500 flex items-center gap-1.5 flex-wrap mb-2">
+              <span>⏱️ 44m</span>
+              <span className="text-gray-300">·</span>
+              <span>🪧 0 Trail Markers</span>
+              <span className="text-gray-300">·</span>
+              <span>👀 View tracked in Zoom</span>
+            </p>
+            <a
+              href="https://app.reachdesk.com/engages/new/campaign?auto_teams=true&team_ids=8622"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="block text-xs text-orange-600 hover:text-orange-700 font-medium mb-2"
+            >
+              🖥️ Open Reachdesk on a 2nd screen to follow along →
+            </a>
+            {zoomClipWatched ? (
+              <button
+                onClick={(e) => { e.stopPropagation(); onZoomClipReview?.(); }}
+                className="w-full py-2.5 rounded-lg text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition-colors"
+              >
+                🗺️ Review Reachdesk Report
+              </button>
+            ) : (
+              <button
+                onClick={(e) => { e.stopPropagation(); onZoomClipWatch(); }}
+                className="w-full py-2.5 rounded-lg text-sm font-semibold bg-green-600 hover:bg-green-700 text-white transition-colors"
+              >
+                🎁 Watch Reachdesk Clip
+              </button>
+            )}
+          </div>
+        )}
 
         {/* cAMP Quiz button — visible on qualifying tiles */}
         {showCampQuiz && onCampQuiz && (
@@ -382,6 +445,61 @@ function ClipButton({
           <p className="text-xs text-gray-400 mt-1">
             Scores • key takeaways • missed markers • XP collected • resources
           </p>
+        </div>
+      );
+    case "locked":
+      return (
+        <button
+          disabled
+          className="w-full py-2.5 rounded-lg text-sm font-medium bg-gray-100 text-gray-400 cursor-not-allowed"
+        >
+          🔒 Watch & pass{" "}
+          {previousClipTitle
+            ? getPreviousClipShortName(previousClipTitle)
+            : "the previous clip"}{" "}
+          to unlock
+        </button>
+      );
+  }
+}
+
+function LiteClipButton({
+  buttonState,
+  previousClipTitle,
+  onWatch,
+}: {
+  buttonState: ButtonState;
+  previousClipTitle?: string;
+  onWatch: () => void;
+}) {
+  switch (buttonState) {
+    case "watch":
+      return (
+        <button
+          onClick={(e) => { e.stopPropagation(); onWatch(); }}
+          className="w-full py-2.5 rounded-lg text-sm font-semibold bg-green-600 hover:bg-green-700 text-white transition-colors"
+        >
+          🚣🏼‍♂️ Watch Clip 2
+        </button>
+      );
+    case "resume":
+      return (
+        <button
+          onClick={(e) => { e.stopPropagation(); onWatch(); }}
+          className="w-full py-2.5 rounded-lg text-sm font-semibold bg-red-600 hover:bg-red-700 text-white transition-colors"
+        >
+          🧗🏼 Resume Clip 2
+        </button>
+      );
+    case "report":
+      return (
+        <div className="flex flex-col items-center gap-1.5">
+          <button
+            disabled
+            className="w-full py-2.5 rounded-lg text-sm font-semibold bg-emerald-100 text-emerald-700 cursor-default"
+          >
+            ✅ Watched
+          </button>
         </div>
       );
     case "locked":

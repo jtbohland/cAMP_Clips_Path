@@ -18,6 +18,9 @@ import { getLibraryPath } from "@/lib/libraryNav";
 import { WistiaPlayer } from "@wistia/wistia-player-react";
 import { toast } from "sonner";
 
+/** Sort orders for lite clips — no engagement scoring, no trail markers, no Ranger Report */
+const LITE_CLIP_SORTS = new Set([51]);
+
 
 type WatchPhase =
   | "loading_resume"
@@ -28,6 +31,7 @@ type WatchPhase =
   | "search_rescue"
   | "search_rescue_passed"
   | "weather_storm"
+  | "lite_complete"
   | "complete";
 
 /** Phases where the learner is locked in — no exit until they pass or unlock */
@@ -119,6 +123,12 @@ export default function WatchPage() {
   const highWaterMarkRef = useRef(0);
 
   // Ascent Guide panel — summary + learning objectives shown on clip open
+  // Lite clip detection — no engagement scoring, no trail markers, no Ranger Report
+  const isLite = useMemo(() => {
+    const sortOrder = clipData?.clip?.sortOrder;
+    return sortOrder ? LITE_CLIP_SORTS.has(sortOrder) : false;
+  }, [clipData?.clip?.sortOrder]);
+
   const guideEntry = useMemo(
     () => {
       const sortOrder = clipData?.clip?.sortOrder;
@@ -677,6 +687,24 @@ export default function WatchPage() {
   const handleFinishWatching = useCallback(async () => {
     playerRef.current?.pause();
 
+    // ── Lite clip path: skip engagement, skip Ranger Report, complete & go back ──
+    if (isLite) {
+      if (viewer?.id && clipId && sessionId) {
+        try {
+          await completeClipPath({
+            viewerId: viewer.id,
+            clipId,
+            sessionId,
+            path: "first_pass",
+          });
+        } catch (err) {
+          console.error("completeClipPath failed for lite clip:", err);
+        }
+      }
+      setPhase("lite_complete");
+      return;
+    }
+
     const allTrailMarkerCount = trailMarkers.length;
     setTotalTrailMarkers(allTrailMarkerCount || totalTrailMarkers);
     const finalTotal = allTrailMarkerCount || 1;
@@ -786,6 +814,7 @@ export default function WatchPage() {
   }, [
     trailMarkers, totalTrailMarkers, correctCount, sessionId, endSession,
     watchedSeconds, focusSeconds, blurSeconds, viewer, clipId, clipData, awardXP, completeClipPath,
+    isLite, navigate,
   ]);
 
   const handleFinishWatchingRef = useRef(handleFinishWatching);
@@ -1253,6 +1282,36 @@ export default function WatchPage() {
           onContinueToNext={goToNextClip}
           nextIsResourceDay={nextIsResourceDay}
         />
+      )}
+
+      {/* Lite clip completion overlay */}
+      {phase === "lite_complete" && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+          <div className="bg-white rounded-2xl p-8 max-w-md mx-4 text-center shadow-2xl">
+            <p className="text-4xl mb-3">✅</p>
+            <h2 className="text-xl font-bold text-gray-900 mb-2">Clip Complete!</h2>
+            <p className="text-sm text-gray-700 mb-1">
+              📞 <span className="font-semibold">Cold Calling in an AI World</span> is now unlocked.
+            </p>
+            <p className="text-sm text-gray-500 mb-6">
+              Up next: the Reachdesk walkthrough — learn how to turn gifts into booked meetings.
+            </p>
+            <div className="flex flex-col gap-2.5">
+              <button
+                onClick={() => navigate(getLibraryPath())}
+                className="w-full py-2.5 rounded-lg text-sm font-bold bg-green-600 hover:bg-green-700 text-white transition-colors shadow-md"
+              >
+                🎁 Watch Reachdesk Clip
+              </button>
+              <button
+                onClick={() => navigate(getLibraryPath())}
+                className="w-full py-2 rounded-lg text-sm font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+              >
+                Back to Library
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Weather the Storm */}
