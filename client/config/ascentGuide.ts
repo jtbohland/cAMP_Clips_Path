@@ -60,6 +60,9 @@ const GUIDE_SESSIONS: Record<string, AscentGuideEntry> = {
       { name: "Nathan Youmans", title: "Director, Marketing Operations" },
       { name: "Chelsie Cauthon", title: "Sr. Marketing Transformation Manager" },
     ],
+    followAlongUrl:
+      "https://amplitude.lightning.force.com/lightning/o/Lead/list?filterName=My_MQLs_Slack",
+    followAlongLabel: "My MQLs (SFDC)",
   },
 
   // ── Day 3 (sort 4): GTM Launch Pad ──
