@@ -105,7 +105,10 @@ export default function ReportPage() {
     [reportData?.videoUrl]
   );
 
-  const handleRewatch = useCallback(() => setShowRewatch(true), []);
+  const handleRewatch = useCallback(() => {
+    if (viewer?.id && reportData?.clipTitle) logClick({ viewerId: viewer.id, pitchName: `Rewatch Clip: ${reportData.clipTitle}` });
+    setShowRewatch(true);
+  }, [viewer?.id, reportData?.clipTitle, logClick]);
   const handleCloseRewatch = useCallback(() => setShowRewatch(false), []);
 
   if (!viewer) {

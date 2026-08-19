@@ -26,8 +26,9 @@ export default function ReachdeskReport() {
   }, [viewer?.id, logClick]);
 
   const handleRewatch = useCallback(() => {
+    if (viewer?.id) logClick({ viewerId: viewer.id, pitchName: "Rewatch Clip: Reachdesk" });
     window.open(REACHDESK_ZOOM_URL, "_blank");
-  }, []);
+  }, [viewer?.id, logClick]);
 
   return (
     <div className="flex flex-col h-full overflow-y-auto" style={{ backgroundColor: "#ECFDF5" }}>
