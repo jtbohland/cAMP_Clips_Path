@@ -4,6 +4,7 @@ import {
   getClipsExpectedByWeekday,
   getTotalWeekdays,
   getRoleGroup,
+  TOTAL_ASCENT_CLIPS_SDR,
   type RoleGroup,
 } from "./pacing-helpers.js";
 
@@ -248,8 +249,13 @@ export default api({
     // For now, use known constants. SDR max is calculated from their 16-clip path.
     const MAX_XP_AE = 963;
     const MAX_XP_SDR = 720; // 16 clips × fewer trail markers + resource days
-    function getMaxXp(role: string): number {
-      return getRoleGroup(role) === "SDR" ? MAX_XP_SDR : MAX_XP_AE;
+    function getMaxXp(role: string, clipsDone: number): number {
+      // If an SDR completed more clips than the SDR path offers,
+      // they followed the AE path — use AE max XP for fair comparison.
+      if (getRoleGroup(role) === "SDR" && clipsDone <= TOTAL_ASCENT_CLIPS_SDR) {
+        return MAX_XP_SDR;
+      }
+      return MAX_XP_AE;
     }
 
     // Build enriched entries with pacing + xpPct
@@ -279,7 +285,7 @@ export default api({
       }
 
       const currentTier = TIERS.reduce((acc, t) => (r.total_xp >= t.xpMin ? t : acc), TIERS[0]);
-      const maxXp = getMaxXp(r.role);
+      const maxXp = getMaxXp(r.role, clipsDone);
       const xpPct = maxXp > 0 ? Math.round((r.total_xp / maxXp) * 1000) / 10 : 0;
       const roleGroup = getRoleGroup(r.role);
 

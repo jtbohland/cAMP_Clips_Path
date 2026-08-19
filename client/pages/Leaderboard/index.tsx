@@ -62,10 +62,10 @@ const TZ_PILL: Record<string, { emoji: string; label: string; bg: string; text: 
 // ─── Role group display config ───────────────────────────────────────────────
 
 const ROLE_GROUP_CONFIG: Record<string, { label: string; emoji: string; headerBg: string; headerText: string }> = {
-  AE:       { label: "Account Executives", emoji: "💼", headerBg: "#1E40AF",  headerText: "#DBEAFE" },
-  SDR:      { label: "SDRs",               emoji: "📞", headerBg: "#3730A3",  headerText: "#E0E7FF" },
-  PSM:      { label: "PSMs",               emoji: "🤝", headerBg: "#9A3412",  headerText: "#FFEDD5" },
-  Renewals: { label: "Renewals",           emoji: "🔄", headerBg: "#854D0E",  headerText: "#FEF9C3" },
+  AE:       { label: "Account Executives", emoji: "💰", headerBg: "#3B82F6",  headerText: "#EFF6FF" },
+  SDR:      { label: "SDRs",               emoji: "📞", headerBg: "#8B5CF6",  headerText: "#F5F3FF" },
+  PSM:      { label: "PSMs",               emoji: "🤝", headerBg: "#F97316",  headerText: "#FFF7ED" },
+  Renewals: { label: "Renewals",           emoji: "🔄", headerBg: "#EAB308",  headerText: "#FEFCE8" },
 };
 
 function RolePill({ role }: { role: string }) {
