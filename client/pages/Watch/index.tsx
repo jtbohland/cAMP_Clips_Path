@@ -18,6 +18,9 @@ import { getLibraryPath } from "@/lib/libraryNav";
 import { WistiaPlayer } from "@wistia/wistia-player-react";
 import { toast } from "sonner";
 
+/** Sort orders for lite clips — no engagement scoring, no trail markers, no Ranger Report */
+const LITE_CLIP_SORTS = new Set([51]);
+
 
 type WatchPhase =
   | "loading_resume"
@@ -119,6 +122,12 @@ export default function WatchPage() {
   const highWaterMarkRef = useRef(0);
 
   // Ascent Guide panel — summary + learning objectives shown on clip open
+  // Lite clip detection — no engagement scoring, no trail markers, no Ranger Report
+  const isLite = useMemo(() => {
+    const sortOrder = clipData?.clip?.sortOrder;
+    return sortOrder ? LITE_CLIP_SORTS.has(sortOrder) : false;
+  }, [clipData?.clip?.sortOrder]);
+
   const guideEntry = useMemo(
     () => {
       const sortOrder = clipData?.clip?.sortOrder;
@@ -677,6 +686,25 @@ export default function WatchPage() {
   const handleFinishWatching = useCallback(async () => {
     playerRef.current?.pause();
 
+    // ── Lite clip path: skip engagement, skip Ranger Report, complete & go back ──
+    if (isLite) {
+      if (viewer?.id && clipId && sessionId) {
+        try {
+          await completeClipPath({
+            viewerId: viewer.id,
+            clipId,
+            sessionId,
+            path: "first_pass",
+          });
+        } catch (err) {
+          console.error("completeClipPath failed for lite clip:", err);
+        }
+      }
+      toast.success("✅ Clip watched! Next clip unlocked.");
+      navigate(getLibraryPath());
+      return;
+    }
+
     const allTrailMarkerCount = trailMarkers.length;
     setTotalTrailMarkers(allTrailMarkerCount || totalTrailMarkers);
     const finalTotal = allTrailMarkerCount || 1;
@@ -786,6 +814,7 @@ export default function WatchPage() {
   }, [
     trailMarkers, totalTrailMarkers, correctCount, sessionId, endSession,
     watchedSeconds, focusSeconds, blurSeconds, viewer, clipId, clipData, awardXP, completeClipPath,
+    isLite, navigate,
   ]);
 
   const handleFinishWatchingRef = useRef(handleFinishWatching);

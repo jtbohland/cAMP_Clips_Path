@@ -105,6 +105,19 @@ const GUIDE_SESSIONS: Record<string, AscentGuideEntry> = {
     smes: [{ name: "JT Bohland", title: "Sr. Enablement Program Manager" }],
   },
 
+  // ── Day 4 (sort 51): Prospecting for Marketing Events (SDR) ──
+  day4_mktg_events: {
+    id: "day4_mktg_events",
+    summary:
+      "This session walks you through the end-to-end process of prospecting for Amplitude marketing events. Hope Flower demonstrates how to use the marketing events calendar to identify upcoming opportunities, build targeted prospect lists in Sales Navigator using ICP personas and geographic filters, tag and export contacts via ZoomInfo into Salesforce, and sequence them in Outreach to drive event registrations.",
+    learningObjectives: [
+      "Use the marketing events calendar to identify upcoming events and build a territory-relevant prospect list in Sales Navigator.",
+      "Tag, export, and verify contacts through ZoomInfo into Salesforce for clean prospecting workflows.",
+      "Import Salesforce contacts into Outreach sequences to systematically invite prospects to marketing events.",
+    ],
+    smes: [{ name: "Talk to your Mentor or a Teammate", title: "", emoji: "👥" }],
+  },
+
   // ── Day 5 (sort 55): Cold Calling in an AI World (SDR) ──
   day5_cold_calling: {
     id: "day5_cold_calling",
@@ -319,6 +332,7 @@ const SORT_ORDER_TO_SESSION_ID: Record<number, string> = {
   40: "day3",             // Day 3: GTM Launch Pad
   45: "day3_pod_tower",   // Day 3: Pod Tower
   50: "day4",             // Day 4: Prospecting Process
+  51: "day4_mktg_events", // Day 4: Prospecting for Marketing Events (SDR, lite)
   55: "day5_cold_calling", // Day 5: Cold Calling in an AI World (SDR)
   56: "day5_nooks",        // Day 5: Making Calls with Nooks (SDR)
   60: "day5",             // Day 5: Renewal Operations

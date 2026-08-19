@@ -295,14 +295,16 @@ export default function LibraryPage() {
     }));
   }, [rawClips, ascentTestMode]);
   const totalTopicDays = useMemo(() => {
-    const days = new Set(clips.map((c: any) => c.dayLabel).filter(Boolean));
+    const days = new Set(clips.filter((c: any) => !c.isLite).map((c: any) => c.dayLabel).filter(Boolean));
     return days.size;
   }, [clips]);
-  const ascentComplete = clips.length > 0 && clips.every((c: any) => c.completed);
+  // Lite clips don't count toward Ascent completion
+  const officialClips = useMemo(() => clips.filter((c: any) => !c.isLite), [clips]);
+  const ascentComplete = officialClips.length > 0 && officialClips.every((c: any) => c.completed);
 
   // A/B pair sort orders — updated after Phase 1 migration (×10 spacing)
   // Pairs: sorts 10+20 (Day 1), 80+90 (Day 7), 100+110 (Day 8), 140+150 (Day 11), 190+200 (Day 15)
-  const AB_PAIRS: [number, number][] = [[10, 20], [40, 45], [55, 56], [80, 90], [100, 110], [140, 150], [190, 200]];
+  const AB_PAIRS: [number, number][] = [[10, 20], [40, 45], [50, 51], [55, 56], [80, 90], [100, 110], [140, 150], [190, 200]];
   const pairedSortOrders = new Set(AB_PAIRS.flat());
 
   // ── Pacing calculation ──
@@ -321,8 +323,8 @@ export default function LibraryPage() {
     const role = viewer?.role ?? "AE";
     const summitDay = getSummitDay(startDate, extensionDays, role);
     const afterSummitDay = isAfterDate(summitDay);
-    // Clip-level pacing: count individual completed clips
-    const clipsDone = clips.filter((c: any) => c.completed).length;
+    // Clip-level pacing: count individual completed clips (exclude lite clips)
+    const clipsDone = clips.filter((c: any) => c.completed && !c.isLite).length;
     // Max sort order completed (for legacy exemptions)
     const maxSortDone = clips
       .filter((c: any) => c.completed)
@@ -1333,6 +1335,10 @@ export default function LibraryPage() {
                               onWheelAndDeal={handleWheelAndDeal}
                               onCampQuiz={handleCampQuiz}
                               wheelAndDealSortOrders={wheelAndDealSortOrders}
+                              isLiteB={clipB.isLite === true}
+                              onZoomClipWatch={clip.sortOrder === 50 ? handleReachdeskWatch : undefined}
+                              onZoomClipReview={clip.sortOrder === 50 ? () => navigate(`/report/reachdesk`) : undefined}
+                              zoomClipWatched={clip.sortOrder === 50 ? reachdeskWatched : undefined}
                             />
                           );
                         }

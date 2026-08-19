@@ -2,6 +2,9 @@ import { api, z, postgres } from "@superblocksteam/sdk-api";
 
 const APPS_DB = "c6e32cf4-ca66-42ae-aeb3-58c84ffae574";
 
+/** Lite clips: watchable but excluded from pacing/totals/engagement scoring */
+const LITE_CLIP_SORTS = new Set([51]);
+
 const ClipWithProgressSchema = z.object({
   id: z.string(),
   title: z.string(),
@@ -52,6 +55,7 @@ export default api({
         isTopicDay: z.boolean(),
         resourceCount: z.number(),
         resourcesClicked: z.number(),
+        isLite: z.boolean(),
       })
     ),
   }),
@@ -208,6 +212,7 @@ export default api({
         isTopicDay,
         resourceCount,
         resourcesClicked: clickCountMap.get(clip.id) ?? 0,
+        isLite: LITE_CLIP_SORTS.has(clip.sort_order),
       };
     });
 
