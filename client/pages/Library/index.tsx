@@ -631,8 +631,8 @@ export default function LibraryPage() {
         },
         4: {
           emoji: "🧗🏻‍♂️",
-          title: "Telling the Customer Story",
-          time: "⏱ Total: ~1h 11m | 1 session day",
+          title: "Closing the Loop",
+          time: "⏱ Total: ~2h | 2 session days",
           note: TIME_NOTE,
         },
       }
