@@ -151,4 +151,33 @@ export const TOPIC_DAYS: Record<string, TopicDayConfig> = {
       { id: "day9_q2", prompt: "What's a common pricing objection you expect, and how would you handle it?" },
     ],
   },
+
+  // Day 13 SDR — sort_order 165 (SDR-only, Rules of Engagement)
+  "day13_sdr_roe": {
+    dayLabel: "Day 13",
+    title: "Rules of Engagement",
+    emoji: "⚖️",
+    summary: "This session covers Amplitude's SDR Rules of Engagement — the policies that determine how sourcing credit, territory boundaries, BoB transitions, and deal crediting work. Instead of a reflection, SDRs will play Rules of the Ridge, a scenario-based game where they wager real cAMP XP on their knowledge of ROE rules across 10 randomized case studies.",
+    learningObjectives: [
+      "Apply primary and secondary sourcing credit rules to realistic SDR scenarios.",
+      "Navigate territory, BoB transition, and live chat policies that affect deal crediting.",
+      "Evaluate edge cases involving stage movement, clawbacks, and the statute of limitations.",
+    ],
+    smes: [
+      { name: "Derrick Williams", title: "Sr. Director, Sales Development" },
+    ],
+    slackChannels: [
+      { name: "#sdr-team", url: "https://amplitude.slack.com/archives/C04LW12V65N" },
+    ],
+    resources: [
+      {
+        label: "Rules of Engagement Guide",
+        url: "https://docs.google.com/document/d/1-cmpMniog8PRBu25_d3jvPbi0rrL4LvvNYanfFkyXEg/edit?tab=t.0#heading=h.2as1pztam7vi",
+        type: "gdrive",
+        emoji: "📋",
+      },
+    ],
+    // No reflectionQuestions — the Ridge game replaces reflection for this day
+  },
 };
+
