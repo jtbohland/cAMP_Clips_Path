@@ -146,6 +146,8 @@ export default api({
       lastLogin: z.string().nullable(),
       approachComplete: z.boolean(),
       approachCompletedCount: z.number(),
+      extensionDays: z.number(),
+      lastCompletedAt: z.string().nullable(),
     })),
     clipBreakdown: z.array(z.object({
       clipId: z.string(),
@@ -534,6 +536,8 @@ export default api({
         lastLogin: l.last_login_at,
         approachComplete: (approachMap.get(l.viewer_id) ?? 0) >= TOTAL_APPROACH_MODULES,
         approachCompletedCount: approachMap.get(l.viewer_id) ?? 0,
+        extensionDays: l.extension_days,
+        lastCompletedAt: l.last_completed_at,
       };
     });
 

@@ -8,6 +8,7 @@ import LearnerTileGrid from "@/components/analytics/LearnerTileGrid";
 import LearnerDetailView from "@/components/analytics/LearnerDetailView";
 import { type LearnerTileData } from "@/components/analytics/LearnerTile";
 import ManagerFeedbackSection from "@/components/analytics/ManagerFeedbackSection";
+import PacingDeepDiveModal from "@/components/analytics/PacingDeepDiveModal";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -106,6 +107,7 @@ function AnalyticsContent() {
   const { data, loading, fetching, isError, error } = useApiData("GetAnalyticsV3", {});
   const [selectedLearnerId, setSelectedLearnerId] = useState<string | null>(null);
   const [mainTab, setMainTab] = useState<MainTab>("dashboard");
+  const [showPacingDeepDive, setShowPacingDeepDive] = useState(false);
 
   const handleLearnerClick = useCallback((viewerId: string) => {
     setSelectedLearnerId(viewerId);
@@ -222,7 +224,7 @@ function AnalyticsContent() {
           <>
             {/* 1. Overview */}
             <Section title="Overview" emoji="📈" defaultOpen>
-              <OverviewSection overview={overview} />
+              <OverviewSection overview={overview} onPacingDeepDive={() => setShowPacingDeepDive(true)} />
             </Section>
 
             {/* 2. cAMPers Tile Grid */}
@@ -258,13 +260,35 @@ function AnalyticsContent() {
           </>
         )}
       </div>
+
+      {showPacingDeepDive && (
+        <PacingDeepDiveModal
+          learners={(learners ?? []).map((l: any) => ({
+            viewerId: l.viewerId,
+            name: l.name,
+            role: l.role,
+            timezone: l.timezone,
+            ascentDay1: l.ascentDay1,
+            clipsCompleted: l.clipsCompleted,
+            effectiveTotal: l.effectiveTotal,
+            pacingStatus: l.pacingStatus,
+            summitDay: l.summitDay,
+            isAnchorFailure: l.isAnchorFailure,
+            approachComplete: l.approachComplete,
+            approachCompletedCount: l.approachCompletedCount ?? 0,
+            extensionDays: l.extensionDays ?? 0,
+            lastCompletedAt: l.lastCompletedAt ?? null,
+          }))}
+          onClose={() => setShowPacingDeepDive(false)}
+        />
+      )}
     </div>
   );
 }
 
 // ─── Overview ────────────────────────────────────────────────────────────────
 
-function OverviewSection({ overview }: { overview: any }) {
+function OverviewSection({ overview, onPacingDeepDive }: { overview: any; onPacingDeepDive: () => void }) {
   if (!overview) return <p className="text-sm text-gray-500 py-4">No data</p>;
   const topRow = [
     { label: "Live Clips", desc: "Clips published in Ascent", value: overview.totalClips, icon: "🎬" },
@@ -316,6 +340,12 @@ function OverviewSection({ overview }: { overview: any }) {
           </div>
           <div className="text-[10px] text-gray-500 mt-0.5">Pacing</div>
           <div className="text-[9px] text-gray-400 mt-0.5 leading-tight">Finished on time vs triggered Anchor Failure</div>
+          <button
+            onClick={onPacingDeepDive}
+            className="mt-1.5 text-[9px] font-medium text-indigo-600 hover:text-indigo-800 transition-colors underline underline-offset-2"
+          >
+            View Deep Dive →
+          </button>
         </div>
       </div>
     </div>
