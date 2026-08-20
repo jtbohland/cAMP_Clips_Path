@@ -36,6 +36,13 @@ const ENGAGEMENT_STREAK_BONUSES = [
   { badge: "Leave No Trace", xp: 15, emoji: "🌱", condition: "5/5 Trail Markers on a 3-clip window (×5 max: clips 1–3, 3–5, 7–9, 10–11+13, 13–15)" },
 ];
 
+const RIDGE_BADGES = [
+  { badge: "Ridge Rookie", xpLabel: "+5 XP", emoji: "🪨", condition: "Score 0–99 on Rules of the Ridge (you showed up and played!)" },
+  { badge: "Trail Judge", xpLabel: "+15 XP", emoji: "⛏️", condition: "Score 100–179 — solid understanding of the ROE" },
+  { badge: "ROE Enforcer", xpLabel: "+25 XP", emoji: "🏔️", condition: "Score 180–249 — you know these rules cold" },
+  { badge: "Summit Authority", xpLabel: "+35 XP", emoji: "🌄", condition: "Score 250–300 — near-perfect mastery of the Rules of Engagement" },
+];
+
 const PACING_STREAK_BONUSES = [
   { badge: "Ridge Runner", xp: 10, emoji: "🥾", condition: "5 consecutive days Summit Bound" },
   { badge: "Alpine Endurance", xp: 15, emoji: "🏔️", condition: "10 consecutive days Summit Bound" },
@@ -154,6 +161,30 @@ export default function XPlanationPage() {
               />
             ))}
           </div>
+        </Section>
+
+        {/* Rules of the Ridge (SDR Only) */}
+        <Section title="⛏️ Rules of the Ridge" description="Complete the ROE scenario game on Day 12 to earn one of four Ridge badges (SDR path only):">
+          <div className="space-y-2">
+            {RIDGE_BADGES.map((b) => (
+              <RidgeBadgeRow
+                key={b.badge}
+                emoji={b.emoji}
+                badge={b.badge}
+                xpLabel={b.xpLabel}
+                condition={b.condition}
+                earned={earnedBadgeIds.has(b.badge.toLowerCase().replace(/ /g, "_"))}
+              />
+            ))}
+          </div>
+          <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
+            <p className="text-sm text-amber-800">
+              <span className="font-semibold">⛏️ Crux Call:</span> Before each answer is revealed, wager your confidence (⛏️ ⛏️⛏️ ⛏️⛏️⛏️). Higher confidence = bigger XP multiplier if right, but costs points if wrong. Your Ridge Score determines your badge — play it safe or send it!
+            </p>
+          </div>
+          <p className="text-xs text-gray-500 mt-2 italic">
+            10 scenarios drawn randomly from 50+. Every playthrough is different. You earn exactly one Ridge badge based on your final score.
+          </p>
         </Section>
 
         {/* Pacing Streak Bonuses */}
@@ -328,6 +359,37 @@ function XpRow({ emoji, label, xp, description }: { emoji: string; label: string
         </div>
       </div>
       <span className="text-sm font-bold text-indigo-600">+{xp} XP</span>
+    </div>
+  );
+}
+
+function RidgeBadgeRow({ emoji, badge, xpLabel, condition, earned }: { emoji: string; badge: string; xpLabel: string; condition: string; earned: boolean }) {
+  return (
+    <div className={`flex items-center justify-between rounded-lg border px-3 py-2 ${
+      earned
+        ? "bg-amber-50 border-amber-300/50"
+        : "bg-white border-gray-200"
+    }`}>
+      <div className="flex items-center gap-2">
+        <span className={`text-lg ${!earned ? "opacity-50" : ""}`}>{emoji}</span>
+        <div>
+          <p className={`text-sm ${earned ? "font-bold text-gray-900" : "font-medium text-gray-500"}`}>
+            {badge}
+            <span className="ml-2 inline-flex items-center rounded-full bg-sky-100 px-2 py-0.5 text-xs font-semibold text-sky-700">
+              SDR Only
+            </span>
+            {earned && (
+              <span className="ml-1 inline-flex items-center rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-semibold text-indigo-700">
+                ✅ Earned
+              </span>
+            )}
+          </p>
+          <p className={`text-xs ${earned ? "text-gray-500" : "text-gray-500/60"}`}>
+            {condition}
+          </p>
+        </div>
+      </div>
+      <span className={`text-sm font-bold whitespace-nowrap ${earned ? "text-amber-600" : "text-gray-500"}`}>{xpLabel}</span>
     </div>
   );
 }
