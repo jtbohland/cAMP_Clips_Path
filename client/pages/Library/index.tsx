@@ -1369,7 +1369,7 @@ export default function LibraryPage() {
                           wheelAndDealSortOrders={wheelAndDealSortOrders}
                           onViewGear={
                             clip.isTopicDay
-                              ? () => navigate(`/topic-gear/${clip.sortOrder === 60 ? "day5" : "day9"}/${clip.id}`)
+                              ? () => navigate(`/topic-gear/${clip.sortOrder === 60 ? "day5" : clip.sortOrder === 165 ? "day13_sdr_roe" : "day9"}/${clip.id}`)
                               : undefined
                           }
                           onZoomClipWatch={clip.sortOrder === 50 ? handleReachdeskWatch : undefined}

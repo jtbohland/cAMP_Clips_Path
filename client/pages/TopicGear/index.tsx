@@ -8,10 +8,11 @@ import { TOPIC_DAYS } from "@/config/topicDays";
 import type { TopicDayConfig } from "@/config/topicDays";
 import TopicResourceList from "@/components/TopicResourceList";
 import TopicReflectionSection from "@/components/TopicReflectionSection";
+import RidgeGame from "@/components/RidgeGame";
 
 /**
  * Topic Gear page — shows summary, learning objectives, SMEs, and resources
- * for resource-only topic days (Day 5: Renewal Operations, Day 9: Pricing & Packaging).
+ * for resource-only topic days (Day 5, Day 9, Day 13 SDR ROE).
  *
  * Route: /topic-gear/:topicKey/:clipId
  *   topicKey = "day5" | "day9"
@@ -257,6 +258,26 @@ export default function TopicGearPage() {
             sfdcStyle={SFDC_STYLE}
             typeLabels={TYPE_LABELS}
           />
+
+          {/* Ridge Game (ROE day only) — replaces reflection */}
+          {topicKey === "day13_sdr_roe" && viewer?.id && clipId && (
+            allClicked ? (
+              <RidgeGame
+                viewerId={viewer.id}
+                clipId={clipId}
+                onBackToClips={() => navigate("/?tab=ascent")}
+              />
+            ) : (
+              <div className="rounded-xl bg-gray-50 border border-gray-200 shadow-[0_1px_3px_rgba(0,0,0,0.08)] p-5 opacity-60">
+                <h2 className="text-base font-bold text-gray-400 flex items-center gap-2 mb-1">
+                  🔒 Rules of the Ridge
+                </h2>
+                <p className="text-xs text-gray-400">
+                  Review the ROE Guide above to unlock the game.
+                </p>
+              </div>
+            )
+          )}
 
           {/* Topic Reflection (Day 5 & Day 9 only) — locked until all resources clicked */}
           {config.reflectionQuestions && config.reflectionQuestions.length >= 2 && viewer?.id && topicKey && (

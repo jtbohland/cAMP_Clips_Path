@@ -124,6 +124,9 @@ import UpdateChallengerConstraint from './v2/update-challenger-constraint.js';
 import SetupRolePaths from './v2/setup-role-paths.js';
 import SetupRidgeSchema from './v2/setup-ridge-schema.js';
 import SeedRidgeScenarios from './v2/seed-ridge-scenarios.js';
+import StartRidgeGame from './v2/start-ridge-game.js';
+import SubmitRidgeResponse from './v2/submit-ridge-response.js';
+import CompleteRidgeGame from './v2/complete-ridge-game.js';
 
 
 
@@ -252,6 +255,9 @@ ResetJTSessions,
   SetupRolePaths,
   SetupRidgeSchema,
   SeedRidgeScenarios,
+  StartRidgeGame,
+  SubmitRidgeResponse,
+  CompleteRidgeGame,
 } as const;
 
 export default apis;
