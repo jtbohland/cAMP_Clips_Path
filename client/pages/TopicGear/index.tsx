@@ -81,21 +81,6 @@ export default function TopicGearPage() {
     return reflectionData.reflections.some((r: any) => r.topicDay === topicKey);
   }, [hasReflection, reflectionData, topicKey]);
 
-  // Determine if "Back to Clips" should be enabled
-  const canLeave = useMemo(() => {
-    if (isROE) {
-      // ROE: can leave before clicking doc, or after game complete
-      if (!roeDocClicked) return true;
-      return roeGameComplete;
-    }
-    // Day 5 & Day 9: can leave only after reflection is submitted
-    if (hasReflection) {
-      return reflectionAlreadyDone || reflectionJustSubmitted;
-    }
-    // Fallback (unknown topic day): always allow
-    return true;
-  }, [isROE, roeDocClicked, roeGameComplete, hasReflection, reflectionAlreadyDone, reflectionJustSubmitted]);
-
   // Get resource progress for this clip
   const { data: progressData, refetch: refetchProgress } = useApiData(
     "GetResourceProgress",
@@ -110,6 +95,29 @@ export default function TopicGearPage() {
   }, [progressData, clipId]);
 
   const allClicked = config ? clickedIndices.size >= config.resources.length : false;
+
+  // Has the learner clicked at least one resource? (from DB, persists across visits)
+  const hasStartedResources = clickedIndices.size > 0;
+
+  // Determine if "Back to Clips" should be enabled
+  // All resource days share the same pattern:
+  //   - Can leave BEFORE clicking the first resource (not committed yet)
+  //   - Once the first resource is clicked → locked until completion
+  //   - Completion = reflection submitted (Day 5/9) or game finished (ROE)
+  const canLeave = useMemo(() => {
+    if (isROE) {
+      // ROE: can leave before clicking doc, or after game complete
+      if (!roeDocClicked) return true;
+      return roeGameComplete;
+    }
+    // Day 5 & Day 9: can leave before clicking any resource, or after reflection
+    if (hasReflection) {
+      if (!hasStartedResources) return true;
+      return reflectionAlreadyDone || reflectionJustSubmitted;
+    }
+    // Fallback (unknown topic day): always allow
+    return true;
+  }, [isROE, roeDocClicked, roeGameComplete, hasReflection, hasStartedResources, reflectionAlreadyDone, reflectionJustSubmitted]);
 
   const handleResourceClick = useCallback(async (index: number, url: string) => {
     // Open resource in new tab
