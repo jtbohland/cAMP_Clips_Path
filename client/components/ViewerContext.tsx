@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
+import { useApiData } from "@/hooks/useApiData.js";
 import { executeApi } from "@/lib/executeApi.js";
 
 export type Viewer = {
@@ -22,90 +23,88 @@ const ViewerContext = createContext<ViewerContextType | undefined>(undefined);
 const STORAGE_KEY = "cliptracker_viewer";
 
 export function ViewerProvider({ children }: { children: ReactNode }) {
-  const [viewer, setViewerState] = useState<Viewer | null>(null);
+  const [viewer, setViewerState] = useState<Viewer | null>(() => {
+    // Synchronous init from localStorage for instant rendering
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) return JSON.parse(stored) as Viewer;
+    } catch { /* ignore */ }
+    return null;
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [lookupError, setLookupError] = useState(false);
 
-  // On mount: try auto-lookup using Superblocks session email (ctx.user.email)
-  // Falls back to localStorage if auto-lookup returns null
+  // Use the hook-based API call — this integrates properly with the Superblocks
+  // runtime in both preview and deployed modes
+  const {
+    data: autoLookupData,
+    loading: autoLookupLoading,
+    isError: autoLookupError,
+  } = useApiData("AutoLookupViewer", {});
+
+  // When auto-lookup resolves, update the viewer
   useEffect(() => {
-    let cancelled = false;
+    if (autoLookupLoading) return; // Still loading — wait
 
-    async function autoRecognize() {
-      let apiErrored = false;
+    if (autoLookupData?.viewer) {
+      const v: Viewer = {
+        id: autoLookupData.viewer.id,
+        email: autoLookupData.viewer.email,
+        name: autoLookupData.viewer.name,
+        role: autoLookupData.viewer.role,
+        isAdmin: autoLookupData.viewer.isAdmin ?? false,
+      };
+      setViewerState(v);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(v));
+      setLookupError(false);
+      setIsLoading(false);
+      return;
+    }
 
-      try {
-        // First, try server-side auto-lookup using the Superblocks JWT email
-        // Timeout after 5s to prevent infinite loading on deep links
-        const result = await Promise.race([
-          executeApi("AutoLookupViewer", {}),
-          new Promise<null>((resolve) => setTimeout(() => resolve(null), 5000)),
-        ]) as any;
-        if (!cancelled && result?.viewer) {
-          const v: Viewer = {
-            id: result.viewer.id,
-            email: result.viewer.email,
-            name: result.viewer.name,
-            role: result.viewer.role,
-            isAdmin: result.viewer.isAdmin ?? false,
-          };
-          setViewerState(v);
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(v));
-          setLookupError(false);
-          setIsLoading(false);
-          return;
-        }
-      } catch (e) {
-        // Auto-lookup failed (DB down, network error, etc.) — track the error
-        apiErrored = true;
+    // Auto-lookup returned no viewer
+    if (autoLookupError) {
+      // API errored — check localStorage fallback
+      if (viewer) {
+        // We have a cached viewer, use it and refresh in background
+        setLookupError(false);
+        setIsLoading(false);
+        refreshFromDb(viewer.email);
+      } else {
+        setLookupError(true);
+        setIsLoading(false);
       }
-
-      // Fallback: check localStorage
-      if (!cancelled) {
-        try {
-          const stored = localStorage.getItem(STORAGE_KEY);
-          if (stored) {
-            const parsed = JSON.parse(stored) as Viewer;
-            setViewerState(parsed);
-
-            // Refresh from DB to pick up isAdmin changes
-            executeApi("LookupViewer", { email: parsed.email })
-              .then((lookupResult: any) => {
-                if (!cancelled && lookupResult?.viewer) {
-                  const refreshed: Viewer = {
-                    id: lookupResult.viewer.id,
-                    email: lookupResult.viewer.email,
-                    name: lookupResult.viewer.name,
-                    role: lookupResult.viewer.role,
-                    isAdmin: lookupResult.viewer.isAdmin ?? false,
-                  };
-                  setViewerState(refreshed);
-                  localStorage.setItem(STORAGE_KEY, JSON.stringify(refreshed));
-                }
-              })
-              .catch(() => { /* ignore — stale local data is fine */ });
-            setLookupError(false);
-            setIsLoading(false);
-            return;
-          }
-        } catch (e) {
-          // ignore parse errors
-        }
-
-        // No localStorage fallback available
-        if (apiErrored) {
-          // DB was unreachable AND no cache — don't show registration
-          setLookupError(true);
-        } else {
-          // API succeeded with no match — genuinely new user
-          setLookupError(false);
-        }
+    } else {
+      // API succeeded but no match — check localStorage fallback
+      if (viewer) {
+        // Cached viewer exists, refresh it
+        setLookupError(false);
+        setIsLoading(false);
+        refreshFromDb(viewer.email);
+      } else {
+        // Genuinely new user
+        setLookupError(false);
         setIsLoading(false);
       }
     }
+  }, [autoLookupLoading, autoLookupData, autoLookupError]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    autoRecognize();
-    return () => { cancelled = true; };
+  // Background refresh from DB to pick up isAdmin changes
+  const refreshFromDb = useCallback((email: string) => {
+    executeApi("LookupViewer", { email })
+      .then((lookupResult: any) => {
+        if (lookupResult?.viewer) {
+          const refreshed: Viewer = {
+            id: lookupResult.viewer.id,
+            email: lookupResult.viewer.email,
+            name: lookupResult.viewer.name,
+            role: lookupResult.viewer.role,
+            isAdmin: lookupResult.viewer.isAdmin ?? false,
+          };
+          setViewerState(refreshed);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(refreshed));
+        }
+      })
+      .catch(() => { /* ignore — stale local data is fine */ });
   }, []);
 
   const setViewer = useCallback((v: Viewer) => {
