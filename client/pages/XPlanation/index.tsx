@@ -37,10 +37,11 @@ const ENGAGEMENT_STREAK_BONUSES = [
 ];
 
 const RIDGE_BADGES = [
-  { badge: "Ridge Rookie", xpLabel: "+5 XP", emoji: "🪨", condition: "Score 0–99 on Rules of the Ridge (you showed up and played!)" },
-  { badge: "Trail Judge", xpLabel: "+15 XP", emoji: "⛏️", condition: "Score 100–179 — solid understanding of the ROE" },
-  { badge: "ROE Enforcer", xpLabel: "+25 XP", emoji: "🏔️", condition: "Score 180–249 — you know these rules cold" },
-  { badge: "Summit Authority", xpLabel: "+35 XP", emoji: "🌄", condition: "Score 250–300 — near-perfect mastery of the Rules of Engagement" },
+  { badge: "Whipper", xpLabel: "−20 to −1 XP", emoji: "🪢", condition: "Net negative score — you took a big fall, but the rope caught you" },
+  { badge: "Ridge Rookie", xpLabel: "0 to +9 XP", emoji: "🪨", condition: "Broke even or small gain — you survived the Ridge" },
+  { badge: "Trail Judge", xpLabel: "+10 to +19 XP", emoji: "⛏️", condition: "Solid positive — you know the rules and wagered smart" },
+  { badge: "ROE Enforcer", xpLabel: "+20 to +26 XP", emoji: "🏔️", condition: "Strong gains — you know the ROE cold and backed yourself" },
+  { badge: "Summit Authority", xpLabel: "+27 to +30 XP", emoji: "🌄", condition: "Near-perfect mastery — you sent it and crushed it" },
 ];
 
 const PACING_STREAK_BONUSES = [
@@ -164,7 +165,7 @@ export default function XPlanationPage() {
         </Section>
 
         {/* Rules of the Ridge (SDR Only) */}
-        <Section title="⛏️ Rules of the Ridge" description="Complete the ROE scenario game on Day 12 to earn one of four Ridge badges (SDR path only):">
+        <Section title="⛏️ Rules of the Ridge" description="SDR path only — wager your real cAMP XP on ROE scenario challenges. Your net XP change determines your badge:">
           <div className="space-y-2">
             {RIDGE_BADGES.map((b) => (
               <RidgeBadgeRow
@@ -179,11 +180,28 @@ export default function XPlanationPage() {
           </div>
           <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
             <p className="text-sm text-amber-800">
-              <span className="font-semibold">⛏️ Crux Call:</span> Before each answer is revealed, wager your confidence (⛏️ ⛏️⛏️ ⛏️⛏️⛏️). Higher confidence = bigger XP multiplier if right, but costs points if wrong. Your Ridge Score determines your badge — play it safe or send it!
+              <span className="font-semibold">⛏️ Crux Call:</span> After answering each scenario, wager your confidence (⛏️, ⛏️⛏️, or ⛏️⛏️⛏️) before the answer is revealed. Every level has real stakes:
             </p>
+            <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-amber-900">
+              <div className="rounded bg-amber-100/60 p-2 text-center">
+                <p className="font-bold">⛏️</p>
+                <p className="text-green-700">+1 if right</p>
+                <p className="text-red-700">−1 if wrong</p>
+              </div>
+              <div className="rounded bg-amber-100/60 p-2 text-center">
+                <p className="font-bold">⛏️⛏️</p>
+                <p className="text-green-700">+2 if right</p>
+                <p className="text-red-700">−1 if wrong</p>
+              </div>
+              <div className="rounded bg-amber-100/60 p-2 text-center">
+                <p className="font-bold">⛏️⛏️⛏️</p>
+                <p className="text-green-700">+3 if right</p>
+                <p className="text-red-700">−2 if wrong</p>
+              </div>
+            </div>
           </div>
           <p className="text-xs text-gray-500 mt-2 italic">
-            10 scenarios drawn randomly from 50+. Every playthrough is different. You earn exactly one Ridge badge based on your final score.
+            10 scenarios drawn randomly from 50+. Every playthrough is different. Your net XP (−20 to +30) is added to your real cAMP total — leaderboard positions are on the line.
           </p>
         </Section>
 

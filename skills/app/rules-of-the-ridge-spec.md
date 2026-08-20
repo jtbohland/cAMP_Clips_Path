@@ -48,28 +48,33 @@ When the clip is recorded:
    f. Points animate into running Ridge Score
 6. After 10 scenarios → End Screen
 
-### Crux Call (Confidence Wager)
+### Crux Call (Confidence Wager — Real cAMP XP)
 
-Set **after answering both parts, before seeing the result**. The SDR is wagering on their total judgment.
+Set **after answering both parts, before seeing the result**. The SDR is wagering their **real cAMP XP** — gains and losses apply to their actual total and affect leaderboard position.
 
-| Level | Label | Correct Multiplier | Wrong Penalty |
-|-------|-------|--------------------|---------------|
-| ⛏️ | Cautious | 1x | −0 |
-| ⛏️⛏️ | Confident | 2x | −3 |
-| ⛏️⛏️⛏️ | Sending It | 3x | −5 |
+| Level | Label | If Right | If Wrong |
+|-------|-------|----------|----------|
+| ⛏️ | Cautious | +1 XP | −1 XP |
+| ⛏️⛏️ | Confident | +2 XP | −1 XP |
+| ⛏️⛏️⛏️ | Sending It | +3 XP | −2 XP |
+
+**Range across 10 scenarios: −20 to +30 XP**
+
+Every level has real stakes. There is no free play — even ⛏️ risks 1 XP per scenario.
 
 ### Scoring
 
-| Component | Points |
-|-----------|--------|
-| Yes/No correct | 5 base |
-| Rule correct | 5 base |
-| Both correct | 10 base × Crux multiplier |
-| Yes/No wrong | 0 (+ Crux penalty) |
-| Rule wrong | 0 (+ Crux penalty if Yes/No also wrong) |
-| Half right (Yes/No correct, Rule wrong) | 5 × Crux multiplier (no penalty) |
+Scoring is based on the Crux Call wager outcome. The two-part answer (Yes/No + Rule) determines **right vs. wrong** for the wager:
 
-**Max possible score:** 10 scenarios × 10 pts × 3x = **300 points**
+| Outcome | Crux Call Result |
+|---------|------------------|
+| Both parts correct (Yes/No + Rule) | RIGHT — earn XP per Crux level |
+| Either part wrong | WRONG — lose XP per Crux level |
+
+XP is added/subtracted from the SDR's **real cAMP total**. Net XP change across 10 scenarios determines the badge tier.
+
+**Max possible gain:** +30 XP (all correct, all ⛏️⛏️⛏️)
+**Max possible loss:** −20 XP (all wrong, all ⛏️⛏️⛏️)
 
 ### Running Ridge Score
 
@@ -86,16 +91,19 @@ When a wrong answer is revealed, show a coaching note:
 
 ## Badges (Title = Badge)
 
-Earned based on final Ridge Score. Four tiers:
+Earned based on net XP change from the game. Five tiers:
 
-| Threshold | Emoji | Badge Name |
-|-----------|-------|------------|
-| 0–99 | 🪨 | Ridge Rookie |
-| 100–179 | ⛏️ | Trail Judge |
-| 180–249 | 🏔️ | ROE Enforcer |
-| 250–300 | 🌄 | Summit Authority |
+| Net XP Range | Emoji | Badge Name |
+|--------------|-------|------------|
+| −20 to −1 | 🪢 | Whipper |
+| 0 to +9 | 🪨 | Ridge Rookie |
+| +10 to +19 | ⛏️ | Trail Judge |
+| +20 to +26 | 🏔️ | ROE Enforcer |
+| +27 to +30 | 🌄 | Summit Authority |
 
-All four are added to the badge system alongside existing badges (speed_hiker, swiss_army_knife, etc.).
+All five are added to the badge system alongside existing badges (speed_hiker, swiss_army_knife, etc.).
+
+**Whipper** (🪢) — climbing term for taking a big fall but being caught by the rope. Light-hearted, not harsh.
 
 ---
 
@@ -103,11 +111,11 @@ All four are added to the badge system alongside existing badges (speed_hiker, s
 
 After 10 scenarios, display:
 
-1. **Ridge Score** (total points / 300 max)
+1. **Net XP Change** (−20 to +30, shown prominently with + or − and color)
 2. **Badge earned** (emoji + title, animated reveal)
 3. **Crux Accuracy** — how well-calibrated their confidence was (% of high-confidence answers that were correct)
 4. **ROE Section Breakdown** — which sections they nailed vs. stumbled on
-5. **XP Earned** — total XP from the game
+5. **New cAMP XP Total** — updated total after gains/losses
 6. **"Back to Clips"** button → returns to Library homescreen
 7. **"Ridge Replay"** button → restarts with new random 10, no XP stakes
 
@@ -153,11 +161,12 @@ Customer Stories (Day 11) completion
 
 ## XP Implications
 
-- New XP source for SDRs only
-- Max Ridge XP = to be calculated based on scoring + badge XP
-- Update SDR max in XPlanation modal
-- Update SDR cap on leaderboard
+- Real cAMP XP wagered — SDRs can gain up to +30 or lose up to −20
+- Net XP change affects leaderboard position
+- Update SDR max in XPlanation modal (+30 theoretical max)
+- Update SDR cap on leaderboard (+30 theoretical max)
 - AE max unchanged
+- Ridge Replay has NO XP stakes — practice only
 
 ---
 
