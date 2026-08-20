@@ -1234,7 +1234,7 @@ export default function WatchPage() {
           )}
         </div>
 
-        {showTranscript && wistiaVideoId && (
+        {showTranscript && wistiaVideoId && phase === "watching" && (
           <div className="w-[340px] flex-shrink-0 border-l border-gray-200 overflow-y-auto bg-white">
             {/* @ts-expect-error wistia-transcript is a web component */}
             <wistia-transcript media-id={wistiaVideoId} accent-color="#4F46E5" />
