@@ -164,10 +164,10 @@ export const TOPIC_DAYS: Record<string, TopicDayConfig> = {
       "Evaluate edge cases involving stage movement, clawbacks, and the statute of limitations.",
     ],
     smes: [
-      { name: "Derrick Williams", title: "Sr. Director, Sales Development" },
+      { name: "Derrick Williams", title: "Sales Development, Strategy & Operations Manager" },
     ],
     slackChannels: [
-      { name: "#sdr-team", url: "https://amplitude.slack.com/archives/C04LW12V65N" },
+      { name: "#sdr-internal", url: "https://amplitude.slack.com/archives/C04LW12V65N" },
     ],
     resources: [
       {

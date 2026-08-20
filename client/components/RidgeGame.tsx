@@ -23,9 +23,10 @@ type RidgeGameProps = {
   viewerId: string;
   clipId: string;
   onBackToClips: () => void;
+  onComplete?: () => void;
 };
 
-export default function RidgeGame({ viewerId, clipId, onBackToClips }: RidgeGameProps) {
+export default function RidgeGame({ viewerId, clipId, onBackToClips, onComplete }: RidgeGameProps) {
   const [phase, setPhase] = useState<GamePhase>("idle");
   const [isReplay, setIsReplay] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -89,6 +90,7 @@ export default function RidgeGame({ viewerId, clipId, onBackToClips }: RidgeGame
         const result = await completeGame({ sessionId, viewerId, clipId, isReplay });
         setEndData(result);
         setPhase("complete");
+        onComplete?.();
       } catch (e) {
         console.error("Failed to complete Ridge game", e);
         setPhase("complete");
