@@ -516,7 +516,8 @@ export const CLIPS_EXPECTED_BY_WEEKDAY_AE = [
 ];
 
 // ─── SDR clip schedule ──────────────────────────────────────────────
-// SDR has 13 Ascent days (vs 15 for AE) → 18 total weekdays
+// SDR has 14 Ascent days (vs 15 for AE) → 19 total weekdays
+// Day 14 = Rules of Engagement (resource day, SDR-only)
 export const CLIPS_EXPECTED_BY_WEEKDAY_SDR = [
   0,   // 0 weekdays elapsed
   0, 0, 0, 0, 0,            // weekdays 1-5: Approach (no clips)
@@ -531,17 +532,18 @@ export const CLIPS_EXPECTED_BY_WEEKDAY_SDR = [
   14,  // weekday 14 → Day 9  (Discovery × 2)
   15,  // weekday 15 → Day 10 (resource day)
   16,  // weekday 16 → Day 11 (Pricing & Packaging)
-  16,  // weekday 17 → (SDR done after Day 13/weekday 18)
-  16,  // weekday 18 → (padding — SDR finishes at weekday 18)
+  16,  // weekday 17 → Day 12 (Partners)
+  16,  // weekday 18 → Day 13 (Customer Stories)
+  17,  // weekday 19 → Day 14 (ROE — resource day, Ridge game)
 ];
 
 /** Legacy alias — AE schedule */
 export const CLIPS_EXPECTED_BY_WEEKDAY = CLIPS_EXPECTED_BY_WEEKDAY_AE;
 
 export const TOTAL_ASCENT_CLIPS_AE = 21;
-export const TOTAL_ASCENT_CLIPS_SDR = 16;
+export const TOTAL_ASCENT_CLIPS_SDR = 17;
 export const TOTAL_WEEKDAYS_AE = 20;
-export const TOTAL_WEEKDAYS_SDR = 18;
+export const TOTAL_WEEKDAYS_SDR = 19;
 
 /** Legacy alias */
 export const TOTAL_ASCENT_CLIPS = TOTAL_ASCENT_CLIPS_AE;

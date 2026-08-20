@@ -60,6 +60,9 @@ const GUIDE_SESSIONS: Record<string, AscentGuideEntry> = {
       { name: "Nathan Youmans", title: "Director, Marketing Operations" },
       { name: "Chelsie Cauthon", title: "Sr. Marketing Transformation Manager" },
     ],
+    followAlongUrl:
+      "https://amplitude.lightning.force.com/lightning/o/Lead/list?filterName=My_MQLs_Slack",
+    followAlongLabel: "My MQLs (SFDC)",
   },
 
   // ── Day 3 (sort 4): GTM Launch Pad ──
@@ -258,7 +261,20 @@ const GUIDE_SESSIONS: Record<string, AscentGuideEntry> = {
     smes: [{ name: "YOU 🫵🏼", title: "You are the subject matter expert" }],
   },
 
-  // ── Day 13 (sort 17): Contract Lifecycle Management ──
+  // ── Day 13 SDR (sort 165): Rules of Engagement ──
+  day13_roe: {
+    id: "day13_roe",
+    summary:
+      "This session teaches SDRs the Rules of Engagement — the policies that govern sourcing credit, territory boundaries, BoB transitions, and deal crediting. SDRs will play Rules of the Ridge, a scenario-based game that tests ROE knowledge through realistic case studies with real cAMP XP wagered on every answer.",
+    learningObjectives: [
+      "Apply primary and secondary sourcing credit rules to realistic SDR scenarios.",
+      "Identify when territory, BoB transition, and live chat policies affect deal crediting.",
+      "Evaluate edge cases around stage movement, clawbacks, and statute of limitations.",
+    ],
+    smes: [{ name: "Derrick Williams", title: "Sr. Director, Sales Development" }],
+  },
+
+  // ── Day 13 AE (sort 17): Contract Lifecycle Management ──
   day13: {
     id: "day13",
     summary:
@@ -346,7 +362,8 @@ const SORT_ORDER_TO_SESSION_ID: Record<number, string> = {
   140: "day11",           // Day 11: Forecasting
   150: "day11",           // Day 11: Forecasting (Intro to Services)
   160: "day12",           // Day 12: Customer Stories
-  170: "day13",           // Day 13: Contract Lifecycle Management
+  165: "day13_roe",       // Day 13 SDR: Rules of Engagement (SDR-only)
+  170: "day13",           // Day 13 AE: Contract Lifecycle Management
   180: "day14",           // Day 14: Deal Desk & CPQ
   190: "day15_se",        // Day 15: Leveraging Solution Engineers
   200: "day15_ps",        // Day 15: Leveraging Professional Services

@@ -12,11 +12,12 @@
  *   Day 9: 1 (resource) → Day 10: 1 → Day 11: 2 → Day 12: 1 →
  *   Day 13: 1 → Day 14: 1 → Day 15: 2
  *
- * SDR path: 16 clips (14 video + 2 resource days)
+ * SDR path: 17 clips (14 video + 3 resource days)
  *   Day 1: 2 → Day 2: 1 → Day 3: 2 (GTM LP + Pod Tower) → Day 4: 1 →
  *   Day 5: 2 (Cold Calling + Nooks) → Day 6: 1 (resource) →
  *   Day 7: 1 → Day 8: 2 → Day 9: 2 →
- *   Day 10: 1 (resource) → Day 11: 1 → Day 12: 1 → Day 13: 1
+ *   Day 10: 1 (resource) → Day 11: 1 → Day 12: 1 → Day 13: 1 →
+ *   Day 14: 1 (resource — ROE / Ridge game, SDR-only)
  *
  * Legacy path (pre–Pod Tower): 20 clips for AE, 15 for SDR
  *   Same as above but without Pod Tower (sort 45).
@@ -40,11 +41,11 @@ export const CLIPS_EXPECTED_BY_WEEKDAY_AE = [
 
 // ─── SDR ─────────────────────────────────────────────────────────────────────
 
-export const TOTAL_ASCENT_CLIPS_SDR = 16;
-export const TOTAL_WEEKDAYS_SDR = 18; // 5 Approach + 13 Ascent days
+export const TOTAL_ASCENT_CLIPS_SDR = 17;
+export const TOTAL_WEEKDAYS_SDR = 19; // 5 Approach + 14 Ascent days
 
 /** Cumulative clips expected by weekday for SDR.
- *  SDR has 13 Ascent days (vs 15 for AE) — fewer clips, faster summit.
+ *  SDR has 14 Ascent days (vs 15 for AE) — fewer clips, faster summit.
  *
  *  Weekday 6  → Day 1: 2 (Verticals + Personas)
  *  Weekday 7  → Day 2: 1 (TOFU)
@@ -59,13 +60,14 @@ export const TOTAL_WEEKDAYS_SDR = 18; // 5 Approach + 13 Ascent days
  *  Weekday 16 → Day 11: 1 (Pricing & Packaging)
  *  Weekday 17 → Day 12: 1 (Partners)
  *  Weekday 18 → Day 13: 1 (Customer Stories)
+ *  Weekday 19 → Day 14: 1 (ROE — resource day, Ridge game)
  */
 export const CLIPS_EXPECTED_BY_WEEKDAY_SDR = [
   0,   // 0 weekdays elapsed
   0, 0, 0, 0, 0,            // weekdays 1-5: Approach (no clips)
   2, 3, 5, 6, 8,            // weekdays 6-10  (Day 5 adds 2 SDR clips)
   9, 10, 12, 14, 15,        // weekdays 11-15
-  16, 16, 16,               // weekdays 16-18 (done after weekday 18)
+  16, 16, 16, 17,           // weekdays 16-19 (ROE at weekday 19)
 ];
 
 // ─── Legacy (pre–Pod Tower) ──────────────────────────────────────────────────

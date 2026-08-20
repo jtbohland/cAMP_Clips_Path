@@ -8,13 +8,14 @@ interface TopicReflectionSectionProps {
   viewerId: string;
   topicDay: string;
   questions: ReflectionQuestion[];
+  onComplete?: () => void;
 }
 
 /**
  * Topic day reflection section — 2 open-ended questions shown at the bottom
  * of TopicGear pages. Once submitted, shows read-only answers with a green check.
  */
-function TopicReflectionSectionInner({ viewerId, topicDay, questions }: TopicReflectionSectionProps) {
+function TopicReflectionSectionInner({ viewerId, topicDay, questions, onComplete }: TopicReflectionSectionProps) {
   const [answer1, setAnswer1] = useState("");
   const [answer2, setAnswer2] = useState("");
 
@@ -58,6 +59,7 @@ function TopicReflectionSectionInner({ viewerId, topicDay, questions }: TopicRef
         });
       }
       await refetch();
+      onComplete?.();
     } catch (error) {
       const message = error && typeof error === "object" && "message" in error
         ? String((error as { message: unknown }).message)

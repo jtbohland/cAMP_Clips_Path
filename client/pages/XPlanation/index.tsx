@@ -36,6 +36,14 @@ const ENGAGEMENT_STREAK_BONUSES = [
   { badge: "Leave No Trace", xp: 15, emoji: "🌱", condition: "5/5 Trail Markers on a 3-clip window (×5 max: clips 1–3, 3–5, 7–9, 10–11+13, 13–15)" },
 ];
 
+const RIDGE_BADGES = [
+  { badge: "Whipper", xpLabel: "−20 to −1 XP", emoji: "🪢", condition: "Net negative score — you took a big fall, but the rope caught you" },
+  { badge: "Ridge Rookie", xpLabel: "0 to +9 XP", emoji: "🪨", condition: "Broke even or small gain — you survived the Ridge" },
+  { badge: "Trail Judge", xpLabel: "+10 to +19 XP", emoji: "⛏️", condition: "Solid positive — you know the rules and wagered smart" },
+  { badge: "ROE Enforcer", xpLabel: "+20 to +26 XP", emoji: "🏔️", condition: "Strong gains — you know the ROE cold and backed yourself" },
+  { badge: "Summit Authority", xpLabel: "+27 to +30 XP", emoji: "🌄", condition: "Near-perfect mastery — you sent it and crushed it" },
+];
+
 const PACING_STREAK_BONUSES = [
   { badge: "Ridge Runner", xp: 10, emoji: "🥾", condition: "5 consecutive days Summit Bound" },
   { badge: "Alpine Endurance", xp: 15, emoji: "🏔️", condition: "10 consecutive days Summit Bound" },
@@ -154,6 +162,47 @@ export default function XPlanationPage() {
               />
             ))}
           </div>
+        </Section>
+
+        {/* Rules of the Ridge (SDR Only) */}
+        <Section title="⛏️ Rules of the Ridge" description="SDR path only — wager your real cAMP XP on ROE scenario challenges. Your net XP change determines your badge:">
+          <div className="space-y-2">
+            {RIDGE_BADGES.map((b) => (
+              <RidgeBadgeRow
+                key={b.badge}
+                emoji={b.emoji}
+                badge={b.badge}
+                xpLabel={b.xpLabel}
+                condition={b.condition}
+                earned={earnedBadgeIds.has(b.badge.toLowerCase().replace(/ /g, "_"))}
+              />
+            ))}
+          </div>
+          <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
+            <p className="text-sm text-amber-800">
+              <span className="font-semibold">⛏️ Crux Call:</span> After answering each scenario, wager your confidence (⛏️, ⛏️⛏️, or ⛏️⛏️⛏️) before the answer is revealed. Every level has real stakes:
+            </p>
+            <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-amber-900">
+              <div className="rounded bg-amber-100/60 p-2 text-center">
+                <p className="font-bold">⛏️</p>
+                <p className="text-green-700">+1 if right</p>
+                <p className="text-red-700">−1 if wrong</p>
+              </div>
+              <div className="rounded bg-amber-100/60 p-2 text-center">
+                <p className="font-bold">⛏️⛏️</p>
+                <p className="text-green-700">+2 if right</p>
+                <p className="text-red-700">−1 if wrong</p>
+              </div>
+              <div className="rounded bg-amber-100/60 p-2 text-center">
+                <p className="font-bold">⛏️⛏️⛏️</p>
+                <p className="text-green-700">+3 if right</p>
+                <p className="text-red-700">−2 if wrong</p>
+              </div>
+            </div>
+          </div>
+          <p className="text-xs text-gray-500 mt-2 italic">
+            10 scenarios drawn randomly from 50+. Every playthrough is different. Your net XP (−20 to +30) is added to your real cAMP total — leaderboard positions are on the line.
+          </p>
         </Section>
 
         {/* Pacing Streak Bonuses */}
@@ -328,6 +377,37 @@ function XpRow({ emoji, label, xp, description }: { emoji: string; label: string
         </div>
       </div>
       <span className="text-sm font-bold text-indigo-600">+{xp} XP</span>
+    </div>
+  );
+}
+
+function RidgeBadgeRow({ emoji, badge, xpLabel, condition, earned }: { emoji: string; badge: string; xpLabel: string; condition: string; earned: boolean }) {
+  return (
+    <div className={`flex items-center justify-between rounded-lg border px-3 py-2 ${
+      earned
+        ? "bg-amber-50 border-amber-300/50"
+        : "bg-white border-gray-200"
+    }`}>
+      <div className="flex items-center gap-2">
+        <span className={`text-lg ${!earned ? "opacity-50" : ""}`}>{emoji}</span>
+        <div>
+          <p className={`text-sm ${earned ? "font-bold text-gray-900" : "font-medium text-gray-500"}`}>
+            {badge}
+            <span className="ml-2 inline-flex items-center rounded-full bg-sky-100 px-2 py-0.5 text-xs font-semibold text-sky-700">
+              SDR Only
+            </span>
+            {earned && (
+              <span className="ml-1 inline-flex items-center rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-semibold text-indigo-700">
+                ✅ Earned
+              </span>
+            )}
+          </p>
+          <p className={`text-xs ${earned ? "text-gray-500" : "text-gray-500/60"}`}>
+            {condition}
+          </p>
+        </div>
+      </div>
+      <span className={`text-sm font-bold whitespace-nowrap ${earned ? "text-amber-600" : "text-gray-500"}`}>{xpLabel}</span>
     </div>
   );
 }

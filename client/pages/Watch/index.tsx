@@ -54,7 +54,7 @@ function getWistiaVideoId(url: string): string | null {
 export default function WatchPage() {
   const { clipId } = useParams<{ clipId: string }>();
   const navigate = useNavigate();
-  const { viewer } = useViewer();
+  const { viewer, isLoading: viewerLoading } = useViewer();
 
   const { data: clipData, loading: clipLoading } = useApiData(
     "GetClipForWatching",
@@ -967,6 +967,23 @@ export default function WatchPage() {
 
   // ── Render ──────────────────────────────────────────────────────────────────
 
+  // If no valid clipId or viewer (after loading finishes), show fallback
+  if (!clipId || (!viewer?.id && !viewerLoading)) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="flex flex-col items-center gap-4">
+          <p className="text-sm text-gray-500">No clip selected.</p>
+          <button
+            onClick={() => navigate("/")}
+            className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700"
+          >
+            Go to Clip Library
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (clipLoading || !clipData) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -987,7 +1004,7 @@ export default function WatchPage() {
   const goToNextClip = nextClip
     ? () => {
         if (nextIsResourceDay) {
-          const topicKey = nextClip.sortOrder === 60 ? "day5" : "day9";
+          const topicKey = nextClip.sortOrder === 60 ? "day5" : nextClip.sortOrder === 165 ? "day13_sdr_roe" : "day9";
           navigate(`/topic-gear/${topicKey}/${nextClip.id}`);
         } else {
           navigate(`/watch/${nextClip.id}`);

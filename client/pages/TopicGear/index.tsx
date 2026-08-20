@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router";
 import { useViewer } from "@/components/ViewerContext";
 import { useApiData } from "@/hooks/useApiData.js";
@@ -8,14 +8,21 @@ import { TOPIC_DAYS } from "@/config/topicDays";
 import type { TopicDayConfig } from "@/config/topicDays";
 import TopicResourceList from "@/components/TopicResourceList";
 import TopicReflectionSection from "@/components/TopicReflectionSection";
+import RidgeGame from "@/components/RidgeGame";
 
 /**
  * Topic Gear page — shows summary, learning objectives, SMEs, and resources
- * for resource-only topic days (Day 5: Renewal Operations, Day 9: Pricing & Packaging).
+ * for resource-only topic days (Day 5, Day 9, Day 13 SDR ROE).
  *
  * Route: /topic-gear/:topicKey/:clipId
- *   topicKey = "day5" | "day9"
+ *   topicKey = "day5" | "day9" | "day13_sdr_roe"
  *   clipId = UUID of the topic day clip row (for tracking)
+ *
+ * Gating rules:
+ *   Day 5 & Day 9: "Back to Clips" is locked until the reflection is submitted.
+ *   Day 13 ROE:    "Back to Clips" is available until the learner clicks the ROE doc.
+ *                  Once clicked, "Back to Clips" locks and the Ridge game unlocks.
+ *                  After the game end screen, "Back to Clips" re-enables.
  */
 
 const BADGE_STYLES: Record<string, string> = {
@@ -50,7 +57,29 @@ export default function TopicGearPage() {
   const { viewer } = useViewer();
 
   const config = topicKey ? TOPIC_DAYS[topicKey] : undefined;
+  const isROE = topicKey === "day13_sdr_roe";
+  const hasReflection = !!(config?.reflectionQuestions && config.reflectionQuestions.length >= 2);
+
   const { run: trackClick, loading: tracking } = useApi("TrackResourceClick");
+
+  // ── Completion state ──────────────────────────────────────────────────────
+  // Day 5 & Day 9: reflection must be submitted
+  // Day 13 ROE: Ridge game must be completed
+  const [reflectionJustSubmitted, setReflectionJustSubmitted] = useState(false);
+  const [roeDocClicked, setRoeDocClicked] = useState(false);
+  const [roeGameComplete, setRoeGameComplete] = useState(false);
+
+  // Check if reflection was ALREADY submitted on a previous visit (Day 5 & Day 9)
+  const { data: reflectionData } = useApiData(
+    "GetTopicReflections",
+    { viewerId: viewer?.id ?? "" },
+    { enabled: !!viewer?.id && hasReflection }
+  );
+
+  const reflectionAlreadyDone = useMemo(() => {
+    if (!hasReflection || !reflectionData?.reflections) return false;
+    return reflectionData.reflections.some((r: any) => r.topicDay === topicKey);
+  }, [hasReflection, reflectionData, topicKey]);
 
   // Get resource progress for this clip
   const { data: progressData, refetch: refetchProgress } = useApiData(
@@ -67,9 +96,37 @@ export default function TopicGearPage() {
 
   const allClicked = config ? clickedIndices.size >= config.resources.length : false;
 
+  // Has the learner clicked at least one resource? (from DB, persists across visits)
+  const hasStartedResources = clickedIndices.size > 0;
+
+  // Determine if "Back to Clips" should be enabled
+  // All resource days share the same pattern:
+  //   - Can leave BEFORE clicking the first resource (not committed yet)
+  //   - Once the first resource is clicked → locked until completion
+  //   - Completion = reflection submitted (Day 5/9) or game finished (ROE)
+  const canLeave = useMemo(() => {
+    if (isROE) {
+      // ROE: can leave before clicking doc, or after game complete
+      if (!roeDocClicked) return true;
+      return roeGameComplete;
+    }
+    // Day 5 & Day 9: can leave before clicking any resource, or after reflection
+    if (hasReflection) {
+      if (!hasStartedResources) return true;
+      return reflectionAlreadyDone || reflectionJustSubmitted;
+    }
+    // Fallback (unknown topic day): always allow
+    return true;
+  }, [isROE, roeDocClicked, roeGameComplete, hasReflection, hasStartedResources, reflectionAlreadyDone, reflectionJustSubmitted]);
+
   const handleResourceClick = useCallback(async (index: number, url: string) => {
     // Open resource in new tab
     window.open(url, "_blank");
+
+    // For ROE, mark the doc as clicked (locks "Back to Clips")
+    if (isROE) {
+      setRoeDocClicked(true);
+    }
 
     // Track the click
     if (viewer?.id && clipId && config) {
@@ -83,7 +140,10 @@ export default function TopicGearPage() {
         await refetchProgress();
 
         if (result?.justCompleted) {
-          toast.success("🪓 Swiss Army Knife badge earned! Complete the reflection below for +10 XP.", {
+          const toastMsg = isROE
+            ? "🪓 Swiss Army Knife badge earned! Complete the Ridge game below."
+            : "🪓 Swiss Army Knife badge earned! Complete the reflection below for +10 XP.";
+          toast.success(toastMsg, {
             style: { backgroundColor: "#dcfce7", color: "#166534", border: "1px solid #bbf7d0" },
             duration: 5000,
           });
@@ -95,7 +155,7 @@ export default function TopicGearPage() {
         console.error("Error tracking resource click:", message);
       }
     }
-  }, [viewer?.id, clipId, config, trackClick, refetchProgress]);
+  }, [viewer?.id, clipId, config, isROE, trackClick, refetchProgress]);
 
   if (!viewer) {
     navigate("/?tab=ascent", { replace: true });
@@ -119,6 +179,22 @@ export default function TopicGearPage() {
     );
   }
 
+  // Shared "Back to Clips" button renderer — disabled when gated
+  const backToClipsButton = (
+    <button
+      onClick={() => navigate("/?tab=ascent")}
+      disabled={!canLeave}
+      className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm ${
+        canLeave
+          ? "bg-indigo-600 text-white hover:bg-indigo-700"
+          : "bg-gray-400 text-gray-200 cursor-not-allowed"
+      }`}
+      title={!canLeave ? (isROE ? "Complete the Ridge game to continue" : "Complete the reflection to continue") : undefined}
+    >
+      {canLeave ? "🎞️ Back to Clips" : "🔒 Back to Clips"}
+    </button>
+  );
+
   return (
     <div className="flex flex-col h-full overflow-hidden" style={{ backgroundColor: "#ECFDF5" }}>
       {/* Forest green header */}
@@ -133,25 +209,47 @@ export default function TopicGearPage() {
               <p className="text-sm text-green-200 mt-0.5">🎒 cAMP Gear — Resource Review</p>
             </div>
           </div>
-          <button
-            onClick={() => navigate("/?tab=ascent")}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-indigo-600 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors shadow-sm"
-          >
-            🎞️ Back to Clips
-          </button>
+          {backToClipsButton}
         </div>
       </div>
 
       {/* Content */}
       <div className="flex-1 overflow-auto">
         <div className="max-w-3xl mx-auto w-full p-6 space-y-5">
+          {/* Gating notice — shown when learner hasn't completed the day yet */}
+          {!canLeave && (
+            <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 flex items-center gap-3">
+              <span className="text-xl">🔒</span>
+              <div>
+                <p className="text-sm font-bold text-amber-800">
+                  {isROE
+                    ? "Complete the Ridge game to unlock \"Back to Clips\""
+                    : "Complete the reflection to unlock \"Back to Clips\""}
+                </p>
+                <p className="text-xs text-amber-600 mt-0.5">
+                  {isROE
+                    ? "You've reviewed the ROE Guide — now prove your knowledge in the Ridge game below."
+                    : "Review all resources and submit your reflection to continue."}
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Completion banner */}
           {allClicked && (
             <div className="rounded-xl border border-green-300 bg-green-50 p-4 flex items-center gap-3">
               <span className="text-2xl">🪓</span>
               <div>
-                <p className="text-sm font-bold text-green-800">All resources reviewed — Swiss Army Knife earned!</p>
-                <p className="text-xs text-green-600 mt-0.5">All tools. All terrain. You're ready for anything. Submit the reflection below for +10 XP!</p>
+                <p className="text-sm font-bold text-green-800">
+                  {isROE
+                    ? "All resources reviewed — Swiss Army Knife earned!"
+                    : "All resources reviewed — Swiss Army Knife earned!"}
+                </p>
+                <p className="text-xs text-green-600 mt-0.5">
+                  {isROE
+                    ? "All tools. All terrain. You're ready for the Ridge."
+                    : "All tools. All terrain. You're ready for anything. Submit the reflection below for +10 XP!"}
+                </p>
               </div>
             </div>
           )}
@@ -258,13 +356,35 @@ export default function TopicGearPage() {
             typeLabels={TYPE_LABELS}
           />
 
+          {/* Ridge Game (ROE day only) — replaces reflection */}
+          {isROE && viewer?.id && clipId && (
+            allClicked ? (
+              <RidgeGame
+                viewerId={viewer.id}
+                clipId={clipId}
+                onBackToClips={() => navigate("/?tab=ascent")}
+                onComplete={() => setRoeGameComplete(true)}
+              />
+            ) : roeDocClicked ? (
+              <div className="rounded-xl bg-gray-50 border border-gray-200 shadow-[0_1px_3px_rgba(0,0,0,0.08)] p-5 opacity-60">
+                <h2 className="text-base font-bold text-gray-400 flex items-center gap-2 mb-1">
+                  🔒 Rules of the Ridge
+                </h2>
+                <p className="text-xs text-gray-400">
+                  Review the ROE Guide above to unlock the game.
+                </p>
+              </div>
+            ) : null
+          )}
+
           {/* Topic Reflection (Day 5 & Day 9 only) — locked until all resources clicked */}
-          {config.reflectionQuestions && config.reflectionQuestions.length >= 2 && viewer?.id && topicKey && (
+          {hasReflection && viewer?.id && topicKey && (
             allClicked ? (
               <TopicReflectionSection
                 viewerId={viewer.id}
                 topicDay={topicKey}
-                questions={config.reflectionQuestions}
+                questions={config.reflectionQuestions!}
+                onComplete={() => setReflectionJustSubmitted(true)}
               />
             ) : (
               <div className="rounded-xl bg-gray-50 border border-gray-200 shadow-[0_1px_3px_rgba(0,0,0,0.08)] p-5 opacity-60">
@@ -280,12 +400,7 @@ export default function TopicGearPage() {
 
           {/* Bottom back button */}
           <div className="flex justify-center pb-6">
-            <button
-              onClick={() => navigate("/?tab=ascent")}
-              className="inline-flex items-center gap-1.5 px-6 py-2.5 rounded-lg bg-indigo-600 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors shadow-sm"
-            >
-              🎞️ Back to Clips
-            </button>
+            {backToClipsButton}
           </div>
         </div>
       </div>

@@ -103,6 +103,33 @@ export default function LibraryPage() {
     return sessionStorage.getItem(SDR_SAVED_KEY) !== null;
   });
 
+  // If sdrTestMode was restored from sessionStorage but AutoLookupViewer
+  // already overwrote the viewer back to the real admin, re-apply SDR swap.
+  // Conversely, if sdrTestMode is OFF but the viewer is the fake SDR test
+  // identity (stale localStorage), force a re-lookup so we don't get stuck.
+  useEffect(() => {
+    if (sdrTestMode && viewer && viewer.role !== "SDR") {
+      setViewer({
+        id: "c618622d-0a80-45c4-980b-8490331327ae",
+        email: "sdr-test@test.local",
+        name: "SDR Test Viewer",
+        role: "SDR",
+        isAdmin: true,
+      });
+      // Keep admin viewer in localStorage for safety
+      localStorage.setItem("cliptracker_viewer", JSON.stringify(viewer));
+    } else if (!sdrTestMode && viewer?.email === "sdr-test@test.local") {
+      // Stale SDR test identity in localStorage — clear it and reload once
+      // so ViewerContext re-derives the real viewer via AutoLookupViewer
+      const reloadKey = "sdr_stale_reload";
+      if (!sessionStorage.getItem(reloadKey)) {
+        sessionStorage.setItem(reloadKey, "1");
+        localStorage.removeItem("cliptracker_viewer");
+        window.location.reload();
+      }
+    }
+  }, [sdrTestMode, viewer?.role, viewer?.email]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleToggleSdrTest = useCallback(() => {
     if (sdrTestMode) {
       // Restore original admin viewer from sessionStorage
@@ -125,6 +152,8 @@ export default function LibraryPage() {
         role: "SDR",
         isAdmin: true,
       });
+      // Keep admin viewer in localStorage so a page refresh can't get stuck on SDR
+      localStorage.setItem("cliptracker_viewer", JSON.stringify(viewer));
       setSdrTestMode(true);
     }
   }, [sdrTestMode, ascentTestMode, viewer, setViewer]);
@@ -602,8 +631,8 @@ export default function LibraryPage() {
         },
         4: {
           emoji: "🧗🏻‍♂️",
-          title: "Telling the Customer Story",
-          time: "⏱ Total: ~1h 11m | 1 session day",
+          title: "Closing the Loop",
+          time: "⏱ Total: ~2h | 2 session days",
           note: TIME_NOTE,
         },
       }
@@ -1369,7 +1398,7 @@ export default function LibraryPage() {
                           wheelAndDealSortOrders={wheelAndDealSortOrders}
                           onViewGear={
                             clip.isTopicDay
-                              ? () => navigate(`/topic-gear/${clip.sortOrder === 60 ? "day5" : "day9"}/${clip.id}`)
+                              ? () => navigate(`/topic-gear/${clip.sortOrder === 60 ? "day5" : clip.sortOrder === 165 ? "day13_sdr_roe" : "day9"}/${clip.id}`)
                               : undefined
                           }
                           onZoomClipWatch={clip.sortOrder === 50 ? handleReachdeskWatch : undefined}

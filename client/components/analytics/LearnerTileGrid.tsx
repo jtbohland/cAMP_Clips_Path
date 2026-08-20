@@ -17,7 +17,6 @@ type SortKey = "urgency" | "name" | "xp" | "clips" | "lastLogin";
 
 interface LearnerTileGridProps {
   learners: LearnerTileData[];
-  totalClips: number;
   onLearnerClick: (viewerId: string) => void;
 }
 
@@ -25,7 +24,6 @@ const PAGE_SIZE = 24;
 
 const LearnerTileGrid = memo(function LearnerTileGrid({
   learners,
-  totalClips,
   onLearnerClick,
 }: LearnerTileGridProps) {
   const [search, setSearch] = useState("");
@@ -155,7 +153,6 @@ const LearnerTileGrid = memo(function LearnerTileGrid({
             <LearnerTile
               key={l.viewerId}
               learner={l}
-              totalClips={totalClips}
               onClick={onLearnerClick}
             />
           ))}
