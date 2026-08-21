@@ -381,23 +381,27 @@ export default function XPlanationPage() {
         )}
 
         {/* Max Possible XP */}
-        <div className="rounded-xl bg-white border border-gray-200 shadow-[0_1px_3px_rgba(0,0,0,0.08)] p-5 text-center space-y-2">
-          <p className="text-lg font-bold text-gray-900">
-            🏆 Theoretical Maximum: ~{maxXp} XP
-            <span className="ml-2 text-xs font-normal text-gray-400">
-              ({selectedRole === "SDR" ? "SDR" : "AE/PSM/Renewals"} path • {clipCount} clips)
-            </span>
+        <div className="relative rounded-xl border-2 border-amber-400 bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 p-6 text-center space-y-3 shadow-[0_2px_12px_rgba(245,158,11,0.2)]">
+          <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-400 text-white text-xs font-bold px-3 py-0.5 rounded-full tracking-wide uppercase shadow-sm">
+            {selectedRole === "SDR" ? "SDR" : "AE/PSM/Renewals"} Path • {clipCount} Clips
+          </div>
+          <p className="text-3xl font-extrabold text-gray-900 pt-1">
+            🏆 ~{maxXp} XP
           </p>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm font-semibold text-amber-700 tracking-wide uppercase">
+            Theoretical Maximum
+          </p>
+          <div className="w-16 h-0.5 mx-auto bg-amber-300 rounded-full" />
+          <p className="text-sm text-gray-600 max-w-md mx-auto">
             {selectedRole === "SDR" ? (
               <>
-                A strong, engaged SDR typically lands around <span className="font-semibold text-gray-900">350–450 XP</span> (Summit Seeker).
-                Pinnacle Achiever (450+) requires consistent first-pass scores and staying on pace. Alpinist All-Star (636+) is reserved for those who earn real bonuses across the board.
+                A strong, engaged SDR typically lands around <span className="font-bold text-gray-900">350–450 XP</span> (Summit Seeker).
+                Pinnacle Achiever (450+) requires consistent first-pass scores. <span className="font-bold text-amber-700">Alpinist All-Star (636+)</span> is reserved for those who earn bonuses across the board.
               </>
             ) : (
               <>
-                A strong, engaged learner typically lands around <span className="font-semibold text-gray-900">400–500 XP</span> (Summit Seeker).
-                Pinnacle Achiever (500+) requires consistent first-pass scores and staying on pace. Alpinist All-Star (700+) is reserved for those who earn real bonuses across the board.
+                A strong, engaged learner typically lands around <span className="font-bold text-gray-900">400–500 XP</span> (Summit Seeker).
+                Pinnacle Achiever (500+) requires consistent first-pass scores. <span className="font-bold text-amber-700">Alpinist All-Star (700+)</span> is reserved for those who earn bonuses across the board.
               </>
             )}
           </p>
