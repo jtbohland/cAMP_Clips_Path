@@ -247,8 +247,8 @@ export default api({
 
     // Compute max XP per role group (AE/PSM/Renewals share ~963, SDR needs calculation)
     // For now, use known constants. SDR max is calculated from their 16-clip path.
-    const MAX_XP_AE = 963;
-    const MAX_XP_SDR = 720; // 16 clips × fewer trail markers + resource days
+    const MAX_XP_AE = 993;
+    const MAX_XP_SDR = 903; // 18 clips, scaled pacing (3/6/9/12), Ridge Runner game
     function getMaxXp(role: string, clipsDone: number): number {
       // If an SDR completed more clips than the SDR path offers,
       // they followed the AE path — use AE max XP for fair comparison.

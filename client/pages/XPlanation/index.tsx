@@ -1,9 +1,18 @@
+import { useState, useMemo } from "react";
 import { useViewer } from "@/components/ViewerContext";
 import { useApiData } from "@/hooks/useApiData.js";
 import PageHeader from "@/components/PageHeader";
 
+// ─── Role detection ────────────────────────────────────────────────────────────
+type RolePath = "AE" | "SDR";
 
-const TIERS = [
+function detectRolePath(role: string): RolePath {
+  if (/sdr|sales development/i.test(role)) return "SDR";
+  return "AE"; // AE, PSM, Renewals, Strat AE, etc. all use AE path
+}
+
+// ─── Tier data ─────────────────────────────────────────────────────────────────
+const AE_TIERS = [
   { tier: 1, name: "Base Camper", emoji: "🏕️", xpMin: 0, xpMax: 149, description: "Just getting started on the trail" },
   { tier: 2, name: "Trailblazer", emoji: "🥾", xpMin: 150, xpMax: 324, description: "Building momentum and finding your footing" },
   { tier: 3, name: "Summit Seeker", emoji: "🧗🏼", xpMin: 325, xpMax: 499, description: "Pushing toward mastery" },
@@ -11,6 +20,15 @@ const TIERS = [
   { tier: 5, name: "Alpinist All-Star", emoji: "💫", xpMin: 700, xpMax: null, description: "Peak performance — the best of the best" },
 ];
 
+const SDR_TIERS = [
+  { tier: 1, name: "Base Camper", emoji: "🏕️", xpMin: 0, xpMax: 135, description: "Just getting started on the trail" },
+  { tier: 2, name: "Trailblazer", emoji: "🥾", xpMin: 136, xpMax: 295, description: "Building momentum and finding your footing" },
+  { tier: 3, name: "Summit Seeker", emoji: "🧗🏼", xpMin: 296, xpMax: 449, description: "Pushing toward mastery" },
+  { tier: 4, name: "Pinnacle Achiever", emoji: "⛰️", xpMin: 450, xpMax: 635, description: "You've conquered the Ascent" },
+  { tier: 5, name: "Alpinist All-Star", emoji: "💫", xpMin: 636, xpMax: null, description: "Peak performance — the best of the best" },
+];
+
+// ─── Base XP (shared) ──────────────────────────────────────────────────────────
 const BASE_XP = [
   { action: "Approach Accomplishment", xp: 10, emoji: "🏕️", description: "Complete a module in The Approach (MEDDPICC, Challenger, cAMP 101, or Wheel & Deal)" },
   { action: "Watch a clip", xp: 3, emoji: "🎬", description: "Complete any clip session" },
@@ -21,21 +39,88 @@ const BASE_XP = [
   { action: "Complete Weather the Storm", xp: 1, emoji: "⛈️", description: "Wait out the 2-min review" },
 ];
 
-const PERFORMANCE_BONUSES = [
-  { badge: "Perfect Hiker", xp: 8, emoji: "🌲", condition: "5/5 Trail Markers + pass without Search & Rescue" },
-  { badge: "Speed Hiker", xp: 5, emoji: "🥾", condition: "Complete clip in under video length + 5 min (first pass)" },
-  { badge: "Search & Rescue Hero", xp: 8, emoji: "🚁", condition: "Perfect score on Search & Rescue questions" },
-  { badge: "Storm Chaser", xp: 3, emoji: "⛈️", condition: "Hit Weather Storm on previous clip, then pass the next clip first try" },
-  { badge: "Double Summit", xp: 5, emoji: "⛰️", condition: "Complete 2 clips in one calendar day" },
-  { badge: "Swiss Army Knife", xp: 10, emoji: "🪓", condition: "All tools. All terrain. You're ready for anything. (Review all resources + submit reflection on a topic day — ×2 available: Day 5, Day 9)" },
-  { badge: "Grip Strength", xp: 35, emoji: "💪", condition: "Average ≥85% engagement score across all 19 Ascent clips" },
+// ─── Performance Bonuses (shared structure, Swiss Army Knife day differs) ─────
+function getPerformanceBonuses(role: RolePath) {
+  return [
+    { badge: "Perfect Hiker", xp: 8, emoji: "🌲", condition: "5/5 Trail Markers + pass without Search & Rescue" },
+    { badge: "Speed Hiker", xp: 5, emoji: "🥾", condition: "Complete clip in under video length + 5 min (first pass)" },
+    { badge: "Search & Rescue Hero", xp: 8, emoji: "🚁", condition: "Perfect score on Search & Rescue questions" },
+    { badge: "Storm Chaser", xp: 3, emoji: "⛈️", condition: "Hit Weather Storm on previous clip, then pass the next clip first try" },
+    { badge: "Double Summit", xp: 5, emoji: "⛰️", condition: "Complete 2 clips in one calendar day" },
+    { badge: "Swiss Army Knife", xp: 10, emoji: "🪓",
+      condition: role === "SDR"
+        ? "All tools. All terrain. You're ready for anything. (Review all resources + submit reflection on a topic day — ×2 available: Day 5, Day 13)"
+        : "All tools. All terrain. You're ready for anything. (Review all resources + submit reflection on a topic day — ×2 available: Day 5, Day 9)"
+    },
+    { badge: "Grip Strength", xp: 35, emoji: "💪",
+      condition: role === "SDR"
+        ? "Average ≥85% engagement score across all 14 Ascent clips"
+        : "Average ≥85% engagement score across all 19 Ascent clips"
+    },
+  ];
+}
+
+// ─── Engagement Streaks (Leave No Trace differs) ─────────────────────────────
+function getEngagementStreaks(role: RolePath) {
+  return [
+    { badge: "No Detours", xp: 10, emoji: "🧭", condition: "Complete a 5-clip window without triggering S&R (×3 max: clips 1–5, 6–10, 11–15)" },
+    { badge: "Leave No Trace", xp: 15, emoji: "🌱",
+      condition: role === "SDR"
+        ? "5/5 Trail Markers on a 3-clip window (×4 max: clips 1–3, 3–5, 7–9, 10–11+13)"
+        : "5/5 Trail Markers on a 3-clip window (×5 max: clips 1–3, 3–5, 7–9, 10–11+13, 13–15)"
+    },
+  ];
+}
+
+// ─── Pacing Streaks (role-specific thresholds) ───────────────────────────────
+function getPacingStreaks(role: RolePath) {
+  if (role === "SDR") {
+    return [
+      { badge: "Ridge Runner", xp: 10, emoji: "🥾", condition: "3 consecutive days Summit Bound" },
+      { badge: "Alpine Endurance", xp: 15, emoji: "🏔️", condition: "6 consecutive days Summit Bound" },
+      { badge: "Iron Legs", xp: 20, emoji: "🦿", condition: "9 consecutive days Summit Bound" },
+      { badge: "Mountain Goat", xp: 30, emoji: "🐐", condition: "12 consecutive days Summit Bound — every single day on pace" },
+      { badge: "Free Solo", xp: 40, emoji: "🧗", condition: "0 rockslide, avalanche, or anchor failure across all 12 Ascent days" },
+    ];
+  }
+  return [
+    { badge: "Ridge Runner", xp: 10, emoji: "🥾", condition: "5 consecutive days Summit Bound" },
+    { badge: "Alpine Endurance", xp: 15, emoji: "🏔️", condition: "10 consecutive days Summit Bound" },
+    { badge: "Iron Legs", xp: 20, emoji: "🦿", condition: "15 consecutive days Summit Bound" },
+    { badge: "Mountain Goat", xp: 30, emoji: "🐐", condition: "20 consecutive days Summit Bound — every single day on pace" },
+    { badge: "Free Solo", xp: 40, emoji: "🧗", condition: "0 rockslide, avalanche, or anchor failure across all 20 Ascent days" },
+  ];
+}
+
+// ─── Milestone Bonuses (Halfway Up day differs) ──────────────────────────────
+function getMilestones(role: RolePath) {
+  return [
+    { badge: "Peak Lift", xp: 25, emoji: "🚡", condition: "Finish The Approach in 5 days or less — you rode the gondola and you're ready to climb" },
+    { badge: "First Step", xp: 5, emoji: "🎬", condition: "Complete Clip 1" },
+    { badge: "Halfway Up", xp: 15, emoji: "🏔️",
+      condition: role === "SDR"
+        ? "Complete Day 6 — review all resources + submit reflection"
+        : "Complete Day 10 — review all resources + submit reflection"
+    },
+    { badge: "Into the Summit Push", xp: 10, emoji: "🪢", condition: "Unlock Week 4 (complete Clip 10)" },
+    { badge: "The Ranger's Secret", xp: 20, emoji: "🌲",
+      condition: role === "SDR"
+        ? "Complete all 14 clips without EVER triggering Weather the Storm"
+        : "Complete all 19 clips without EVER triggering Weather the Storm"
+    },
+    { badge: "The Full Cast", xp: 50, emoji: "🎣", condition: "Listen to 80%+ of all 4 PODcast episodes" },
+  ];
+}
+
+// ─── Summit Rewards (shared) ─────────────────────────────────────────────────
+const SUMMIT_REWARDS = [
+  { badge: "Golden Summit", xp: 40, emoji: "🌄", condition: "Approach ✅ + Ascent ✅ completed by Summit Day" },
+  { badge: "Speed Ascent", xp: 30, emoji: "⛷️", condition: "Ascent ✅ completed by Summit Day (Approach incomplete)" },
+  { badge: "Second Wind", xp: 20, emoji: "💨", condition: "Approach ✅ + Ascent ✅ completed by Adjustment Day" },
+  { badge: "Every Step Counts", xp: 10, emoji: "👣", condition: "Finished Ascent after Adjustment Day — you still made it" },
 ];
 
-const ENGAGEMENT_STREAK_BONUSES = [
-  { badge: "No Detours", xp: 10, emoji: "🧭", condition: "Complete a 5-clip window without triggering S&R (×3 max: clips 1–5, 6–10, 11–15)" },
-  { badge: "Leave No Trace", xp: 15, emoji: "🌱", condition: "5/5 Trail Markers on a 3-clip window (×5 max: clips 1–3, 3–5, 7–9, 10–11+13, 13–15)" },
-];
-
+// ─── Game Badges ─────────────────────────────────────────────────────────────
 const RIDGE_BADGES = [
   { badge: "Whipper", xpLabel: "−20 to −1 XP", emoji: "🪢", condition: "Net negative score — you took a big fall, but the rope caught you" },
   { badge: "Ridge Rookie", xpLabel: "0 to +9 XP", emoji: "🪨", condition: "Broke even or small gain — you survived the Ridge" },
@@ -52,32 +137,15 @@ const PRICE_BADGES = [
   { badge: "Jackpot Genius", xpLabel: "+27 to +30 XP", emoji: "🎰", condition: "Near-perfect — you owned every price point and backed yourself" },
 ];
 
-const PACING_STREAK_BONUSES = [
-  { badge: "Ridge Runner", xp: 10, emoji: "🥾", condition: "5 consecutive days Summit Bound" },
-  { badge: "Alpine Endurance", xp: 15, emoji: "🏔️", condition: "10 consecutive days Summit Bound" },
-  { badge: "Iron Legs", xp: 20, emoji: "🦿", condition: "15 consecutive days Summit Bound" },
-  { badge: "Mountain Goat", xp: 30, emoji: "🐐", condition: "20 consecutive days Summit Bound — every single day on pace" },
-  { badge: "Free Solo", xp: 40, emoji: "🧗", condition: "0 rockslide, avalanche, or anchor failure across all 20 Ascent days" },
-];
-
-const SUMMIT_REWARDS = [
-  { badge: "Golden Summit", xp: 40, emoji: "🌄", condition: "Approach ✅ + Ascent ✅ completed by Summit Day" },
-  { badge: "Speed Ascent", xp: 30, emoji: "⛷️", condition: "Ascent ✅ completed by Summit Day (Approach incomplete)" },
-  { badge: "Second Wind", xp: 20, emoji: "💨", condition: "Approach ✅ + Ascent ✅ completed by Adjustment Day" },
-  { badge: "Every Step Counts", xp: 10, emoji: "👣", condition: "Finished Ascent after Adjustment Day — you still made it" },
-];
-
-const MILESTONE_BONUSES = [
-  { badge: "Peak Lift", xp: 25, emoji: "🚡", condition: "Finish The Approach in 5 days or less — you rode the gondola and you're ready to climb" },
-  { badge: "First Step", xp: 5, emoji: "🎬", condition: "Complete Clip 1" },
-  { badge: "Halfway Up", xp: 15, emoji: "🏔️", condition: "Complete Day 10 — review all resources + submit reflection" },
-  { badge: "Into the Summit Push", xp: 10, emoji: "🪢", condition: "Unlock Week 4 (complete Clip 10)" },
-  { badge: "The Ranger's Secret", xp: 20, emoji: "🌲", condition: "Complete all 19 clips without EVER triggering Weather the Storm" },
-  { badge: "The Full Cast", xp: 50, emoji: "🎣", condition: "Listen to 80%+ of all 4 PODcast episodes" },
-];
+// ─── Theoretical Max XP ──────────────────────────────────────────────────────
+const MAX_XP_AE = 993;
+const MAX_XP_SDR = 903;
 
 export default function XPlanationPage() {
   const { viewer } = useViewer();
+  const autoDetectedRole = viewer?.role ? detectRolePath(viewer.role) : "AE";
+  const [selectedRole, setSelectedRole] = useState<RolePath>(autoDetectedRole);
+
   const { data } = useApiData(
     "GetLearnerProgress",
     { viewerId: viewer?.id ?? "" },
@@ -85,14 +153,24 @@ export default function XPlanationPage() {
   );
 
   const totalXp = data?.totalXp ?? 0;
-  const currentTier = data?.tier ?? TIERS[0];
   const badges = data?.badges ?? [];
-  const earnedBadgeIds = new Set(badges.map((b: any) => b.badgeId));
+  const earnedBadgeIds = useMemo(() => new Set(badges.map((b: any) => b.badgeId)), [badges]);
+
+  // Role-specific data
+  const tiers = selectedRole === "SDR" ? SDR_TIERS : AE_TIERS;
+  const currentTier = useMemo(() => tiers.reduce((acc, t) => (totalXp >= t.xpMin ? t : acc), tiers[0]), [tiers, totalXp]);
+  const performanceBonuses = useMemo(() => getPerformanceBonuses(selectedRole), [selectedRole]);
+  const engagementStreaks = useMemo(() => getEngagementStreaks(selectedRole), [selectedRole]);
+  const pacingStreaks = useMemo(() => getPacingStreaks(selectedRole), [selectedRole]);
+  const milestones = useMemo(() => getMilestones(selectedRole), [selectedRole]);
+  const maxXp = selectedRole === "SDR" ? MAX_XP_SDR : MAX_XP_AE;
+  const clipCount = selectedRole === "SDR" ? 18 : 21;
 
   return (
     <div className="flex flex-col h-full overflow-auto" style={{ backgroundColor: "#ECFDF5" }}>
       <PageHeader emoji="🔭" title="XP-lanation" subtitle="How the Ascent scoring works" />
       <div className="max-w-3xl mx-auto w-full p-6 space-y-5">
+
         {/* Current Tier Badge */}
         {viewer && (
           <div className="flex justify-center">
@@ -128,8 +206,38 @@ export default function XPlanationPage() {
           </div>
         </Section>
 
+        {/* ─── ROLE TOGGLE ─── */}
+        <div className="flex flex-col items-center gap-2">
+          <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">Viewing XP for</p>
+          <div className="inline-flex rounded-lg border border-gray-300 bg-white shadow-sm overflow-hidden">
+            <button
+              onClick={() => setSelectedRole("AE")}
+              className={`px-4 py-2 text-sm font-semibold transition-colors ${
+                selectedRole === "AE"
+                  ? "bg-emerald-600 text-white"
+                  : "bg-white text-gray-600 hover:bg-gray-50"
+              }`}
+            >
+              💰 AE / PSM / Renewals
+            </button>
+            <button
+              onClick={() => setSelectedRole("SDR")}
+              className={`px-4 py-2 text-sm font-semibold transition-colors border-l border-gray-300 ${
+                selectedRole === "SDR"
+                  ? "bg-indigo-600 text-white"
+                  : "bg-white text-gray-600 hover:bg-gray-50"
+              }`}
+            >
+              📞 SDR
+            </button>
+          </div>
+          {viewer && detectRolePath(viewer.role) === selectedRole && (
+            <p className="text-xs text-gray-400 italic">This is your path</p>
+          )}
+        </div>
+
         {/* Tier Progression */}
-        <Section title="🪜 Tiers" description="Climb the ranks as you earn XP:">
+        <Section title="🪜 Tiers" description={`Climb the ranks as you earn XP${selectedRole === "SDR" ? " (SDR-scaled thresholds)" : ""}:`}>
           <div className="rounded-lg border border-gray-200 overflow-hidden">
             <table className="w-full text-sm">
               <thead>
@@ -140,7 +248,7 @@ export default function XPlanationPage() {
                 </tr>
               </thead>
               <tbody>
-                {TIERS.map((t) => {
+                {tiers.map((t) => {
                   const isActive = currentTier.emoji === t.emoji;
                   return (
                     <tr
@@ -153,9 +261,9 @@ export default function XPlanationPage() {
                         <span className="mr-1.5">{t.emoji}</span>
                         {t.name}
                         {isActive && (
-                        <span className="ml-2 inline-flex items-center rounded-full bg-[#4F46E5] px-2 py-0.5 text-xs font-semibold text-white">
-                          You
-                        </span>
+                          <span className="ml-2 inline-flex items-center rounded-full bg-[#4F46E5] px-2 py-0.5 text-xs font-semibold text-white">
+                            You
+                          </span>
                         )}
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap text-gray-900">
@@ -187,7 +295,7 @@ export default function XPlanationPage() {
         {/* Milestone Bonuses */}
         <Section title="🏔️ Milestone Bonuses" description="Hit these checkpoints to earn big XP:">
           <div className="space-y-2">
-            {MILESTONE_BONUSES.map((b) => (
+            {milestones.map((b) => (
               <BadgeRow
                 key={b.badge}
                 emoji={b.emoji}
@@ -204,7 +312,7 @@ export default function XPlanationPage() {
         {/* Performance Bonuses */}
         <Section title="🏅 Performance Bonuses" description="Extra XP for exceptional runs:">
           <div className="space-y-2">
-            {PERFORMANCE_BONUSES.map((b) => (
+            {performanceBonuses.map((b) => (
               <BadgeRow
                 key={b.badge}
                 emoji={b.emoji}
@@ -220,7 +328,7 @@ export default function XPlanationPage() {
         {/* Engagement Streak Bonuses */}
         <Section title="🔥 Engagement Streaks" description="Consistency on clips pays off:">
           <div className="space-y-2">
-            {ENGAGEMENT_STREAK_BONUSES.map((b) => (
+            {engagementStreaks.map((b) => (
               <BadgeRow
                 key={b.badge}
                 emoji={b.emoji}
@@ -234,9 +342,9 @@ export default function XPlanationPage() {
         </Section>
 
         {/* Pacing Streak Bonuses */}
-        <Section title="🥾 Pacing Streaks" description="Stay on pace, earn your patches:">
+        <Section title="🥾 Pacing Streaks" description={`Stay on pace, earn your patches${selectedRole === "SDR" ? " (scaled for 12-day SDR path)" : ""}:`}>
           <div className="space-y-2">
-            {PACING_STREAK_BONUSES.map((b) => (
+            {pacingStreaks.map((b) => (
               <BadgeRow
                 key={b.badge}
                 emoji={b.emoji}
@@ -265,226 +373,33 @@ export default function XPlanationPage() {
           </div>
         </Section>
 
-        {/* Price is Right (AE/PSM/Renewals Only) */}
-        <Section title="⛏️ Rules of the Ridge" description="SDR path only — wager your real cAMP XP on ROE scenario challenges. Your net XP change determines your badge:">
-          <div className="space-y-2">
-            {RIDGE_BADGES.map((b) => (
-              <RidgeBadgeRow
-                key={b.badge}
-                emoji={b.emoji}
-                badge={b.badge}
-                xpLabel={b.xpLabel}
-                condition={b.condition}
-                earned={earnedBadgeIds.has(b.badge.toLowerCase().replace(/ /g, "_"))}
-              />
-            ))}
-          </div>
-          <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
-            <p className="text-sm text-amber-800">
-              <span className="font-semibold">⛏️ Crux Call:</span> After answering each scenario, wager your confidence (⛏️, ⛏️⛏️, or ⛏️⛏️⛏️) before the answer is revealed. Every level has real stakes:
-            </p>
-            <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-amber-900">
-              <div className="rounded bg-amber-100/60 p-2 text-center">
-                <p className="font-bold">⛏️</p>
-                <p className="text-green-700">+1 if right</p>
-                <p className="text-red-700">−1 if wrong</p>
-              </div>
-              <div className="rounded bg-amber-100/60 p-2 text-center">
-                <p className="font-bold">⛏️⛏️</p>
-                <p className="text-green-700">+2 if right</p>
-                <p className="text-red-700">−1 if wrong</p>
-              </div>
-              <div className="rounded bg-amber-100/60 p-2 text-center">
-                <p className="font-bold">⛏️⛏️⛏️</p>
-                <p className="text-green-700">+3 if right</p>
-                <p className="text-red-700">−2 if wrong</p>
-              </div>
-            </div>
-          </div>
-          <p className="text-xs text-gray-500 mt-2 italic">
-            10 scenarios drawn randomly from 50+. Every playthrough is different. Your net XP (−20 to +30) is added to your real cAMP total — leaderboard positions are on the line.
-          </p>
-        </Section>
-
-        {/* Price is Right (AE/PSM/Renewals Only) */}
-        <Section title="🎰 The Price is Right: cAMP Edition" description="AE / PSM / Renewals path — test your pricing & packaging mastery across 6 mini-games. Your net XP change determines your badge:">
-          <div className="space-y-2">
-            {PRICE_BADGES.map((b) => (
-              <PriceBadgeRow
-                key={b.badge}
-                emoji={b.emoji}
-                badge={b.badge}
-                xpLabel={b.xpLabel}
-                condition={b.condition}
-                earned={earnedBadgeIds.has(`price_${b.badge.toLowerCase().replace(/ /g, "_")}`)}
-              />
-            ))}
-          </div>
-          <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3">
-            <p className="text-sm text-emerald-800">
-              <span className="font-semibold">🎲 6 Mini-Games:</span> Each scenario tests pricing knowledge a different way:
-            </p>
-            <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs text-emerald-900">
-              <div className="rounded bg-emerald-100/60 p-2 text-center">
-                <p className="font-bold">📊 Higher / Lower</p>
-                <p>Is the real price above or below?</p>
-              </div>
-              <div className="rounded bg-emerald-100/60 p-2 text-center">
-                <p className="font-bold">🎯 Bullseye</p>
-                <p>Type the exact price (±15%)</p>
-              </div>
-              <div className="rounded bg-emerald-100/60 p-2 text-center">
-                <p className="font-bold">🔗 Price Match</p>
-                <p>Match items to correct prices</p>
-              </div>
-              <div className="rounded bg-emerald-100/60 p-2 text-center">
-                <p className="font-bold">🏗️ Deal Builder</p>
-                <p>Build the right quote from parts</p>
-              </div>
-              <div className="rounded bg-emerald-100/60 p-2 text-center">
-                <p className="font-bold">⚠️ Pricing Pitfall</p>
-                <p>Spot the error in a statement</p>
-              </div>
-              <div className="rounded bg-emerald-100/60 p-2 text-center">
-                <p className="font-bold">🗣️ Objection Closer</p>
-                <p>Best response to a customer</p>
-              </div>
-            </div>
-          </div>
-          <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
-            <p className="text-sm text-amber-800">
-              <span className="font-semibold">⛏️ Crux Call:</span> Same wager system as Ridge Runner — after answering, wager your confidence before the reveal:
-            </p>
-            <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-amber-900">
-              <div className="rounded bg-amber-100/60 p-2 text-center">
-                <p className="font-bold">⛏️</p>
-                <p className="text-green-700">+1 if right</p>
-                <p className="text-red-700">−1 if wrong</p>
-              </div>
-              <div className="rounded bg-amber-100/60 p-2 text-center">
-                <p className="font-bold">⛏️⛏️</p>
-                <p className="text-green-700">+2 if right</p>
-                <p className="text-red-700">−1 if wrong</p>
-              </div>
-              <div className="rounded bg-amber-100/60 p-2 text-center">
-                <p className="font-bold">⛏️⛏️⛏️</p>
-                <p className="text-green-700">+3 if right</p>
-                <p className="text-red-700">−2 if wrong</p>
-              </div>
-            </div>
-          </div>
-          <div className="mt-3 rounded-lg border border-sky-200 bg-sky-50 p-3">
-            <p className="text-sm text-sky-800">
-              <span className="font-semibold">📊 Calculator Link:</span> Some Statsig scenarios include a link to the real Sales Calculator — use it! This is about knowing how to work the tools, not just memorizing numbers.
-            </p>
-          </div>
-          <p className="text-xs text-gray-500 mt-2 italic">
-            10 scenarios drawn randomly from 40 across Amplitude & Statsig pricing. Every playthrough is different. Replay anytime for practice (practice runs don't affect XP).
-          </p>
-        </Section>
-
-        {/* Pacing Streak Bonuses */}
-        <Section title="🥾 Pacing Streaks" description="Stay on pace, earn your patches:">
-          <div className="space-y-2">
-            {PACING_STREAK_BONUSES.map((b) => (
-              <BadgeRow
-                key={b.badge}
-                emoji={b.emoji}
-                badge={b.badge}
-                xp={b.xp}
-                condition={b.condition}
-                earned={earnedBadgeIds.has(b.badge.toLowerCase().replace(/ /g, "_"))}
-              />
-            ))}
-          </div>
-        </Section>
-
-        {/* Summit Rewards */}
-        <Section title="🌄 Summit Rewards" description="Tiered rewards based on when you finish — everyone who completes earns one:">
-          <div className="space-y-2">
-            {SUMMIT_REWARDS.map((b) => (
-              <BadgeRow
-                key={b.badge}
-                emoji={b.emoji}
-                badge={b.badge}
-                xp={b.xp}
-                condition={b.condition}
-                earned={earnedBadgeIds.has(b.badge.toLowerCase().replace(/ /g, "_"))}
-              />
-            ))}
-          </div>
-        </Section>
-
-        {/* Milestone Bonuses */}
-        <Section title="🏔️ Milestone Bonuses" description="Hit these checkpoints to earn big XP:">
-          <div className="space-y-2">
-            {MILESTONE_BONUSES.map((b) => (
-              <BadgeRow
-                key={b.badge}
-                emoji={b.emoji}
-                badge={b.badge}
-                xp={b.xp}
-                condition={b.condition}
-                earned={earnedBadgeIds.has(b.badge === "The Full Cast" ? "podcast_cast" : b.badge.toLowerCase().replace(/ /g, "_"))}
-                isMystery={b.badge === "The Ranger's Secret"}
-
-              />
-            ))}
-          </div>
-        </Section>
-
-        {/* Tier Progression */}
-        <Section title="🪜 Tiers" description="Climb the ranks as you earn XP:">
-          <div className="rounded-lg border border-gray-200 overflow-hidden">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b bg-gray-50">
-                  <th className="text-left font-semibold px-4 py-3 text-gray-900">Tier</th>
-                  <th className="text-left font-semibold px-4 py-3 text-gray-900">XP Range</th>
-                  <th className="text-left font-semibold px-4 py-3 text-gray-900">Description</th>
-                </tr>
-              </thead>
-              <tbody>
-                {TIERS.map((t) => {
-                  const isActive = currentTier.emoji === t.emoji;
-                  return (
-                    <tr
-                      key={t.tier}
-                      className={`border-b last:border-b-0 ${
-                        isActive ? "bg-[#4F46E5]/5" : ""
-                      }`}
-                    >
-                      <td className="px-4 py-3 font-medium whitespace-nowrap text-gray-900">
-                        <span className="mr-1.5">{t.emoji}</span>
-                        {t.name}
-                        {isActive && (
-                        <span className="ml-2 inline-flex items-center rounded-full bg-[#4F46E5] px-2 py-0.5 text-xs font-semibold text-white">
-                          You
-                        </span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-gray-900">
-                        {t.xpMax ? `${t.xpMin}–${t.xpMax} XP` : `${t.xpMin}+ XP`}
-                      </td>
-                      <td className="px-4 py-3 text-gray-500">
-                        {t.description}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </Section>
+        {/* Role-specific Game Section */}
+        {selectedRole === "SDR" ? (
+          <RidgeRunnerSection earnedBadgeIds={earnedBadgeIds} />
+        ) : (
+          <PriceIsRightSection earnedBadgeIds={earnedBadgeIds} />
+        )}
 
         {/* Max Possible XP */}
         <div className="rounded-xl bg-white border border-gray-200 shadow-[0_1px_3px_rgba(0,0,0,0.08)] p-5 text-center space-y-2">
           <p className="text-lg font-bold text-gray-900">
-            🏆 Theoretical Maximum: ~963 XP
+            🏆 Theoretical Maximum: ~{maxXp} XP
+            <span className="ml-2 text-xs font-normal text-gray-400">
+              ({selectedRole === "SDR" ? "SDR" : "AE/PSM/Renewals"} path • {clipCount} clips)
+            </span>
           </p>
           <p className="text-sm text-gray-500">
-            A strong, engaged learner typically lands around <span className="font-semibold text-gray-900">400–500 XP</span> (Summit Seeker).
-            Pinnacle Achiever (500+) requires consistent first-pass scores and staying on pace. Alpinist All-Star (700+) is reserved for those who earn real bonuses across the board.
+            {selectedRole === "SDR" ? (
+              <>
+                A strong, engaged SDR typically lands around <span className="font-semibold text-gray-900">350–450 XP</span> (Summit Seeker).
+                Pinnacle Achiever (450+) requires consistent first-pass scores and staying on pace. Alpinist All-Star (636+) is reserved for those who earn real bonuses across the board.
+              </>
+            ) : (
+              <>
+                A strong, engaged learner typically lands around <span className="font-semibold text-gray-900">400–500 XP</span> (Summit Seeker).
+                Pinnacle Achiever (500+) requires consistent first-pass scores and staying on pace. Alpinist All-Star (700+) is reserved for those who earn real bonuses across the board.
+              </>
+            )}
           </p>
         </div>
 
@@ -499,7 +414,122 @@ export default function XPlanationPage() {
   );
 }
 
-/* --- Helper Components --- */
+/* ─── Ridge Runner Section (SDR) ──────────────────────────────────────────── */
+
+function RidgeRunnerSection({ earnedBadgeIds }: { earnedBadgeIds: Set<string> }) {
+  return (
+    <Section title="⛏️ Rules of the Ridge" description="SDR path — wager your real cAMP XP on ROE scenario challenges. Your net XP change determines your badge:">
+      <div className="space-y-2">
+        {RIDGE_BADGES.map((b) => (
+          <GameBadgeRow
+            key={b.badge}
+            emoji={b.emoji}
+            badge={b.badge}
+            xpLabel={b.xpLabel}
+            condition={b.condition}
+            earned={earnedBadgeIds.has(b.badge.toLowerCase().replace(/ /g, "_"))}
+          />
+        ))}
+      </div>
+      <CruxCallExplainer />
+      <p className="text-xs text-gray-500 mt-2 italic">
+        10 scenarios drawn randomly from 50+. Every playthrough is different. Your net XP (−20 to +30) is added to your real cAMP total — leaderboard positions are on the line.
+      </p>
+    </Section>
+  );
+}
+
+/* ─── Price is Right Section (AE/PSM/Renewals) ───────────────────────────── */
+
+function PriceIsRightSection({ earnedBadgeIds }: { earnedBadgeIds: Set<string> }) {
+  return (
+    <Section title="🎰 The Price is Right: cAMP Edition" description="AE / PSM / Renewals path — test your pricing & packaging mastery across 6 mini-games. Your net XP change determines your badge:">
+      <div className="space-y-2">
+        {PRICE_BADGES.map((b) => (
+          <GameBadgeRow
+            key={b.badge}
+            emoji={b.emoji}
+            badge={b.badge}
+            xpLabel={b.xpLabel}
+            condition={b.condition}
+            earned={earnedBadgeIds.has(`price_${b.badge.toLowerCase().replace(/ /g, "_")}`)}
+          />
+        ))}
+      </div>
+      <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+        <p className="text-sm text-emerald-800">
+          <span className="font-semibold">🎲 6 Mini-Games:</span> Each scenario tests pricing knowledge a different way:
+        </p>
+        <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs text-emerald-900">
+          <div className="rounded bg-emerald-100/60 p-2 text-center">
+            <p className="font-bold">📊 Higher / Lower</p>
+            <p>Is the real price above or below?</p>
+          </div>
+          <div className="rounded bg-emerald-100/60 p-2 text-center">
+            <p className="font-bold">🎯 Bullseye</p>
+            <p>Type the exact price (±15%)</p>
+          </div>
+          <div className="rounded bg-emerald-100/60 p-2 text-center">
+            <p className="font-bold">🔗 Price Match</p>
+            <p>Match items to correct prices</p>
+          </div>
+          <div className="rounded bg-emerald-100/60 p-2 text-center">
+            <p className="font-bold">🏗️ Deal Builder</p>
+            <p>Build the right quote from parts</p>
+          </div>
+          <div className="rounded bg-emerald-100/60 p-2 text-center">
+            <p className="font-bold">⚠️ Pricing Pitfall</p>
+            <p>Spot the error in a statement</p>
+          </div>
+          <div className="rounded bg-emerald-100/60 p-2 text-center">
+            <p className="font-bold">🗣️ Objection Closer</p>
+            <p>Best response to a customer</p>
+          </div>
+        </div>
+      </div>
+      <CruxCallExplainer />
+      <div className="mt-3 rounded-lg border border-sky-200 bg-sky-50 p-3">
+        <p className="text-sm text-sky-800">
+          <span className="font-semibold">📊 Calculator Link:</span> Some Statsig scenarios include a link to the real Sales Calculator — use it! This is about knowing how to work the tools, not just memorizing numbers.
+        </p>
+      </div>
+      <p className="text-xs text-gray-500 mt-2 italic">
+        10 scenarios drawn randomly from 40 across Amplitude & Statsig pricing. Every playthrough is different. Replay anytime for practice (practice runs don't affect XP).
+      </p>
+    </Section>
+  );
+}
+
+/* ─── Crux Call Explainer (shared by both game sections) ──────────────────── */
+
+function CruxCallExplainer() {
+  return (
+    <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
+      <p className="text-sm text-amber-800">
+        <span className="font-semibold">⛏️ Crux Call:</span> After answering each scenario, wager your confidence (⛏️, ⛏️⛏️, or ⛏️⛏️⛏️) before the answer is revealed. Every level has real stakes:
+      </p>
+      <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-amber-900">
+        <div className="rounded bg-amber-100/60 p-2 text-center">
+          <p className="font-bold">⛏️</p>
+          <p className="text-green-700">+1 if right</p>
+          <p className="text-red-700">−1 if wrong</p>
+        </div>
+        <div className="rounded bg-amber-100/60 p-2 text-center">
+          <p className="font-bold">⛏️⛏️</p>
+          <p className="text-green-700">+2 if right</p>
+          <p className="text-red-700">−1 if wrong</p>
+        </div>
+        <div className="rounded bg-amber-100/60 p-2 text-center">
+          <p className="font-bold">⛏️⛏️⛏️</p>
+          <p className="text-green-700">+3 if right</p>
+          <p className="text-red-700">−2 if wrong</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Helper Components ─────────────────────────────────────────────────────── */
 
 function Section({ title, description, children }: { title: string; description: string; children: React.ReactNode }) {
   return (
@@ -559,7 +589,7 @@ function XpRow({ emoji, label, xp, description }: { emoji: string; label: string
   );
 }
 
-function RidgeBadgeRow({ emoji, badge, xpLabel, condition, earned }: { emoji: string; badge: string; xpLabel: string; condition: string; earned: boolean }) {
+function GameBadgeRow({ emoji, badge, xpLabel, condition, earned }: { emoji: string; badge: string; xpLabel: string; condition: string; earned: boolean }) {
   return (
     <div className={`flex items-center justify-between rounded-lg border px-3 py-2 ${
       earned
@@ -571,42 +601,8 @@ function RidgeBadgeRow({ emoji, badge, xpLabel, condition, earned }: { emoji: st
         <div>
           <p className={`text-sm ${earned ? "font-bold text-gray-900" : "font-medium text-gray-500"}`}>
             {badge}
-            <span className="ml-2 inline-flex items-center rounded-full bg-sky-100 px-2 py-0.5 text-xs font-semibold text-sky-700">
-              SDR Only
-            </span>
             {earned && (
-              <span className="ml-1 inline-flex items-center rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-semibold text-indigo-700">
-                ✅ Earned
-              </span>
-            )}
-          </p>
-          <p className={`text-xs ${earned ? "text-gray-500" : "text-gray-500/60"}`}>
-            {condition}
-          </p>
-        </div>
-      </div>
-      <span className={`text-sm font-bold whitespace-nowrap ${earned ? "text-amber-600" : "text-gray-500"}`}>{xpLabel}</span>
-    </div>
-  );
-}
-
-function PriceBadgeRow({ emoji, badge, xpLabel, condition, earned }: { emoji: string; badge: string; xpLabel: string; condition: string; earned: boolean }) {
-  return (
-    <div className={`flex items-center justify-between rounded-lg border px-3 py-2 ${
-      earned
-        ? "bg-amber-50 border-amber-300/50"
-        : "bg-white border-gray-200"
-    }`}>
-      <div className="flex items-center gap-2">
-        <span className={`text-lg ${!earned ? "opacity-50" : ""}`}>{emoji}</span>
-        <div>
-          <p className={`text-sm ${earned ? "font-bold text-gray-900" : "font-medium text-gray-500"}`}>
-            {badge}
-            <span className="ml-2 inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">
-              AE / PSM / Renewals
-            </span>
-            {earned && (
-              <span className="ml-1 inline-flex items-center rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-semibold text-indigo-700">
+              <span className="ml-2 inline-flex items-center rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-semibold text-indigo-700">
                 ✅ Earned
               </span>
             )}
