@@ -44,6 +44,14 @@ const RIDGE_BADGES = [
   { badge: "Summit Authority", xpLabel: "+27 to +30 XP", emoji: "🌄", condition: "Near-perfect mastery — you sent it and crushed it" },
 ];
 
+const PRICE_BADGES = [
+  { badge: "Busted Deal", xpLabel: "−20 to −1 XP", emoji: "💸", condition: "Net negative — you overpaid, underbid, or fell for a pricing trap" },
+  { badge: "Window Shopper", xpLabel: "0 to +9 XP", emoji: "🪟", condition: "Broke even — you browsed the price list but didn't close" },
+  { badge: "Pricing Prodigy", xpLabel: "+10 to +19 XP", emoji: "🏷️", condition: "Solid gains — you know the catalog and wagered smart" },
+  { badge: "Deal Architect", xpLabel: "+20 to +26 XP", emoji: "📐", condition: "Strong — you can build a deal from memory and defend it" },
+  { badge: "Jackpot Genius", xpLabel: "+27 to +30 XP", emoji: "🎰", condition: "Near-perfect — you owned every price point and backed yourself" },
+];
+
 const PACING_STREAK_BONUSES = [
   { badge: "Ridge Runner", xp: 10, emoji: "🥾", condition: "5 consecutive days Summit Bound" },
   { badge: "Alpine Endurance", xp: 15, emoji: "🏔️", condition: "10 consecutive days Summit Bound" },
@@ -202,6 +210,83 @@ export default function XPlanationPage() {
           </div>
           <p className="text-xs text-gray-500 mt-2 italic">
             10 scenarios drawn randomly from 50+. Every playthrough is different. Your net XP (−20 to +30) is added to your real cAMP total — leaderboard positions are on the line.
+          </p>
+        </Section>
+
+        {/* Price is Right (AE/PSM/Renewals Only) */}
+        <Section title="🎰 The Price is Right: cAMP Edition" description="AE / PSM / Renewals path — test your pricing & packaging mastery across 6 mini-games. Your net XP change determines your badge:">
+          <div className="space-y-2">
+            {PRICE_BADGES.map((b) => (
+              <PriceBadgeRow
+                key={b.badge}
+                emoji={b.emoji}
+                badge={b.badge}
+                xpLabel={b.xpLabel}
+                condition={b.condition}
+                earned={earnedBadgeIds.has(`price_${b.badge.toLowerCase().replace(/ /g, "_")}`)}
+              />
+            ))}
+          </div>
+          <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+            <p className="text-sm text-emerald-800">
+              <span className="font-semibold">🎲 6 Mini-Games:</span> Each scenario tests pricing knowledge a different way:
+            </p>
+            <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs text-emerald-900">
+              <div className="rounded bg-emerald-100/60 p-2 text-center">
+                <p className="font-bold">📊 Higher / Lower</p>
+                <p>Is the real price above or below?</p>
+              </div>
+              <div className="rounded bg-emerald-100/60 p-2 text-center">
+                <p className="font-bold">🎯 Bullseye</p>
+                <p>Type the exact price (±15%)</p>
+              </div>
+              <div className="rounded bg-emerald-100/60 p-2 text-center">
+                <p className="font-bold">🔗 Price Match</p>
+                <p>Match items to correct prices</p>
+              </div>
+              <div className="rounded bg-emerald-100/60 p-2 text-center">
+                <p className="font-bold">🏗️ Deal Builder</p>
+                <p>Build the right quote from parts</p>
+              </div>
+              <div className="rounded bg-emerald-100/60 p-2 text-center">
+                <p className="font-bold">⚠️ Pricing Pitfall</p>
+                <p>Spot the error in a statement</p>
+              </div>
+              <div className="rounded bg-emerald-100/60 p-2 text-center">
+                <p className="font-bold">🗣️ Objection Closer</p>
+                <p>Best response to a customer</p>
+              </div>
+            </div>
+          </div>
+          <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
+            <p className="text-sm text-amber-800">
+              <span className="font-semibold">⛏️ Crux Call:</span> Same wager system as Ridge Runner — after answering, wager your confidence before the reveal:
+            </p>
+            <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-amber-900">
+              <div className="rounded bg-amber-100/60 p-2 text-center">
+                <p className="font-bold">⛏️</p>
+                <p className="text-green-700">+1 if right</p>
+                <p className="text-red-700">−1 if wrong</p>
+              </div>
+              <div className="rounded bg-amber-100/60 p-2 text-center">
+                <p className="font-bold">⛏️⛏️</p>
+                <p className="text-green-700">+2 if right</p>
+                <p className="text-red-700">−1 if wrong</p>
+              </div>
+              <div className="rounded bg-amber-100/60 p-2 text-center">
+                <p className="font-bold">⛏️⛏️⛏️</p>
+                <p className="text-green-700">+3 if right</p>
+                <p className="text-red-700">−2 if wrong</p>
+              </div>
+            </div>
+          </div>
+          <div className="mt-3 rounded-lg border border-sky-200 bg-sky-50 p-3">
+            <p className="text-sm text-sky-800">
+              <span className="font-semibold">📊 Calculator Link:</span> Some Statsig scenarios include a link to the real Sales Calculator — use it! This is about knowing how to work the tools, not just memorizing numbers.
+            </p>
+          </div>
+          <p className="text-xs text-gray-500 mt-2 italic">
+            10 scenarios drawn randomly from 40 across Amplitude & Statsig pricing. Every playthrough is different. Replay anytime for practice (practice runs don't affect XP).
           </p>
         </Section>
 
@@ -395,6 +480,37 @@ function RidgeBadgeRow({ emoji, badge, xpLabel, condition, earned }: { emoji: st
             {badge}
             <span className="ml-2 inline-flex items-center rounded-full bg-sky-100 px-2 py-0.5 text-xs font-semibold text-sky-700">
               SDR Only
+            </span>
+            {earned && (
+              <span className="ml-1 inline-flex items-center rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-semibold text-indigo-700">
+                ✅ Earned
+              </span>
+            )}
+          </p>
+          <p className={`text-xs ${earned ? "text-gray-500" : "text-gray-500/60"}`}>
+            {condition}
+          </p>
+        </div>
+      </div>
+      <span className={`text-sm font-bold whitespace-nowrap ${earned ? "text-amber-600" : "text-gray-500"}`}>{xpLabel}</span>
+    </div>
+  );
+}
+
+function PriceBadgeRow({ emoji, badge, xpLabel, condition, earned }: { emoji: string; badge: string; xpLabel: string; condition: string; earned: boolean }) {
+  return (
+    <div className={`flex items-center justify-between rounded-lg border px-3 py-2 ${
+      earned
+        ? "bg-amber-50 border-amber-300/50"
+        : "bg-white border-gray-200"
+    }`}>
+      <div className="flex items-center gap-2">
+        <span className={`text-lg ${!earned ? "opacity-50" : ""}`}>{emoji}</span>
+        <div>
+          <p className={`text-sm ${earned ? "font-bold text-gray-900" : "font-medium text-gray-500"}`}>
+            {badge}
+            <span className="ml-2 inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+              AE / PSM / Renewals
             </span>
             {earned && (
               <span className="ml-1 inline-flex items-center rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-semibold text-indigo-700">
