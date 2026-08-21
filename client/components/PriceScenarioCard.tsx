@@ -137,6 +137,17 @@ export default function PriceScenarioCard({
               🔄 Practice — No XP
             </span>
           )}
+          {/* Calculator link when available */}
+          {scenario.game_data?.calculator_url && (
+            <a
+              href={scenario.game_data.calculator_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ml-auto text-xs font-medium text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full hover:bg-emerald-100 transition-colors flex items-center gap-1"
+            >
+              📊 Open Calculator ↗
+            </a>
+          )}
         </div>
 
         {/* Game content by phase */}

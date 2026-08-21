@@ -2,6 +2,9 @@ import { api, z, postgres } from "@superblocksteam/sdk-api";
 
 const APPS_DB = "c6e32cf4-ca66-42ae-aeb3-58c84ffae574";
 
+const STATSIG_CALCULATOR_URL =
+  "https://docs.google.com/spreadsheets/d/1WoVf4CEFD9iWPpYyY_QBnP1hx27AbrjWcgiw540Sw1c/edit?gid=1967279232#gid=1967279232";
+
 /**
  * All 40 Price is Right scenarios.
  * Each row: [scenario_id, section, game_type, narrative, game_data (JSON string), coaching_note]
@@ -52,7 +55,8 @@ const scenarios: ScenarioRow[] = [
     "Statsig WHN Platform Fee for an M-sized customer (250 experiments) — is the suggested price higher or lower than $40,000?",
     JSON.stringify({
       reference_value: 40000, reference_label: "$40,000",
-      correct_direction: "higher", actual_value: 48000, actual_label: "$48,000"
+      correct_direction: "higher", actual_value: 48000, actual_label: "$48,000",
+      calculator_url: STATSIG_CALCULATOR_URL
     }),
     "WHN Platform Fee M t-shirt is $40K base × 1.2 suggested uplift = $48K suggested. The platform fee is a flat annual charge separate from per-unit SKU pricing."
   ],
@@ -70,7 +74,8 @@ const scenarios: ScenarioRow[] = [
     "Statsig Cloud Feature Gates 100K units (1M checks each) — is the suggested annual price higher or lower than $25,000?",
     JSON.stringify({
       reference_value: 25000, reference_label: "$25,000/yr",
-      correct_direction: "lower", actual_value: 22548, actual_label: "$22,548/yr"
+      correct_direction: "lower", actual_value: 22548, actual_label: "$22,548/yr",
+      calculator_url: STATSIG_CALCULATOR_URL
     }),
     "Cloud Feature Gates at 100K units × 1M checks = $22,548/yr suggested. This is the minimum fair use volume (100B checks = 100,000 units in Salesforce). Feature Gates pricing uses a curve-fit formula that decreases per-unit cost at higher volumes."
   ],
@@ -79,7 +84,8 @@ const scenarios: ScenarioRow[] = [
     "Total suggested annual price for a WHN deal with Platform Fee + 250 experiments + 500K Feature Gate checks — higher or lower than $200,000?",
     JSON.stringify({
       reference_value: 200000, reference_label: "$200,000/yr",
-      correct_direction: "higher", actual_value: 220968, actual_label: "$220,968/yr"
+      correct_direction: "higher", actual_value: 220968, actual_label: "$220,968/yr",
+      calculator_url: STATSIG_CALCULATOR_URL
     }),
     "The full M-sized WHN deal totals $220,968/yr suggested: Platform Fee $48K + Experimentation $82,275 + Feature Gates $90,693. The range spans $87K (floor) to $386K (ceiling)."
   ],
@@ -102,13 +108,13 @@ const scenarios: ScenarioRow[] = [
   [
     "PIR-BE-03", "Statsig WHN", "bullseye",
     "What is the suggested annual price for WHN Experimentation with 250 experiments?",
-    JSON.stringify({ correct_value: 82275, tolerance_pct: 15, unit: "$/yr", display_hint: "Annual experiment price" }),
+    JSON.stringify({ correct_value: 82275, tolerance_pct: 15, unit: "$/yr", display_hint: "Annual experiment price", calculator_url: STATSIG_CALCULATOR_URL }),
     "WHN Experimentation at 250 experiments = ~$82,275/yr suggested ($329/experiment suggested unit price). The floor is ~$46K and ceiling ~$113K for this volume."
   ],
   [
     "PIR-BE-04", "Statsig Cloud", "bullseye",
     "What is the suggested annual price for Cloud Experimentation at 2,000 units of 1M Billable Events?",
-    JSON.stringify({ correct_value: 40474, tolerance_pct: 15, unit: "$/yr", display_hint: "Annual experiment price" }),
+    JSON.stringify({ correct_value: 40474, tolerance_pct: 15, unit: "$/yr", display_hint: "Annual experiment price", calculator_url: STATSIG_CALCULATOR_URL }),
     "Cloud Experimentation at 2,000 × 1M Billable Events = ~$40,474/yr suggested ($20.24/unit). Floor is ~$20K, ceiling ~$64K."
   ],
   [
@@ -126,7 +132,7 @@ const scenarios: ScenarioRow[] = [
   [
     "PIR-BE-07", "Statsig Cloud", "bullseye",
     "What is the total suggested annual contract value for a Cloud deal with Experimentation (2,000 × 1M BE) + Feature Gates (100K × 1M checks) + Standard Support?",
-    JSON.stringify({ correct_value: 68022, tolerance_pct: 15, unit: "$/yr", display_hint: "Total ACV" }),
+    JSON.stringify({ correct_value: 68022, tolerance_pct: 15, unit: "$/yr", display_hint: "Total ACV", calculator_url: STATSIG_CALCULATOR_URL }),
     "Total Cloud ACV = $40,474 (Exp) + $22,548 (FG) + $5,000 (Support) = $68,022. Cloud deals don't have a separate platform fee — it's built into the per-unit pricing."
   ],
 
@@ -168,7 +174,8 @@ const scenarios: ScenarioRow[] = [
         { item: "M (51–300 experiments)", price: "$48,000" },
         { item: "L (301–750 experiments)", price: "$96,000" },
         { item: "XL (751+ experiments)", price: "$216,000" }
-      ]
+      ],
+      calculator_url: STATSIG_CALCULATOR_URL
     }),
     "Platform Fee suggested prices use the 1.2× uplift on base: S=$30K×1.2=$36K, M=$40K×1.2=$48K, L=$80K×1.2=$96K, XL=$180K×1.2=$216K. These are flat annual fees independent of per-experiment pricing."
   ],
@@ -181,7 +188,8 @@ const scenarios: ScenarioRow[] = [
         { item: "Cloud Feature Gates (per 1M checks)", price: "$0.23" },
         { item: "Cloud Platform Fee (M tier)", price: "$25,000" },
         { item: "Standard Support", price: "$5,000" }
-      ]
+      ],
+      calculator_url: STATSIG_CALCULATOR_URL
     }),
     "Cloud pricing is usage-based with no separate platform fee for most deals. The Cloud PF only applies when experiment volume warrants it. Standard Support is the mandatory minimum at $5K."
   ],
@@ -245,7 +253,8 @@ const scenarios: ScenarioRow[] = [
         { name: "Standard Support ($5,000)", price: 5000, included: false }
       ],
       correct_total: 220968,
-      explanation: "WHN deals use WHN-specific SKUs: Platform Fee + WHN Experimentation + WHN Feature Gates. Never mix Cloud and WHN products. Support is separate and not included in the base deal total here."
+      explanation: "WHN deals use WHN-specific SKUs: Platform Fee + WHN Experimentation + WHN Feature Gates. Never mix Cloud and WHN products. Support is separate and not included in the base deal total here.",
+      calculator_url: STATSIG_CALCULATOR_URL
     }),
     "WHN deals have three core components: Platform Fee (flat by t-shirt), Experimentation (per-experiment), and Feature Gates (per 1M checks). Never mix Cloud SKUs into a WHN quote."
   ],
@@ -262,7 +271,8 @@ const scenarios: ScenarioRow[] = [
         { name: "Enterprise Support ($15,000)", price: 15000, included: false }
       ],
       correct_total: 68022,
-      explanation: "Cloud ACV = Experimentation ($40,474) + Feature Gates ($22,548) + Standard Support ($5,000) = $68,022. No WHN products in a Cloud deal."
+      explanation: "Cloud ACV = Experimentation ($40,474) + Feature Gates ($22,548) + Standard Support ($5,000) = $68,022. No WHN products in a Cloud deal.",
+      calculator_url: STATSIG_CALCULATOR_URL
     }),
     "Cloud deals: Experimentation + Feature Gates + mandatory Support. Standard Support is the minimum ($5K). Cloud has no separate platform fee at standard volumes."
   ],
@@ -309,7 +319,8 @@ const scenarios: ScenarioRow[] = [
         { name: "WHN Platform Fee – S (≤50 exp) = $36,000", price: 36000, included: false }
       ],
       correct_total: 96000,
-      explanation: "750 experiments falls in the L tier (301–750). Suggested = $80K base × 1.2 uplift = $96K."
+      explanation: "750 experiments falls in the L tier (301–750). Suggested = $80K base × 1.2 uplift = $96K.",
+      calculator_url: STATSIG_CALCULATOR_URL
     }),
     "750 experiments is the upper boundary of L-tier (301–750). One more experiment and you'd jump to XL ($216K) — a massive price step. Help customers right-size their volume."
   ],
@@ -372,7 +383,8 @@ const scenarios: ScenarioRow[] = [
         { text: "Customers can choose monthly or annual billing terms", is_error: true },
         { text: "Standard Support starts at $5,000/year", is_error: false }
       ],
-      error_explanation: "All Statsig contracts require annual usage terms. There is no monthly billing option — this is non-negotiable."
+      error_explanation: "All Statsig contracts require annual usage terms. There is no monthly billing option — this is non-negotiable.",
+      calculator_url: STATSIG_CALCULATOR_URL
     }),
     "Statsig = annual only. No monthly billing, no quarterly terms. Every Statsig deal must be on annual usage term with annual quantity. This is a hard rule."
   ],
@@ -386,7 +398,8 @@ const scenarios: ScenarioRow[] = [
         { text: "Feature Gates minimum fair use is 50B checks", is_error: true },
         { text: "All WHN deals must be on 2026 PPL pricebook", is_error: false }
       ],
-      error_explanation: "The minimum fair use volume for Feature Gates is 100B checks (100,000 units in Salesforce), not 50B. This is the absolute floor — no customer contract goes below 100B."
+      error_explanation: "The minimum fair use volume for Feature Gates is 100B checks (100,000 units in Salesforce), not 50B. This is the absolute floor — no customer contract goes below 100B.",
+      calculator_url: STATSIG_CALCULATOR_URL
     }),
     "100B checks is the minimum fair use — never set it lower. In Salesforce, that's 100,000 units (the system divides by 1,000,000). This protects both Amplitude and the customer."
   ],
@@ -414,7 +427,8 @@ const scenarios: ScenarioRow[] = [
         { text: "If a customer exceeds fair use, they get an automatic overage bill", is_error: true },
         { text: "The scoping calculator helps estimate the right volume", is_error: false }
       ],
-      error_explanation: "Overages are NOT automatic. If the customer exceeds fair use by orders of magnitude, Amplitude works with them in good faith on a path forward via upsell or expansion — not automatic billing."
+      error_explanation: "Overages are NOT automatic. If the customer exceeds fair use by orders of magnitude, Amplitude works with them in good faith on a path forward via upsell or expansion — not automatic billing.",
+      calculator_url: STATSIG_CALCULATOR_URL
     }),
     "Fair use is not a hard cap with automatic overages. It's a mutual good-faith estimate. If exceeded significantly, the path is conversation → upsell/expansion on renewal, not surprise bills."
   ],
