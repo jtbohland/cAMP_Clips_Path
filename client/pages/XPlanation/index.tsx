@@ -128,6 +128,50 @@ export default function XPlanationPage() {
           </div>
         </Section>
 
+        {/* Tier Progression */}
+        <Section title="🪜 Tiers" description="Climb the ranks as you earn XP:">
+          <div className="rounded-lg border border-gray-200 overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b bg-gray-50">
+                  <th className="text-left font-semibold px-4 py-3 text-gray-900">Tier</th>
+                  <th className="text-left font-semibold px-4 py-3 text-gray-900">XP Range</th>
+                  <th className="text-left font-semibold px-4 py-3 text-gray-900">Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                {TIERS.map((t) => {
+                  const isActive = currentTier.emoji === t.emoji;
+                  return (
+                    <tr
+                      key={t.tier}
+                      className={`border-b last:border-b-0 ${
+                        isActive ? "bg-[#4F46E5]/5" : ""
+                      }`}
+                    >
+                      <td className="px-4 py-3 font-medium whitespace-nowrap text-gray-900">
+                        <span className="mr-1.5">{t.emoji}</span>
+                        {t.name}
+                        {isActive && (
+                        <span className="ml-2 inline-flex items-center rounded-full bg-[#4F46E5] px-2 py-0.5 text-xs font-semibold text-white">
+                          You
+                        </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-gray-900">
+                        {t.xpMax ? `${t.xpMin}–${t.xpMax} XP` : `${t.xpMin}+ XP`}
+                      </td>
+                      <td className="px-4 py-3 text-gray-500">
+                        {t.description}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </Section>
+
         {/* Base XP */}
         <Section title="☀️ Base XP" description="Earned every time you complete a clip:">
           <div className="space-y-1">
@@ -138,6 +182,23 @@ export default function XPlanationPage() {
           <p className="text-xs text-gray-500 mt-3 italic">
             Max base XP per clip: 8 (watch + 5/5 trail markers). Approach modules: 40 XP total (4 modules × 10 XP each).
           </p>
+        </Section>
+
+        {/* Milestone Bonuses */}
+        <Section title="🏔️ Milestone Bonuses" description="Hit these checkpoints to earn big XP:">
+          <div className="space-y-2">
+            {MILESTONE_BONUSES.map((b) => (
+              <BadgeRow
+                key={b.badge}
+                emoji={b.emoji}
+                badge={b.badge}
+                xp={b.xp}
+                condition={b.condition}
+                earned={earnedBadgeIds.has(b.badge === "The Full Cast" ? "podcast_cast" : b.badge.toLowerCase().replace(/ /g, "_"))}
+                isMystery={b.badge === "The Ranger's Secret"}
+              />
+            ))}
+          </div>
         </Section>
 
         {/* Performance Bonuses */}
@@ -172,7 +233,39 @@ export default function XPlanationPage() {
           </div>
         </Section>
 
-        {/* Rules of the Ridge (SDR Only) */}
+        {/* Pacing Streak Bonuses */}
+        <Section title="🥾 Pacing Streaks" description="Stay on pace, earn your patches:">
+          <div className="space-y-2">
+            {PACING_STREAK_BONUSES.map((b) => (
+              <BadgeRow
+                key={b.badge}
+                emoji={b.emoji}
+                badge={b.badge}
+                xp={b.xp}
+                condition={b.condition}
+                earned={earnedBadgeIds.has(b.badge.toLowerCase().replace(/ /g, "_"))}
+              />
+            ))}
+          </div>
+        </Section>
+
+        {/* Summit Rewards */}
+        <Section title="🌄 Summit Rewards" description="Tiered rewards based on when you finish — everyone who completes earns one:">
+          <div className="space-y-2">
+            {SUMMIT_REWARDS.map((b) => (
+              <BadgeRow
+                key={b.badge}
+                emoji={b.emoji}
+                badge={b.badge}
+                xp={b.xp}
+                condition={b.condition}
+                earned={earnedBadgeIds.has(b.badge.toLowerCase().replace(/ /g, "_"))}
+              />
+            ))}
+          </div>
+        </Section>
+
+        {/* Price is Right (AE/PSM/Renewals Only) */}
         <Section title="⛏️ Rules of the Ridge" description="SDR path only — wager your real cAMP XP on ROE scenario challenges. Your net XP change determines your badge:">
           <div className="space-y-2">
             {RIDGE_BADGES.map((b) => (
