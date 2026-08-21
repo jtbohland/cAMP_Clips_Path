@@ -105,6 +105,9 @@ export default function TopicGearPage() {
   //   - Once the first resource is clicked → locked until completion
   //   - Completion = reflection submitted (Day 5/9) or game finished (ROE)
   const canLeave = useMemo(() => {
+    // Admins/builders can always leave freely — no gating
+    if (viewer?.isAdmin) return true;
+
     if (isROE) {
       // ROE: can leave before clicking doc, or after game complete
       if (!roeDocClicked) return true;
@@ -117,7 +120,7 @@ export default function TopicGearPage() {
     }
     // Fallback (unknown topic day): always allow
     return true;
-  }, [isROE, roeDocClicked, roeGameComplete, hasReflection, hasStartedResources, reflectionAlreadyDone, reflectionJustSubmitted]);
+  }, [viewer?.isAdmin, isROE, roeDocClicked, roeGameComplete, hasReflection, hasStartedResources, reflectionAlreadyDone, reflectionJustSubmitted]);
 
   const handleResourceClick = useCallback(async (index: number, url: string) => {
     // Open resource in new tab
