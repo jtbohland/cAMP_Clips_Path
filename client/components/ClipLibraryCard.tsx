@@ -163,7 +163,7 @@ export default function ClipLibraryCard({
             )}
             {buttonState === "resume" && (
               <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-yellow-100 text-yellow-800">
-                🐌 In Progress
+                🐌 In Progress{clip.durationSeconds && pausedElapsedSeconds > 0 ? ` · ${Math.min(99, Math.round((pausedElapsedSeconds / clip.durationSeconds) * 100))}%` : ""}
               </span>
             )}
             <button

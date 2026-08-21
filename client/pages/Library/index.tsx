@@ -455,6 +455,30 @@ export default function LibraryPage() {
   // Gate: ALL data must be loaded before any modal logic runs
   const dataReady = !!viewer && !!data && !!progressData && !!week1Data;
 
+  // ── Layer 4: Near-complete session recovery ──
+  // If the learner closed the tab at ≥85% watched + all markers answered,
+  // PauseSession saved phase="near_complete". Show a toast nudging them
+  // to resume — the Watch page's auto-end logic will handle the rest.
+  const nearCompleteHandledRef = useRef(false);
+  useEffect(() => {
+    if (!dataReady || nearCompleteHandledRef.current) return;
+    const nearCompleteClip = clips.find((c: any) => c.pausedPhase === "near_complete" && !c.completed);
+    if (nearCompleteClip) {
+      nearCompleteHandledRef.current = true;
+      const clipTitle = (nearCompleteClip as any).title?.replace(/^[^a-zA-Z]*/, "").trim() || "your clip";
+      toast.info(
+        `🎬 You were almost done with "${clipTitle}" — tap to see your Ranger Report!`,
+        {
+          duration: 12000,
+          action: {
+            label: "Resume",
+            onClick: () => navigate(`/watch/${(nearCompleteClip as any).id}?source=library`),
+          },
+        }
+      );
+    }
+  }, [dataReady, clips, navigate]);
+
   // Auto-trigger Tier Unlock — only after all data ready
   useEffect(() => {
     if (!dataReady || previewMode === "tier") return;
