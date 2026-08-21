@@ -127,6 +127,7 @@ import SeedRidgeScenarios from './v2/seed-ridge-scenarios.js';
 import StartRidgeGame from './v2/start-ridge-game.js';
 import SubmitRidgeResponse from './v2/submit-ridge-response.js';
 import CompleteRidgeGame from './v2/complete-ridge-game.js';
+import AddWdAiCoachColumn from './v2/add-wd-ai-coach-column.js';
 
 
 
@@ -258,6 +259,7 @@ ResetJTSessions,
   StartRidgeGame,
   SubmitRidgeResponse,
   CompleteRidgeGame,
+  AddWdAiCoachColumn,
 } as const;
 
 export default apis;

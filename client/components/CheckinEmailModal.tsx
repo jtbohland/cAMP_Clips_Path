@@ -173,7 +173,10 @@ function CheckinEmailModalInner({ viewerId, viewerName, checkinType, onClose }: 
                     {" — "}
                     <span>{data.wdVerification.scenario}</span>
                     {" — "}
-                    <span className="font-bold text-indigo-600">{data.wdVerification.score}%</span>
+                    <span className="font-bold text-indigo-600">{data.wdVerification.score}/15</span>
+                    {data.wdVerification.aiCoachScore != null && (
+                      <span className="ml-2 text-purple-600 font-medium">AI: {data.wdVerification.aiCoachScore}/15</span>
+                    )}
                   </div>
                 </div>
               )}

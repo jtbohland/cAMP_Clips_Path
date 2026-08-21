@@ -10,6 +10,7 @@ const VALID_PRODUCTS = [
   'AI Feedback',
   'AI Assistant',
   'Session Replay & Heat Maps',
+  'Statsig',
 ] as const;
 
 const VALID_SCENARIOS = [
@@ -32,6 +33,7 @@ export default api({
     product: z.string().min(1),
     scenario: z.string().min(1),
     score: z.number().int(),
+    aiCoachScore: z.number().int(),
   }),
 
   output: z.object({
@@ -40,7 +42,7 @@ export default api({
     validationError: z.string().nullable(),
   }),
 
-  async run(ctx, { viewerId, product, scenario, score }) {
+  async run(ctx, { viewerId, product, scenario, score, aiCoachScore }) {
     // Validate product against allowed list
     if (!VALID_PRODUCTS.includes(product as any)) {
       return {
@@ -70,6 +72,15 @@ export default api({
       };
     }
 
+    // Validate AI Coach score range
+    if (aiCoachScore < 4 || aiCoachScore > 15) {
+      return {
+        success: false,
+        alreadySubmitted: false,
+        validationError: `AI Coach score must be between 4 and 15. Enter the score from your AI Coach session.`,
+      };
+    }
+
     // Check if already submitted
     const existingCheck = await ctx.integrations.db.query(
       `SELECT COUNT(*)::int AS count FROM cliptracker_v2_wd_verifications
@@ -85,10 +96,10 @@ export default api({
 
     // Insert verification
     await ctx.integrations.db.execute(
-      `INSERT INTO cliptracker_v2_wd_verifications (viewer_id, product, scenario, score)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO cliptracker_v2_wd_verifications (viewer_id, product, scenario, score, ai_coach_score)
+       VALUES ($1, $2, $3, $4, $5)
        ON CONFLICT (viewer_id) DO NOTHING`,
-      [viewerId, product, scenario, score],
+      [viewerId, product, scenario, score, aiCoachScore],
       { label: "Insert W&D verification" }
     );
 
@@ -108,7 +119,7 @@ export default api({
       { label: "Award approach module XP: wheel_deal" }
     );
 
-    ctx.log.info("W&D verification submitted + XP awarded", { viewerId, product, scenario, score });
+    ctx.log.info("W&D verification submitted + XP awarded", { viewerId, product, scenario, score, aiCoachScore });
     return { success: true, alreadySubmitted: false, validationError: null };
   },
 });

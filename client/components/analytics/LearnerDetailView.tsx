@@ -500,6 +500,7 @@ function ApproachTab({ approach }: { approach: any }) {
                   {w.scenario && <p className="text-[10px] text-gray-500">{w.scenario}</p>}
                 </div>
                 {w.score != null && <span className="text-sm font-bold text-indigo-600">{w.score}</span>}
+                {w.aiCoachScore != null && <span className="text-xs text-purple-600 font-medium">AI: {w.aiCoachScore}</span>}
                 <span className="text-[10px] text-gray-400">{fmtShortDate(w.completedAt)}</span>
               </div>
             ))}

@@ -296,6 +296,9 @@ function LearnerCheckinModalInner({ viewerId, checkinType, onClose, onSent, allo
         body += `  Product: ${data.wdVerification.product}\n`;
         body += `  Scenario: ${data.wdVerification.scenario}\n`;
         body += `  Self-score: ${data.wdVerification.score}/15\n`;
+        if (data.wdVerification.aiCoachScore != null) {
+          body += `  AI Coach score: ${data.wdVerification.aiCoachScore}/15\n`;
+        }
       }
 
     // ── TEMPLATE 2: APPROACH (INCOMPLETE / AUTO-UNLOCK) ──
@@ -906,7 +909,10 @@ function StatsView({ data, checkinType }: { data: any; checkinType: CheckinType 
             {" — "}
             <span>{data.wdVerification.scenario}</span>
             {" — "}
-            <span className="font-bold text-indigo-600">{data.wdVerification.score}%</span>
+            <span className="font-bold text-indigo-600">{data.wdVerification.score}/15</span>
+            {data.wdVerification.aiCoachScore != null && (
+              <span className="ml-2 text-purple-600 font-medium">AI: {data.wdVerification.aiCoachScore}/15</span>
+            )}
           </div>
         </div>
       )}
@@ -1075,9 +1081,12 @@ function EmailView({
               {data.wdVerification && (
                 <>
                   <p>Wheel & Deal:</p>
-                  <p>{"  "}Product: {data.wdVerification.product}</p>
+                    <p>{"  "}Product: {data.wdVerification.product}</p>
                   <p>{"  "}Scenario: {data.wdVerification.scenario}</p>
                   <p>{"  "}Self-score: {data.wdVerification.score}/15</p>
+                  {data.wdVerification.aiCoachScore != null && (
+                    <p>{"  "}AI Coach score: {data.wdVerification.aiCoachScore}/15</p>
+                  )}
                 </>
               )}
             </>

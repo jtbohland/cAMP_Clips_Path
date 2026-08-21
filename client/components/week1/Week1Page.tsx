@@ -282,12 +282,13 @@ export default function Week1Page({ viewerId, viewerName, viewerRole, isAdmin, p
     await refetch();
   }, [viewerId, submitScreenshot, refetch]);
 
-  const handleWdSubmit = useCallback(async (wdData: { product: string; scenario: string; score: number }) => {
+  const handleWdSubmit = useCallback(async (wdData: { product: string; scenario: string; score: number; aiCoachScore: number }) => {
     const result = await submitWd({
       viewerId,
       product: wdData.product,
       scenario: wdData.scenario,
       score: wdData.score,
+      aiCoachScore: wdData.aiCoachScore,
     });
     if (result?.validationError) {
       throw new Error(result.validationError);
