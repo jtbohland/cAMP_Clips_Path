@@ -9,6 +9,7 @@ import type { TopicDayConfig } from "@/config/topicDays";
 import TopicResourceList from "@/components/TopicResourceList";
 import TopicReflectionSection from "@/components/TopicReflectionSection";
 import RidgeGame from "@/components/RidgeGame";
+import PriceGame from "@/components/PriceGame";
 
 /**
  * Topic Gear page — shows summary, learning objectives, SMEs, and resources
@@ -58,7 +59,8 @@ export default function TopicGearPage() {
 
   const config = topicKey ? TOPIC_DAYS[topicKey] : undefined;
   const isROE = topicKey === "day13_sdr_roe";
-  const hasReflection = !!(config?.reflectionQuestions && config.reflectionQuestions.length >= 2);
+  const isPriceGame = topicKey === "day9";
+  const hasReflection = !!(config?.reflectionQuestions && config.reflectionQuestions.length >= 2 && !isPriceGame);
 
   const { run: trackClick, loading: tracking } = useApi("TrackResourceClick");
 
@@ -68,6 +70,7 @@ export default function TopicGearPage() {
   const [reflectionJustSubmitted, setReflectionJustSubmitted] = useState(false);
   const [roeDocClicked, setRoeDocClicked] = useState(false);
   const [roeGameComplete, setRoeGameComplete] = useState(false);
+  const [priceGameComplete, setPriceGameComplete] = useState(false);
 
   // Check if reflection was ALREADY submitted on a previous visit (Day 5 & Day 9)
   const { data: reflectionData } = useApiData(
@@ -105,19 +108,27 @@ export default function TopicGearPage() {
   //   - Once the first resource is clicked → locked until completion
   //   - Completion = reflection submitted (Day 5/9) or game finished (ROE)
   const canLeave = useMemo(() => {
+    // Admins/builders can always leave freely — no gating
+    if (viewer?.isAdmin) return true;
+
     if (isROE) {
       // ROE: can leave before clicking doc, or after game complete
       if (!roeDocClicked) return true;
       return roeGameComplete;
     }
-    // Day 5 & Day 9: can leave before clicking any resource, or after reflection
+    // Day 9 Price is Right: can leave before first click, or after game complete
+    if (isPriceGame) {
+      if (!hasStartedResources) return true;
+      return priceGameComplete;
+    }
+    // Day 5: can leave before clicking any resource, or after reflection
     if (hasReflection) {
       if (!hasStartedResources) return true;
       return reflectionAlreadyDone || reflectionJustSubmitted;
     }
     // Fallback (unknown topic day): always allow
     return true;
-  }, [isROE, roeDocClicked, roeGameComplete, hasReflection, hasStartedResources, reflectionAlreadyDone, reflectionJustSubmitted]);
+  }, [viewer?.isAdmin, isROE, roeDocClicked, roeGameComplete, isPriceGame, priceGameComplete, hasReflection, hasStartedResources, reflectionAlreadyDone, reflectionJustSubmitted]);
 
   const handleResourceClick = useCallback(async (index: number, url: string) => {
     // Open resource in new tab
@@ -189,7 +200,7 @@ export default function TopicGearPage() {
           ? "bg-indigo-600 text-white hover:bg-indigo-700"
           : "bg-gray-400 text-gray-200 cursor-not-allowed"
       }`}
-      title={!canLeave ? (isROE ? "Complete the Ridge game to continue" : "Complete the reflection to continue") : undefined}
+      title={!canLeave ? (isROE ? "Complete the Ridge game to continue" : isPriceGame ? "Complete the Price is Right game to continue" : "Complete the reflection to continue") : undefined}
     >
       {canLeave ? "🎞️ Back to Clips" : "🔒 Back to Clips"}
     </button>
@@ -224,11 +235,15 @@ export default function TopicGearPage() {
                 <p className="text-sm font-bold text-amber-800">
                   {isROE
                     ? "Complete the Ridge game to unlock \"Back to Clips\""
+                    : isPriceGame
+                    ? "Complete The Price is Right game to unlock \"Back to Clips\""
                     : "Complete the reflection to unlock \"Back to Clips\""}
                 </p>
                 <p className="text-xs text-amber-600 mt-0.5">
                   {isROE
                     ? "You've reviewed the ROE Guide — now prove your knowledge in the Ridge game below."
+                    : isPriceGame
+                    ? "Review all resources, then test your pricing knowledge in the game below."
                     : "Review all resources and submit your reflection to continue."}
                 </p>
               </div>
@@ -248,6 +263,8 @@ export default function TopicGearPage() {
                 <p className="text-xs text-green-600 mt-0.5">
                   {isROE
                     ? "All tools. All terrain. You're ready for the Ridge."
+                    : isPriceGame
+                    ? "All tools. All terrain. You're ready for The Price is Right! 🎰"
                     : "All tools. All terrain. You're ready for anything. Submit the reflection below for +10 XP!"}
                 </p>
               </div>
@@ -377,7 +394,28 @@ export default function TopicGearPage() {
             ) : null
           )}
 
-          {/* Topic Reflection (Day 5 & Day 9 only) — locked until all resources clicked */}
+          {/* Price is Right game (Day 9 only) — replaces reflection */}
+          {isPriceGame && viewer?.id && clipId && (
+            allClicked ? (
+              <PriceGame
+                viewerId={viewer.id}
+                clipId={clipId}
+                onBackToClips={() => navigate("/?tab=ascent")}
+                onComplete={() => setPriceGameComplete(true)}
+              />
+            ) : hasStartedResources ? (
+              <div className="rounded-xl bg-gray-50 border border-gray-200 shadow-[0_1px_3px_rgba(0,0,0,0.08)] p-5 opacity-60">
+                <h2 className="text-base font-bold text-gray-400 flex items-center gap-2 mb-1">
+                  🔒 The Price is Right: cAMP Edition
+                </h2>
+                <p className="text-xs text-gray-400">
+                  Review all resources above to unlock the pricing game.
+                </p>
+              </div>
+            ) : null
+          )}
+
+          {/* Topic Reflection (Day 5 only) — locked until all resources clicked */}
           {hasReflection && viewer?.id && topicKey && (
             allClicked ? (
               <TopicReflectionSection

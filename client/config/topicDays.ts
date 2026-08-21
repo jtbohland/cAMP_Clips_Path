@@ -144,12 +144,21 @@ export const TOPIC_DAYS: Record<string, TopicDayConfig> = {
         type: "spekit",
         emoji: "🐙",
       },
+      {
+        label: "Statsig Pricing & Packaging Guidance",
+        url: "https://docs.google.com/presentation/d/1NrAfU9XXXtfufnliPwGfjUDOae8WiBGFrE4QYhKkMA4/edit?slide=id.g3e63be01072_9_700#slide=id.g3e63be01072_9_700",
+        type: "slides",
+        emoji: "💻",
+      },
+      {
+        label: "Statsig: Sales Calculator",
+        url: "https://docs.google.com/spreadsheets/d/1WoVf4CEFD9iWPpYyY_QBnP1hx27AbrjWcgiw540Sw1c/edit?gid=1967279232#gid=1967279232",
+        type: "sheets",
+        emoji: "📊",
+      },
     ],
     dealDeskNote: "For pricing/quoting help on 2026 PPL, open a case with Deal Desk from the associated opportunity in Salesforce.",
-    reflectionQuestions: [
-      { id: "day9_q1", prompt: "How would you explain Amplitude's pricing model to a prospect in 2 sentences?" },
-      { id: "day9_q2", prompt: "What's a common pricing objection you expect, and how would you handle it?" },
-    ],
+    // No reflectionQuestions — the Price is Right game replaces reflection for this day
   },
 
   // Day 13 SDR — sort_order 165 (SDR-only, Rules of Engagement)

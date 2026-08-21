@@ -128,6 +128,13 @@ import StartRidgeGame from './v2/start-ridge-game.js';
 import SubmitRidgeResponse from './v2/submit-ridge-response.js';
 import CompleteRidgeGame from './v2/complete-ridge-game.js';
 import AddWdAiCoachColumn from './v2/add-wd-ai-coach-column.js';
+import SetupPriceSchema from './v2/setup-price-schema.js';
+import SeedPriceScenarios from './v2/seed-price-scenarios.js';
+import StartPriceGame from './v2/start-price-game.js';
+import SubmitPriceResponse from './v2/submit-price-response.js';
+import CompletePriceGame from './v2/complete-price-game.js';
+import GetPriceGameHistory from './v2/get-price-game-history.js';
+import GetRidgeGameHistory from './v2/get-ridge-game-history.js';
 
 
 
@@ -260,6 +267,13 @@ ResetJTSessions,
   SubmitRidgeResponse,
   CompleteRidgeGame,
   AddWdAiCoachColumn,
+  SetupPriceSchema,
+  SeedPriceScenarios,
+  StartPriceGame,
+  SubmitPriceResponse,
+  CompletePriceGame,
+  GetPriceGameHistory,
+  GetRidgeGameHistory,
 } as const;
 
 export default apis;
