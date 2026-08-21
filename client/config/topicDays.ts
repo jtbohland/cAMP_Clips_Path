@@ -158,10 +158,7 @@ export const TOPIC_DAYS: Record<string, TopicDayConfig> = {
       },
     ],
     dealDeskNote: "For pricing/quoting help on 2026 PPL, open a case with Deal Desk from the associated opportunity in Salesforce.",
-    reflectionQuestions: [
-      { id: "day9_q1", prompt: "How would you explain Amplitude's pricing model to a prospect in 2 sentences?" },
-      { id: "day9_q2", prompt: "What's a common pricing objection you expect, and how would you handle it?" },
-    ],
+    // No reflectionQuestions — the Price is Right game replaces reflection for this day
   },
 
   // Day 13 SDR — sort_order 165 (SDR-only, Rules of Engagement)

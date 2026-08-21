@@ -32,6 +32,11 @@ const BADGE_MAP: Record<string, { name: string; emoji: string }> = {
   halfway: { name: "Halfway Up", emoji: "🏔️" },
   week_4_entry: { name: "Summit Push", emoji: "🪢" },
   mystery: { name: "Ranger's Secret", emoji: "🌲" },
+  price_busted_deal: { name: "Busted Deal", emoji: "💸" },
+  price_window_shopper: { name: "Window Shopper", emoji: "🪟" },
+  price_pricing_prodigy: { name: "Pricing Prodigy", emoji: "🏷️" },
+  price_deal_architect: { name: "Deal Architect", emoji: "📐" },
+  price_jackpot_genius: { name: "Jackpot Genius", emoji: "🎰" },
   podcast_cast: { name: "The Full Cast", emoji: "🎣" },
   approach_complete: { name: "The Approach", emoji: "🚡" },
   on_the_trail: { name: "On the Trail", emoji: "🗓️" },
@@ -72,15 +77,23 @@ const CHECKIN_LABELS: Record<string, { emoji: string; label: string }> = {
   summit: { emoji: "🏔️", label: "Summit" },
 };
 
-type TabKey = "overview" | "approach" | "ascent" | "journals" | "activity";
+type TabKey = "overview" | "approach" | "ascent" | "journals" | "activity" | "price_game" | "ridge_game";
 
-const TABS: Array<{ key: TabKey; label: string; emoji: string }> = [
+const BASE_TABS: Array<{ key: TabKey; label: string; emoji: string }> = [
   { key: "overview", label: "Overview", emoji: "📊" },
   { key: "approach", label: "Approach", emoji: "🚡" },
   { key: "ascent", label: "Ascent Clips", emoji: "🎬" },
   { key: "journals", label: "Journals", emoji: "📓" },
   { key: "activity", label: "Activity", emoji: "🔔" },
 ];
+
+const PRICE_TAB = { key: "price_game" as TabKey, label: "Price is Right", emoji: "🎰" };
+const RIDGE_TAB = { key: "ridge_game" as TabKey, label: "Ridge Runner", emoji: "🥾" };
+
+function getTabsForRole(role: string): Array<{ key: TabKey; label: string; emoji: string }> {
+  const isSDR = /sdr|sales development/i.test(role);
+  return [...BASE_TABS, isSDR ? RIDGE_TAB : PRICE_TAB];
+}
 
 function fmtDate(d: string | null) {
   if (!d) return "—";
@@ -186,6 +199,7 @@ function LearnerDetailView({ viewerId, onBack }: LearnerDetailViewProps) {
 
   const { viewer, pacing, xp, tier, badges, clips, approach, journals, checkinReflections, gearClicks, modalInteractions, clipsCompleted, totalLiveClips, leaderboardRank } = data;
   const pacingInfo = PACING[pacing.status] ?? PACING.not_started;
+  const tabs = useMemo(() => getTabsForRole(viewer.role ?? ""), [viewer.role]);
 
   return (
     <div className="space-y-4">
@@ -243,7 +257,7 @@ function LearnerDetailView({ viewerId, onBack }: LearnerDetailViewProps) {
 
       {/* ─── Tabs ─── */}
       <div className="flex gap-1 border-b border-gray-200">
-        {TABS.map(tab => (
+        {tabs.map(tab => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
@@ -271,6 +285,8 @@ function LearnerDetailView({ viewerId, onBack }: LearnerDetailViewProps) {
         {activeTab === "ascent" && <AscentTab clips={clips} />}
         {activeTab === "journals" && <JournalsTab journals={journals} checkins={checkinReflections} />}
         {activeTab === "activity" && <ActivityTab gearClicks={gearClicks} modals={modalInteractions} />}
+        {activeTab === "price_game" && <PriceGameTab viewerId={viewerId} />}
+        {activeTab === "ridge_game" && <RidgeGameTab viewerId={viewerId} />}
       </div>
     </div>
   );
@@ -834,6 +850,158 @@ function InfoRow({ label, value, alert }: { label: string; value: string | numbe
     <div className="flex items-center justify-between text-xs">
       <span className="text-gray-500">{label}</span>
       <span className={alert ? "text-red-600 font-semibold" : "text-gray-800 font-medium"}>{value}</span>
+    </div>
+  );
+}
+
+// ─── Price is Right Game Tab ─────────────────────────────────────────────────
+
+const PRICE_BADGE_MAP: Record<string, { name: string; emoji: string }> = {
+  price_busted_deal: { name: "Busted Deal", emoji: "💸" },
+  price_window_shopper: { name: "Window Shopper", emoji: "🪟" },
+  price_pricing_prodigy: { name: "Pricing Prodigy", emoji: "🏷️" },
+  price_deal_architect: { name: "Deal Architect", emoji: "📐" },
+  price_jackpot_genius: { name: "Jackpot Genius", emoji: "🎰" },
+};
+
+function PriceGameTab({ viewerId }: { viewerId: string }) {
+  const { data, loading, isError } = useApiData("GetPriceGameHistory", { viewerId });
+
+  if (loading) return <div className="space-y-3"><Skeleton className="h-24" /><Skeleton className="h-48" /></div>;
+  if (isError || !data) return <p className="text-sm text-gray-500">No game data available.</p>;
+
+  const { sessions, bestNetXp, totalGamesPlayed, bestBadge } = data;
+  const bestBadgeInfo = bestBadge ? PRICE_BADGE_MAP[bestBadge] : null;
+
+  return (
+    <div className="space-y-4">
+      {/* Summary stats */}
+      <div className="grid grid-cols-3 gap-3">
+        <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
+          <p className="text-2xl font-bold text-indigo-600">{totalGamesPlayed}</p>
+          <p className="text-xs text-gray-500">Games Played</p>
+        </div>
+        <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
+          <p className="text-2xl font-bold text-indigo-600">{bestNetXp !== null ? `${bestNetXp > 0 ? "+" : ""}${bestNetXp}` : "—"}</p>
+          <p className="text-xs text-gray-500">Best Net XP</p>
+        </div>
+        <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
+          <p className="text-2xl">{bestBadgeInfo?.emoji ?? "—"}</p>
+          <p className="text-xs text-gray-500">{bestBadgeInfo?.name ?? "No badge yet"}</p>
+        </div>
+      </div>
+
+      {/* Session history */}
+      <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <h3 className="text-sm font-bold text-gray-700 mb-3">Game History</h3>
+        {sessions.length === 0 ? (
+          <p className="text-sm text-gray-400 italic">No games played yet.</p>
+        ) : (
+          <div className="space-y-2">
+            {sessions.map((s: any) => {
+              const badge = s.badge_key ? PRICE_BADGE_MAP[s.badge_key] : null;
+              return (
+                <div key={s.session_id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{badge?.emoji ?? "🎰"}</span>
+                    <div>
+                      <p className="text-sm font-medium text-gray-800">
+                        {badge?.name ?? "In progress"}
+                        {s.is_replay && <span className="text-xs text-gray-400 ml-1">(practice)</span>}
+                      </p>
+                      <p className="text-xs text-gray-400">{fmtDateTime(s.created_at)}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    {s.completed_at ? (
+                      <p className={`text-sm font-bold ${(s.net_xp ?? 0) >= 0 ? "text-green-600" : "text-red-600"}`}>
+                        {s.is_replay ? "—" : `${(s.net_xp ?? 0) > 0 ? "+" : ""}${s.net_xp ?? 0} XP`}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-amber-600">In progress</p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Ridge Runner Game Tab ───────────────────────────────────────────────────
+
+const RIDGE_BADGE_MAP: Record<string, { name: string; emoji: string }> = {
+  ridge_whipper: { name: "Whipper", emoji: "🪢" },
+  ridge_rookie: { name: "Ridge Rookie", emoji: "🪨" },
+  ridge_trail_judge: { name: "Trail Judge", emoji: "⛏️" },
+  ridge_roe_enforcer: { name: "ROE Enforcer", emoji: "🏔️" },
+  ridge_summit_authority: { name: "Summit Authority", emoji: "🌄" },
+};
+
+function RidgeGameTab({ viewerId }: { viewerId: string }) {
+  const { data, loading, isError } = useApiData("GetRidgeGameHistory", { viewerId });
+
+  if (loading) return <div className="space-y-3"><Skeleton className="h-24" /><Skeleton className="h-48" /></div>;
+  if (isError || !data) return <p className="text-sm text-gray-500">No game data available.</p>;
+
+  const { sessions, bestNetXp, totalGamesPlayed, bestBadge } = data;
+  const bestBadgeInfo = bestBadge ? RIDGE_BADGE_MAP[bestBadge] : null;
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-3 gap-3">
+        <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
+          <p className="text-2xl font-bold text-indigo-600">{totalGamesPlayed}</p>
+          <p className="text-xs text-gray-500">Games Played</p>
+        </div>
+        <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
+          <p className="text-2xl font-bold text-indigo-600">{bestNetXp !== null ? `${bestNetXp > 0 ? "+" : ""}${bestNetXp}` : "—"}</p>
+          <p className="text-xs text-gray-500">Best Net XP</p>
+        </div>
+        <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
+          <p className="text-2xl">{bestBadgeInfo?.emoji ?? "—"}</p>
+          <p className="text-xs text-gray-500">{bestBadgeInfo?.name ?? "No badge yet"}</p>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <h3 className="text-sm font-bold text-gray-700 mb-3">Game History</h3>
+        {sessions.length === 0 ? (
+          <p className="text-sm text-gray-400 italic">No games played yet.</p>
+        ) : (
+          <div className="space-y-2">
+            {sessions.map((s: any) => {
+              const badge = s.badge_key ? RIDGE_BADGE_MAP[s.badge_key] : null;
+              return (
+                <div key={s.session_id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{badge?.emoji ?? "⛏️"}</span>
+                    <div>
+                      <p className="text-sm font-medium text-gray-800">
+                        {badge?.name ?? "In progress"}
+                        {s.is_replay && <span className="text-xs text-gray-400 ml-1">(practice)</span>}
+                      </p>
+                      <p className="text-xs text-gray-400">{fmtDateTime(s.created_at)}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    {s.completed_at ? (
+                      <p className={`text-sm font-bold ${(s.net_xp ?? 0) >= 0 ? "text-green-600" : "text-red-600"}`}>
+                        {s.is_replay ? "—" : `${(s.net_xp ?? 0) > 0 ? "+" : ""}${s.net_xp ?? 0} XP`}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-amber-600">In progress</p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
