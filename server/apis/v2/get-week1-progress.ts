@@ -19,6 +19,7 @@ const WdVerificationRow = z.object({
   product: z.string(),
   scenario: z.string(),
   score: z.coerce.number(),
+  ai_coach_score: z.coerce.number().nullable(),
   completed_at: z.string(),
 });
 
@@ -63,6 +64,7 @@ export default api({
       product: z.string(),
       scenario: z.string(),
       score: z.number(),
+      aiCoachScore: z.number().nullable(),
       completedAt: z.string(),
     }).nullable(),
     week1UnlockedAt: z.string().nullable(),
@@ -121,7 +123,7 @@ export default api({
 
     // Get W&D verification
     const wdRows = await ctx.integrations.db.query(
-      `SELECT product, scenario, score, completed_at::text
+      `SELECT product, scenario, score, ai_coach_score, completed_at::text
        FROM cliptracker_v2_wd_verifications
        WHERE viewer_id = $1
        LIMIT 1`,
@@ -160,6 +162,7 @@ export default api({
             product: wdRows[0].product,
             scenario: wdRows[0].scenario,
             score: wdRows[0].score,
+            aiCoachScore: wdRows[0].ai_coach_score,
             completedAt: wdRows[0].completed_at,
           }
         : null,

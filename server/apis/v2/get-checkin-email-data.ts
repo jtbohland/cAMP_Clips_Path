@@ -20,6 +20,7 @@ const WdRow = z.object({
   product: z.string(),
   scenario: z.string(),
   score: z.coerce.number(),
+  ai_coach_score: z.coerce.number().nullable(),
 });
 
 const ViewerStatsRow = z.object({
@@ -112,6 +113,7 @@ export default api({
       product: z.string(),
       scenario: z.string(),
       score: z.number(),
+      aiCoachScore: z.number().nullable(),
     }).nullable(),
     // Approach completion status (available for all check-in types)
     approachStatus: z.object({
@@ -182,7 +184,7 @@ export default api({
 
     // Get module reflections (for approach checkin)
     let moduleReflections: { moduleKey: string; reflectionPrompt: string; reflectionResponse: string }[] = [];
-    let wdVerification: { product: string; scenario: string; score: number } | null = null;
+    let wdVerification: { product: string; scenario: string; score: number; aiCoachScore: number | null } | null = null;
 
     // Always fetch approach module status (needed for all check-in types)
     const signoffs = await ctx.integrations.db.query(
@@ -204,7 +206,7 @@ export default api({
     );
 
     const wdRows = await ctx.integrations.db.query(
-      `SELECT product, scenario, score
+      `SELECT product, scenario, score, ai_coach_score
        FROM cliptracker_v2_wd_verifications
        WHERE viewer_id = $1
        LIMIT 1`,
@@ -252,7 +254,7 @@ export default api({
       }));
 
       wdVerification = wdRows.length > 0
-        ? { product: wdRows[0].product, scenario: wdRows[0].scenario, score: wdRows[0].score }
+        ? { product: wdRows[0].product, scenario: wdRows[0].scenario, score: wdRows[0].score, aiCoachScore: wdRows[0].ai_coach_score }
         : null;
     }
 

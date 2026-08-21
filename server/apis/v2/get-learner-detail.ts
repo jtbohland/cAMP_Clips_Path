@@ -177,6 +177,7 @@ const WdRow = z.object({
   product: z.string(),
   scenario: z.string().nullable(),
   score: z.coerce.number().nullable(),
+  ai_coach_score: z.coerce.number().nullable(),
   completed_at: z.string(),
 });
 
@@ -338,6 +339,7 @@ export default api({
         product: z.string(),
         scenario: z.string().nullable(),
         score: z.number().nullable(),
+        aiCoachScore: z.number().nullable(),
         completedAt: z.string(),
       })),
     }),
@@ -474,7 +476,7 @@ export default api({
 
       // 7. WD verifications
       ctx.integrations.db.query(
-        `SELECT product, scenario, score, completed_at::text
+        `SELECT product, scenario, score, ai_coach_score, completed_at::text
          FROM cliptracker_v2_wd_verifications
          WHERE viewer_id = $1
          ORDER BY completed_at ASC`,
@@ -925,6 +927,7 @@ export default api({
           product: w.product,
           scenario: w.scenario,
           score: w.score,
+          aiCoachScore: w.ai_coach_score,
           completedAt: w.completed_at,
         })),
       },

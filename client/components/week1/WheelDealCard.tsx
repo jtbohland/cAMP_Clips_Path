@@ -10,15 +10,16 @@ const VALID_SCENARIOS = [
 
 type WheelDealCardProps = {
   isVerified: boolean;
-  verificationData?: { product: string; scenario: string; score: number; completedAt: string };
+  verificationData?: { product: string; scenario: string; score: number; aiCoachScore: number | null; completedAt: string };
   isLegacy: boolean;
-  onSubmit: (data: { product: string; scenario: string; score: number }) => Promise<void>;
+  onSubmit: (data: { product: string; scenario: string; score: number; aiCoachScore: number }) => Promise<void>;
 };
 
 export default function WheelDealCard({ isVerified, verificationData, isLegacy, onSubmit }: WheelDealCardProps) {
   const [product, setProduct] = useState("");
   const [scenario, setScenario] = useState("");
   const [score, setScore] = useState<number | "">("");
+  const [aiCoachScore, setAiCoachScore] = useState<number | "">("");
   const [submitting, setSubmitting] = useState(false);
 
   const WHEEL_AND_DEAL_URL = "https://app.superblocks.com/code-mode/applications/fef97ebe-4fb9-401f-b97c-c52c1693b31b/";
@@ -36,10 +37,14 @@ export default function WheelDealCard({ isVerified, verificationData, isLegacy, 
       toast.error("Please enter your score");
       return;
     }
+    if (aiCoachScore === "") {
+      toast.error("Please enter your AI Coach score");
+      return;
+    }
 
     setSubmitting(true);
     try {
-      await onSubmit({ product: product.trim(), scenario, score: Number(score) });
+      await onSubmit({ product: product.trim(), scenario, score: Number(score), aiCoachScore: Number(aiCoachScore) });
     } catch (err: any) {
       toast.error(err?.message || "Failed to submit verification");
     } finally {
@@ -76,7 +81,7 @@ export default function WheelDealCard({ isVerified, verificationData, isLegacy, 
 
         {isVerified && verificationData ? (
           <div className="px-5 py-3 bg-green-50">
-            <div className="grid grid-cols-3 gap-3 text-sm">
+            <div className="grid grid-cols-2 gap-3 text-sm">
               <div>
                 <p className="text-[10px] font-semibold text-gray-500 uppercase">Product</p>
                 <p className="text-gray-800 font-medium">{verificationData.product}</p>
@@ -88,6 +93,12 @@ export default function WheelDealCard({ isVerified, verificationData, isLegacy, 
               <div>
                 <p className="text-[10px] font-semibold text-gray-500 uppercase">Score</p>
                 <p className="text-gray-800 font-medium">{verificationData.score}/15</p>
+              </div>
+              <div>
+                <p className="text-[10px] font-semibold text-gray-500 uppercase">AI Coach Score</p>
+                <p className="text-gray-800 font-medium">
+                  {verificationData.aiCoachScore != null ? `${verificationData.aiCoachScore}/15` : '—'}
+                </p>
               </div>
             </div>
             <p className="text-xs text-green-700 mt-2">
@@ -141,14 +152,28 @@ export default function WheelDealCard({ isVerified, verificationData, isLegacy, 
                 type="number"
                 value={score}
                 onChange={(e) => setScore(e.target.value === "" ? "" : Number(e.target.value))}
-                placeholder="What was your score?"
+                placeholder="What was your score? (4–15)"
+                className="w-full text-sm rounded-lg border border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+              />
+            </div>
+
+            {/* AI Coach Score */}
+            <div>
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1">
+                AI Coach Score
+              </label>
+              <input
+                type="number"
+                value={aiCoachScore}
+                onChange={(e) => setAiCoachScore(e.target.value === "" ? "" : Number(e.target.value))}
+                placeholder="What was your AI Coach score? (4–15)"
                 className="w-full text-sm rounded-lg border border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               />
             </div>
 
             <button
               onClick={handleSubmit}
-              disabled={submitting || !product.trim() || !scenario || score === ""}
+              disabled={submitting || !product.trim() || !scenario || score === "" || aiCoachScore === ""}
               className="w-full py-2.5 rounded-lg bg-[#1B4332] text-white text-sm font-semibold hover:bg-[#2D6A4F] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {submitting ? "Submitting..." : "🎡 Submit Result"}
