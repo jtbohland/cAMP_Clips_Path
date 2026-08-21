@@ -45,12 +45,18 @@ const SORT_TO_ASCENT_DAY: Record<number, number> = {
 // Total Ascent weekdays = 15
 const TOTAL_ASCENT_DAYS = 15;
 
-// ── Pacing streak badge definitions ──
-const PACING_STREAKS = [
+// ── Pacing streak badge definitions (role-aware thresholds) ──
+const AE_PACING_STREAKS = [
   { days: 5,  badgeId: "ridge_runner",      name: "Ridge Runner",      emoji: "🥾",  xp: 10 },
   { days: 10, badgeId: "alpine_endurance",  name: "Alpine Endurance",  emoji: "🏔️", xp: 15 },
   { days: 15, badgeId: "iron_legs",         name: "Iron Legs",         emoji: "🦿",  xp: 20 },
   { days: 20, badgeId: "mountain_goat",     name: "Mountain Goat",     emoji: "🐐",  xp: 30 },
+];
+const SDR_PACING_STREAKS = [
+  { days: 3,  badgeId: "ridge_runner",      name: "Ridge Runner",      emoji: "🥾",  xp: 10 },
+  { days: 6,  badgeId: "alpine_endurance",  name: "Alpine Endurance",  emoji: "🏔️", xp: 15 },
+  { days: 9,  badgeId: "iron_legs",         name: "Iron Legs",         emoji: "🦿",  xp: 20 },
+  { days: 12, badgeId: "mountain_goat",     name: "Mountain Goat",     emoji: "🐐",  xp: 30 },
 ];
 
 const BadgeEarnedSchema = z.object({
@@ -353,7 +359,9 @@ export default api({
 
       // Award pacing streak badges based on max consecutive summit_bound days
       // These are cumulative — if you hit 10, you also earned 5
-      for (const streak of PACING_STREAKS) {
+      // SDRs use scaled thresholds (3/6/9/12) vs AEs (5/10/15/20)
+      const pacingStreakDefs = isSDR(learnerRole) ? SDR_PACING_STREAKS : AE_PACING_STREAKS;
+      for (const streak of pacingStreakDefs) {
         if (maxConsecutive >= streak.days) {
           xpEvents.push({ sourceId: streak.badgeId, eventType: "pacing_streak", xp: streak.xp });
           const badge: BadgeEarned = { badgeId: streak.badgeId, name: streak.name, emoji: streak.emoji, xp: streak.xp };
