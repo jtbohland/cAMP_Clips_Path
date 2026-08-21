@@ -122,6 +122,10 @@ export default function WatchPage() {
   const seekSnapbackTimeRef = useRef<number | null>(null);
   const highWaterMarkRef = useRef(0);
 
+  // ─── Nudge banner at ~80% watched ─────────────────────────────────────────
+  const [showNudgeBanner, setShowNudgeBanner] = useState(false);
+  const nudgeDismissedRef = useRef(false);
+
   // Ascent Guide panel — summary + learning objectives shown on clip open
   // Lite clip detection — no engagement scoring, no trail markers, no Ranger Report
   const isLite = useMemo(() => {
@@ -341,7 +345,7 @@ export default function WatchPage() {
     const player = playerRef.current;
     const actualDur = player?.duration;
     const clipDur = actualDur && actualDur > 0 ? actualDur : clipData?.clip?.durationSeconds;
-    if (player && (player.ended || (clipDur && t >= clipDur - 5))) {
+    if (player && (player.ended || (clipDur && t >= clipDur - 30))) {
       if (!autoEndedRef.current) {
         const allAnswered = trailMarkersRef.current.every(
           (q: any) => answeredQuestionsRef.current.has(q.id)
@@ -487,6 +491,20 @@ export default function WatchPage() {
 
   const handlePauseAndBack = useCallback(async () => {
     if (sessionId && phase === "watching") {
+      // ── Layer 1: Intercept "Back to Clips" at ≥85% + all markers answered ──
+      // Instead of pausing and navigating away, trigger the completion flow.
+      // The Ranger Report will overlay while the video keeps playing underneath.
+      const clipDuration = clipData?.clip?.durationSeconds;
+      const watchPct = clipDuration && clipDuration > 0 ? watchedSeconds / clipDuration : 0;
+      const allAnswered = trailMarkersRef.current.length === 0 ||
+        trailMarkersRef.current.every((q: any) => answeredQuestionsRef.current.has(q.id));
+
+      if (watchPct >= 0.85 && allAnswered && !autoEndedRef.current) {
+        autoEndedRef.current = true;
+        handleFinishWatchingRef.current();
+        return; // Don't navigate — Ranger Report will show
+      }
+
       playerRef.current?.pause();
       try {
         await pauseSession({
@@ -505,7 +523,7 @@ export default function WatchPage() {
       }
     }
     navigate(getLibraryPath());
-  }, [sessionId, phase, pauseSession, elapsedSeconds, focusSeconds, blurSeconds, watchedSeconds, answeredQuestions, correctCount, navigate]);
+  }, [sessionId, phase, clipData, pauseSession, elapsedSeconds, focusSeconds, blurSeconds, watchedSeconds, answeredQuestions, correctCount, navigate]);
 
   // 30-second autosave
   useEffect(() => {
@@ -527,14 +545,26 @@ export default function WatchPage() {
   }, [phase, sessionId, elapsedSeconds, focusSeconds, blurSeconds, watchedSeconds, answeredQuestions, correctCount]);
 
   // Save on hide/unload
+  // Layer 4: If learner is at ≥85% watched + all markers answered, save with
+  // phase "near_complete" so the Library can auto-complete on next visit.
   useEffect(() => {
     if (phase !== "watching" || !sessionId) return;
+
+    const getNearCompletePhase = (): string => {
+      const clipDuration = clipData?.clip?.durationSeconds;
+      if (!clipDuration || clipDuration <= 0) return "watching";
+      const pct = watchedSeconds / clipDuration;
+      const allAnswered = trailMarkersRef.current.length === 0 ||
+        trailMarkersRef.current.every((q: any) => answeredQuestionsRef.current.has(q.id));
+      return (pct >= 0.85 && allAnswered) ? "near_complete" : "watching";
+    };
+
     const saveOnHide = () => {
       if (document.visibilityState === "hidden") {
         executeApi("PauseSession", {
           sessionId, elapsedSeconds, focusSeconds, blurSeconds, watchedSeconds,
           answeredQuestionIds: Array.from(answeredQuestions),
-          correctCount, phase: "watching",
+          correctCount, phase: getNearCompletePhase(),
           lowVolumeSeconds: lowVolumeSecondsRef.current,
         }).catch(() => {});
       }
@@ -543,7 +573,7 @@ export default function WatchPage() {
       executeApi("PauseSession", {
         sessionId, elapsedSeconds, focusSeconds, blurSeconds, watchedSeconds,
         answeredQuestionIds: Array.from(answeredQuestions),
-        correctCount, phase: "watching",
+        correctCount, phase: getNearCompletePhase(),
         lowVolumeSeconds: lowVolumeSecondsRef.current,
       }).catch(() => {});
     };
@@ -553,7 +583,7 @@ export default function WatchPage() {
       document.removeEventListener("visibilitychange", saveOnHide);
       window.removeEventListener("beforeunload", saveOnUnload);
     };
-  }, [phase, sessionId, elapsedSeconds, focusSeconds, blurSeconds, watchedSeconds, answeredQuestions, correctCount]);
+  }, [phase, sessionId, clipData, elapsedSeconds, focusSeconds, blurSeconds, watchedSeconds, answeredQuestions, correctCount]);
 
   // Tab visibility — pause video when tab hidden
   useEffect(() => {
@@ -626,7 +656,7 @@ export default function WatchPage() {
     if (phase !== "watching" || autoEndedRef.current) return;
     const clipDuration = clipData?.clip?.durationSeconds;
     if (!clipDuration || clipDuration <= 0) return;
-    if (elapsedSeconds >= clipDuration - 5) {
+    if (elapsedSeconds >= clipDuration - 30) {
       const allAnswered = trailMarkers.every((q: any) => answeredQuestions.has(q.id));
       if (allAnswered || trailMarkers.length === 0) {
         autoEndedRef.current = true;
@@ -634,6 +664,24 @@ export default function WatchPage() {
       }
     }
   }, [elapsedSeconds, phase, clipData, trailMarkers, answeredQuestions]);
+
+  // ── Layer 2: Nudge banner at ~80% watched ──
+  // Shows a subtle, camp-themed reminder when the learner is near the end.
+  useEffect(() => {
+    if (phase !== "watching" || nudgeDismissedRef.current || isLite) return;
+    const clipDuration = clipData?.clip?.durationSeconds;
+    if (!clipDuration || clipDuration <= 0) return;
+    const pct = watchedSeconds / clipDuration;
+    if (pct >= 0.80 && !showNudgeBanner) {
+      setShowNudgeBanner(true);
+      // Auto-dismiss after 10 seconds
+      const timer = setTimeout(() => {
+        nudgeDismissedRef.current = true;
+        setShowNudgeBanner(false);
+      }, 10_000);
+      return () => clearTimeout(timer);
+    }
+  }, [watchedSeconds, phase, clipData, isLite, showNudgeBanner]);
 
   const handleTrailMarkerAnswer = useCallback(
     (selectedOption: number) => {
@@ -671,7 +719,7 @@ export default function WatchPage() {
     const player = playerRef.current;
     const actualDur = player?.duration;
     const clipDur = actualDur && actualDur > 0 ? actualDur : clipData?.clip?.durationSeconds;
-    const videoAlreadyEnded = videoEndedWhileQuizRef.current || player?.ended || (clipDur && lastTimeRef.current >= clipDur - 5);
+    const videoAlreadyEnded = videoEndedWhileQuizRef.current || player?.ended || (clipDur && lastTimeRef.current >= clipDur - 30);
     const allAnswered = trailMarkersRef.current.every(
       (q: any) => answeredQuestionsRef.current.has(q.id)
     );
@@ -1180,6 +1228,22 @@ export default function WatchPage() {
             >
               <div className="bg-black/80 backdrop-blur-sm text-white text-sm font-medium px-5 py-2.5 rounded-full shadow-lg">
                 🎬 Watch straight through — trail markers are synced to the video
+              </div>
+            </div>
+          )}
+
+          {/* Layer 2: Nudge banner — "Almost a wrap" at ~80% watched */}
+          {showNudgeBanner && phase === "watching" && (
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="bg-black/85 backdrop-blur-sm text-white text-sm font-medium px-5 py-3 rounded-full shadow-lg flex items-center gap-2">
+                <span>🎬 Almost a wrap — your Ranger Report is just around the bend!</span>
+                <button
+                  onClick={() => { nudgeDismissedRef.current = true; setShowNudgeBanner(false); }}
+                  className="text-white/60 hover:text-white ml-1 text-xs"
+                  aria-label="Dismiss"
+                >
+                  ✕
+                </button>
               </div>
             </div>
           )}

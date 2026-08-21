@@ -20,6 +20,7 @@ const ClipWithProgressSchema = z.object({
   xp_earned: z.coerce.number(),
   question_count: z.coerce.number(),
   paused_elapsed_seconds: z.coerce.number().nullable(),
+  paused_phase: z.string().nullable(),
   resource_count: z.coerce.number(),
 });
 
@@ -52,6 +53,7 @@ export default api({
         xpEarned: z.number(),
         questionCount: z.number(),
         pausedElapsedSeconds: z.number().nullable(),
+        pausedPhase: z.string().nullable(),
         isTopicDay: z.boolean(),
         resourceCount: z.number(),
         resourcesClicked: z.number(),
@@ -106,6 +108,12 @@ export default api({
           WHERE s.clip_id = c.id AND s.viewer_id = $1
           LIMIT 1
         ) as paused_elapsed_seconds,
+        (
+          SELECT s.paused_phase
+          FROM cliptracker_v2_sessions s
+          WHERE s.clip_id = c.id AND s.viewer_id = $1 AND s.completed = false
+          LIMIT 1
+        ) as paused_phase,
         COALESCE(jsonb_array_length(c.resources), 0)::int as resource_count
       FROM cliptracker_v2_clips c
       WHERE c.status = 'live'
@@ -209,6 +217,7 @@ export default api({
         xpEarned: clip.xp_earned,
         questionCount: clip.question_count,
         pausedElapsedSeconds: clip.paused_elapsed_seconds ?? 0,
+        pausedPhase: clip.paused_phase,
         isTopicDay,
         resourceCount,
         resourcesClicked: clickCountMap.get(clip.id) ?? 0,

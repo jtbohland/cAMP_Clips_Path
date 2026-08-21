@@ -228,11 +228,19 @@ export default function PairedClipCard({
                 )}
               </span>
             )}
-            {overallStatus === "in_progress" && (
-              <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-yellow-100 text-yellow-800">
-                🐌 In Progress
-              </span>
-            )}
+            {overallStatus === "in_progress" && (() => {
+              // Show progress % for the clip currently being watched
+              const activeState = !stateA.isCompleted && stateA.pausedElapsedSeconds > 1 ? stateA : stateB;
+              const activeClip = activeState === stateA ? clipA : clipB;
+              const pct = activeClip.durationSeconds && activeState.pausedElapsedSeconds > 0
+                ? Math.min(99, Math.round((activeState.pausedElapsedSeconds / activeClip.durationSeconds) * 100))
+                : null;
+              return (
+                <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-yellow-100 text-yellow-800">
+                  🐌 In Progress{pct !== null ? ` · ${pct}%` : ""}
+                </span>
+              );
+            })()}
             <ShareDropdown onCopyA={handleShareA} onCopyB={handleShareB} />
           </div>
         </div>
