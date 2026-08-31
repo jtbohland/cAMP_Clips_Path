@@ -378,7 +378,16 @@ export default function LibraryPage() {
     } else if (afterSummitDay) {
       tier = "anchor_failure";
     } else {
-      tier = getPacingStatusFromPercent(unifiedPercent);
+      const rawTier = getPacingStatusFromPercent(unifiedPercent);
+      // Approach shield: don't punish brand-new learners with scary modals
+      // Day 1 → always summit_bound (neutral); Days 2-5 → cap floor at avalanche_warning; Day 6+ → full brackets
+      if (effectiveWeekdaysElapsed <= 1) {
+        tier = "summit_bound";
+      } else if (effectiveWeekdaysElapsed <= 5) {
+        tier = rawTier === "anchor_failure" ? "avalanche_warning" : rawTier;
+      } else {
+        tier = rawTier;
+      }
     }
     const daysBehind = getTopicDaysBehind(sessionsCompleted, effectiveWeekdaysElapsed);
     const missedClips = getMissedClips(
@@ -546,6 +555,9 @@ export default function LibraryPage() {
     const lastDismissed = localStorage.getItem(dismissKey);
 
     if (lastDismissed !== todayStr) {
+      // Day 1: no pacing modal at all — let learners explore first
+      if (pacingInfo.weekdaysElapsed <= 1) return;
+
       pacingShownRef.current = true;
       // NOTE: localStorage is set on DISMISS, not here — if the modal never renders
       // (e.g. another modal takes priority), it will retry on next page load
@@ -578,6 +590,8 @@ export default function LibraryPage() {
       const todayStr = new Date().toLocaleDateString();
       const lastDismissed = localStorage.getItem(dismissKey);
       if (lastDismissed !== todayStr && pacingInfo && !showSummit && tierUnlock === null) {
+        // Day 1: no pacing modal at all — let learners explore first
+        if (pacingInfo.weekdaysElapsed <= 1) return;
         if (ascentComplete && approachStatus?.complete === false) {
           setShowSummitInSight(true);
           logModal("summit_in_sight", "shown");
