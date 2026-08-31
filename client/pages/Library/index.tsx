@@ -34,6 +34,7 @@ import {
   isSameDay,
   computeUnifiedPacingPercent,
   getPacingStatusFromPercent,
+  getApproachPacingTier,
   CLIPS_EXPECTED_BY_WEEKDAY,
   WEEK1_TOTAL_ITEMS,
   getEffectiveClipTotal,
@@ -377,7 +378,16 @@ export default function LibraryPage() {
       tier = "completed";
     } else if (afterSummitDay) {
       tier = "anchor_failure";
+    } else if (effectiveWeekdaysElapsed <= 1) {
+      // Day 1: no pacing signal — they just started
+      tier = "summit_bound";
+    } else if (effectiveWeekdaysElapsed <= 5) {
+      // Approach week (Days 2-5): use items-behind scale, not harsh % brackets.
+      // Approach is self-paced over 5 days — the daily schedule is aspirational.
+      // getApproachPacingTier maxes out at avalanche_warning (never anchor_failure during Approach).
+      tier = getApproachPacingTier(approachDone, effectiveWeekdaysElapsed);
     } else {
+      // Ascent (Day 6+): full unified % brackets
       tier = getPacingStatusFromPercent(unifiedPercent);
     }
     const daysBehind = getTopicDaysBehind(sessionsCompleted, effectiveWeekdaysElapsed);
@@ -546,6 +556,9 @@ export default function LibraryPage() {
     const lastDismissed = localStorage.getItem(dismissKey);
 
     if (lastDismissed !== todayStr) {
+      // Day 1: no pacing modal at all — let learners explore first
+      if (pacingInfo.weekdaysElapsed <= 1) return;
+
       pacingShownRef.current = true;
       // NOTE: localStorage is set on DISMISS, not here — if the modal never renders
       // (e.g. another modal takes priority), it will retry on next page load
@@ -578,6 +591,8 @@ export default function LibraryPage() {
       const todayStr = new Date().toLocaleDateString();
       const lastDismissed = localStorage.getItem(dismissKey);
       if (lastDismissed !== todayStr && pacingInfo && !showSummit && tierUnlock === null) {
+        // Day 1: no pacing modal at all — let learners explore first
+        if (pacingInfo.weekdaysElapsed <= 1) return;
         if (ascentComplete && approachStatus?.complete === false) {
           setShowSummitInSight(true);
           logModal("summit_in_sight", "shown");
