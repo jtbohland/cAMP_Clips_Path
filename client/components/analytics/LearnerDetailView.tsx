@@ -175,6 +175,8 @@ function LearnerDetailView({ viewerId, onBack }: LearnerDetailViewProps) {
     }
   }, [summaryData]);
 
+  const tabs = useMemo(() => getTabsForRole(data?.viewer?.role ?? ""), [data?.viewer?.role]);
+
   if (loading) {
     return (
       <div className="space-y-4 p-6">
@@ -199,7 +201,6 @@ function LearnerDetailView({ viewerId, onBack }: LearnerDetailViewProps) {
 
   const { viewer, pacing, xp, tier, badges, clips, approach, journals, checkinReflections, gearClicks, modalInteractions, clipsCompleted, totalLiveClips, leaderboardRank } = data;
   const pacingInfo = PACING[pacing.status] ?? PACING.not_started;
-  const tabs = useMemo(() => getTabsForRole(viewer.role ?? ""), [viewer.role]);
 
   return (
     <div className="space-y-4">
