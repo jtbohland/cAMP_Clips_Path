@@ -34,6 +34,7 @@ import {
   isSameDay,
   computeUnifiedPacingPercent,
   getPacingStatusFromPercent,
+  getApproachPacingTier,
   CLIPS_EXPECTED_BY_WEEKDAY,
   WEEK1_TOTAL_ITEMS,
   getEffectiveClipTotal,
@@ -377,17 +378,17 @@ export default function LibraryPage() {
       tier = "completed";
     } else if (afterSummitDay) {
       tier = "anchor_failure";
+    } else if (effectiveWeekdaysElapsed <= 1) {
+      // Day 1: no pacing signal — they just started
+      tier = "summit_bound";
+    } else if (effectiveWeekdaysElapsed <= 5) {
+      // Approach week (Days 2-5): use items-behind scale, not harsh % brackets.
+      // Approach is self-paced over 5 days — the daily schedule is aspirational.
+      // getApproachPacingTier maxes out at avalanche_warning (never anchor_failure during Approach).
+      tier = getApproachPacingTier(approachDone, effectiveWeekdaysElapsed);
     } else {
-      const rawTier = getPacingStatusFromPercent(unifiedPercent);
-      // Approach shield: don't punish brand-new learners with scary modals
-      // Day 1 → always summit_bound (neutral); Days 2-5 → cap floor at avalanche_warning; Day 6+ → full brackets
-      if (effectiveWeekdaysElapsed <= 1) {
-        tier = "summit_bound";
-      } else if (effectiveWeekdaysElapsed <= 5) {
-        tier = rawTier === "anchor_failure" ? "avalanche_warning" : rawTier;
-      } else {
-        tier = rawTier;
-      }
+      // Ascent (Day 6+): full unified % brackets
+      tier = getPacingStatusFromPercent(unifiedPercent);
     }
     const daysBehind = getTopicDaysBehind(sessionsCompleted, effectiveWeekdaysElapsed);
     const missedClips = getMissedClips(
