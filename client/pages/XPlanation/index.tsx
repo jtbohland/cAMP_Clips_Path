@@ -85,8 +85,8 @@ function getEngagementStreaks(role: RolePath) {
       condition: role === "VP"
         ? "5/5 Trail Markers on a 3-clip window (×2 max: clips 1–3, clips 4–6)"
         : role === "SDR"
-        ? "5/5 Trail Markers on a 3-clip window (×4 max: clips 1–3, 3–5, 7–9, 10–11+13)"
-        : "5/5 Trail Markers on a 3-clip window (×5 max: clips 1–3, 3–5, 7–9, 10–11+13, 13–15)"
+        ? "5/5 Trail Markers on a 3-clip window (×4 max: clips 1–3, 4–6, 7–9, 10–12)"
+        : "5/5 Trail Markers on a 3-clip window (×5 max: clips 1–3, 4–6, 7–9, 10–12, 13–15)"
     },
   ];
 }
