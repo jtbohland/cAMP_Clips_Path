@@ -5,6 +5,9 @@ const APPS_DB = "c6e32cf4-ca66-42ae-aeb3-58c84ffae574";
 /** Lite clips: watchable but excluded from pacing/totals/engagement scoring */
 const LITE_CLIP_SORTS = new Set([51]);
 
+/** VP curated clip set — only these sort_orders appear for SDR>Velocity Promo viewers */
+const VP_CLIP_SORTS = [60, 120, 130, 140, 150, 170, 180, 190, 200];
+
 const ClipWithProgressSchema = z.object({
   id: z.string(),
   title: z.string(),
@@ -34,6 +37,9 @@ export default api({
 
   input: z.object({
     viewerId: z.string(),
+    /** Admin test-mode overrides (frontend passes these when "Test as VP/SDR" is active) */
+    roleOverride: z.string().nullable().optional(),
+    adminOverride: z.boolean().nullable().optional(),
   }),
 
   output: z.object({
@@ -62,7 +68,7 @@ export default api({
     ),
   }),
 
-  async run(ctx, { viewerId }) {
+  async run(ctx, { viewerId, roleOverride, adminOverride }) {
     // Look up viewer role and admin status
     const ViewerInfoSchema = z.object({ is_admin: z.boolean(), role: z.string().nullable() });
     const viewerInfo = await ctx.integrations.db.query(
@@ -71,8 +77,10 @@ export default api({
       [viewerId],
       { label: "Get viewer info (role + admin)" }
     );
-    const isAdmin = viewerInfo[0]?.is_admin ?? false;
-    const viewerRole = viewerInfo[0]?.role ?? null;
+    // Admin test-mode overrides: frontend can pass role/admin when viewer
+    // doesn't exist in DB yet (e.g. VP test before CHECK constraint update)
+    const isAdmin = adminOverride ?? (viewerInfo[0]?.is_admin ?? false);
+    const viewerRole = roleOverride ?? (viewerInfo[0]?.role ?? null);
 
     const clips = await ctx.integrations.db.query(
       `SELECT 
@@ -118,18 +126,19 @@ export default api({
       FROM cliptracker_v2_clips c
       WHERE c.status = 'live'
         AND (c.roles IS NULL OR c.roles @> to_jsonb($2::text))
+        AND ($3::int[] IS NULL OR c.sort_order = ANY($3::int[]))
       ORDER BY c.sort_order ASC`,
       ClipWithProgressSchema,
-      [viewerId, viewerRole],
+      [viewerId, viewerRole, viewerRole === 'SDR>Velocity Promo' ? VP_CLIP_SORTS : null],
       { label: "Get clip library with progress" }
     );
 
-    // Build dynamic day label map for SDRs:
-    // SDRs see fewer clips so their day numbering is renumbered.
-    // We derive the mapping from the ordered DB day_labels of the
-    // clips they actually receive.
+    // Build dynamic day label map for roles with reduced clip sets.
+    // SDR and Velocity Promo learners see fewer clips, so their day
+    // numbering is renumbered sequentially from the clips they receive.
+    const needsDayRenumber = viewerRole === 'SDR' || viewerRole === 'SDR>Velocity Promo';
     const dayLabelMap = new Map<string, string>();
-    if (viewerRole === 'SDR') {
+    if (needsDayRenumber) {
       const seenDays: string[] = [];
       for (const clip of clips) {
         if (clip.day_label && !seenDays.includes(clip.day_label)) {
@@ -139,6 +148,22 @@ export default api({
       // Renumber: seenDays[0] -> "Day 1", seenDays[1] -> "Day 2", etc.
       seenDays.forEach((originalDay, i) => {
         dayLabelMap.set(originalDay, `Day ${i + 1}`);
+      });
+    }
+
+    // VP week renumbering: Days 1-5 → Week 2, Days 6-7 → Week 3
+    // (VP has no Week 4; the underlying DB week_numbers are from the AE path)
+    const vpWeekMap = new Map<string, number>();
+    if (viewerRole === 'SDR>Velocity Promo') {
+      const seenDays: string[] = [];
+      for (const clip of clips) {
+        if (clip.day_label && !seenDays.includes(clip.day_label)) {
+          seenDays.push(clip.day_label);
+        }
+      }
+      // seenDays are in order; index 0-4 → Week 2, index 5-6 → Week 3
+      seenDays.forEach((originalDay, i) => {
+        vpWeekMap.set(originalDay, i < 5 ? 2 : 3);
       });
     }
 
@@ -208,8 +233,8 @@ export default api({
         videoUrl: clip.video_url,
         durationSeconds: clip.duration_seconds,
         sortOrder: clip.sort_order,
-        weekNumber: clip.week_number,
-        dayLabel: viewerRole === 'SDR' && clip.day_label ? (dayLabelMap.get(clip.day_label) ?? clip.day_label) : clip.day_label,
+        weekNumber: vpWeekMap.size > 0 && clip.day_label ? (vpWeekMap.get(clip.day_label) ?? clip.week_number) : clip.week_number,
+        dayLabel: needsDayRenumber && clip.day_label ? (dayLabelMap.get(clip.day_label) ?? clip.day_label) : clip.day_label,
         bestScore: bestScore,
         attempts: clip.attempts ? parseInt(clip.attempts) : 0,
         completed: isCompleted,

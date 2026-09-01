@@ -4,7 +4,9 @@ import {
   getClipsExpectedByWeekday,
   getTotalWeekdays,
   getRoleGroup,
+  isVelocityPromo,
   TOTAL_ASCENT_CLIPS_SDR,
+  TOTAL_ASCENT_CLIPS_VP,
   type RoleGroup,
 } from "./pacing-helpers.js";
 
@@ -249,7 +251,9 @@ export default api({
     // For now, use known constants. SDR max is calculated from their 16-clip path.
     const MAX_XP_AE = 993;
     const MAX_XP_SDR = 903; // 18 clips, scaled pacing (3/6/9/12), Ridge Runner game
+    const MAX_XP_VP = 600;  // 9 clips, shorter streaks (2/4/5/7), no Free Solo, includes PiR
     function getMaxXp(role: string, clipsDone: number): number {
+      if (isVelocityPromo(role)) return MAX_XP_VP;
       // If an SDR completed more clips than the SDR path offers,
       // they followed the AE path — use AE max XP for fair comparison.
       if (getRoleGroup(role) === "SDR" && clipsDone <= TOTAL_ASCENT_CLIPS_SDR) {

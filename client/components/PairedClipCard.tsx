@@ -97,7 +97,8 @@ const PAIRED_TITLE_OVERRIDE: Record<number, { emoji: string; text: string }> = {
   50: { emoji: "📇", text: "Prospecting Process" },
 };
 
-function getPairedDayLabel(sortOrder: number): string {
+function getPairedDayLabel(sortOrder: number, dayLabel?: string | null): string {
+  if (dayLabel) return dayLabel.toUpperCase();
   return `DAY ${PAIRED_DAY_MAP[sortOrder] ?? sortOrder}`;
 }
 
@@ -217,7 +218,7 @@ export default function PairedClipCard({
         {/* Row 1: Week/Day label + status badge + share links */}
         <div className="flex items-center justify-between">
           <span className="text-[11px] font-bold tracking-[0.12em] text-indigo-600 uppercase">
-            {getWeekLabel(clipA.weekNumber, clipA.sortOrder)} · {getPairedDayLabel(clipA.sortOrder)}
+            {getWeekLabel(clipA.weekNumber, clipA.sortOrder)} · {getPairedDayLabel(clipA.sortOrder, clipA.dayLabel)}
           </span>
           <div className="flex items-center gap-2">
             {overallStatus === "completed" && (

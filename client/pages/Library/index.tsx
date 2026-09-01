@@ -37,8 +37,11 @@ import {
   getApproachPacingTier,
   CLIPS_EXPECTED_BY_WEEKDAY,
   WEEK1_TOTAL_ITEMS,
+  WEEK1_TOTAL_ITEMS_VP,
+  WEEK1_WEEKDAYS_VP,
   getEffectiveClipTotal,
   getRoleTotalClips,
+  isVelocityPromo,
 } from "@/lib/pacing";
 import type { ApproachCatchUpItem } from "@/components/PacingModal";
 import { calculatePatchProgress } from "@/lib/patchProgress";
@@ -95,13 +98,20 @@ export default function LibraryPage() {
   // Use a code-mode-scoped key so it never bleeds into the deployed app
   const isEditorPreview = window.location.pathname.includes("code-mode");
   const SDR_SAVED_KEY = "sdr_test_saved_viewer";
+  const VP_SAVED_KEY = "vp_test_saved_viewer";
   const [sdrTestMode, setSdrTestMode] = useState(() => {
     if (!isEditorPreview) {
-      // Deployed app: clear any stale SDR test state and never activate
       sessionStorage.removeItem(SDR_SAVED_KEY);
+      sessionStorage.removeItem(VP_SAVED_KEY);
       return false;
     }
     return sessionStorage.getItem(SDR_SAVED_KEY) !== null;
+  });
+
+  // Admin "Test as Veloc. Promo"
+  const [vpTestMode, setVpTestMode] = useState(() => {
+    if (!isEditorPreview) return false;
+    return sessionStorage.getItem(VP_SAVED_KEY) !== null;
   });
 
   // If sdrTestMode was restored from sessionStorage but AutoLookupViewer
@@ -117,19 +127,25 @@ export default function LibraryPage() {
         role: "SDR",
         isAdmin: true,
       });
-      // Keep admin viewer in localStorage for safety
       localStorage.setItem("cliptracker_viewer", JSON.stringify(viewer));
-    } else if (!sdrTestMode && viewer?.email === "sdr-test@test.local") {
-      // Stale SDR test identity in localStorage — clear it and reload once
-      // so ViewerContext re-derives the real viewer via AutoLookupViewer
-      const reloadKey = "sdr_stale_reload";
+    } else if (vpTestMode && viewer && viewer.role !== "SDR>Velocity Promo") {
+      setViewer({
+        id: "d729733e-1b91-46d5-a091-9501442438bf",
+        email: "vp-test@test.local",
+        name: "VP Test Viewer",
+        role: "SDR>Velocity Promo",
+        isAdmin: true,
+      });
+      localStorage.setItem("cliptracker_viewer", JSON.stringify(viewer));
+    } else if (!sdrTestMode && !vpTestMode && (viewer?.email === "sdr-test@test.local" || viewer?.email === "vp-test@test.local")) {
+      const reloadKey = "test_stale_reload";
       if (!sessionStorage.getItem(reloadKey)) {
         sessionStorage.setItem(reloadKey, "1");
         localStorage.removeItem("cliptracker_viewer");
         window.location.reload();
       }
     }
-  }, [sdrTestMode, viewer?.role, viewer?.email]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [sdrTestMode, vpTestMode, viewer?.role, viewer?.email]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleToggleSdrTest = useCallback(() => {
     if (sdrTestMode) {
@@ -158,6 +174,36 @@ export default function LibraryPage() {
       setSdrTestMode(true);
     }
   }, [sdrTestMode, ascentTestMode, viewer, setViewer]);
+
+  const handleToggleVpTest = useCallback(() => {
+    if (vpTestMode) {
+      const saved = sessionStorage.getItem(VP_SAVED_KEY);
+      if (saved) {
+        try { setViewer(JSON.parse(saved)); } catch {}
+        sessionStorage.removeItem(VP_SAVED_KEY);
+      }
+      setVpTestMode(false);
+      setAscentTestMode(false);
+    } else {
+      if (ascentTestMode) setAscentTestMode(false);
+      if (sdrTestMode) {
+        // Turn off SDR test first
+        const savedSdr = sessionStorage.getItem(SDR_SAVED_KEY);
+        if (savedSdr) sessionStorage.removeItem(SDR_SAVED_KEY);
+        setSdrTestMode(false);
+      }
+      sessionStorage.setItem(VP_SAVED_KEY, JSON.stringify(viewer));
+      setViewer({
+        id: "d729733e-1b91-46d5-a091-9501442438bf",
+        email: "vp-test@test.local",
+        name: "VP Test Viewer",
+        role: "SDR>Velocity Promo",
+        isAdmin: true,
+      });
+      localStorage.setItem("cliptracker_viewer", JSON.stringify(viewer));
+      setVpTestMode(true);
+    }
+  }, [vpTestMode, sdrTestMode, ascentTestMode, viewer, setViewer]);
 
   const { run: logClick } = useApi("LogPitchClick");
   const { run: trackLogin } = useApi("TrackLogin");
@@ -286,7 +332,11 @@ export default function LibraryPage() {
 
   const { data, loading } = useApiData(
     "GetClipLibrary",
-    { viewerId: viewer?.id ?? "" },
+    {
+      viewerId: viewer?.id ?? "",
+      roleOverride: vpTestMode ? "SDR>Velocity Promo" : sdrTestMode ? "SDR" : null,
+      adminOverride: vpTestMode || sdrTestMode ? true : undefined,
+    },
     { enabled: !!viewer?.id }
   );
 
@@ -311,14 +361,24 @@ export default function LibraryPage() {
   );
   const pacingLearners = pacingPerfData?.learners ?? [];
 
-  const rawClips = useMemo(() => data?.clips ?? [], [data]);
+  // Guard against SWR keepPreviousData leaking stale clips across
+  // test-mode toggles. Content-based: VP first clip is sort 60, SDR/admin is 10.
+  const isRealVP = viewer?.role === "SDR>Velocity Promo";
+  const rawClips = useMemo(() => {
+    const clips = data?.clips ?? [];
+    if (!clips.length) return clips;
+    const first = (clips[0] as any)?.sortOrder;
+    if (vpTestMode && first !== 60) return [];
+    if (!vpTestMode && !sdrTestMode && !isRealVP && first === 60) return [];
+    return clips;
+  }, [data, vpTestMode, sdrTestMode, isRealVP]);
 
-  // In ascent test mode, reset all clips to fresh state (only clip 1 unlocked, none completed)
+  // In AE test mode, reset all clips to fresh state (all unlocked, none completed)
   const clips = useMemo(() => {
     if (!ascentTestMode) return rawClips;
-    return rawClips.map((c: any, i: number) => ({
+    return rawClips.map((c: any) => ({
       ...c,
-      unlocked: i === 0,
+      unlocked: true,
       completed: false,
       xpEarned: 0,
       pausedElapsedSeconds: 0,
@@ -360,12 +420,13 @@ export default function LibraryPage() {
       .filter((c: any) => c.completed)
       .reduce((max: number, c: any) => Math.max(max, c.sortOrder ?? 0), 0);
     const effectiveTotal = getEffectiveClipTotal(role, maxSortDone);
-    // Approach items done
+    // Approach items done — VP has no MEDDPICC/Challenger; only 4 academies + W&D
+    const isVP = isVelocityPromo(role);
     const approachDone = (() => {
       if (!week1Data) return 0;
       const signoffs = new Set(week1Data.moduleSignoffs.map((s) => s.moduleKey));
       const screenshots = new Set(week1Data.academyScreenshots.map((s) => s.courseKey));
-      const validSignoffs = ['meddpicc', 'challenger'].filter(k => signoffs.has(k)).length;
+      const validSignoffs = isVP ? 0 : ['meddpicc', 'challenger'].filter(k => signoffs.has(k)).length;
       const validAcademies = ['analytics', 'experiment', 'session_replay', 'guides_surveys'].filter(k => screenshots.has(k)).length;
       const wdDone = week1Data.wdVerification ? 1 : 0;
       return validSignoffs + validAcademies + wdDone;
@@ -373,7 +434,8 @@ export default function LibraryPage() {
     const unifiedPercent = computeUnifiedPacingPercent(effectiveWeekdaysElapsed, approachDone, clipsDone, role, effectiveTotal);
     // Determine tier: past summit + incomplete → anchor_failure, all done → completed, else %-based
     let tier: ReturnType<typeof getPacingTier>;
-    const allClipsDone = clipsDone >= effectiveTotal && approachDone >= WEEK1_TOTAL_ITEMS;
+    const approachTotal = isVP ? WEEK1_TOTAL_ITEMS_VP : WEEK1_TOTAL_ITEMS;
+    const allClipsDone = clipsDone >= effectiveTotal && approachDone >= approachTotal;
     if (allClipsDone) {
       tier = "completed";
     } else if (afterSummitDay) {
@@ -381,16 +443,16 @@ export default function LibraryPage() {
     } else if (effectiveWeekdaysElapsed <= 1) {
       // Day 1: no pacing signal — they just started
       tier = "summit_bound";
-    } else if (effectiveWeekdaysElapsed <= 5) {
-      // Approach week (Days 2-5): use items-behind scale, not harsh % brackets.
-      // Approach is self-paced over 5 days — the daily schedule is aspirational.
+    } else if (effectiveWeekdaysElapsed <= (isVP ? WEEK1_WEEKDAYS_VP : 5)) {
+      // Approach week: use items-behind scale, not harsh % brackets.
+      // Approach is self-paced — the daily schedule is aspirational.
       // getApproachPacingTier maxes out at avalanche_warning (never anchor_failure during Approach).
-      tier = getApproachPacingTier(approachDone, effectiveWeekdaysElapsed);
+      tier = getApproachPacingTier(approachDone, effectiveWeekdaysElapsed, role);
     } else {
       // Ascent (Day 6+): full unified % brackets
       tier = getPacingStatusFromPercent(unifiedPercent);
     }
-    const daysBehind = getTopicDaysBehind(sessionsCompleted, effectiveWeekdaysElapsed);
+    const daysBehind = getTopicDaysBehind(sessionsCompleted, effectiveWeekdaysElapsed, role);
     const missedClips = getMissedClips(
       clips.map((c: any) => ({
         sortOrder: c.sortOrder,
@@ -399,7 +461,8 @@ export default function LibraryPage() {
         title: c.title,
         completed: c.completed,
       })),
-      effectiveWeekdaysElapsed
+      effectiveWeekdaysElapsed,
+      role
     );
     const incompleteSessions = totalTopicDays - sessionsCompleted;
     const adjustmentDay = getAscentAdjustmentDay(summitDay, incompleteSessions);
@@ -423,25 +486,30 @@ export default function LibraryPage() {
     const signoffs = new Set(moduleSignoffs.map((s) => s.moduleKey));
     const screenshots = new Set(academyScreenshots.map((s) => s.courseKey));
     const wdDone = !!wdVerification;
+    const role = viewer?.role ?? "AE";
+    const vpPath = isVelocityPromo(role);
 
-    const allDone = signoffs.has("meddpicc") && signoffs.has("camp101") && signoffs.has("challenger")
-      && screenshots.has("analytics") && screenshots.has("experiment") && screenshots.has("session_replay") && screenshots.has("guides_surveys")
-      && wdDone;
+    // VP Approach: 4 academies + W&D = 5 items (no MEDDPICC/Challenger/cAMP101)
+    const allDone = vpPath
+      ? (screenshots.has("analytics") && screenshots.has("experiment") && screenshots.has("session_replay") && screenshots.has("guides_surveys") && wdDone)
+      : (signoffs.has("meddpicc") && signoffs.has("camp101") && signoffs.has("challenger")
+        && screenshots.has("analytics") && screenshots.has("experiment") && screenshots.has("session_replay") && screenshots.has("guides_surveys")
+        && wdDone);
 
     if (allDone) return { complete: true, catchUpItems: [] as ApproachCatchUpItem[] };
 
     // Build incomplete items list
     const items: ApproachCatchUpItem[] = [];
-    if (!signoffs.has("meddpicc")) items.push({ emoji: "✍🏽", label: "MEDDPICC sign-off" });
+    if (!vpPath && !signoffs.has("meddpicc")) items.push({ emoji: "✍🏽", label: "MEDDPICC sign-off" });
     if (!screenshots.has("analytics")) items.push({ emoji: "🎓", label: "Academy: Analytics" });
     if (!screenshots.has("experiment")) items.push({ emoji: "🎓", label: "Academy: Experiment" });
     if (!screenshots.has("session_replay")) items.push({ emoji: "🎓", label: "Academy: Session Replay" });
     if (!screenshots.has("guides_surveys")) items.push({ emoji: "🎓", label: "Academy: Guides & Surveys" });
-    if (!signoffs.has("camp101")) items.push({ emoji: "✍🏽", label: "cAMP 101 sign-off" });
-    if (!signoffs.has("challenger")) items.push({ emoji: "✍🏽", label: "Challenger sign-off" });
+    if (!vpPath && !signoffs.has("camp101")) items.push({ emoji: "✍🏽", label: "cAMP 101 sign-off" });
+    if (!vpPath && !signoffs.has("challenger")) items.push({ emoji: "✍🏽", label: "Challenger sign-off" });
     if (!wdDone) items.push({ emoji: "🎡", label: "Wheel & Deal" });
     return { complete: false, catchUpItems: items };
-  }, [week1Data]);
+  }, [week1Data, viewer]);
 
   // ── Today's Patch Progress ──
   const patchProgress = useMemo(() => {
@@ -646,15 +714,31 @@ export default function LibraryPage() {
   // SDR Days 3, 6, 9, 11 → sorts 40, 70, 120, 160 (SDR Day 11 = Customer Stories)
   const wheelAndDealSortOrders = useMemo(() => {
     const role = viewer?.role ?? "AE";
-    return role === "SDR"
-      ? new Set([40, 70, 120, 160])
-      : new Set([40, 70, 120, 140]);
+    if (role === "SDR>Velocity Promo") return new Set([130, 180]);
+    if (role === "SDR") return new Set([40, 70, 120, 160]);
+    return new Set([40, 70, 120, 140]);
   }, [viewer?.role]);
 
   const TIME_NOTE = "These times are approximate and reflect course + video durations, plus ~20 minutes per day for quizzes. They do not include any extra time you spend reading or reviewing linked resources.";
   const isSDRViewer = viewer?.role === "SDR";
+  const isVPViewer = viewer?.role === "SDR>Velocity Promo";
 
-  const WEEK_META: Record<number, { emoji: string; title: string; time: string; note: string }> = isSDRViewer
+  const WEEK_META: Record<number, { emoji: string; title: string; time: string; note: string }> = isVPViewer
+    ? {
+        2: {
+          emoji: "🥾",
+          title: "Core Revenue Operations",
+          time: "⏱ Total: ~5h | Daily average: ~1h per day",
+          note: TIME_NOTE,
+        },
+        3: {
+          emoji: "🏞️",
+          title: "Deal Execution & Cross-Functional",
+          time: "⏱ Total: ~3h | 2 session days",
+          note: TIME_NOTE,
+        },
+      }
+    : isSDRViewer
     ? {
         2: {
           emoji: "🥾",
@@ -1147,6 +1231,8 @@ export default function LibraryPage() {
             pacingLoading={pacingPerfLoading}
             sdrTestMode={sdrTestMode}
             onToggleSdrTest={handleToggleSdrTest}
+            vpTestMode={vpTestMode}
+            onToggleVpTest={handleToggleVpTest}
             onOpenRegistration={() => setPreviewMode("register")}
             onTestCheckin={(type, approachOverride) => {
               setCheckinType(type);
@@ -1184,7 +1270,9 @@ export default function LibraryPage() {
               <span className="text-sm">🔧</span>
               <span className="text-sm font-semibold text-purple-900">Admin View</span>
               <span className="text-xs text-purple-600">
-                {sdrTestMode
+                {vpTestMode
+                  ? "Showing fresh Velocity Promo view"
+                  : sdrTestMode
                   ? "Showing fresh SDR view"
                   : ascentTestMode
                     ? "Showing fresh learner view"
@@ -1230,7 +1318,7 @@ export default function LibraryPage() {
               >
                 📝 Registration
               </button>
-              {!sdrTestMode && (
+              {!sdrTestMode && !vpTestMode && (
                 <button
                   onClick={() => setAscentTestMode((prev) => !prev)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
@@ -1239,10 +1327,10 @@ export default function LibraryPage() {
                       : "bg-white text-purple-700 border border-purple-300 hover:bg-purple-100"
                   }`}
                 >
-                  {ascentTestMode ? "👁️ Show My Progress" : "🧪 Test as New Learner"}
+                  {ascentTestMode ? "👁️ Show My Progress" : "🧪 Test as New AE"}
                 </button>
               )}
-              {(!ascentTestMode || sdrTestMode) && (
+              {(!ascentTestMode || sdrTestMode) && !vpTestMode && (
                 <button
                   onClick={handleToggleSdrTest}
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
@@ -1252,6 +1340,18 @@ export default function LibraryPage() {
                   }`}
                 >
                   {sdrTestMode ? "↩️ Back to Admin" : "🧪 Test as New SDR"}
+                </button>
+              )}
+              {(!ascentTestMode || vpTestMode) && !sdrTestMode && (
+                <button
+                  onClick={handleToggleVpTest}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                    vpTestMode
+                      ? "bg-orange-600 text-white hover:bg-orange-700"
+                      : "bg-white text-orange-700 border border-orange-300 hover:bg-orange-100"
+                  }`}
+                >
+                  {vpTestMode ? "↩️ Back to Admin" : "🧪 Test as Veloc. Promo"}
                 </button>
               )}
             </div>
