@@ -77,13 +77,17 @@ export default function ModuleCard({
 
     setScreenshotFile(file);
 
-    // Generate preview
+    // Read file ONCE as ArrayBuffer, then derive both preview + hash from it
+    // (reading twice can throw NotFoundError on some browsers)
+    const buffer = await file.arrayBuffer();
+
+    // Generate preview from buffer
+    const blob = new Blob([buffer], { type: file.type });
     const reader = new FileReader();
     reader.onload = () => setScreenshotPreview(reader.result as string);
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(blob);
 
-    // Generate SHA-256 hash
-    const buffer = await file.arrayBuffer();
+    // Generate SHA-256 hash from same buffer
     const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     const hashHex = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");

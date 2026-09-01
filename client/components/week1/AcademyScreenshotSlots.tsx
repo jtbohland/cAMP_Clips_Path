@@ -48,15 +48,19 @@ export default function AcademyScreenshotSlots({ slots, isLegacy, onUpload }: Ac
     setUploading(courseKey);
 
     try {
-      // Generate preview
+      // Read file ONCE as ArrayBuffer, then derive both preview + hash from it
+      // (reading twice can throw NotFoundError on some browsers)
+      const buffer = await file.arrayBuffer();
+
+      // Generate preview from buffer
+      const blob = new Blob([buffer], { type: file.type });
       const dataUrl = await new Promise<string>((resolve) => {
         const reader = new FileReader();
         reader.onload = () => resolve(reader.result as string);
-        reader.readAsDataURL(file);
+        reader.readAsDataURL(blob);
       });
 
-      // Generate hash
-      const buffer = await file.arrayBuffer();
+      // Generate hash from same buffer
       const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
       const hashHex = Array.from(new Uint8Array(hashBuffer))
         .map((b) => b.toString(16).padStart(2, "0"))
