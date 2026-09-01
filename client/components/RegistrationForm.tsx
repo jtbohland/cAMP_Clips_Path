@@ -12,6 +12,7 @@ const TIMEZONES = [
 
 const ROLES = [
   "SDR",
+  "SDR>Velocity Promo",
   "Velocity AE",
   "Emerging AE",
   "Majors AE",
