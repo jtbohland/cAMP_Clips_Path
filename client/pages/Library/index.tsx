@@ -361,34 +361,16 @@ export default function LibraryPage() {
   );
   const pacingLearners = pacingPerfData?.learners ?? [];
 
-  // Guard against SWR's keepPreviousData leaking stale clips across
-  // test-mode toggles.  When the mode changes we blank the clips until the
-  // `data` object reference actually changes (= fresh API response arrived).
-  const clipModeKey = vpTestMode ? "vp" : sdrTestMode ? "sdr" : "default";
-  const prevModeKeyRef = useRef(clipModeKey);
-  const prevDataRef = useRef(data);
-  const [dataFresh, setDataFresh] = useState(true);
-
-  // Mode changed → mark data stale
-  useEffect(() => {
-    if (clipModeKey !== prevModeKeyRef.current) {
-      prevModeKeyRef.current = clipModeKey;
-      setDataFresh(false);
-    }
-  }, [clipModeKey]);
-
-  // data reference changed → mark data fresh
-  useEffect(() => {
-    if (data !== prevDataRef.current) {
-      prevDataRef.current = data;
-      setDataFresh(true);
-    }
-  }, [data]);
-
-  const rawClips = useMemo(
-    () => (dataFresh ? (data?.clips ?? []) : []),
-    [data, dataFresh]
-  );
+  // Guard against SWR keepPreviousData leaking stale clips across
+  // test-mode toggles. Content-based: VP first clip is sort 60, SDR/admin is 10.
+  const rawClips = useMemo(() => {
+    const clips = data?.clips ?? [];
+    if (!clips.length) return clips;
+    const first = (clips[0] as any)?.sortOrder;
+    if (vpTestMode && first !== 60) return [];
+    if (!vpTestMode && !sdrTestMode && first === 60) return [];
+    return clips;
+  }, [data, vpTestMode, sdrTestMode]);
 
   // In ascent test mode, reset all clips to fresh state (only clip 1 unlocked, none completed)
   const clips = useMemo(() => {
