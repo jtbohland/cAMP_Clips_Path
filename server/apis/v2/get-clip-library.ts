@@ -39,7 +39,7 @@ export default api({
     viewerId: z.string(),
     /** Admin test-mode overrides (frontend passes these when "Test as VP/SDR" is active) */
     roleOverride: z.string().nullable().optional(),
-    adminOverride: z.boolean().optional(),
+    adminOverride: z.boolean().nullable().optional(),
   }),
 
   output: z.object({
