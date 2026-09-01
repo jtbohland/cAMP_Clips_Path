@@ -424,17 +424,24 @@ export const WEEK1_EXPECTED_BY_DAY = [0, 2, 4, 5, 6, 7];
 export function getApproachPacingTier(
   completedItems: number,
   approachWeekdaysElapsed: number,
+  role: string = "",
 ): PacingTier {
-  if (completedItems >= WEEK1_TOTAL_ITEMS) return "completed";
+  const isVP = isVelocityPromo(role);
+  const totalItems = isVP ? WEEK1_TOTAL_ITEMS_VP : WEEK1_TOTAL_ITEMS;
+  const expectedByDay = isVP ? WEEK1_EXPECTED_BY_DAY_VP : WEEK1_EXPECTED_BY_DAY;
+  const deadlineDays = isVP ? WEEK1_WEEKDAYS_VP : 5; // 3 for VP, 5 for others
+
+  if (completedItems >= totalItems) return "completed";
   if (approachWeekdaysElapsed <= 0) return "not_started";
 
-  // Day 6-7: missed the 5-day deadline but still have catch-up time
-  if (approachWeekdaysElapsed >= 8) return "anchor_failure";
-  if (approachWeekdaysElapsed >= 6) return "anchor_failure";
+  // Past Oh Deer threshold (deadline + 3): auto-unlock zone
+  if (approachWeekdaysElapsed >= deadlineDays + 3) return "anchor_failure";
+  // Past deadline: missed, anchor failure (catch-up window)
+  if (approachWeekdaysElapsed > deadlineDays) return "anchor_failure";
 
-  // Days 1-5: compare to expected
-  const day = Math.min(approachWeekdaysElapsed, 5);
-  const expected = WEEK1_EXPECTED_BY_DAY[day] ?? WEEK1_TOTAL_ITEMS;
+  // Days 1 to deadline: compare to expected
+  const day = Math.min(approachWeekdaysElapsed, deadlineDays);
+  const expected = expectedByDay[day] ?? totalItems;
   const itemsBehind = Math.max(0, expected - completedItems);
 
   if (itemsBehind <= 0) return "summit_bound";
@@ -447,10 +454,14 @@ export function getApproachPacingTier(
 /**
  * Get the number of Approach items a learner is behind.
  */
-export function getApproachItemsBehind(completedItems: number, approachWeekdaysElapsed: number): number {
-  if (completedItems >= WEEK1_TOTAL_ITEMS) return 0;
-  const day = Math.min(approachWeekdaysElapsed, 5);
-  const expected = WEEK1_EXPECTED_BY_DAY[day] ?? WEEK1_TOTAL_ITEMS;
+export function getApproachItemsBehind(completedItems: number, approachWeekdaysElapsed: number, role: string = ""): number {
+  const isVP = isVelocityPromo(role);
+  const totalItems = isVP ? WEEK1_TOTAL_ITEMS_VP : WEEK1_TOTAL_ITEMS;
+  const expectedByDay = isVP ? WEEK1_EXPECTED_BY_DAY_VP : WEEK1_EXPECTED_BY_DAY;
+  const deadlineDays = isVP ? WEEK1_WEEKDAYS_VP : 5;
+  if (completedItems >= totalItems) return 0;
+  const day = Math.min(approachWeekdaysElapsed, deadlineDays);
+  const expected = expectedByDay[day] ?? totalItems;
   return Math.max(0, expected - completedItems);
 }
 
@@ -542,33 +553,61 @@ export const CLIPS_EXPECTED_BY_WEEKDAY = CLIPS_EXPECTED_BY_WEEKDAY_AE;
 
 export const TOTAL_ASCENT_CLIPS_AE = 21;
 export const TOTAL_ASCENT_CLIPS_SDR = 17;
+export const TOTAL_ASCENT_CLIPS_VP = 9;
 export const TOTAL_WEEKDAYS_AE = 20;
 export const TOTAL_WEEKDAYS_SDR = 19;
+export const TOTAL_WEEKDAYS_VP = 10; // 3 Approach + 7 Ascent days
 
 /** Legacy alias */
 export const TOTAL_ASCENT_CLIPS = TOTAL_ASCENT_CLIPS_AE;
 export const TOTAL_UNIFIED_ITEMS = WEEK1_TOTAL_ITEMS + TOTAL_ASCENT_CLIPS_AE; // 28
 
+// ─── SDR>Velocity Promo clip schedule ─────────────────────────────
+// Approach is only 3 weekdays; Ascent is 7 days (weekdays 4–10)
+export const CLIPS_EXPECTED_BY_WEEKDAY_VP = [
+  0,   // 0 weekdays elapsed
+  0, 0, 0,                   // weekdays 1-3: Approach (no clips)
+  1,                         // weekday 4  → Day 1 (Renewal Ops)
+  2,                         // weekday 5  → Day 2 (P&P)
+  3,                         // weekday 6  → Day 3 (Partners)
+  5,                         // weekday 7  → Day 4 (Forecasting ×2)
+  6,                         // weekday 8  → Day 5 (CLM)
+  7,                         // weekday 9  → Day 6 (Deal Desk)
+  9,                         // weekday 10 → Day 7 (SE+PS ×2)
+];
+
+/** Approach schedule for Velocity Promo: 5 items over 3 weekdays */
+export const WEEK1_EXPECTED_BY_DAY_VP = [0, 2, 4, 5];
+export const WEEK1_TOTAL_ITEMS_VP = 5;
+export const WEEK1_WEEKDAYS_VP = 3;
+
 // ─── Exempt clip sort orders (newly added clips) ────────────────────
 const EXEMPT_CLIP_SORT_ORDERS = [45, 55, 56] as const;
 
 const SDR_ROLES = ["SDR"];
+const VELOCITY_PROMO_ROLES = ["SDR>Velocity Promo"];
 function isSDR(role: string): boolean {
   return SDR_ROLES.includes(role);
+}
+function isVelocityPromo(role: string): boolean {
+  return VELOCITY_PROMO_ROLES.includes(role);
 }
 
 /** Get the schedule for a role. */
 export function getClipsExpectedByWeekday(role: string): readonly number[] {
+  if (isVelocityPromo(role)) return CLIPS_EXPECTED_BY_WEEKDAY_VP;
   return isSDR(role) ? CLIPS_EXPECTED_BY_WEEKDAY_SDR : CLIPS_EXPECTED_BY_WEEKDAY_AE;
 }
 
 /** Get total weekdays for a role's path. */
 export function getRoleTotalWeekdays(role: string): number {
+  if (isVelocityPromo(role)) return TOTAL_WEEKDAYS_VP;
   return isSDR(role) ? TOTAL_WEEKDAYS_SDR : TOTAL_WEEKDAYS_AE;
 }
 
 /** Get base clip total for a role. */
 export function getRoleTotalClips(role: string): number {
+  if (isVelocityPromo(role)) return TOTAL_ASCENT_CLIPS_VP;
   return isSDR(role) ? TOTAL_ASCENT_CLIPS_SDR : TOTAL_ASCENT_CLIPS_AE;
 }
 
@@ -577,6 +616,7 @@ export function getRoleTotalClips(role: string): number {
  * Mirrors server/apis/v2/pacing-helpers.ts getEffectiveClipTotal.
  */
 export function getEffectiveClipTotal(role: string, maxSortDone: number): number {
+  if (isVelocityPromo(role)) return TOTAL_ASCENT_CLIPS_VP; // VP has no legacy exemptions
   const baseTotal = getRoleTotalClips(role);
   if (maxSortDone <= 0) return baseTotal;
 
@@ -613,14 +653,17 @@ export function computeUnifiedPacingPercent(
   const total = effectiveTotal ?? getRoleTotalClips(role);
   const capped = Math.min(Math.max(weekdaysElapsed, 0), totalWeekdays);
 
-  // Approach expected: ramp over weekdays 1-5
-  const approachExpected = capped >= 5 ? WEEK1_TOTAL_ITEMS : (WEEK1_EXPECTED_BY_DAY[capped] ?? 0);
+  const totalApproachItems = isVelocityPromo(role) ? WEEK1_TOTAL_ITEMS_VP : WEEK1_TOTAL_ITEMS;
+  const approachDeadline = isVelocityPromo(role) ? WEEK1_WEEKDAYS_VP : 5;
+  const approachExpected = capped >= approachDeadline
+    ? totalApproachItems
+    : (isVelocityPromo(role) ? WEEK1_EXPECTED_BY_DAY_VP[capped] : WEEK1_EXPECTED_BY_DAY[capped]) ?? 0;
 
   // Clips expected by this weekday
   const clipsExpected = schedule[capped] ?? total;
 
   const totalExpected = approachExpected + clipsExpected;
-  const totalDone = Math.min(approachDone, WEEK1_TOTAL_ITEMS) + Math.min(clipsDone, total);
+  const totalDone = Math.min(approachDone, totalApproachItems) + Math.min(clipsDone, total);
 
   if (totalExpected <= 0) {
     return 100;

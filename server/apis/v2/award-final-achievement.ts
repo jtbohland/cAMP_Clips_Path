@@ -4,6 +4,7 @@ import {
   getEffectiveClipTotal,
   getTotalWeekdays,
   isSDR,
+  isVelocityPromo,
 } from "./pacing-helpers.js";
 
 const APPS_DB = "c6e32cf4-ca66-42ae-aeb3-58c84ffae574";
@@ -57,6 +58,12 @@ const SDR_PACING_STREAKS = [
   { days: 6,  badgeId: "alpine_endurance",  name: "Alpine Endurance",  emoji: "🏔️", xp: 15 },
   { days: 9,  badgeId: "iron_legs",         name: "Iron Legs",         emoji: "🦿",  xp: 20 },
   { days: 12, badgeId: "mountain_goat",     name: "Mountain Goat",     emoji: "🐐",  xp: 30 },
+];
+const VP_PACING_STREAKS = [
+  { days: 2,  badgeId: "ridge_runner",      name: "Ridge Runner",      emoji: "🥾",  xp: 10 },
+  { days: 4,  badgeId: "alpine_endurance",  name: "Alpine Endurance",  emoji: "🏔️", xp: 15 },
+  { days: 6,  badgeId: "iron_legs",         name: "Iron Legs",         emoji: "🦿",  xp: 20 },
+  { days: 7,  badgeId: "mountain_goat",     name: "Mountain Goat",     emoji: "🐐",  xp: 30 },
 ];
 
 const BadgeEarnedSchema = z.object({
@@ -360,7 +367,7 @@ export default api({
       // Award pacing streak badges based on max consecutive summit_bound days
       // These are cumulative — if you hit 10, you also earned 5
       // SDRs use scaled thresholds (3/6/9/12) vs AEs (5/10/15/20)
-      const pacingStreakDefs = isSDR(learnerRole) ? SDR_PACING_STREAKS : AE_PACING_STREAKS;
+      const pacingStreakDefs = isVelocityPromo(learnerRole) ? VP_PACING_STREAKS : isSDR(learnerRole) ? SDR_PACING_STREAKS : AE_PACING_STREAKS;
       for (const streak of pacingStreakDefs) {
         if (maxConsecutive >= streak.days) {
           xpEvents.push({ sourceId: streak.badgeId, eventType: "pacing_streak", xp: streak.xp });

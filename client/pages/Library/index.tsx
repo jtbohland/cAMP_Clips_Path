@@ -95,13 +95,20 @@ export default function LibraryPage() {
   // Use a code-mode-scoped key so it never bleeds into the deployed app
   const isEditorPreview = window.location.pathname.includes("code-mode");
   const SDR_SAVED_KEY = "sdr_test_saved_viewer";
+  const VP_SAVED_KEY = "vp_test_saved_viewer";
   const [sdrTestMode, setSdrTestMode] = useState(() => {
     if (!isEditorPreview) {
-      // Deployed app: clear any stale SDR test state and never activate
       sessionStorage.removeItem(SDR_SAVED_KEY);
+      sessionStorage.removeItem(VP_SAVED_KEY);
       return false;
     }
     return sessionStorage.getItem(SDR_SAVED_KEY) !== null;
+  });
+
+  // Admin "Test as Veloc. Promo"
+  const [vpTestMode, setVpTestMode] = useState(() => {
+    if (!isEditorPreview) return false;
+    return sessionStorage.getItem(VP_SAVED_KEY) !== null;
   });
 
   // If sdrTestMode was restored from sessionStorage but AutoLookupViewer
@@ -117,19 +124,25 @@ export default function LibraryPage() {
         role: "SDR",
         isAdmin: true,
       });
-      // Keep admin viewer in localStorage for safety
       localStorage.setItem("cliptracker_viewer", JSON.stringify(viewer));
-    } else if (!sdrTestMode && viewer?.email === "sdr-test@test.local") {
-      // Stale SDR test identity in localStorage — clear it and reload once
-      // so ViewerContext re-derives the real viewer via AutoLookupViewer
-      const reloadKey = "sdr_stale_reload";
+    } else if (vpTestMode && viewer && viewer.role !== "SDR>Velocity Promo") {
+      setViewer({
+        id: "d729733e-1b91-46d5-a091-9501442438bf",
+        email: "vp-test@test.local",
+        name: "VP Test Viewer",
+        role: "SDR>Velocity Promo",
+        isAdmin: true,
+      });
+      localStorage.setItem("cliptracker_viewer", JSON.stringify(viewer));
+    } else if (!sdrTestMode && !vpTestMode && (viewer?.email === "sdr-test@test.local" || viewer?.email === "vp-test@test.local")) {
+      const reloadKey = "test_stale_reload";
       if (!sessionStorage.getItem(reloadKey)) {
         sessionStorage.setItem(reloadKey, "1");
         localStorage.removeItem("cliptracker_viewer");
         window.location.reload();
       }
     }
-  }, [sdrTestMode, viewer?.role, viewer?.email]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [sdrTestMode, vpTestMode, viewer?.role, viewer?.email]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleToggleSdrTest = useCallback(() => {
     if (sdrTestMode) {
@@ -158,6 +171,36 @@ export default function LibraryPage() {
       setSdrTestMode(true);
     }
   }, [sdrTestMode, ascentTestMode, viewer, setViewer]);
+
+  const handleToggleVpTest = useCallback(() => {
+    if (vpTestMode) {
+      const saved = sessionStorage.getItem(VP_SAVED_KEY);
+      if (saved) {
+        try { setViewer(JSON.parse(saved)); } catch {}
+        sessionStorage.removeItem(VP_SAVED_KEY);
+      }
+      setVpTestMode(false);
+      setAscentTestMode(false);
+    } else {
+      if (ascentTestMode) setAscentTestMode(false);
+      if (sdrTestMode) {
+        // Turn off SDR test first
+        const savedSdr = sessionStorage.getItem(SDR_SAVED_KEY);
+        if (savedSdr) sessionStorage.removeItem(SDR_SAVED_KEY);
+        setSdrTestMode(false);
+      }
+      sessionStorage.setItem(VP_SAVED_KEY, JSON.stringify(viewer));
+      setViewer({
+        id: "d729733e-1b91-46d5-a091-9501442438bf",
+        email: "vp-test@test.local",
+        name: "VP Test Viewer",
+        role: "SDR>Velocity Promo",
+        isAdmin: true,
+      });
+      localStorage.setItem("cliptracker_viewer", JSON.stringify(viewer));
+      setVpTestMode(true);
+    }
+  }, [vpTestMode, sdrTestMode, ascentTestMode, viewer, setViewer]);
 
   const { run: logClick } = useApi("LogPitchClick");
   const { run: trackLogin } = useApi("TrackLogin");
@@ -653,8 +696,24 @@ export default function LibraryPage() {
 
   const TIME_NOTE = "These times are approximate and reflect course + video durations, plus ~20 minutes per day for quizzes. They do not include any extra time you spend reading or reviewing linked resources.";
   const isSDRViewer = viewer?.role === "SDR";
+  const isVPViewer = viewer?.role === "SDR>Velocity Promo";
 
-  const WEEK_META: Record<number, { emoji: string; title: string; time: string; note: string }> = isSDRViewer
+  const WEEK_META: Record<number, { emoji: string; title: string; time: string; note: string }> = isVPViewer
+    ? {
+        2: {
+          emoji: "🥾",
+          title: "Core Revenue Operations",
+          time: "⏱ Total: ~5h | Daily average: ~1h per day",
+          note: TIME_NOTE,
+        },
+        3: {
+          emoji: "🏞️",
+          title: "Deal Execution & Cross-Functional",
+          time: "⏱ Total: ~3h | 2 session days",
+          note: TIME_NOTE,
+        },
+      }
+    : isSDRViewer
     ? {
         2: {
           emoji: "🥾",
@@ -1184,7 +1243,9 @@ export default function LibraryPage() {
               <span className="text-sm">🔧</span>
               <span className="text-sm font-semibold text-purple-900">Admin View</span>
               <span className="text-xs text-purple-600">
-                {sdrTestMode
+                {vpTestMode
+                  ? "Showing fresh Velocity Promo view"
+                  : sdrTestMode
                   ? "Showing fresh SDR view"
                   : ascentTestMode
                     ? "Showing fresh learner view"
@@ -1230,7 +1291,7 @@ export default function LibraryPage() {
               >
                 📝 Registration
               </button>
-              {!sdrTestMode && (
+              {!sdrTestMode && !vpTestMode && (
                 <button
                   onClick={() => setAscentTestMode((prev) => !prev)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
@@ -1242,7 +1303,7 @@ export default function LibraryPage() {
                   {ascentTestMode ? "👁️ Show My Progress" : "🧪 Test as New Learner"}
                 </button>
               )}
-              {(!ascentTestMode || sdrTestMode) && (
+              {(!ascentTestMode || sdrTestMode) && !vpTestMode && (
                 <button
                   onClick={handleToggleSdrTest}
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
@@ -1252,6 +1313,18 @@ export default function LibraryPage() {
                   }`}
                 >
                   {sdrTestMode ? "↩️ Back to Admin" : "🧪 Test as New SDR"}
+                </button>
+              )}
+              {(!ascentTestMode || vpTestMode) && !sdrTestMode && (
+                <button
+                  onClick={handleToggleVpTest}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                    vpTestMode
+                      ? "bg-orange-600 text-white hover:bg-orange-700"
+                      : "bg-white text-orange-700 border border-orange-300 hover:bg-orange-100"
+                  }`}
+                >
+                  {vpTestMode ? "↩️ Back to Admin" : "🧪 Test as Veloc. Promo"}
                 </button>
               )}
             </div>

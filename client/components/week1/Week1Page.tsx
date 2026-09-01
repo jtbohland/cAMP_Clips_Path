@@ -18,6 +18,9 @@ import {
   getApproachItemsBehind,
   computeUnifiedPacingPercent,
   getPacingStatusFromPercent,
+  WEEK1_TOTAL_ITEMS_VP,
+  WEEK1_WEEKDAYS_VP,
+  getRoleTotalWeekdays,
 } from "@/lib/pacing";
 
 // Reflection prompts
@@ -85,6 +88,7 @@ export default function Week1Page({ viewerId, viewerName, viewerRole, isAdmin, p
   const navigate = useNavigate();
   // Admin "Test as New Learner" toggle — resets view to fresh state
   const [testMode, setTestMode] = useState(false);
+  const isVP = viewerRole === "SDR>Velocity Promo";
 
   const { data: rawData, loading, refetch } = useApiData(
     "GetWeek1Progress",
@@ -134,7 +138,10 @@ export default function Week1Page({ viewerId, viewerName, viewerRole, isAdmin, p
   }, [data?.academyScreenshots]);
 
   // Completion checks
-  const allModulesSigned = !!signoffMap.meddpicc && !!signoffMap.camp101 && !!signoffMap.challenger;
+  // VP only requires cAMP 101 (no MEDDPICC or Challenger)
+  const allModulesSigned = isVP
+    ? !!signoffMap.camp101
+    : !!signoffMap.meddpicc && !!signoffMap.camp101 && !!signoffMap.challenger;
   const wdVerified = !!data?.wdVerification;
   const allComplete = allModulesSigned && wdVerified;
 
@@ -144,31 +151,33 @@ export default function Week1Page({ viewerId, viewerName, viewerRole, isAdmin, p
   const [showOhDeer, setShowOhDeer] = useState(false);
   const approachPacingShownRef = useRef(false);
 
-  // Count completed items (MEDDPICC + 4 academies + Challenger + W&D = 7)
+  // Count completed items
+  // AE/SDR: MEDDPICC + 4 academies + Challenger + W&D = 7
+  // VP: 4 academies + W&D = 5 (no MEDDPICC or Challenger)
   // cAMP 101 sign-off is NOT a separate trackable item
   const completedItemCount = useMemo(() => {
     let count = 0;
-    if (signoffMap.meddpicc) count++;
-    if (signoffMap.challenger) count++;
+    if (!isVP && signoffMap.meddpicc) count++;
+    if (!isVP && signoffMap.challenger) count++;
     // Academy tiles: experiment tile requires BOTH experiment + statsig to count as 1
     const expDone = screenshotMap.experiment && screenshotMap.statsig;
     count += ['analytics','session_replay','guides_surveys'].filter(k => screenshotMap[k]).length + (expDone ? 1 : 0);
     if (wdVerified) count++;
     return count;
-  }, [signoffMap, screenshotMap, wdVerified]);
+  }, [signoffMap, screenshotMap, wdVerified, isVP]);
 
   // Set of completed trackable keys for ApproachPacingModal
   const completedKeys = useMemo(() => {
     const keys = new Set<string>();
-    if (signoffMap.meddpicc) keys.add("module:meddpicc");
-    if (signoffMap.challenger) keys.add("module:challenger");
+    if (!isVP && signoffMap.meddpicc) keys.add("module:meddpicc");
+    if (!isVP && signoffMap.challenger) keys.add("module:challenger");
     if (screenshotMap.analytics) keys.add("academy:analytics");
     if (screenshotMap.experiment && screenshotMap.statsig) keys.add("academy:experiment");
     if (screenshotMap.session_replay) keys.add("academy:session_replay");
     if (screenshotMap.guides_surveys) keys.add("academy:guides_surveys");
     if (wdVerified) keys.add("wd");
     return keys;
-  }, [signoffMap, screenshotMap, wdVerified]);
+  }, [signoffMap, screenshotMap, wdVerified, isVP]);
 
   // Approach pacing calculation
   const approachPacing = useMemo(() => {
@@ -179,11 +188,12 @@ export default function Week1Page({ viewerId, viewerName, viewerRole, isAdmin, p
     const pacingPercent = computeUnifiedPacingPercent(weekdaysElapsed, completedItemCount, 0);
     const tier = getPacingStatusFromPercent(pacingPercent);
     const itemsBehind = getApproachItemsBehind(completedItemCount, weekdaysElapsed);
-    // Projected summit day = createdAt + 25 weekdays (5 approach + 20 ascent)
+    // Projected summit day = createdAt + totalWeekdays
+    const totalWD = getRoleTotalWeekdays(viewerRole ?? "");
     const projectedSummitDay = (() => {
       const cursor = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
       let wd = 0;
-      while (wd < 25) { cursor.setDate(cursor.getDate() + 1); const d = cursor.getDay(); if (d !== 0 && d !== 6) wd++; }
+      while (wd < totalWD) { cursor.setDate(cursor.getDate() + 1); const d = cursor.getDay(); if (d !== 0 && d !== 6) wd++; }
       return cursor;
     })();
     return { weekdaysElapsed, tier, itemsBehind, projectedSummitDay };
@@ -192,15 +202,15 @@ export default function Week1Page({ viewerId, viewerName, viewerRole, isAdmin, p
   // Incomplete modules for deadline modals
   const incompleteModules = useMemo(() => {
     const items: Array<{ emoji: string; label: string; done: boolean }> = [];
-    items.push({ emoji: "✍🏽", label: "MEDDPICC sign-off", done: !!signoffMap.meddpicc });
+    if (!isVP) items.push({ emoji: "✍🏽", label: "MEDDPICC sign-off", done: !!signoffMap.meddpicc });
     items.push({ emoji: "🎓", label: "Academy: Analytics", done: !!screenshotMap.analytics });
     items.push({ emoji: "🎓", label: "Academy: Experiment & Statsig", done: !!(screenshotMap.experiment && screenshotMap.statsig) });
     items.push({ emoji: "🎓", label: "Academy: Session Replay", done: !!screenshotMap.session_replay });
     items.push({ emoji: "🎓", label: "Academy: Guides & Surveys", done: !!screenshotMap.guides_surveys });
-    items.push({ emoji: "✍🏽", label: "Challenger sign-off", done: !!signoffMap.challenger });
+    if (!isVP) items.push({ emoji: "✍🏽", label: "Challenger sign-off", done: !!signoffMap.challenger });
     items.push({ emoji: "🎡", label: "Wheel & Deal", done: wdVerified });
     return items.filter((m) => !m.done);
-  }, [signoffMap, screenshotMap, wdVerified]);
+  }, [signoffMap, screenshotMap, wdVerified, isVP]);
 
   // Auto-trigger Approach pacing modal — once per calendar day, skip legacy/unlocked
   useEffect(() => {
@@ -224,19 +234,21 @@ export default function Week1Page({ viewerId, viewerName, viewerRole, isAdmin, p
     // If the modal renders but the learner refreshes before clicking,
     // it will re-fire — matching the Ascent pacing pattern.
 
-    // Day 8+: Oh Deer auto-unlock
-    if (weekdaysElapsed >= 8) {
+    // Oh Deer auto-unlock: Day 8+ (AE/SDR) or Day 6+ (VP)
+    const ohDeerDay = isVP ? 6 : 8;
+    if (weekdaysElapsed >= ohDeerDay) {
       setShowOhDeer(true);
       return;
     }
 
-    // Day 6-7: missed deadline
-    if (weekdaysElapsed >= 6) {
-      setShowDeadline(weekdaysElapsed === 7 ? "day7" : "day6");
+    // Missed deadline: Day 6-7 (AE/SDR) or Day 4-5 (VP)
+    const deadlineStart = isVP ? 4 : 6;
+    if (weekdaysElapsed >= deadlineStart) {
+      setShowDeadline(weekdaysElapsed === deadlineStart + 1 ? "day7" : "day6");
       return;
     }
 
-    // Day 2-5: regular pacing modal
+    // Regular pacing modal: Day 2+ (within approach window)
     setShowApproachPacing(true);
   }, [data, isLegacy, isUnlocked, approachPacing, viewerId, testMode, isAdmin]);
 
@@ -469,8 +481,8 @@ export default function Week1Page({ viewerId, viewerName, viewerRole, isAdmin, p
         </div>
       )}
 
-      {/* Module 1: MEDDPICC */}
-      <ModuleCard
+      {/* Module 1: MEDDPICC (hidden for Velocity Promo) */}
+      {!isVP && <ModuleCard
         moduleKey="meddpicc"
         emoji="🧱"
         title="MEDDPICC"
@@ -493,7 +505,7 @@ export default function Week1Page({ viewerId, viewerName, viewerRole, isAdmin, p
         } : undefined}
         isLegacy={isLegacy}
         onSignOff={async (d) => handleModuleSignoff("meddpicc", d, MEDDPICC_REFLECTION)}
-      />
+      />}
 
       {/* Module 2: cAMP 101 */}
       <div className="rounded-xl border border-gray-200 shadow-sm overflow-hidden">
@@ -580,8 +592,8 @@ export default function Week1Page({ viewerId, viewerName, viewerRole, isAdmin, p
         </div>
       </div>
 
-      {/* Module 3: Challenger — custom layout with account/contact inputs */}
-      <ChallengerCard
+      {/* Module 3: Challenger — hidden for Velocity Promo */}
+      {!isVP && <ChallengerCard
         isSignedOff={!!signoffMap.challenger}
         signoffData={signoffMap.challenger ? {
           reflectionResponse: signoffMap.challenger.reflectionResponse,
@@ -600,7 +612,7 @@ export default function Week1Page({ viewerId, viewerName, viewerRole, isAdmin, p
         }}
         onChallengerUpload={handleAcademyUpload}
         onSignOff={async (d) => handleModuleSignoff("challenger", d, challengerPrompt)}
-      />
+      />}
 
       {/* Module 4: Wheel & Deal */}
       <WheelDealCard
@@ -626,9 +638,9 @@ export default function Week1Page({ viewerId, viewerName, viewerRole, isAdmin, p
           </button>
           {!allComplete && (
             <p className="text-xs text-gray-400 text-center mt-2">
-              {!signoffMap.meddpicc && "⬜ MEDDPICC · "}
+              {!isVP && !signoffMap.meddpicc && "⬜ MEDDPICC · "}
               {!signoffMap.camp101 && "⬜ cAMP 101 · "}
-              {!signoffMap.challenger && "⬜ Challenger · "}
+              {!isVP && !signoffMap.challenger && "⬜ Challenger · "}
               {!wdVerified && "⬜ Wheel & Deal"}
             </p>
           )}

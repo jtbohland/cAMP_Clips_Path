@@ -124,12 +124,12 @@ export default api({
       { label: "Get clip library with progress" }
     );
 
-    // Build dynamic day label map for SDRs:
-    // SDRs see fewer clips so their day numbering is renumbered.
-    // We derive the mapping from the ordered DB day_labels of the
-    // clips they actually receive.
+    // Build dynamic day label map for roles with reduced clip sets.
+    // SDR and Velocity Promo learners see fewer clips, so their day
+    // numbering is renumbered sequentially from the clips they receive.
+    const needsDayRenumber = viewerRole === 'SDR' || viewerRole === 'SDR>Velocity Promo';
     const dayLabelMap = new Map<string, string>();
-    if (viewerRole === 'SDR') {
+    if (needsDayRenumber) {
       const seenDays: string[] = [];
       for (const clip of clips) {
         if (clip.day_label && !seenDays.includes(clip.day_label)) {
@@ -209,7 +209,7 @@ export default api({
         durationSeconds: clip.duration_seconds,
         sortOrder: clip.sort_order,
         weekNumber: clip.week_number,
-        dayLabel: viewerRole === 'SDR' && clip.day_label ? (dayLabelMap.get(clip.day_label) ?? clip.day_label) : clip.day_label,
+        dayLabel: needsDayRenumber && clip.day_label ? (dayLabelMap.get(clip.day_label) ?? clip.day_label) : clip.day_label,
         bestScore: bestScore,
         attempts: clip.attempts ? parseInt(clip.attempts) : 0,
         completed: isCompleted,

@@ -4,11 +4,12 @@ import { useApiData } from "@/hooks/useApiData.js";
 import PageHeader from "@/components/PageHeader";
 
 // ─── Role detection ────────────────────────────────────────────────────────────
-type RolePath = "AE" | "SDR";
+type RolePath = "AE" | "SDR" | "VP";
 
 function detectRolePath(role: string): RolePath {
+  if (role === "SDR>Velocity Promo") return "VP";
   if (/sdr|sales development/i.test(role)) return "SDR";
-  return "AE"; // AE, PSM, Renewals, Strat AE, etc. all use AE path
+  return "AE";
 }
 
 // ─── Tier data ─────────────────────────────────────────────────────────────────
@@ -28,9 +29,17 @@ const SDR_TIERS = [
   { tier: 5, name: "Alpinist All-Star", emoji: "💫", xpMin: 636, xpMax: null, description: "Peak performance — the best of the best" },
 ];
 
+const VP_TIERS = [
+  { tier: 1, name: "Base Camper", emoji: "🏕️", xpMin: 0, xpMax: 89, description: "Just getting started on the trail" },
+  { tier: 2, name: "Trailblazer", emoji: "🥾", xpMin: 90, xpMax: 199, description: "Building momentum and finding your footing" },
+  { tier: 3, name: "Summit Seeker", emoji: "🧗🏼", xpMin: 200, xpMax: 329, description: "Pushing toward mastery" },
+  { tier: 4, name: "Pinnacle Achiever", emoji: "⛰️", xpMin: 330, xpMax: 469, description: "You've conquered the Ascent" },
+  { tier: 5, name: "Alpinist All-Star", emoji: "💫", xpMin: 470, xpMax: null, description: "Peak performance — the best of the best" },
+];
+
 // ─── Base XP (shared) ──────────────────────────────────────────────────────────
 const BASE_XP = [
-  { action: "Approach Accomplishment", xp: 10, emoji: "🏕️", description: "Complete a module in The Approach (MEDDPICC, Challenger, cAMP 101, or Wheel & Deal)" },
+  { action: "Approach Accomplishment", xp: 10, emoji: "🏕️", description: "Complete a module in The Approach (MEDDPICC, Challenger, cAMP 101, or Wheel & Deal — VP path: 4 academies + W&D)" },
   { action: "Watch a clip", xp: 3, emoji: "🎬", description: "Complete any clip session" },
   { action: "Trail Markers: 5/5", xp: 5, emoji: "🪧", description: "Perfect score on in-video questions" },
   { action: "Trail Markers: 4/5", xp: 3, emoji: "🪧", description: "Strong performance on questions" },
@@ -74,6 +83,14 @@ function getEngagementStreaks(role: RolePath) {
 
 // ─── Pacing Streaks (role-specific thresholds) ───────────────────────────────
 function getPacingStreaks(role: RolePath) {
+  if (role === "VP") {
+    return [
+      { badge: "Ridge Runner", xp: 10, emoji: "🥾", condition: "2 consecutive days Summit Bound" },
+      { badge: "Alpine Endurance", xp: 15, emoji: "🏔️", condition: "4 consecutive days Summit Bound" },
+      { badge: "Iron Legs", xp: 20, emoji: "🦿", condition: "5 consecutive days Summit Bound" },
+      { badge: "Mountain Goat", xp: 30, emoji: "🐐", condition: "7 consecutive days Summit Bound — every single day on pace" },
+    ];
+  }
   if (role === "SDR") {
     return [
       { badge: "Ridge Runner", xp: 10, emoji: "🥾", condition: "3 consecutive days Summit Bound" },
@@ -94,19 +111,18 @@ function getPacingStreaks(role: RolePath) {
 
 // ─── Milestone Bonuses (Halfway Up day differs) ──────────────────────────────
 function getMilestones(role: RolePath) {
+  const approachLabel = role === "VP" ? "3 days" : "5 days";
+  const halfwayDay = role === "VP" ? "Day 4" : role === "SDR" ? "Day 6" : "Day 10";
+  const totalClips = role === "VP" ? 9 : role === "SDR" ? 14 : 19;
   return [
-    { badge: "Peak Lift", xp: 25, emoji: "🚡", condition: "Finish The Approach in 5 days or less — you rode the gondola and you're ready to climb" },
+    { badge: "Peak Lift", xp: 25, emoji: "🚡", condition: `Finish The Approach in ${approachLabel} or less — you rode the gondola and you're ready to climb` },
     { badge: "First Step", xp: 5, emoji: "🎬", condition: "Complete Clip 1" },
     { badge: "Halfway Up", xp: 15, emoji: "🏔️",
-      condition: role === "SDR"
-        ? "Complete Day 6 — review all resources + submit reflection"
-        : "Complete Day 10 — review all resources + submit reflection"
+      condition: `Complete ${halfwayDay} — review all resources + submit reflection`
     },
-    { badge: "Into the Summit Push", xp: 10, emoji: "🪢", condition: "Unlock Week 4 (complete Clip 10)" },
+    { badge: "Into the Summit Push", xp: 10, emoji: "🩢", condition: role === "VP" ? "Unlock Week 3 (complete Day 5)" : "Unlock Week 4 (complete Clip 10)" },
     { badge: "The Ranger's Secret", xp: 20, emoji: "🌲",
-      condition: role === "SDR"
-        ? "Complete all 14 clips without EVER triggering Weather the Storm"
-        : "Complete all 19 clips without EVER triggering Weather the Storm"
+      condition: `Complete all ${totalClips} clips without EVER triggering Weather the Storm`
     },
     { badge: "The Full Cast", xp: 50, emoji: "🎣", condition: "Listen to 80%+ of all 4 PODcast episodes" },
   ];
@@ -140,6 +156,7 @@ const PRICE_BADGES = [
 // ─── Theoretical Max XP ──────────────────────────────────────────────────────
 const MAX_XP_AE = 993;
 const MAX_XP_SDR = 903;
+const MAX_XP_VP = 600;
 
 export default function XPlanationPage() {
   const { viewer } = useViewer();
@@ -157,14 +174,14 @@ export default function XPlanationPage() {
   const earnedBadgeIds = useMemo(() => new Set(badges.map((b: any) => b.badgeId)), [badges]);
 
   // Role-specific data
-  const tiers = selectedRole === "SDR" ? SDR_TIERS : AE_TIERS;
+  const tiers = selectedRole === "VP" ? VP_TIERS : selectedRole === "SDR" ? SDR_TIERS : AE_TIERS;
   const currentTier = useMemo(() => tiers.reduce((acc, t) => (totalXp >= t.xpMin ? t : acc), tiers[0]), [tiers, totalXp]);
   const performanceBonuses = useMemo(() => getPerformanceBonuses(selectedRole), [selectedRole]);
   const engagementStreaks = useMemo(() => getEngagementStreaks(selectedRole), [selectedRole]);
   const pacingStreaks = useMemo(() => getPacingStreaks(selectedRole), [selectedRole]);
   const milestones = useMemo(() => getMilestones(selectedRole), [selectedRole]);
-  const maxXp = selectedRole === "SDR" ? MAX_XP_SDR : MAX_XP_AE;
-  const clipCount = selectedRole === "SDR" ? 18 : 21;
+  const maxXp = selectedRole === "VP" ? MAX_XP_VP : selectedRole === "SDR" ? MAX_XP_SDR : MAX_XP_AE;
+  const clipCount = selectedRole === "VP" ? 9 : selectedRole === "SDR" ? 18 : 21;
 
   return (
     <div className="flex flex-col h-full overflow-auto" style={{ backgroundColor: "#ECFDF5" }}>
@@ -229,6 +246,16 @@ export default function XPlanationPage() {
               }`}
             >
               📞 SDR
+            </button>
+            <button
+              onClick={() => setSelectedRole("VP")}
+              className={`px-4 py-2 text-sm font-semibold transition-colors border-l border-gray-300 ${
+                selectedRole === "VP"
+                  ? "bg-orange-600 text-white"
+                  : "bg-white text-gray-600 hover:bg-gray-50"
+              }`}
+            >
+              🚀 Veloc. Promo
             </button>
           </div>
           {viewer && detectRolePath(viewer.role) === selectedRole && (
