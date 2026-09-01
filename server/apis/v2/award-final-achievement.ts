@@ -5,6 +5,8 @@ import {
   getTotalWeekdays,
   isSDR,
   isVelocityPromo,
+  WEEK1_TOTAL_ITEMS_VP,
+  WEEK1_WEEKDAYS_VP,
 } from "./pacing-helpers.js";
 
 const APPS_DB = "c6e32cf4-ca66-42ae-aeb3-58c84ffae574";
@@ -25,9 +27,10 @@ const APPS_DB = "c6e32cf4-ca66-42ae-aeb3-58c84ffae574";
 const WEEK1_EXPECTED_BY_DAY = [0, 2, 4, 5, 6, 7];
 const WEEK1_TOTAL = 7;
 
-// Map each sort_order → which Ascent day (1-15) it belongs to.
+// Map each sort_order → which Ascent day (1-N) it belongs to.
 // Multi-clip days share the same Ascent day number.
-const SORT_TO_ASCENT_DAY: Record<number, number> = {
+// AE/SDR/PSM/Renewals use the AE map (15 Ascent days).
+const SORT_TO_ASCENT_DAY_AE: Record<number, number> = {
   1: 1, 2: 1,   // Day 1: 2 clips (Industries + Personas)
   3: 2, 4: 3, 5: 4,
   6: 5,  // resource day
@@ -43,8 +46,25 @@ const SORT_TO_ASCENT_DAY: Record<number, number> = {
   19: 15, 20: 15, // Day 15: 2 clips
 };
 
-// Total Ascent weekdays = 15
-const TOTAL_ASCENT_DAYS = 15;
+// VP uses a curated clip set with 7 Ascent days.
+const SORT_TO_ASCENT_DAY_VP: Record<number, number> = {
+  60: 1,    // Day 1: Renewal Ops (resource day)
+  120: 2,   // Day 2: P&P 101 (resource day)
+  130: 3,   // Day 3: Partners
+  140: 4, 150: 4,   // Day 4: Forecasting ×2
+  170: 5,   // Day 5: CLM
+  180: 6,   // Day 6: Deal Desk
+  190: 7, 200: 7,   // Day 7: SE + PS ×2
+};
+
+// VP resource day labels map to VP Ascent days (not the AE day labels)
+const VP_RESOURCE_DAY_MAP: Record<string, number> = {
+  day5: 1,  // sort 60 → VP Ascent Day 1 (original "Day 5" label)
+  day9: 2,  // sort 120 → VP Ascent Day 2 (original "Day 9" label)
+};
+
+const TOTAL_ASCENT_DAYS_AE = 15;
+const TOTAL_ASCENT_DAYS_VP = 7;
 
 // ── Pacing streak badge definitions (role-aware thresholds) ──
 const AE_PACING_STREAKS = [
@@ -143,8 +163,13 @@ export default api({
     const ascentDay1 = viewer.ascent_day_1 ? new Date(viewer.ascent_day_1) : null;
     const extensionDays = viewer.extension_days;
     const learnerRole = viewer.role;
+    const vpPath = isVelocityPromo(learnerRole);
     const effectiveTotal = getEffectiveClipTotal(learnerRole, viewer.max_sort_done);
     const schedule = getClipsExpectedByWeekday(learnerRole);
+    const SORT_TO_ASCENT_DAY = vpPath ? SORT_TO_ASCENT_DAY_VP : SORT_TO_ASCENT_DAY_AE;
+    const TOTAL_ASCENT_DAYS = vpPath ? TOTAL_ASCENT_DAYS_VP : TOTAL_ASCENT_DAYS_AE;
+    const approachTotal = vpPath ? WEEK1_TOTAL_ITEMS_VP : WEEK1_TOTAL;
+    const approachWeekdays = vpPath ? WEEK1_WEEKDAYS_VP : 5;
 
     const xpEvents: Array<{ sourceId: string; eventType: string; xp: number }> = [];
     const badgesAwarded: BadgeEarned[] = [];
@@ -158,10 +183,7 @@ export default api({
     let approachComplete = isLegacy;
 
     if (!isLegacy) {
-      // Check the 3 real tables that track approach progress:
-      // 1. module_signoffs: meddpicc, camp101, challenger
-      // 2. academy_screenshots: analytics, experiment, session_replay, guides_surveys
-      // 3. wd_verifications: Wheel & Deal (any row = done)
+      // Check approach progress tables. VP only requires camp101 (no MEDDPICC/Challenger).
       const SignoffSchema = z.object({ module_key: z.string() });
       const signoffs = await ctx.integrations.db.query(
         `SELECT module_key FROM cliptracker_v2_module_signoffs WHERE viewer_id = $1`,
@@ -183,10 +205,17 @@ export default api({
       );
       const wdDone = wdCheck[0].count > 0;
 
-      approachComplete = signoffKeys.has("meddpicc") && signoffKeys.has("camp101") && signoffKeys.has("challenger")
-        && screenshotKeys.has("analytics") && screenshotKeys.has("experiment")
-        && screenshotKeys.has("session_replay") && screenshotKeys.has("guides_surveys")
-        && wdDone;
+      const allAcademies = screenshotKeys.has("analytics") && screenshotKeys.has("experiment")
+        && screenshotKeys.has("session_replay") && screenshotKeys.has("guides_surveys");
+
+      if (vpPath) {
+        // VP: camp101 + 4 academies + W&D
+        approachComplete = signoffKeys.has("camp101") && allAcademies && wdDone;
+      } else {
+        // AE/SDR: meddpicc + camp101 + challenger + 4 academies + W&D
+        approachComplete = signoffKeys.has("meddpicc") && signoffKeys.has("camp101") && signoffKeys.has("challenger")
+          && allAcademies && wdDone;
+      }
     }
 
     // Determine timing: summit day vs adjustment day
@@ -243,8 +272,9 @@ export default api({
     }
 
     // For multi-clip days, the topic is complete when the LAST clip is finished
+    const resourceDays = vpPath ? new Set([1, 2]) : new Set([5, 9]);
     for (const [day, dates] of clipsByDay) {
-      if (day === 5 || day === 9) continue; // resource days handled separately
+      if (resourceDays.has(day)) continue; // resource days handled separately via reflections
       const expectedClips = Object.values(SORT_TO_ASCENT_DAY).filter(d => d === day).length;
       if (dates.length >= expectedClips) {
         topicCompletedDate.set(day, new Date(Math.max(...dates.map(d => d.getTime()))));
@@ -253,7 +283,12 @@ export default api({
 
     // For resource days: topic complete when reflection is submitted
     for (const r of reflections) {
-      const ascentDay = r.topic_day === "day5" ? 5 : r.topic_day === "day9" ? 9 : null;
+      let ascentDay: number | null;
+      if (vpPath) {
+        ascentDay = VP_RESOURCE_DAY_MAP[r.topic_day] ?? null;
+      } else {
+        ascentDay = r.topic_day === "day5" ? 5 : r.topic_day === "day9" ? 9 : null;
+      }
       if (ascentDay !== null) {
         topicCompletedDate.set(ascentDay, new Date(r.submitted_at));
       }
@@ -323,7 +358,7 @@ export default api({
       }
 
       // Approach count (static — either done or not by the time we award)
-      const approachDone = approachComplete ? WEEK1_TOTAL : 0;
+      const approachDone = approachComplete ? approachTotal : 0;
 
       let consecutiveSummitBound = 0;
       let maxConsecutive = 0;
@@ -335,12 +370,12 @@ export default api({
         let approachExpected: number;
         if (ascentDayNum <= extensionDays) {
           clipsExpected = 0;
-          approachExpected = WEEK1_TOTAL; // Approach should be done by Ascent start
+          approachExpected = approachTotal; // Approach should be done by Ascent start
         } else {
           const effectiveAscentDay = ascentDayNum - extensionDays;
-          const weekday = effectiveAscentDay + 5;
+          const weekday = effectiveAscentDay + approachWeekdays;
           clipsExpected = schedule[weekday] ?? effectiveTotal;
-          approachExpected = WEEK1_TOTAL;
+          approachExpected = approachTotal;
         }
 
         // Count clips done by this day
@@ -352,7 +387,7 @@ export default api({
         }
 
         const totalExpected = approachExpected + clipsExpected;
-        const totalDone = Math.min(approachDone, WEEK1_TOTAL) + Math.min(clipsDoneByDay, effectiveTotal);
+        const totalDone = Math.min(approachDone, approachTotal) + Math.min(clipsDoneByDay, effectiveTotal);
         const percent = totalExpected > 0 ? Math.round((totalDone / totalExpected) * 100) : 100;
         const isSummitBound = percent >= 90;
 
@@ -389,7 +424,7 @@ export default api({
           clipsExpected = 0;
         } else {
           const effectiveAscentDay = ascentDayNum - extensionDays;
-          const weekday = effectiveAscentDay + 5;
+          const weekday = effectiveAscentDay + approachWeekdays;
           clipsExpected = schedule[weekday] ?? effectiveTotal;
         }
         let clipsDoneByDay = 0;
@@ -398,14 +433,15 @@ export default api({
           const dayNorm = new Date(dayDate.getFullYear(), dayDate.getMonth(), dayDate.getDate());
           if (compNorm <= dayNorm) clipsDoneByDay++;
         }
-        const totalExpected = WEEK1_TOTAL + clipsExpected;
-        const totalDone = Math.min(approachDone, WEEK1_TOTAL) + Math.min(clipsDoneByDay, effectiveTotal);
+        const totalExpected = approachTotal + clipsExpected;
+        const totalDone = Math.min(approachDone, approachTotal) + Math.min(clipsDoneByDay, effectiveTotal);
         const pct = totalExpected > 0 ? Math.round((totalDone / totalExpected) * 100) : 100;
         minPercent = Math.min(minPercent, pct);
       }
 
       // Free Solo: never dropped below 70% (never hit rockslide/avalanche/anchor)
-      if (minPercent >= 70) {
+      // VP path doesn't include Free Solo — Mountain Goat (7/7 days) already covers it
+      if (!vpPath && minPercent >= 70) {
         const freeSoloBadge: BadgeEarned = { badgeId: "free_solo", name: "Free Solo", emoji: "🧗", xp: 40 };
         xpEvents.push({ sourceId: "free_solo", eventType: "pacing_streak", xp: 40 });
         badgesAwarded.push(freeSoloBadge);
@@ -414,7 +450,8 @@ export default api({
     }
 
     // ── 3. GRIP STRENGTH ──
-    // Average engagement score ≥85% across all 19 clips (all learners eligible)
+    // Average engagement score ≥85% across all video clips (role-aware count)
+    const requiredClips = vpPath ? 7 : isSDR(learnerRole) ? 14 : 19;
     const EngagementSchema = z.object({
       avg_engagement: z.coerce.number(),
       session_count: z.coerce.number(),
@@ -427,21 +464,22 @@ export default api({
        WHERE viewer_id = $1 AND completed = true AND engagement_score IS NOT NULL`,
       EngagementSchema, [viewerId], { label: "Calculate average engagement" }
     );
-    if (engData[0] && engData[0].session_count >= 19 && engData[0].avg_engagement >= 85) {
+    if (engData[0] && engData[0].session_count >= requiredClips && engData[0].avg_engagement >= 85) {
       gripStrength = { badgeId: "grip_strength", name: "Grip Strength", emoji: "💪", xp: 35 };
       xpEvents.push({ sourceId: "grip_strength", eventType: "performance", xp: 35 });
       badgesAwarded.push(gripStrength);
     }
 
     // ── INSERT XP EVENTS & BADGES ──
-    // Use last clip (sort_order 20) as the clip reference for these awards
+    // Use last clip in the viewer's path as the clip reference for these awards
+    const lastSortOrder = vpPath ? 200 : 20;
     const LastClipSchema = z.object({ id: z.string() });
     const lastClip = await ctx.integrations.db.query(
-      "SELECT id FROM cliptracker_v2_clips WHERE sort_order = 20 LIMIT 1",
-      LastClipSchema, [], { label: "Get last clip ID" }
+      "SELECT id FROM cliptracker_v2_clips WHERE sort_order = $1 LIMIT 1",
+      LastClipSchema, [lastSortOrder], { label: "Get last clip ID" }
     );
     const lastClipId = lastClip[0]?.id;
-    if (!lastClipId) throw new Error("Clip sort_order 20 not found");
+    if (!lastClipId) throw new Error(`Clip sort_order ${lastSortOrder} not found`);
 
     let totalXpAwarded = 0;
     for (const event of xpEvents) {

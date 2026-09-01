@@ -2,11 +2,12 @@ import { useState, useCallback } from "react";
 
 type ApproachManifestoProps = {
   viewerId: string;
+  isVP?: boolean;
 };
 
 const STORAGE_KEY_PREFIX = "approach_manifesto_dismissed_";
 
-export default function ApproachManifesto({ viewerId }: ApproachManifestoProps) {
+export default function ApproachManifesto({ viewerId, isVP = false }: ApproachManifestoProps) {
   const storageKey = `${STORAGE_KEY_PREFIX}${viewerId}`;
   const [dismissed, setDismissed] = useState(() => {
     try {
@@ -65,11 +66,13 @@ export default function ApproachManifesto({ viewerId }: ApproachManifestoProps) 
       {/* Body */}
       <div className="px-6 py-5 space-y-4 text-sm text-gray-700 leading-relaxed">
         <p>
-          This week you'll complete four modules that give you the frameworks, product knowledge, and practice reps you need to hit the ground running. Here's what you'll be doing:
+          {isVP
+            ? "This week you'll complete two modules — product knowledge and a practice rep — before jumping into your clips."
+            : "This week you'll complete four modules that give you the frameworks, product knowledge, and practice reps you need to hit the ground running. Here's what you'll be doing:"}
         </p>
 
-        {/* MEDDPICC */}
-        <div className="flex items-start gap-3 rounded-lg bg-emerald-50/60 border border-emerald-100 px-4 py-3">
+        {/* MEDDPICC — hidden for VP */}
+        {!isVP && <div className="flex items-start gap-3 rounded-lg bg-emerald-50/60 border border-emerald-100 px-4 py-3">
           <span className="text-lg mt-0.5 shrink-0">🧱</span>
           <div>
             <p className="font-semibold text-gray-900">MEDDPICC</p>
@@ -77,7 +80,7 @@ export default function ApproachManifesto({ viewerId }: ApproachManifestoProps) 
               Amplitude's qualification framework — the backbone of every deal. Complete the MindTickle course, upload your completion screenshot, then answer a reflection prompt and sign off.
             </p>
           </div>
-        </div>
+        </div>}
 
         {/* cAMP 101 */}
         <div className="flex items-start gap-3 rounded-lg bg-emerald-50/60 border border-emerald-100 px-4 py-3">
@@ -90,8 +93,8 @@ export default function ApproachManifesto({ viewerId }: ApproachManifestoProps) 
           </div>
         </div>
 
-        {/* Challenger */}
-        <div className="flex items-start gap-3 rounded-lg bg-emerald-50/60 border border-emerald-100 px-4 py-3">
+        {/* Challenger — hidden for VP */}
+        {!isVP && <div className="flex items-start gap-3 rounded-lg bg-emerald-50/60 border border-emerald-100 px-4 py-3">
           <span className="text-lg mt-0.5 shrink-0">⚔️</span>
           <div>
             <p className="font-semibold text-gray-900">Challenger Sale</p>
@@ -99,7 +102,7 @@ export default function ApproachManifesto({ viewerId }: ApproachManifestoProps) 
               Read the assigned chapter, upload your completion screenshot, then write a commercial insight for a real account and sign off. Tip: have a target account and contact in mind before you start.
             </p>
           </div>
-        </div>
+        </div>}
 
         {/* Wheel & Deal */}
         <div className="flex items-start gap-3 rounded-lg bg-emerald-50/60 border border-emerald-100 px-4 py-3">
@@ -118,7 +121,9 @@ export default function ApproachManifesto({ viewerId }: ApproachManifestoProps) 
           <div>
             <p className="font-semibold text-gray-900">How to unlock cAMP Clips</p>
             <p className="text-xs text-gray-600 mt-0.5">
-              Complete all four modules above, then hit the "Begin The Ascent" button at the bottom. That unlocks The Ascent tab and your full clip library with Trail Markers, quizzes, and XP tracking.
+              {isVP
+                ? "Complete both modules above, then hit the \"Begin The Ascent\" button at the bottom. That unlocks your clip library with Trail Markers, quizzes, and XP tracking."
+                : "Complete all four modules above, then hit the \"Begin The Ascent\" button at the bottom. That unlocks The Ascent tab and your full clip library with Trail Markers, quizzes, and XP tracking."}
             </p>
           </div>
         </div>
@@ -129,7 +134,9 @@ export default function ApproachManifesto({ viewerId }: ApproachManifestoProps) 
           <div>
             <p className="font-semibold text-gray-900">Screenshot reminder</p>
             <p className="text-xs text-gray-600 mt-0.5">
-              Before closing out of MindTickle, Academy, or your Challenger reading — take a screenshot of the completion screen. You'll need to upload it here as proof of completion before the reflection and sign-off fields unlock.
+              {isVP
+                ? "Before closing out of each Academy course — take a screenshot of the completion screen. You'll need to upload it here as proof of completion before the reflection and sign-off fields unlock."
+                : "Before closing out of MindTickle, Academy, or your Challenger reading — take a screenshot of the completion screen. You'll need to upload it here as proof of completion before the reflection and sign-off fields unlock."}
             </p>
           </div>
         </div>
@@ -138,13 +145,23 @@ export default function ApproachManifesto({ viewerId }: ApproachManifestoProps) 
         <div className="flex items-start gap-3 rounded-lg bg-gray-50 border border-gray-200/60 px-4 py-3">
           <span className="text-lg mt-0.5 shrink-0">📅</span>
           <div>
-            <p className="font-semibold text-gray-900">Suggested pace (5 weekdays)</p>
+            <p className="font-semibold text-gray-900">Suggested pace ({isVP ? "3" : "5"} weekdays)</p>
             <div className="text-xs text-gray-600 mt-1 space-y-0.5">
-              <p><strong>Day 1:</strong> MEDDPICC + Analytics Academy (~2 hrs)</p>
-              <p><strong>Day 2:</strong> Experiment + Session Replay Academy + start Challenger reading (~2 hrs)</p>
-              <p><strong>Day 3:</strong> Guides & Surveys Academy + continue Challenger (~1.5 hrs)</p>
-              <p><strong>Day 4:</strong> Finish Challenger + Challenger sign-off (~1 hr)</p>
-              <p><strong>Day 5:</strong> Wheel & Deal with your manager (~15 min) → 🧗 Begin The Ascent!</p>
+              {isVP ? (
+                <>
+                  <p><strong>Day 1:</strong> Analytics Academy + Experiment & Statsig Academy (~1.5 hrs)</p>
+                  <p><strong>Day 2:</strong> Session Replay + Guides & Surveys Academy (~1 hr)</p>
+                  <p><strong>Day 3:</strong> Wheel & Deal with your manager (~15 min) → 🧗 Begin The Ascent!</p>
+                </>
+              ) : (
+                <>
+                  <p><strong>Day 1:</strong> MEDDPICC + Analytics Academy (~2 hrs)</p>
+                  <p><strong>Day 2:</strong> Experiment + Session Replay Academy + start Challenger reading (~2 hrs)</p>
+                  <p><strong>Day 3:</strong> Guides & Surveys Academy + continue Challenger (~1.5 hrs)</p>
+                  <p><strong>Day 4:</strong> Finish Challenger + Challenger sign-off (~1 hr)</p>
+                  <p><strong>Day 5:</strong> Wheel & Deal with your manager (~15 min) → 🧗 Begin The Ascent!</p>
+                </>
+              )}
             </div>
           </div>
         </div>

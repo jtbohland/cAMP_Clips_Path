@@ -49,13 +49,13 @@ export default api({
 
     const currentSort = currentClips[0].sort_order;
 
-    // Find the next clip
+    // Find the next clip by sort_order (first live clip with sort > current)
     const NextClipSchema = z.object({ id: z.string() });
     const nextClips = await ctx.integrations.db.query(
-      "SELECT id FROM cliptracker_v2_clips WHERE sort_order = $1 AND status = 'live'",
+      "SELECT id FROM cliptracker_v2_clips WHERE sort_order > $1 AND status = 'live' ORDER BY sort_order LIMIT 1",
       NextClipSchema,
-      [currentSort + 1],
-      { label: "Find next clip" }
+      [currentSort],
+      { label: "Find next clip by sort order" }
     );
 
     let nextClipUnlocked = false;

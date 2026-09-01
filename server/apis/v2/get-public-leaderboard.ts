@@ -251,7 +251,7 @@ export default api({
     // For now, use known constants. SDR max is calculated from their 16-clip path.
     const MAX_XP_AE = 993;
     const MAX_XP_SDR = 903; // 18 clips, scaled pacing (3/6/9/12), Ridge Runner game
-    const MAX_XP_VP = 600;  // 9 clips, shorter streaks (2/4/5/7), no Free Solo, includes PiR
+    const MAX_XP_VP = 495;  // 9 clips, shorter streaks (2/4/5/7), no Free Solo, includes PiR
     function getMaxXp(role: string, clipsDone: number): number {
       if (isVelocityPromo(role)) return MAX_XP_VP;
       // If an SDR completed more clips than the SDR path offers,

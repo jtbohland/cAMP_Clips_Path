@@ -486,7 +486,7 @@ export default function Week1Page({ viewerId, viewerName, viewerRole, isAdmin, p
       )}
 
       {/* Welcome to The Approach — manifesto */}
-      {<ApproachManifesto viewerId={viewerId} />}
+      {<ApproachManifesto viewerId={viewerId} isVP={isVP} />}
 
       {/* Legacy learner banner */}
       {isLegacy && (

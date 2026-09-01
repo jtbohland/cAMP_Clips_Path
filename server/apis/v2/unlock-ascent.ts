@@ -1,4 +1,5 @@
 import { api, z, postgres } from "@superblocksteam/sdk-api";
+import { isVelocityPromo } from "./pacing-helpers.js";
 
 const APPS_DB = "c6e32cf4-ca66-42ae-aeb3-58c84ffae574";
 
@@ -33,9 +34,10 @@ export default api({
     const ViewerRow = z.object({
       week1_unlocked_at: z.string().nullable(),
       ascent_day_1: z.string().nullable(),
+      role: z.string().nullable(),
     });
     const viewerRows = await ctx.integrations.db.query(
-      `SELECT week1_unlocked_at::text, ascent_day_1::text
+      `SELECT week1_unlocked_at::text, ascent_day_1::text, role
        FROM cliptracker_v2_viewers WHERE id = $1`,
       ViewerRow,
       [viewerId],
@@ -51,7 +53,10 @@ export default api({
     }
 
     // Verify all requirements are met
-    // 1. All 3 module sign-offs
+    // 1. Module sign-offs — VP only requires camp101; AE/SDR require all 3
+    const viewerRole = viewerRows[0].role ?? "Velocity AE";
+    const isVP = isVelocityPromo(viewerRole);
+    const requiredSignoffs = isVP ? 1 : 3;
     const signoffCount = await ctx.integrations.db.query(
       `SELECT COUNT(DISTINCT module_key)::int AS count
        FROM cliptracker_v2_module_signoffs WHERE viewer_id = $1`,
@@ -59,7 +64,7 @@ export default api({
       [viewerId],
       { label: "Count module sign-offs" }
     );
-    if (signoffCount[0]?.count < 3) {
+    if (signoffCount[0]?.count < requiredSignoffs) {
       return { success: false, alreadyUnlocked: false, earnedBadge: false, earnedXp: 0, error: "Not all modules signed off" };
     }
 
@@ -74,7 +79,8 @@ export default api({
       return { success: false, alreadyUnlocked: false, earnedBadge: false, earnedXp: 0, error: "W&D not verified" };
     }
 
-    // Calculate if within 5 weekdays of ascent_day_1
+    // Calculate if within deadline — VP has 3 weekdays, AE/SDR have 5
+    const approachWeekdays = isVP ? 3 : 5;
     const ascentDay1 = viewerRows[0].ascent_day_1;
     let withinDeadline = false;
     if (ascentDay1) {
@@ -88,7 +94,7 @@ export default api({
         if (dow !== 0 && dow !== 6) weekdays++;
         cursor.setDate(cursor.getDate() + 1);
       }
-      withinDeadline = weekdays <= 5;
+      withinDeadline = weekdays <= approachWeekdays;
     }
 
     // Unlock the ascent

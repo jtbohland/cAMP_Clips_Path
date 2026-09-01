@@ -158,144 +158,164 @@ export default api({
       }
     }
 
-    // === STREAK BONUSES (non-overlapping windows) ===
-    // No Detours: 5 clips without S&R — max 3 awards
-    // Windows: clips 1-5, 6-10, 11-15
-    if (!searchRescueTriggered) {
-      const StreakSchema = z.object({ sort_order: z.coerce.number() });
-      const currentSort = await ctx.integrations.db.query(
-        `SELECT sort_order FROM cliptracker_v2_clips WHERE id = $1`,
-        StreakSchema, [clipId], { label: "Streak - current sort" }
-      );
-      if (currentSort[0]) {
-        const currentSortOrder = currentSort[0].sort_order;
-        // Non-overlapping windows: award only at the END of each window (clip 5, 10, 15)
-        const noDetourWindows = [5, 10, 15];
-        if (noDetourWindows.includes(currentSortOrder)) {
-          const windowStart = currentSortOrder - 4;
-          // Check no S&R in this window
-          const SrCheckSchema = z.object({ count: z.coerce.number() });
-          const srClips = await ctx.integrations.db.query(
-            `SELECT COUNT(*)::int as count
-             FROM cliptracker_v2_xp_events xe
-             JOIN cliptracker_v2_clips c ON c.id = xe.clip_id
-             WHERE xe.viewer_id = $1 AND xe.source_id = 'pass_search_rescue'
-             AND c.sort_order BETWEEN $2 AND $3`,
-            SrCheckSchema,
-            [viewerId, windowStart, currentSortOrder],
-            { label: "Check No Detours window" }
+    // === STREAK BONUSES (dynamic role-based windows) ===
+    // Fetch the viewer's role and their ordered video clip list so windows
+    // use real sort_orders instead of hardcoded values.
+    const RoleSchema = z.object({ role: z.string().nullable() });
+    const roleRow = await ctx.integrations.db.query(
+      "SELECT role FROM cliptracker_v2_viewers WHERE id = $1",
+      RoleSchema, [viewerId], { label: "Get viewer role for streaks" }
+    );
+    const viewerRole = roleRow[0]?.role ?? "Velocity AE";
+
+    // VP uses a curated sort list; others use the roles JSONB filter
+    const VP_CLIP_SORTS = [60, 120, 130, 140, 150, 170, 180, 190, 200];
+    const isVP = viewerRole === "SDR>Velocity Promo";
+    const VideoClipSchema = z.object({ sort_order: z.coerce.number(), id: z.string() });
+    const videoClips = await ctx.integrations.db.query(
+      `SELECT sort_order, id::text FROM cliptracker_v2_clips
+       WHERE status = 'live' AND video_url IS NOT NULL
+         AND (CASE WHEN $1 THEN sort_order = ANY($2::int[])
+              ELSE (roles IS NULL OR roles @> to_jsonb($3::text)) END)
+       ORDER BY sort_order`,
+      VideoClipSchema,
+      [isVP, isVP ? VP_CLIP_SORTS : [], viewerRole],
+      { label: "Get viewer video clips for streaks" }
+    );
+
+    // Build ordinal → sort_order map (1-indexed)
+    const clipSorts = videoClips.map(c => c.sort_order);
+    const clipIds = videoClips.map(c => c.id);
+
+    // Get current clip's ordinal position (1-based) in the viewer's path
+    const ClipSortForStreaks = z.object({ sort_order: z.coerce.number() });
+    const currentClipSort = await ctx.integrations.db.query(
+      "SELECT sort_order FROM cliptracker_v2_clips WHERE id = $1",
+      ClipSortForStreaks, [clipId], { label: "Current clip sort for streaks" }
+    );
+    const currentSort = currentClipSort[0]?.sort_order ?? 0;
+    const ordinalIdx = clipSorts.indexOf(currentSort); // 0-based
+    const ordinal = ordinalIdx + 1; // 1-based
+
+    // Define No Detours windows per role path (ordinal positions, 1-based)
+    // Each window: [startOrdinal, endOrdinal] — trigger fires on the endOrdinal clip
+    type Window = { start: number; end: number };
+    const noDetourWindows: Window[] =
+      isVP                   ? [{ start: 1, end: 4 }, { start: 5, end: 7 }]
+      : viewerRole === "SDR" ? [{ start: 1, end: 5 }, { start: 6, end: 10 }, { start: 11, end: 15 }]
+      :                        [{ start: 1, end: 5 }, { start: 6, end: 10 }, { start: 11, end: 15 }];
+
+    // No Detours: complete a window of clips without triggering S&R
+    if (!searchRescueTriggered && ordinal > 0) {
+      const matchingNd = noDetourWindows.filter(w => w.end === ordinal);
+      for (const win of matchingNd) {
+        // Get sort_orders for all clips in this window
+        const windowSorts = clipSorts.slice(win.start - 1, win.end);
+        // Check no S&R in this window
+        const SrCheckSchema = z.object({ count: z.coerce.number() });
+        const srClips = await ctx.integrations.db.query(
+          `SELECT COUNT(*)::int as count
+           FROM cliptracker_v2_xp_events xe
+           JOIN cliptracker_v2_clips c ON c.id = xe.clip_id
+           WHERE xe.viewer_id = $1 AND xe.source_id = 'pass_search_rescue'
+           AND c.sort_order = ANY($2::int[])`,
+          SrCheckSchema,
+          [viewerId, `{${windowSorts.join(",")}}`],
+          { label: `No Detours window ${win.start}-${win.end}` }
+        );
+        // Verify all preceding clips in window are completed (current clip is being completed now)
+        const prevSorts = windowSorts.slice(0, -1);
+        const CompletedSchema = z.object({ count: z.coerce.number() });
+        const completedInWindow = await ctx.integrations.db.query(
+          `SELECT COUNT(DISTINCT c.id)::int as count
+           FROM cliptracker_v2_xp_events xe
+           JOIN cliptracker_v2_clips c ON c.id = xe.clip_id
+           WHERE xe.viewer_id = $1 AND xe.source_id = 'watch'
+           AND c.sort_order = ANY($2::int[])`,
+          CompletedSchema,
+          [viewerId, `{${prevSorts.join(",")}}`],
+          { label: `No Detours completed check ${win.start}-${win.end}` }
+        );
+        if (srClips[0]?.count === 0 && completedInWindow[0]?.count === prevSorts.length) {
+          // Use anchor clip (first clip in window) for dedup
+          const anchorClipId = clipIds[win.start - 1] ?? clipId;
+          const ExistingBadgeSchema = z.object({ count: z.coerce.number() });
+          const existing = await ctx.integrations.db.query(
+            `SELECT COUNT(*)::int as count FROM cliptracker_v2_badges
+             WHERE viewer_id = $1 AND badge_id = 'no_detours' AND clip_id = $2`,
+            ExistingBadgeSchema, [viewerId, anchorClipId], { label: `Check existing no_detours w${win.start}` }
           );
-          // Also verify all 5 clips in window are completed
-          const CompletedSchema = z.object({ count: z.coerce.number() });
-          const completedInWindow = await ctx.integrations.db.query(
-            `SELECT COUNT(DISTINCT c.id)::int as count
-             FROM cliptracker_v2_xp_events xe
-             JOIN cliptracker_v2_clips c ON c.id = xe.clip_id
-             WHERE xe.viewer_id = $1 AND xe.source_id = 'watch'
-             AND c.sort_order BETWEEN $2 AND $3`,
-            CompletedSchema,
-            [viewerId, windowStart, currentSortOrder - 1],
-            { label: "Check completed in No Detours window" }
-          );
-          if (srClips[0]?.count === 0 && completedInWindow[0]?.count === 4) {
-            const ExistingBadgeSchema = z.object({ count: z.coerce.number() });
-            const existing = await ctx.integrations.db.query(
-              `SELECT COUNT(*)::int as count FROM cliptracker_v2_badges
-               WHERE viewer_id = $1 AND badge_id = 'no_detours' AND clip_id = $2`,
-              ExistingBadgeSchema, [viewerId, clipId], { label: "Check existing no_detours" }
-            );
-            if (existing[0]?.count === 0) {
-              xpEvents.push({ sourceId: "no_detours", eventType: "streak", xp: 10 });
-              badgesEarned.push({ badgeId: "no_detours", name: "No Detours", emoji: "🧭", xp: 10 });
-            }
+          if (existing[0]?.count === 0) {
+            xpEvents.push({ sourceId: "no_detours", eventType: "streak", xp: 10 });
+            badgesEarned.push({ badgeId: "no_detours", name: "No Detours", emoji: "🧭", xp: 10, clipIdOverride: anchorClipId });
           }
         }
       }
     }
 
-    // Leave No Trace: 5/5 Trail Markers on a 3-clip window — max 5 awards
-    // Windows shifted to avoid resource days (sorts 6, 12):
-    //   W1: 1-3, W2: 3-5, W3: 7-9, W4: 10-11+13, W5: 13-15
-    // Each window fires when its LAST clip gets 5/5.
-    // Sort 13 is the last clip in both W4 and W5, so both are checked.
-    if (trailMarkerCorrect === 5) {
-      const SortSchema = z.object({ sort_order: z.coerce.number() });
-      const currentSort = await ctx.integrations.db.query(
-        `SELECT sort_order FROM cliptracker_v2_clips WHERE id = $1`,
-        SortSchema, [clipId], { label: "LNT - current sort" }
-      );
-      if (currentSort[0]) {
-        const cs = currentSort[0].sort_order;
-        // Define windows as [triggerSort, otherSorts[]]
-        // triggerSort = last clip in window (fires the check)
-        // otherSorts = the other 2 clips that must also have 5/5
-        const lntWindowDefs: Array<{ trigger: number; others: number[] }> = [
-          { trigger: 3,  others: [1, 2] },    // W1: clips 1-3
-          { trigger: 5,  others: [3, 4] },    // W2: clips 3-5
-          { trigger: 9,  others: [7, 8] },    // W3: clips 7-9
-          { trigger: 13, others: [10, 11] },  // W4: clips 10, 11, 13
-          { trigger: 15, others: [13, 14] },  // W5: clips 13-15
-        ];
-        const matchingWindows = lntWindowDefs.filter(w => w.trigger === cs);
-        for (const win of matchingWindows) {
-          // Check the other 2 clips in this window got 5/5
-          const PerfectSchema = z.object({ count: z.coerce.number() });
-          const perfectInWindow = await ctx.integrations.db.query(
-            `SELECT COUNT(DISTINCT xe.clip_id)::int as count
-             FROM cliptracker_v2_xp_events xe
-             JOIN cliptracker_v2_clips c ON c.id = xe.clip_id
-             WHERE xe.viewer_id = $1 AND xe.source_id = 'trail_markers_5'
-             AND c.sort_order = ANY($2::int[])`,
-            PerfectSchema,
-            [viewerId, `{${win.others.join(",")}}`],
-            { label: `Check LNT window (others: ${win.others.join(",")})` }
+    // Leave No Trace: 5/5 Trail Markers on every clip in a 3-clip window
+    // Windows per role (ordinal positions, 1-based):
+    //   AE  ×5: 1-3, 4-6, 7-9, 10-12, 13-15
+    //   SDR ×4: 1-3, 4-6, 7-9, 10-12
+    //   VP  ×2: 1-3, 4-6
+    const lntWindows: Window[] =
+      isVP                   ? [{ start: 1, end: 3 }, { start: 4, end: 6 }]
+      : viewerRole === "SDR" ? [{ start: 1, end: 3 }, { start: 4, end: 6 }, { start: 7, end: 9 }, { start: 10, end: 12 }]
+      :                        [{ start: 1, end: 3 }, { start: 4, end: 6 }, { start: 7, end: 9 }, { start: 10, end: 12 }, { start: 13, end: 15 }];
+
+    if (trailMarkerCorrect === 5 && ordinal > 0) {
+      const matchingLnt = lntWindows.filter(w => w.end === ordinal);
+      for (const win of matchingLnt) {
+        // Get sort_orders for the other clips in this window (not the trigger clip)
+        const otherSorts = clipSorts.slice(win.start - 1, win.end - 1);
+        // Check the other clips in this window got 5/5
+        const PerfectSchema = z.object({ count: z.coerce.number() });
+        const perfectInWindow = await ctx.integrations.db.query(
+          `SELECT COUNT(DISTINCT xe.clip_id)::int as count
+           FROM cliptracker_v2_xp_events xe
+           JOIN cliptracker_v2_clips c ON c.id = xe.clip_id
+           WHERE xe.viewer_id = $1 AND xe.source_id = 'trail_markers_5'
+           AND c.sort_order = ANY($2::int[])`,
+          PerfectSchema,
+          [viewerId, `{${otherSorts.join(",")}}`],
+          { label: `LNT window ${win.start}-${win.end}` }
+        );
+        if (perfectInWindow[0]?.count === otherSorts.length) {
+          // Use anchor clip (first clip in window) for dedup
+          const anchorClipId = clipIds[win.start - 1] ?? clipId;
+          const ExBadgeSchema = z.object({ count: z.coerce.number() });
+          const ex = await ctx.integrations.db.query(
+            `SELECT COUNT(*)::int as count FROM cliptracker_v2_badges
+             WHERE viewer_id = $1 AND badge_id = 'leave_no_trace' AND clip_id = $2`,
+            ExBadgeSchema, [viewerId, anchorClipId], { label: `Check existing LNT w${win.start}` }
           );
-          if (perfectInWindow[0]?.count === 2) {
-            // Use the clip at the first sort of the window as the badge's clip_id
-            // This ensures unique (viewer_id, badge_id, clip_id) per window
-            const AnchorClipSchema = z.object({ id: z.string() });
-            const anchorClip = await ctx.integrations.db.query(
-              `SELECT id FROM cliptracker_v2_clips WHERE sort_order = $1`,
-              AnchorClipSchema, [win.others[0]], { label: `LNT anchor clip for sort ${win.others[0]}` }
-            );
-            const anchorClipId = anchorClip[0]?.id ?? clipId;
-            const ExBadgeSchema = z.object({ count: z.coerce.number() });
-            const ex = await ctx.integrations.db.query(
-              `SELECT COUNT(*)::int as count FROM cliptracker_v2_badges
-               WHERE viewer_id = $1 AND badge_id = 'leave_no_trace' AND clip_id = $2`,
-              ExBadgeSchema, [viewerId, anchorClipId], { label: `Check existing LNT sort ${win.others[0]}` }
-            );
-            if (ex[0]?.count === 0) {
-              xpEvents.push({ sourceId: "leave_no_trace", eventType: "streak", xp: 15 });
-              badgesEarned.push({ badgeId: "leave_no_trace", name: "Leave No Trace", emoji: "🌱", xp: 15, clipIdOverride: anchorClipId });
-            }
+          if (ex[0]?.count === 0) {
+            xpEvents.push({ sourceId: "leave_no_trace", eventType: "streak", xp: 15 });
+            badgesEarned.push({ badgeId: "leave_no_trace", name: "Leave No Trace", emoji: "🌱", xp: 15, clipIdOverride: anchorClipId });
           }
         }
       }
     }
 
     // === MILESTONE BONUSES ===
-    const ClipSortSchema = z.object({ sort_order: z.coerce.number() });
-    const clipSort = await ctx.integrations.db.query(
-      `SELECT sort_order FROM cliptracker_v2_clips WHERE id = $1`,
-      ClipSortSchema, [clipId], { label: "Get clip sort for milestones" }
-    );
-    const sortOrder = clipSort[0]?.sort_order ?? 0;
+    // Use ordinal position (1-based, among viewer's video clips) for role-agnostic triggers
+    const totalVideoClips = clipSorts.length; // 15 for AE, 12/14 for SDR, 7 for VP
 
-    // First Step: Complete first clip (sort 10)
-    if (sortOrder === 10) {
+    // First Step: Complete first video clip (ordinal 1)
+    if (ordinal === 1) {
       xpEvents.push({ sourceId: "first_step", eventType: "milestone", xp: 5 });
       badgesEarned.push({ badgeId: "first_step", name: "First Step", emoji: "🎬", xp: 5 });
     }
 
-    // Into the Summit Push: Clip 11 gets unlocked (completing sort 100 triggers this)
-    if (sortOrder === 100) {
+    // Into the Summit Push: Unlock Week 3 for VP (ordinal 4 = after Day 5/CLM) or Week 4 for AE/SDR (sort 100)
+    const summitPushTrigger = isVP ? ordinal === 4 : currentSort === 100;
+    if (summitPushTrigger) {
       xpEvents.push({ sourceId: "week_4_entry", eventType: "milestone", xp: 10 });
       badgesEarned.push({ badgeId: "week_4_entry", name: "Into the Summit Push", emoji: "🪢", xp: 10 });
     }
 
-    // Ranger's Secret: Complete all 20 clips without ever triggering Weather the Storm
-    if (sortOrder === 200) {
+    // Ranger's Secret: Complete ALL video clips without ever triggering Weather the Storm
+    if (ordinal === totalVideoClips) {
       const StormSchema = z.object({ count: z.coerce.number() });
       const stormCheck = await ctx.integrations.db.query(
         `SELECT COUNT(*)::int as count FROM cliptracker_v2_xp_events
