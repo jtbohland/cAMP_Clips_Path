@@ -151,6 +151,22 @@ export default api({
       });
     }
 
+    // VP week renumbering: Days 1-5 → Week 2, Days 6-7 → Week 3
+    // (VP has no Week 4; the underlying DB week_numbers are from the AE path)
+    const vpWeekMap = new Map<string, number>();
+    if (viewerRole === 'SDR>Velocity Promo') {
+      const seenDays: string[] = [];
+      for (const clip of clips) {
+        if (clip.day_label && !seenDays.includes(clip.day_label)) {
+          seenDays.push(clip.day_label);
+        }
+      }
+      // seenDays are in order; index 0-4 → Week 2, index 5-6 → Week 3
+      seenDays.forEach((originalDay, i) => {
+        vpWeekMap.set(originalDay, i < 5 ? 2 : 3);
+      });
+    }
+
     // Check for unlock overrides
     const OverrideSchema = z.object({ clip_id: z.string() });
     const overrides = await ctx.integrations.db.query(
@@ -217,7 +233,7 @@ export default api({
         videoUrl: clip.video_url,
         durationSeconds: clip.duration_seconds,
         sortOrder: clip.sort_order,
-        weekNumber: clip.week_number,
+        weekNumber: vpWeekMap.size > 0 && clip.day_label ? (vpWeekMap.get(clip.day_label) ?? clip.week_number) : clip.week_number,
         dayLabel: needsDayRenumber && clip.day_label ? (dayLabelMap.get(clip.day_label) ?? clip.day_label) : clip.day_label,
         bestScore: bestScore,
         attempts: clip.attempts ? parseInt(clip.attempts) : 0,
