@@ -1,5 +1,5 @@
 import { api, z, postgres } from "@superblocksteam/sdk-api";
-import { getEffectiveClipTotal } from "./pacing-helpers.js";
+import { getEffectiveClipTotal, isVelocityPromo } from "./pacing-helpers.js";
 
 const APPS_DB = "c6e32cf4-ca66-42ae-aeb3-58c84ffae574";
 
@@ -49,7 +49,7 @@ const EngagementRow = z.object({
 });
 
 // XP tier thresholds (must match award-xp.ts)
-const TIERS = [
+const AE_TIERS = [
   { name: "Alpinist All-Star", emoji: "💫", xpMin: 700 },
   { name: "Pinnacle Achiever", emoji: "⛰️", xpMin: 500 },
   { name: "Summit Seeker", emoji: "🧗🏼", xpMin: 325 },
@@ -57,8 +57,17 @@ const TIERS = [
   { name: "Base Camper", emoji: "🏕️", xpMin: 0 },
 ];
 
-function getTierFromXp(xp: number): { name: string; emoji: string } {
-  for (const t of TIERS) {
+const VP_TIERS = [
+  { name: "Alpinist All-Star", emoji: "💫", xpMin: 470 },
+  { name: "Pinnacle Achiever", emoji: "⛰️", xpMin: 330 },
+  { name: "Summit Seeker", emoji: "🧗🏼", xpMin: 200 },
+  { name: "Trailblazer", emoji: "🥾", xpMin: 90 },
+  { name: "Base Camper", emoji: "🏕️", xpMin: 0 },
+];
+
+function getTierFromXp(xp: number, role: string): { name: string; emoji: string } {
+  const tiers = isVelocityPromo(role) ? VP_TIERS : AE_TIERS;
+  for (const t of tiers) {
     if (xp >= t.xpMin) return { name: t.name, emoji: t.emoji };
   }
   return { name: "Base Camper", emoji: "🏕️" };
@@ -81,6 +90,7 @@ export default api({
     viewer: z.object({
       name: z.string(),
       email: z.string(),
+      role: z.string().nullable(),
       managerEmail: z.string().nullable(),
       belayBuddyEmail: z.string().nullable(),
       totalXp: z.number(),
@@ -180,7 +190,7 @@ export default api({
     }
 
     const viewer = viewerRows[0];
-    const tierInfo = getTierFromXp(viewer.total_xp);
+    const tierInfo = getTierFromXp(viewer.total_xp, viewer.role);
 
     // Get module reflections (for approach checkin)
     let moduleReflections: { moduleKey: string; reflectionPrompt: string; reflectionResponse: string }[] = [];
@@ -215,19 +225,28 @@ export default api({
       { label: "Get W&D verification" }
     );
 
-    // Compute approach status
+    // Compute approach status — VP learners have fewer modules (no MEDDPICC/Challenger)
     const signoffKeys = new Set(signoffs.map(s => s.module_key));
     const screenshotKeys = new Set(academyRows.map(s => s.course_key));
     const wdDone = wdRows.length > 0;
-    const APPROACH_MODULES = [
-      { key: "meddpicc", label: "MEDDPICC", type: "signoff" },
-      { key: "analytics", label: "Academy: Analytics", type: "screenshot" },
-      { key: "experiment", label: "Academy: Experiment & Statsig", type: "screenshot" },
-      { key: "session_replay", label: "Academy: Session Replay", type: "screenshot" },
-      { key: "guides_surveys", label: "Academy: Guides & Surveys", type: "screenshot" },
-      { key: "challenger", label: "Challenger", type: "signoff" },
-      { key: "wheel_deal", label: "Wheel & Deal", type: "wd" },
-    ] as const;
+    const isVP = isVelocityPromo(viewer.role);
+    const APPROACH_MODULES = isVP
+      ? [
+          { key: "analytics", label: "Academy: Analytics", type: "screenshot" },
+          { key: "experiment", label: "Academy: Experiment & Statsig", type: "screenshot" },
+          { key: "session_replay", label: "Academy: Session Replay", type: "screenshot" },
+          { key: "guides_surveys", label: "Academy: Guides & Surveys", type: "screenshot" },
+          { key: "wheel_deal", label: "Wheel & Deal", type: "wd" },
+        ] as const
+      : [
+          { key: "meddpicc", label: "MEDDPICC", type: "signoff" },
+          { key: "analytics", label: "Academy: Analytics", type: "screenshot" },
+          { key: "experiment", label: "Academy: Experiment & Statsig", type: "screenshot" },
+          { key: "session_replay", label: "Academy: Session Replay", type: "screenshot" },
+          { key: "guides_surveys", label: "Academy: Guides & Surveys", type: "screenshot" },
+          { key: "challenger", label: "Challenger", type: "signoff" },
+          { key: "wheel_deal", label: "Wheel & Deal", type: "wd" },
+        ] as const;
 
     const incompleteModules: string[] = [];
     let approachCompletedCount = 0;
@@ -490,6 +509,7 @@ export default api({
       viewer: {
         name: viewer.name,
         email: viewer.email,
+        role: viewer.role || null,
         managerEmail: viewer.manager_email || null,
         belayBuddyEmail: viewer.belay_buddy || null,
         totalXp: viewer.total_xp,

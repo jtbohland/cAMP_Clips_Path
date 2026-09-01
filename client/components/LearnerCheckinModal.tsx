@@ -221,10 +221,11 @@ function LearnerCheckinModalInner({ viewerId, checkinType, onClose, onSent, allo
     // Unified clip-level pacing % across all checkin types
     const clipsDone = data.completedClipCount ?? 0;
     const approachItemsDone = data.approachStatus?.completedCount ?? 0;
-    const unifiedPercent = computeUnifiedPacingPercent(effectiveWeekdaysElapsed, approachItemsDone, clipsDone);
+    const viewerRole = v.role ?? "AE";
+    const unifiedPercent = computeUnifiedPacingPercent(effectiveWeekdaysElapsed, approachItemsDone, clipsDone, viewerRole);
     const pacingKey = !hasStarted ? "not_started" as PacingTier : getPacingStatusFromPercent(unifiedPercent) as PacingTier;
     const pacingConfig = PACING_TIERS[pacingKey];
-    const summitDay = getSummitDay(startDate, extDays);
+    const summitDay = getSummitDay(startDate, extDays, viewerRole);
     const fmtDate = (d: Date) => d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
     // Pacing note — brief explanation
@@ -750,10 +751,11 @@ function StatsView({ data, checkinType }: { data: any; checkinType: CheckinType 
         const hasStarted = data.completedTopics > 0;
         const clipsDone2 = data.completedClipCount ?? 0;
         const approachDone2 = data.approachStatus?.completedCount ?? 0;
-        const pct2 = computeUnifiedPacingPercent(effectiveWeekdaysElapsed, approachDone2, clipsDone2);
+        const viewerRole = data.viewer.role ?? "AE";
+        const pct2 = computeUnifiedPacingPercent(effectiveWeekdaysElapsed, approachDone2, clipsDone2, viewerRole);
         const pacingKey = hasStarted ? getPacingStatusFromPercent(pct2) as PacingTier : "not_started" as PacingTier;
         const pacingConfig = PACING_TIERS[pacingKey];
-        const summitDay = getSummitDay(startDate, extDays);
+        const summitDay = getSummitDay(startDate, extDays, viewerRole);
         const fmtDate = (d: Date) => d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
         return (
@@ -1033,10 +1035,11 @@ function EmailView({
   const hasStarted = data.completedTopics > 0;
   const clipsDone3 = data.completedClipCount ?? 0;
   const approachDone3 = data.approachStatus?.completedCount ?? 0;
-  const pct3 = computeUnifiedPacingPercent(effectiveWeekdaysElapsed, approachDone3, clipsDone3);
+  const viewerRole = data.viewer?.role ?? "AE";
+  const pct3 = computeUnifiedPacingPercent(effectiveWeekdaysElapsed, approachDone3, clipsDone3, viewerRole);
   const pacingKey = hasStarted ? getPacingStatusFromPercent(pct3) as PacingTier : "not_started" as PacingTier;
   const pacingConfig = PACING_TIERS[pacingKey];
-  const summitDay = getSummitDay(startDate, extDays);
+  const summitDay = getSummitDay(startDate, extDays, viewerRole);
   const fmtDate = (d: Date) => d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
   const label = CHECKIN_LABELS[checkinType];

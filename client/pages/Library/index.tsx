@@ -37,8 +37,11 @@ import {
   getApproachPacingTier,
   CLIPS_EXPECTED_BY_WEEKDAY,
   WEEK1_TOTAL_ITEMS,
+  WEEK1_TOTAL_ITEMS_VP,
+  WEEK1_WEEKDAYS_VP,
   getEffectiveClipTotal,
   getRoleTotalClips,
+  isVelocityPromo,
 } from "@/lib/pacing";
 import type { ApproachCatchUpItem } from "@/components/PacingModal";
 import { calculatePatchProgress } from "@/lib/patchProgress";
@@ -407,12 +410,13 @@ export default function LibraryPage() {
       .filter((c: any) => c.completed)
       .reduce((max: number, c: any) => Math.max(max, c.sortOrder ?? 0), 0);
     const effectiveTotal = getEffectiveClipTotal(role, maxSortDone);
-    // Approach items done
+    // Approach items done — VP has no MEDDPICC/Challenger; only 4 academies + W&D
+    const isVP = isVelocityPromo(role);
     const approachDone = (() => {
       if (!week1Data) return 0;
       const signoffs = new Set(week1Data.moduleSignoffs.map((s) => s.moduleKey));
       const screenshots = new Set(week1Data.academyScreenshots.map((s) => s.courseKey));
-      const validSignoffs = ['meddpicc', 'challenger'].filter(k => signoffs.has(k)).length;
+      const validSignoffs = isVP ? 0 : ['meddpicc', 'challenger'].filter(k => signoffs.has(k)).length;
       const validAcademies = ['analytics', 'experiment', 'session_replay', 'guides_surveys'].filter(k => screenshots.has(k)).length;
       const wdDone = week1Data.wdVerification ? 1 : 0;
       return validSignoffs + validAcademies + wdDone;
@@ -420,7 +424,8 @@ export default function LibraryPage() {
     const unifiedPercent = computeUnifiedPacingPercent(effectiveWeekdaysElapsed, approachDone, clipsDone, role, effectiveTotal);
     // Determine tier: past summit + incomplete → anchor_failure, all done → completed, else %-based
     let tier: ReturnType<typeof getPacingTier>;
-    const allClipsDone = clipsDone >= effectiveTotal && approachDone >= WEEK1_TOTAL_ITEMS;
+    const approachTotal = isVP ? WEEK1_TOTAL_ITEMS_VP : WEEK1_TOTAL_ITEMS;
+    const allClipsDone = clipsDone >= effectiveTotal && approachDone >= approachTotal;
     if (allClipsDone) {
       tier = "completed";
     } else if (afterSummitDay) {
@@ -428,16 +433,16 @@ export default function LibraryPage() {
     } else if (effectiveWeekdaysElapsed <= 1) {
       // Day 1: no pacing signal — they just started
       tier = "summit_bound";
-    } else if (effectiveWeekdaysElapsed <= 5) {
-      // Approach week (Days 2-5): use items-behind scale, not harsh % brackets.
-      // Approach is self-paced over 5 days — the daily schedule is aspirational.
+    } else if (effectiveWeekdaysElapsed <= (isVP ? WEEK1_WEEKDAYS_VP : 5)) {
+      // Approach week: use items-behind scale, not harsh % brackets.
+      // Approach is self-paced — the daily schedule is aspirational.
       // getApproachPacingTier maxes out at avalanche_warning (never anchor_failure during Approach).
-      tier = getApproachPacingTier(approachDone, effectiveWeekdaysElapsed);
+      tier = getApproachPacingTier(approachDone, effectiveWeekdaysElapsed, role);
     } else {
       // Ascent (Day 6+): full unified % brackets
       tier = getPacingStatusFromPercent(unifiedPercent);
     }
-    const daysBehind = getTopicDaysBehind(sessionsCompleted, effectiveWeekdaysElapsed);
+    const daysBehind = getTopicDaysBehind(sessionsCompleted, effectiveWeekdaysElapsed, role);
     const missedClips = getMissedClips(
       clips.map((c: any) => ({
         sortOrder: c.sortOrder,
@@ -446,7 +451,8 @@ export default function LibraryPage() {
         title: c.title,
         completed: c.completed,
       })),
-      effectiveWeekdaysElapsed
+      effectiveWeekdaysElapsed,
+      role
     );
     const incompleteSessions = totalTopicDays - sessionsCompleted;
     const adjustmentDay = getAscentAdjustmentDay(summitDay, incompleteSessions);
@@ -470,25 +476,30 @@ export default function LibraryPage() {
     const signoffs = new Set(moduleSignoffs.map((s) => s.moduleKey));
     const screenshots = new Set(academyScreenshots.map((s) => s.courseKey));
     const wdDone = !!wdVerification;
+    const role = viewer?.role ?? "AE";
+    const vpPath = isVelocityPromo(role);
 
-    const allDone = signoffs.has("meddpicc") && signoffs.has("camp101") && signoffs.has("challenger")
-      && screenshots.has("analytics") && screenshots.has("experiment") && screenshots.has("session_replay") && screenshots.has("guides_surveys")
-      && wdDone;
+    // VP Approach: 4 academies + W&D = 5 items (no MEDDPICC/Challenger/cAMP101)
+    const allDone = vpPath
+      ? (screenshots.has("analytics") && screenshots.has("experiment") && screenshots.has("session_replay") && screenshots.has("guides_surveys") && wdDone)
+      : (signoffs.has("meddpicc") && signoffs.has("camp101") && signoffs.has("challenger")
+        && screenshots.has("analytics") && screenshots.has("experiment") && screenshots.has("session_replay") && screenshots.has("guides_surveys")
+        && wdDone);
 
     if (allDone) return { complete: true, catchUpItems: [] as ApproachCatchUpItem[] };
 
     // Build incomplete items list
     const items: ApproachCatchUpItem[] = [];
-    if (!signoffs.has("meddpicc")) items.push({ emoji: "✍🏽", label: "MEDDPICC sign-off" });
+    if (!vpPath && !signoffs.has("meddpicc")) items.push({ emoji: "✍🏽", label: "MEDDPICC sign-off" });
     if (!screenshots.has("analytics")) items.push({ emoji: "🎓", label: "Academy: Analytics" });
     if (!screenshots.has("experiment")) items.push({ emoji: "🎓", label: "Academy: Experiment" });
     if (!screenshots.has("session_replay")) items.push({ emoji: "🎓", label: "Academy: Session Replay" });
     if (!screenshots.has("guides_surveys")) items.push({ emoji: "🎓", label: "Academy: Guides & Surveys" });
-    if (!signoffs.has("camp101")) items.push({ emoji: "✍🏽", label: "cAMP 101 sign-off" });
-    if (!signoffs.has("challenger")) items.push({ emoji: "✍🏽", label: "Challenger sign-off" });
+    if (!vpPath && !signoffs.has("camp101")) items.push({ emoji: "✍🏽", label: "cAMP 101 sign-off" });
+    if (!vpPath && !signoffs.has("challenger")) items.push({ emoji: "✍🏽", label: "Challenger sign-off" });
     if (!wdDone) items.push({ emoji: "🎡", label: "Wheel & Deal" });
     return { complete: false, catchUpItems: items };
-  }, [week1Data]);
+  }, [week1Data, viewer]);
 
   // ── Today's Patch Progress ──
   const patchProgress = useMemo(() => {

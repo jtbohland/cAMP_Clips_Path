@@ -1,13 +1,22 @@
 import { api, z, postgres } from "@superblocksteam/sdk-api";
+import { isVelocityPromo } from "./pacing-helpers.js";
 
 const APPS_DB = "c6e32cf4-ca66-42ae-aeb3-58c84ffae574";
 
-const TIERS = [
+const AE_TIERS = [
   { tier: 1, name: "Base Camper", emoji: "🏕️", xpMin: 0, xpMax: 149 },
   { tier: 2, name: "Trailblazer", emoji: "🥾", xpMin: 150, xpMax: 324 },
   { tier: 3, name: "Summit Seeker", emoji: "🧗🏼", xpMin: 325, xpMax: 499 },
   { tier: 4, name: "Pinnacle Achiever", emoji: "⛰️", xpMin: 500, xpMax: 699 },
   { tier: 5, name: "Alpinist All-Star", emoji: "💫", xpMin: 700, xpMax: null },
+];
+
+const VP_TIERS = [
+  { tier: 1, name: "Base Camper", emoji: "🏕️", xpMin: 0, xpMax: 89 },
+  { tier: 2, name: "Trailblazer", emoji: "🥾", xpMin: 90, xpMax: 199 },
+  { tier: 3, name: "Summit Seeker", emoji: "🧗🏼", xpMin: 200, xpMax: 329 },
+  { tier: 4, name: "Pinnacle Achiever", emoji: "⛰️", xpMin: 330, xpMax: 469 },
+  { tier: 5, name: "Alpinist All-Star", emoji: "💫", xpMin: 470, xpMax: null },
 ];
 
 const BadgeSchema = z.object({
@@ -120,13 +129,14 @@ export default api({
     const ViewerDateSchema = z.object({
       ascent_day_1: z.string().nullable(),
       manager_name: z.string().nullable(),
+      role: z.string().nullable(),
       approach_checkin_sent_at: z.string().nullable(),
       week2_checkin_sent_at: z.string().nullable(),
       week3_checkin_sent_at: z.string().nullable(),
       extension_days: z.coerce.number(),
     });
     const viewerDate = await ctx.integrations.db.query(
-      `SELECT ascent_day_1::text, manager_name,
+      `SELECT ascent_day_1::text, manager_name, role,
               approach_checkin_sent_at::text, week2_checkin_sent_at::text, week3_checkin_sent_at::text,
               COALESCE(extension_days, 0)::int as extension_days
        FROM cliptracker_v2_viewers WHERE id = $1`,
@@ -161,7 +171,9 @@ export default api({
     );
     const leaderboardRank = rankResult[0]?.rank ?? 1;
 
-    // Determine tier
+    // Determine tier — VP has compressed thresholds
+    const viewerRole = viewerDate[0]?.role ?? "AE";
+    const TIERS = isVelocityPromo(viewerRole) ? VP_TIERS : AE_TIERS;
     const currentTier = TIERS.reduce((acc, t) => {
       if (totalXp >= t.xpMin) return t;
       return acc;

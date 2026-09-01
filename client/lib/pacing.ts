@@ -230,18 +230,22 @@ export function countWeekdays(startDate: Date, endDate: Date): number {
  * Get the number of topics a learner should have completed by now.
  * Returns 0–15 based on weekdays elapsed.
  */
-export function getExpectedSessions(weekdaysElapsed: number): number {
-  const capped = Math.min(weekdaysElapsed, TOTAL_WEEKDAYS);
-  return EXPECTED_SESSIONS_BY_WEEKDAY[capped] ?? TOTAL_SESSIONS;
+export function getExpectedSessions(weekdaysElapsed: number, role: string = "AE"): number {
+  const schedule = isVelocityPromo(role) ? VP_EXPECTED_SESSIONS_BY_WEEKDAY : EXPECTED_SESSIONS_BY_WEEKDAY;
+  const totalSess = isVelocityPromo(role) ? VP_TOTAL_SESSIONS : TOTAL_SESSIONS;
+  const totalWd = getRoleTotalWeekdays(role);
+  const capped = Math.min(weekdaysElapsed, totalWd);
+  return schedule[capped] ?? totalSess;
 }
 
 /**
  * Get the max sort_order that should be completed based on expected topics.
  * Used by getMissedClips to determine which individual clips are behind.
  */
-export function getExpectedMaxSortOrder(weekdaysElapsed: number): number {
-  const expectedTopics = getExpectedSessions(weekdaysElapsed);
-  return TOPIC_TO_MAX_SORT[expectedTopics] ?? 200;
+export function getExpectedMaxSortOrder(weekdaysElapsed: number, role: string = "AE"): number {
+  const expectedTopics = getExpectedSessions(weekdaysElapsed, role);
+  const sortMap = isVelocityPromo(role) ? VP_TOPIC_TO_MAX_SORT : TOPIC_TO_MAX_SORT;
+  return sortMap[expectedTopics] ?? (isVelocityPromo(role) ? 200 : 200);
 }
 
 /**
@@ -271,20 +275,23 @@ export function countCompletedTopics(
  * Returns 0 if on pace or ahead.
  * topicsCompleted = number of completed topic-days (not individual clips).
  */
-export function getTopicDaysBehind(topicsCompleted: number, weekdaysElapsed: number): number {
-  if (topicsCompleted >= TOTAL_SESSIONS) return 0;
+export function getTopicDaysBehind(topicsCompleted: number, weekdaysElapsed: number, role: string = "AE"): number {
+  const totalSess = isVelocityPromo(role) ? VP_TOTAL_SESSIONS : TOTAL_SESSIONS;
+  const schedule = isVelocityPromo(role) ? VP_EXPECTED_SESSIONS_BY_WEEKDAY : EXPECTED_SESSIONS_BY_WEEKDAY;
+  const totalWd = getRoleTotalWeekdays(role);
+  if (topicsCompleted >= totalSess) return 0;
 
   // Find which weekday the learner's completed topics correspond to
   let learnerWeekday = 0;
-  for (let i = 1; i < EXPECTED_SESSIONS_BY_WEEKDAY.length; i++) {
-    if (topicsCompleted >= EXPECTED_SESSIONS_BY_WEEKDAY[i]) {
+  for (let i = 1; i < schedule.length; i++) {
+    if (topicsCompleted >= schedule[i]) {
       learnerWeekday = i;
     } else {
       break;
     }
   }
 
-  const cappedElapsed = Math.min(weekdaysElapsed, TOTAL_WEEKDAYS);
+  const cappedElapsed = Math.min(weekdaysElapsed, totalWd);
   return Math.max(0, cappedElapsed - learnerWeekday);
 }
 
@@ -325,8 +332,9 @@ export interface MissedClip {
 export function getMissedClips(
   clips: Array<{ sortOrder: number; weekNumber: number | null; dayLabel: string | null; title: string; completed: boolean }>,
   weekdaysElapsed: number,
+  role: string = "AE",
 ): MissedClip[] {
-  const maxExpectedSortOrder = getExpectedMaxSortOrder(weekdaysElapsed);
+  const maxExpectedSortOrder = getExpectedMaxSortOrder(weekdaysElapsed, role);
   const missed: MissedClip[] = [];
 
   for (const clip of clips) {
@@ -576,6 +584,23 @@ export const CLIPS_EXPECTED_BY_WEEKDAY_VP = [
   9,                         // weekday 10 → Day 7 (SE+PS ×2)
 ];
 
+/** VP topic-level (day) sessions expected by weekday (for getTopicDaysBehind / getMissedClips) */
+const VP_EXPECTED_SESSIONS_BY_WEEKDAY = [
+  0, 0, 0, 0,  // weekdays 0-3: Approach
+  1, 2, 3, 4, 5, 6, 7,  // weekdays 4-10: Ascent Days 1-7
+];
+const VP_TOTAL_SESSIONS = 7;
+const VP_TOPIC_TO_MAX_SORT: number[] = [
+  0,    // 0 topics
+  60,   // 1 topic  (Day 1: Renewal Ops)
+  120,  // 2 topics (Day 2: P&P)
+  130,  // 3 topics (Day 3: Partners)
+  150,  // 4 topics (Day 4: Forecasting ×2)
+  170,  // 5 topics (Day 5: CLM)
+  180,  // 6 topics (Day 6: Deal Desk)
+  200,  // 7 topics (Day 7: SE+PS ×2)
+];
+
 /** Approach schedule for Velocity Promo: 5 items over 3 weekdays */
 export const WEEK1_EXPECTED_BY_DAY_VP = [0, 2, 4, 5];
 export const WEEK1_TOTAL_ITEMS_VP = 5;
@@ -589,7 +614,7 @@ const VELOCITY_PROMO_ROLES = ["SDR>Velocity Promo"];
 function isSDR(role: string): boolean {
   return SDR_ROLES.includes(role);
 }
-function isVelocityPromo(role: string): boolean {
+export function isVelocityPromo(role: string): boolean {
   return VELOCITY_PROMO_ROLES.includes(role);
 }
 
