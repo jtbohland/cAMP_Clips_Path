@@ -57,12 +57,16 @@ function getPerformanceBonuses(role: RolePath) {
     { badge: "Storm Chaser", xp: 3, emoji: "⛈️", condition: "Hit Weather Storm on previous clip, then pass the next clip first try" },
     { badge: "Double Summit", xp: 5, emoji: "⛰️", condition: "Complete 2 clips in one calendar day" },
     { badge: "Swiss Army Knife", xp: 10, emoji: "🪓",
-      condition: role === "SDR"
+      condition: role === "VP"
+        ? "All tools. All terrain. You're ready for anything. (Review all resources + submit reflection on a topic day — ×2 available: Day 1, Day 2)"
+        : role === "SDR"
         ? "All tools. All terrain. You're ready for anything. (Review all resources + submit reflection on a topic day — ×2 available: Day 5, Day 13)"
         : "All tools. All terrain. You're ready for anything. (Review all resources + submit reflection on a topic day — ×2 available: Day 5, Day 9)"
     },
     { badge: "Grip Strength", xp: 35, emoji: "💪",
-      condition: role === "SDR"
+      condition: role === "VP"
+        ? "Average ≥85% engagement score across all 7 Ascent clips"
+        : role === "SDR"
         ? "Average ≥85% engagement score across all 14 Ascent clips"
         : "Average ≥85% engagement score across all 19 Ascent clips"
     },
@@ -72,9 +76,15 @@ function getPerformanceBonuses(role: RolePath) {
 // ─── Engagement Streaks (Leave No Trace differs) ─────────────────────────────
 function getEngagementStreaks(role: RolePath) {
   return [
-    { badge: "No Detours", xp: 10, emoji: "🧭", condition: "Complete a 5-clip window without triggering S&R (×3 max: clips 1–5, 6–10, 11–15)" },
+    { badge: "No Detours", xp: 10, emoji: "🧭",
+      condition: role === "VP"
+        ? "Complete a clip window without triggering S&R (×2 max: clips 1–4, clips 5–7)"
+        : "Complete a 5-clip window without triggering S&R (×3 max: clips 1–5, 6–10, 11–15)"
+    },
     { badge: "Leave No Trace", xp: 15, emoji: "🌱",
-      condition: role === "SDR"
+      condition: role === "VP"
+        ? "5/5 Trail Markers on a 3-clip window (×2 max: clips 1–3, clips 4–6)"
+        : role === "SDR"
         ? "5/5 Trail Markers on a 3-clip window (×4 max: clips 1–3, 3–5, 7–9, 10–11+13)"
         : "5/5 Trail Markers on a 3-clip window (×5 max: clips 1–3, 3–5, 7–9, 10–11+13, 13–15)"
     },
@@ -124,7 +134,7 @@ function getMilestones(role: RolePath) {
     { badge: "The Ranger's Secret", xp: 20, emoji: "🌲",
       condition: `Complete all ${totalClips} clips without EVER triggering Weather the Storm`
     },
-    { badge: "The Full Cast", xp: 50, emoji: "🎣", condition: "Listen to 80%+ of all 4 PODcast episodes" },
+    ...(role !== "VP" ? [{ badge: "The Full Cast", xp: 50, emoji: "🎣", condition: "Listen to 80%+ of all 4 PODcast episodes" }] : []),
   ];
 }
 
@@ -156,7 +166,7 @@ const PRICE_BADGES = [
 // ─── Theoretical Max XP ──────────────────────────────────────────────────────
 const MAX_XP_AE = 993;
 const MAX_XP_SDR = 903;
-const MAX_XP_VP = 600;
+const MAX_XP_VP = 495;
 
 export default function XPlanationPage() {
   const { viewer } = useViewer();
