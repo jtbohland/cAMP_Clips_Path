@@ -329,7 +329,11 @@ export default function LibraryPage() {
 
   const { data, loading } = useApiData(
     "GetClipLibrary",
-    { viewerId: viewer?.id ?? "" },
+    {
+      viewerId: viewer?.id ?? "",
+      roleOverride: vpTestMode ? "SDR>Velocity Promo" : sdrTestMode ? "SDR" : null,
+      adminOverride: vpTestMode || sdrTestMode ? true : undefined,
+    },
     { enabled: !!viewer?.id }
   );
 
@@ -1206,6 +1210,8 @@ export default function LibraryPage() {
             pacingLoading={pacingPerfLoading}
             sdrTestMode={sdrTestMode}
             onToggleSdrTest={handleToggleSdrTest}
+            vpTestMode={vpTestMode}
+            onToggleVpTest={handleToggleVpTest}
             onOpenRegistration={() => setPreviewMode("register")}
             onTestCheckin={(type, approachOverride) => {
               setCheckinType(type);

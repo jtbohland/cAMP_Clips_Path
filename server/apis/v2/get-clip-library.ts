@@ -5,6 +5,9 @@ const APPS_DB = "c6e32cf4-ca66-42ae-aeb3-58c84ffae574";
 /** Lite clips: watchable but excluded from pacing/totals/engagement scoring */
 const LITE_CLIP_SORTS = new Set([51]);
 
+/** VP curated clip set — only these sort_orders appear for SDR>Velocity Promo viewers */
+const VP_CLIP_SORTS = [60, 120, 130, 140, 150, 170, 180, 190, 200];
+
 const ClipWithProgressSchema = z.object({
   id: z.string(),
   title: z.string(),
@@ -34,6 +37,9 @@ export default api({
 
   input: z.object({
     viewerId: z.string(),
+    /** Admin test-mode overrides (frontend passes these when "Test as VP/SDR" is active) */
+    roleOverride: z.string().nullable().optional(),
+    adminOverride: z.boolean().optional(),
   }),
 
   output: z.object({
@@ -62,7 +68,7 @@ export default api({
     ),
   }),
 
-  async run(ctx, { viewerId }) {
+  async run(ctx, { viewerId, roleOverride, adminOverride }) {
     // Look up viewer role and admin status
     const ViewerInfoSchema = z.object({ is_admin: z.boolean(), role: z.string().nullable() });
     const viewerInfo = await ctx.integrations.db.query(
@@ -71,8 +77,10 @@ export default api({
       [viewerId],
       { label: "Get viewer info (role + admin)" }
     );
-    const isAdmin = viewerInfo[0]?.is_admin ?? false;
-    const viewerRole = viewerInfo[0]?.role ?? null;
+    // Admin test-mode overrides: frontend can pass role/admin when viewer
+    // doesn't exist in DB yet (e.g. VP test before CHECK constraint update)
+    const isAdmin = adminOverride ?? (viewerInfo[0]?.is_admin ?? false);
+    const viewerRole = roleOverride ?? (viewerInfo[0]?.role ?? null);
 
     const clips = await ctx.integrations.db.query(
       `SELECT 
@@ -118,9 +126,10 @@ export default api({
       FROM cliptracker_v2_clips c
       WHERE c.status = 'live'
         AND (c.roles IS NULL OR c.roles @> to_jsonb($2::text))
+        AND ($3::int[] IS NULL OR c.sort_order = ANY($3::int[]))
       ORDER BY c.sort_order ASC`,
       ClipWithProgressSchema,
-      [viewerId, viewerRole],
+      [viewerId, viewerRole, viewerRole === 'SDR>Velocity Promo' ? VP_CLIP_SORTS : null],
       { label: "Get clip library with progress" }
     );
 

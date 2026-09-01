@@ -82,9 +82,13 @@ type Week1PageProps = {
   sdrTestMode?: boolean;
   /** Admin: toggle SDR test mode */
   onToggleSdrTest?: () => void;
+  /** Admin: VP test mode state (controlled by Library page) */
+  vpTestMode?: boolean;
+  /** Admin: toggle VP test mode */
+  onToggleVpTest?: () => void;
 };
 
-export default function Week1Page({ viewerId, viewerName, viewerRole, isAdmin, pacingLearners, pacingLoading, onBeginAscent, onSwitchToAscent, onOpenRegistration, onTestCheckin, sdrTestMode, onToggleSdrTest }: Week1PageProps) {
+export default function Week1Page({ viewerId, viewerName, viewerRole, isAdmin, pacingLearners, pacingLoading, onBeginAscent, onSwitchToAscent, onOpenRegistration, onTestCheckin, sdrTestMode, onToggleSdrTest, vpTestMode, onToggleVpTest }: Week1PageProps) {
   const navigate = useNavigate();
   // Admin "Test as New Learner" toggle — resets view to fresh state
   const [testMode, setTestMode] = useState(false);
@@ -395,7 +399,9 @@ export default function Week1Page({ viewerId, viewerName, viewerRole, isAdmin, p
             <span className="text-sm">🔧</span>
             <span className="text-sm font-semibold text-purple-900">Admin View</span>
             <span className="text-xs text-purple-600">
-              {sdrTestMode
+              {vpTestMode
+                ? "Showing fresh Velocity Promo view"
+                : sdrTestMode
                 ? "Showing fresh SDR view"
                 : testMode
                   ? "Showing fresh learner view"
@@ -451,7 +457,7 @@ export default function Week1Page({ viewerId, viewerName, viewerRole, isAdmin, p
                 {testMode ? "👁️ Show My Progress" : "🧪 Test as New Learner"}
               </button>
             )}
-            {(!testMode || sdrTestMode) && onToggleSdrTest && (
+            {(!testMode || sdrTestMode) && !vpTestMode && onToggleSdrTest && (
               <button
                 onClick={onToggleSdrTest}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
@@ -461,6 +467,18 @@ export default function Week1Page({ viewerId, viewerName, viewerRole, isAdmin, p
                 }`}
               >
                 {sdrTestMode ? "↩️ Back to Admin" : "🧪 Test as New SDR"}
+              </button>
+            )}
+            {(!testMode || vpTestMode) && !sdrTestMode && onToggleVpTest && (
+              <button
+                onClick={onToggleVpTest}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                  vpTestMode
+                    ? "bg-orange-600 text-white hover:bg-orange-700"
+                    : "bg-white text-orange-700 border border-orange-300 hover:bg-orange-100"
+                }`}
+              >
+                {vpTestMode ? "↩️ Back to Admin" : "🧪 Test as Veloc. Promo"}
               </button>
             )}
           </div>
