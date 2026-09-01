@@ -363,14 +363,15 @@ export default function LibraryPage() {
 
   // Guard against SWR keepPreviousData leaking stale clips across
   // test-mode toggles. Content-based: VP first clip is sort 60, SDR/admin is 10.
+  const isRealVP = viewer?.role === "SDR>Velocity Promo";
   const rawClips = useMemo(() => {
     const clips = data?.clips ?? [];
     if (!clips.length) return clips;
     const first = (clips[0] as any)?.sortOrder;
     if (vpTestMode && first !== 60) return [];
-    if (!vpTestMode && !sdrTestMode && first === 60) return [];
+    if (!vpTestMode && !sdrTestMode && !isRealVP && first === 60) return [];
     return clips;
-  }, [data, vpTestMode, sdrTestMode]);
+  }, [data, vpTestMode, sdrTestMode, isRealVP]);
 
   // In AE test mode, reset all clips to fresh state (all unlocked, none completed)
   const clips = useMemo(() => {
