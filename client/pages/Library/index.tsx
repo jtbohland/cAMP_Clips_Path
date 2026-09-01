@@ -372,12 +372,12 @@ export default function LibraryPage() {
     return clips;
   }, [data, vpTestMode, sdrTestMode]);
 
-  // In ascent test mode, reset all clips to fresh state (only clip 1 unlocked, none completed)
+  // In AE test mode, reset all clips to fresh state (all unlocked, none completed)
   const clips = useMemo(() => {
     if (!ascentTestMode) return rawClips;
-    return rawClips.map((c: any, i: number) => ({
+    return rawClips.map((c: any) => ({
       ...c,
-      unlocked: i === 0,
+      unlocked: true,
       completed: false,
       xpEarned: 0,
       pausedElapsedSeconds: 0,
@@ -713,9 +713,9 @@ export default function LibraryPage() {
   // SDR Days 3, 6, 9, 11 → sorts 40, 70, 120, 160 (SDR Day 11 = Customer Stories)
   const wheelAndDealSortOrders = useMemo(() => {
     const role = viewer?.role ?? "AE";
-    return role === "SDR"
-      ? new Set([40, 70, 120, 160])
-      : new Set([40, 70, 120, 140]);
+    if (role === "SDR>Velocity Promo") return new Set([130, 180]);
+    if (role === "SDR") return new Set([40, 70, 120, 160]);
+    return new Set([40, 70, 120, 140]);
   }, [viewer?.role]);
 
   const TIME_NOTE = "These times are approximate and reflect course + video durations, plus ~20 minutes per day for quizzes. They do not include any extra time you spend reading or reviewing linked resources.";
@@ -1326,7 +1326,7 @@ export default function LibraryPage() {
                       : "bg-white text-purple-700 border border-purple-300 hover:bg-purple-100"
                   }`}
                 >
-                  {ascentTestMode ? "👁️ Show My Progress" : "🧪 Test as New Learner"}
+                  {ascentTestMode ? "👁️ Show My Progress" : "🧪 Test as New AE"}
                 </button>
               )}
               {(!ascentTestMode || sdrTestMode) && !vpTestMode && (
