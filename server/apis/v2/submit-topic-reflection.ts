@@ -132,12 +132,12 @@ export default api({
       );
 
       if (topicClipRows.length > 0) {
-        const nextSortOrder = topicClipRows[0].sort_order + 1;
+        const currentSortOrder = topicClipRows[0].sort_order;
         const NextClipSchema = z.object({ id: z.string() });
         const nextClips = await ctx.integrations.db.query(
-          "SELECT id FROM cliptracker_v2_clips WHERE sort_order = $1 AND status = 'live'",
+          "SELECT id FROM cliptracker_v2_clips WHERE sort_order > $1 AND status = 'live' ORDER BY sort_order LIMIT 1",
           NextClipSchema,
-          [nextSortOrder],
+          [currentSortOrder],
           { label: "Find next clip to unlock" }
         );
 

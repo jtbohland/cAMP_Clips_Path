@@ -298,27 +298,24 @@ export default api({
     }
 
     // === MILESTONE BONUSES ===
-    const ClipSortSchema = z.object({ sort_order: z.coerce.number() });
-    const clipSort = await ctx.integrations.db.query(
-      `SELECT sort_order FROM cliptracker_v2_clips WHERE id = $1`,
-      ClipSortSchema, [clipId], { label: "Get clip sort for milestones" }
-    );
-    const sortOrder = clipSort[0]?.sort_order ?? 0;
+    // Use ordinal position (1-based, among viewer's video clips) for role-agnostic triggers
+    const totalVideoClips = clipSorts.length; // 15 for AE, 12/14 for SDR, 7 for VP
 
-    // First Step: Complete first clip (sort 10)
-    if (sortOrder === 10) {
+    // First Step: Complete first video clip (ordinal 1)
+    if (ordinal === 1) {
       xpEvents.push({ sourceId: "first_step", eventType: "milestone", xp: 5 });
       badgesEarned.push({ badgeId: "first_step", name: "First Step", emoji: "🎬", xp: 5 });
     }
 
-    // Into the Summit Push: Clip 11 gets unlocked (completing sort 100 triggers this)
-    if (sortOrder === 100) {
+    // Into the Summit Push: Unlock Week 3 for VP (ordinal 4 = after Day 5/CLM) or Week 4 for AE/SDR (sort 100)
+    const summitPushTrigger = isVP ? ordinal === 4 : currentSort === 100;
+    if (summitPushTrigger) {
       xpEvents.push({ sourceId: "week_4_entry", eventType: "milestone", xp: 10 });
       badgesEarned.push({ badgeId: "week_4_entry", name: "Into the Summit Push", emoji: "🪢", xp: 10 });
     }
 
-    // Ranger's Secret: Complete all 20 clips without ever triggering Weather the Storm
-    if (sortOrder === 200) {
+    // Ranger's Secret: Complete ALL video clips without ever triggering Weather the Storm
+    if (ordinal === totalVideoClips) {
       const StormSchema = z.object({ count: z.coerce.number() });
       const stormCheck = await ctx.integrations.db.query(
         `SELECT COUNT(*)::int as count FROM cliptracker_v2_xp_events
