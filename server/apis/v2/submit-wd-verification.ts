@@ -106,10 +106,11 @@ export default api({
     // Award 10 XP for Approach Accomplishment (Wheel & Deal module)
     const ClipIdSchema = z.object({ id: z.string() });
     const sentinelClip = await ctx.integrations.db.query(
-      `SELECT id FROM cliptracker_v2_clips WHERE sort_order = 1 LIMIT 1`,
+      `SELECT id FROM cliptracker_v2_clips WHERE status = 'live' ORDER BY sort_order ASC LIMIT 1`,
       ClipIdSchema, [], { label: "Get sentinel clip for approach module XP" }
     );
-    const approachClipId = sentinelClip[0]?.id ?? viewerId;
+    if (!sentinelClip[0]?.id) throw new Error("No live clip found for approach XP sentinel");
+    const approachClipId = sentinelClip[0].id;
 
     await ctx.integrations.db.execute(
       `INSERT INTO cliptracker_v2_xp_events (viewer_id, clip_id, event_type, source_id, xp_amount)

@@ -103,14 +103,15 @@ export default api({
     let earnedBadge = false;
     let earnedXp = 0;
 
-    // Use clip at sort 1 as sentinel for approach XP/badge records
+    // Use lowest sort_order live clip as sentinel for approach XP/badge records
     // (clip_id FK requires a real clip — viewerId is not a valid clip_id)
     const ClipIdSchema = z.object({ id: z.string() });
     const sentinelClip = await ctx.integrations.db.query(
-      `SELECT id FROM cliptracker_v2_clips WHERE sort_order = 1 LIMIT 1`,
+      `SELECT id FROM cliptracker_v2_clips WHERE status = 'live' ORDER BY sort_order ASC LIMIT 1`,
       ClipIdSchema, [], { label: "Get sentinel clip for approach XP" }
     );
-    const approachClipId = sentinelClip[0]?.id ?? viewerId; // fallback just in case
+    if (!sentinelClip[0]?.id) throw new Error("No live clip found for approach XP sentinel");
+    const approachClipId = sentinelClip[0].id;
 
     if (withinDeadline) {
       // Award approach_complete badge (on-time only)
