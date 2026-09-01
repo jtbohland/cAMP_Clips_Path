@@ -361,7 +361,29 @@ export default function LibraryPage() {
   );
   const pacingLearners = pacingPerfData?.learners ?? [];
 
-  const rawClips = useMemo(() => data?.clips ?? [], [data]);
+  // Build a mode key so we can detect stale SWR data after a test-mode toggle.
+  // SWR's keepPreviousData shows the old response until the new one arrives,
+  // which causes wrong day-labels when switching between AE / SDR / VP views.
+  const clipModeKey = vpTestMode ? "vp" : sdrTestMode ? "sdr" : "default";
+  const clipModeKeyRef = useRef(clipModeKey);
+  const [lastSettledModeKey, setLastSettledModeKey] = useState(clipModeKey);
+
+  useEffect(() => {
+    if (clipModeKey !== clipModeKeyRef.current) {
+      // Mode just changed — mark data as stale until the next API response arrives
+      clipModeKeyRef.current = clipModeKey;
+    }
+  }, [clipModeKey]);
+
+  // When `data` changes (new API response), mark the current mode as settled
+  useEffect(() => {
+    if (data) setLastSettledModeKey(clipModeKey);
+  }, [data, clipModeKey]);
+
+  const rawClips = useMemo(
+    () => (lastSettledModeKey === clipModeKey ? (data?.clips ?? []) : []),
+    [data, lastSettledModeKey, clipModeKey]
+  );
 
   // In ascent test mode, reset all clips to fresh state (only clip 1 unlocked, none completed)
   const clips = useMemo(() => {
