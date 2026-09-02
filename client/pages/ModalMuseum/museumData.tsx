@@ -6,6 +6,7 @@ import ApproachPacingModal from "@/components/ApproachPacingModal";
 import ApproachDeadlineModal from "@/components/ApproachDeadlineModal";
 import OhDeerModal from "@/components/OhDeerModal";
 import SummitInSightModal from "@/components/SummitInSightModal";
+import QuizReminderModal from "@/components/QuizReminderModal";
 import type { PacingTier, MissedClip } from "@/lib/pacing";
 import type { PacingLearner } from "@/components/PacingPerformanceSection";
 
@@ -188,6 +189,35 @@ const approachExhibits: MuseumExhibit[] = [
       <OhDeerModal
         completedItems={4}
         onDismiss={noop}
+      />
+    ),
+  },
+];
+
+// ─── Section 1b: Quiz Reminder ──────────────────────────────────────
+
+const quizReminderExhibits: MuseumExhibit[] = [
+  {
+    id: "quiz-reminder-day1",
+    title: "Quiz Reminder — Day 1",
+    trigger: "Learner clicks Watch/Gear on Day 2 clip without clicking Day 1 quiz",
+    render: () => (
+      <QuizReminderModal
+        missingQuizDay="Day 1"
+        onTakeQuiz={noop}
+        onQuizClicked={noop}
+      />
+    ),
+  },
+  {
+    id: "quiz-reminder-day7",
+    title: "Quiz Reminder — Day 7",
+    trigger: "Learner clicks Watch/Gear on Day 8 clip without clicking Day 7 quiz",
+    render: () => (
+      <QuizReminderModal
+        missingQuizDay="Day 7"
+        onTakeQuiz={noop}
+        onQuizClicked={noop}
       />
     ),
   },
@@ -593,6 +623,13 @@ export const MUSEUM_SECTIONS: MuseumSectionData[] = [
     title: "The Approach",
     subtitle: "Onboarding & first milestones",
     exhibits: approachExhibits,
+  },
+  {
+    id: "quiz-reminder",
+    emoji: "🧠",
+    title: "Quiz Reminder",
+    subtitle: "Hard gate — must click quiz before advancing to next day's clip",
+    exhibits: quizReminderExhibits,
   },
   {
     id: "pacing",

@@ -401,7 +401,13 @@ export default function LibraryPage() {
 
   // ── cAMP Quiz Reminder ──
   // quizClickedDays from API = ["Day 1", "Day 3", ...] (days where quiz was clicked)
-  const quizClickedDays = useMemo(() => new Set(data?.quizClickedDays ?? []), [data?.quizClickedDays]);
+  // Also track days clicked locally this session (so stale API cache doesn't re-trigger)
+  const [localQuizClicks, setLocalQuizClicks] = useState<Set<string>>(new Set());
+  const quizClickedDays = useMemo(() => {
+    const merged = new Set(data?.quizClickedDays ?? []);
+    localQuizClicks.forEach((d) => merged.add(d));
+    return merged;
+  }, [data?.quizClickedDays, localQuizClicks]);
 
   // Ordered unique day labels from the clips (already renumbered for SDR/VP)
   const orderedDays = useMemo(() => {
@@ -413,7 +419,7 @@ export default function LibraryPage() {
     return seen;
   }, [clips]);
 
-  // State: when a quiz reminder is pending, store the missing day + the action to run after dismiss
+  // State: when a quiz reminder is pending, store the missing day + the action to run after
   const [quizReminder, setQuizReminder] = useState<{
     missingDay: string;
     pendingAction: () => void;
@@ -421,8 +427,8 @@ export default function LibraryPage() {
 
   /**
    * Intercept a navigation action (Watch / Gear click) and check whether
-   * the previous day's quiz was clicked. If not, show the reminder modal
-   * instead of navigating immediately.
+   * the previous day's quiz was clicked. If not, show the hard-gate modal
+   * instead of navigating.
    *
    * Day 1 is always free (no previous day). From Day 2+ we check.
    */
@@ -443,7 +449,7 @@ export default function LibraryPage() {
         action();
         return;
       }
-      // Previous day's quiz not clicked — show reminder
+      // Previous day's quiz not clicked — show hard-gate modal
       setQuizReminder({ missingDay: prevDay, pendingAction: action });
     },
     [orderedDays, quizClickedDays]
@@ -1622,14 +1628,16 @@ export default function LibraryPage() {
       </div>
       )}
     </div>
-    {/* Quiz Reminder Modal */}
+    {/* Quiz Reminder Modal — hard gate */}
     {quizReminder && (
       <QuizReminderModal
         missingQuizDay={quizReminder.missingDay}
         onTakeQuiz={() => {
           handleCampQuiz(quizReminder.missingDay);
         }}
-        onDismiss={() => {
+        onQuizClicked={() => {
+          // Mark day as clicked locally so stale API data doesn't re-trigger
+          setLocalQuizClicks((prev) => new Set(prev).add(quizReminder.missingDay));
           const action = quizReminder.pendingAction;
           setQuizReminder(null);
           action();
