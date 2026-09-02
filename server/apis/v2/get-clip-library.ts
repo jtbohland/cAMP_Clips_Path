@@ -66,6 +66,7 @@ export default api({
         isLite: z.boolean(),
       })
     ),
+    quizClickedDays: z.array(z.string()),
   }),
 
   async run(ctx, { viewerId, roleOverride, adminOverride }) {
@@ -250,6 +251,19 @@ export default api({
       };
     });
 
-    return { clips: result };
+    // Fetch quiz click days for this viewer
+    // Quiz clicks are stored as pitch_name = 'cAMP Quiz::Day X'
+    const QuizClickSchema = z.object({ pitch_name: z.string() });
+    const quizClicks = await ctx.integrations.db.query(
+      `SELECT DISTINCT pitch_name FROM cliptracker_v2_pitch_clicks
+       WHERE viewer_id = $1 AND pitch_name LIKE 'cAMP Quiz::%'`,
+      QuizClickSchema,
+      [viewerId],
+      { label: "Get quiz click days" }
+    );
+    // Extract day labels: "cAMP Quiz::Day 1" → "Day 1"
+    const quizClickedDays = quizClicks.map(q => q.pitch_name.replace('cAMP Quiz::', ''));
+
+    return { clips: result, quizClickedDays };
   },
 });

@@ -37,7 +37,7 @@ type PairedClipCardProps = {
   onReviewA?: () => void;
   onReviewB?: () => void;
   onWheelAndDeal?: () => void;
-  onCampQuiz?: () => void;
+  onCampQuiz?: (dayLabel?: string | null) => void;
   /** Role-aware sort orders that show the W&D button (passed from Library) */
   wheelAndDealSortOrders?: Set<number>;
   /** Clip B is a lite clip (no engagement/markers/Ranger Report) */
@@ -379,7 +379,7 @@ export default function PairedClipCard({
         {/* cAMP Quiz button — visible on qualifying tiles */}
         {showCampQuiz && onCampQuiz && (
           <button
-            onClick={(e) => { e.stopPropagation(); onCampQuiz(); }}
+            onClick={(e) => { e.stopPropagation(); onCampQuiz(clipA.dayLabel); }}
             className="w-full py-2.5 rounded-lg text-sm font-semibold bg-[#EA580C] hover:bg-[#C2410C] text-white transition-colors"
           >
             🧠 Take cAMP Quiz

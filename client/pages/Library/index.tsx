@@ -21,6 +21,7 @@ import LearnerCheckinModal from "@/components/LearnerCheckinModal";
 import SummitInSightModal from "@/components/SummitInSightModal";
 import FinalAchievementModal from "@/components/FinalAchievementModal";
 import Week1Page from "@/components/week1/Week1Page";
+import QuizReminderModal from "@/components/QuizReminderModal";
 import {
   countWeekdays,
   countCompletedTopics,
@@ -230,8 +231,9 @@ export default function LibraryPage() {
   }, [viewer?.id, logClick]);
 
   const CAMP_QUIZ_URL = "https://app.superblocks.com/code-mode/applications/11b66d3d-da48-45dd-b8fa-9f686d4ec72a";
-  const handleCampQuiz = useCallback(() => {
-    if (viewer?.id) logClick({ viewerId: viewer.id, pitchName: "cAMP Quiz" });
+  const handleCampQuiz = useCallback((dayLabel?: string | null) => {
+    const pitchName = dayLabel ? `cAMP Quiz::${dayLabel}` : "cAMP Quiz";
+    if (viewer?.id) logClick({ viewerId: viewer.id, pitchName });
     window.open(CAMP_QUIZ_URL, "_blank");
   }, [viewer?.id, logClick]);
 
@@ -396,6 +398,56 @@ export default function LibraryPage() {
   // Pairs: sorts 10+20 (Day 1), 80+90 (Day 7), 100+110 (Day 8), 140+150 (Day 11), 190+200 (Day 15)
   const AB_PAIRS: [number, number][] = [[10, 20], [40, 45], [50, 51], [55, 56], [80, 90], [100, 110], [140, 150], [190, 200]];
   const pairedSortOrders = new Set(AB_PAIRS.flat());
+
+  // ── cAMP Quiz Reminder ──
+  // quizClickedDays from API = ["Day 1", "Day 3", ...] (days where quiz was clicked)
+  const quizClickedDays = useMemo(() => new Set(data?.quizClickedDays ?? []), [data?.quizClickedDays]);
+
+  // Ordered unique day labels from the clips (already renumbered for SDR/VP)
+  const orderedDays = useMemo(() => {
+    const seen: string[] = [];
+    for (const c of clips) {
+      const d = (c as any).dayLabel;
+      if (d && !seen.includes(d)) seen.push(d);
+    }
+    return seen;
+  }, [clips]);
+
+  // State: when a quiz reminder is pending, store the missing day + the action to run after dismiss
+  const [quizReminder, setQuizReminder] = useState<{
+    missingDay: string;
+    pendingAction: () => void;
+  } | null>(null);
+
+  /**
+   * Intercept a navigation action (Watch / Gear click) and check whether
+   * the previous day's quiz was clicked. If not, show the reminder modal
+   * instead of navigating immediately.
+   *
+   * Day 1 is always free (no previous day). From Day 2+ we check.
+   */
+  const checkQuizAndNavigate = useCallback(
+    (clipDayLabel: string | null | undefined, action: () => void) => {
+      if (!clipDayLabel) {
+        action();
+        return;
+      }
+      const dayIdx = orderedDays.indexOf(clipDayLabel);
+      // Day 1 (index 0) is always free — no check needed
+      if (dayIdx <= 0) {
+        action();
+        return;
+      }
+      const prevDay = orderedDays[dayIdx - 1];
+      if (quizClickedDays.has(prevDay)) {
+        action();
+        return;
+      }
+      // Previous day's quiz not clicked — show reminder
+      setQuizReminder({ missingDay: prevDay, pendingAction: action });
+    },
+    [orderedDays, quizClickedDays]
+  );
 
   // ── Pacing calculation ──
   const pacingInfo = useMemo(() => {
@@ -1496,8 +1548,8 @@ export default function LibraryPage() {
                                 xpEarned: clipB.xpEarned ?? 0,
                               }}
                               previousClipTitle={prevClipA ? prevClipA.title : undefined}
-                              onWatchA={() => navigate(`/watch/${clip.id}?source=library`)}
-                              onWatchB={() => navigate(`/watch/${clipB.id}?source=library`)}
+                              onWatchA={() => checkQuizAndNavigate(clip.dayLabel, () => navigate(`/watch/${clip.id}?source=library`))}
+                              onWatchB={() => checkQuizAndNavigate(clipB.dayLabel, () => navigate(`/watch/${clipB.id}?source=library`))}
                               onReviewA={() => navigate(`/report/${clip.id}`)}
                               onReviewB={() => navigate(`/report/${clipB.id}`)}
                               onWheelAndDeal={handleWheelAndDeal}
@@ -1530,14 +1582,14 @@ export default function LibraryPage() {
                           pausedElapsedSeconds={clip.pausedElapsedSeconds ?? 0}
                           xpEarned={clip.xpEarned ?? 0}
                           previousClipTitle={prevClip ? prevClip.title : undefined}
-                          onWatch={() => navigate(`/watch/${clip.id}?source=library`)}
+                          onWatch={() => checkQuizAndNavigate(clip.dayLabel, () => navigate(`/watch/${clip.id}?source=library`))}
                           onReview={() => navigate(`/report/${clip.id}`)}
                           onWheelAndDeal={handleWheelAndDeal}
                           onCampQuiz={handleCampQuiz}
                           wheelAndDealSortOrders={wheelAndDealSortOrders}
                           onViewGear={
                             clip.isTopicDay
-                              ? () => navigate(`/topic-gear/${clip.sortOrder === 60 ? "day5" : clip.sortOrder === 165 ? "day13_sdr_roe" : "day9"}/${clip.id}`)
+                              ? () => checkQuizAndNavigate(clip.dayLabel, () => navigate(`/topic-gear/${clip.sortOrder === 60 ? "day5" : clip.sortOrder === 165 ? "day13_sdr_roe" : "day9"}/${clip.id}`))
                               : undefined
                           }
                           onZoomClipWatch={clip.sortOrder === 50 ? handleReachdeskWatch : undefined}
@@ -1570,6 +1622,20 @@ export default function LibraryPage() {
       </div>
       )}
     </div>
+    {/* Quiz Reminder Modal */}
+    {quizReminder && (
+      <QuizReminderModal
+        missingQuizDay={quizReminder.missingDay}
+        onTakeQuiz={() => {
+          handleCampQuiz(quizReminder.missingDay);
+        }}
+        onDismiss={() => {
+          const action = quizReminder.pendingAction;
+          setQuizReminder(null);
+          action();
+        }}
+      />
+    )}
     </>
   );
 }
