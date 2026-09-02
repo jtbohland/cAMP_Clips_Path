@@ -89,6 +89,9 @@ export default function ResumePrompt({
         <p className="text-xs text-gray-400 text-center mt-4">
           🎯 Avoid rewinding — trail markers are synced to your progress. Rewatch is available after completion.
         </p>
+        <p className="text-xs text-gray-400 text-center mt-1">
+          💾 Your viewing progress and engagement will be saved.
+        </p>
       </div>
     </div>
   );

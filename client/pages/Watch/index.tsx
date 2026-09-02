@@ -787,7 +787,7 @@ export default function WatchPage() {
           }));
         } catch (err) {
           console.error("completeClipPath failed for lite clip after retries:", err);
-          toast.error("Progress could not be saved. Please try again.");
+          toast.error("We couldn't mark this clip as complete. Your watching progress is safe — tap Try Again.");
           setCompletionError("lite");
           return; // Don't advance — let learner retry
         }
@@ -844,7 +844,7 @@ export default function WatchPage() {
         setCompletionError(null);
       } catch (err) {
         console.error("completeClipPath failed after retries:", err);
-        toast.error("Your completion could not be saved. Please tap 'Try Again' to retry.");
+        toast.error("We couldn't mark this clip as complete. Your watching progress is safe — tap Try Again.");
         setCompletionError("first_pass");
         // Still show Ranger Report so they see their score, but the error banner will appear
       }
@@ -938,7 +938,7 @@ export default function WatchPage() {
       }
     } catch (err) {
       console.error("retryCompletion still failed:", err);
-      toast.error("Still unable to save. Check your connection and try again.");
+      toast.error("Still unable to save. Contact your enablement manager if this continues.");
       setCompletionError(completionError); // restore error state
     }
   }, [completionError, viewer?.id, clipId, sessionId, completeClipPath]);
@@ -1017,7 +1017,7 @@ export default function WatchPage() {
             }
           } catch (err) {
             console.error("completeClipPath (S&R) failed after retries:", err);
-            toast.error("Your completion could not be saved. Please tap 'Try Again' to retry.");
+            toast.error("We couldn't mark this clip as complete. Your watching progress is safe — tap Try Again.");
             setCompletionError("search_rescue");
           }
         }
@@ -1044,7 +1044,7 @@ export default function WatchPage() {
         }));
       } catch (err) {
         console.error("completeClipPath (WtS) failed after retries:", err);
-        toast.error("Your completion could not be saved. Please tap 'Try Again' to retry.");
+        toast.error("We couldn't mark this clip as complete. Your watching progress is safe — tap Try Again.");
         setCompletionError("weather_storm");
       }
 
@@ -1174,7 +1174,7 @@ export default function WatchPage() {
       {completionError && (
         <div className="bg-red-50 border-b border-red-200 px-4 py-3 flex items-center justify-between gap-3">
           <p className="text-sm text-red-800">
-            Your progress couldn't be saved. Check your connection and try again.
+            We couldn't mark this clip as complete. Your watching progress is safe — tap <strong>Try Again</strong>. If the issue continues, contact your enablement manager.
           </p>
           <button
             onClick={retryCompletion}
