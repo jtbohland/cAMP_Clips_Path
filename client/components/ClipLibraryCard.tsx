@@ -24,7 +24,7 @@ type ClipLibraryCardProps = {
   onReview?: () => void;
   onViewGear?: () => void;
   onWheelAndDeal?: () => void;
-  onCampQuiz?: () => void;
+  onCampQuiz?: (dayLabel?: string | null) => void;
   /** Role-aware sort orders that show the W&D button (passed from Library) */
   wheelAndDealSortOrders?: Set<number>;
   onZoomClipWatch?: () => void;
@@ -336,7 +336,7 @@ export default function ClipLibraryCard({
         {/* cAMP Quiz button — always visible on qualifying tiles */}
         {CAMP_QUIZ_SORT_ORDERS.has(clip.sortOrder) && onCampQuiz && (
           <button
-            onClick={(e) => { e.stopPropagation(); onCampQuiz(); }}
+            onClick={(e) => { e.stopPropagation(); onCampQuiz(clip.dayLabel); }}
             className="w-full py-2.5 rounded-lg text-sm font-semibold bg-[#EA580C] hover:bg-[#C2410C] text-white transition-colors"
           >
             🧠 Take cAMP Quiz
