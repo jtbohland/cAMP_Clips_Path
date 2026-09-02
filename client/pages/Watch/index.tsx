@@ -10,6 +10,7 @@ import SearchRescue from "@/components/SearchRescue";
 import WeatherStorm from "@/components/WeatherStorm";
 import SearchRescuePassPopup from "@/components/SearchRescuePassPopup";
 import ResumePrompt from "@/components/ResumePrompt";
+import PauseModal from "@/components/PauseModal";
 import AscentGuidePanel from "@/components/AscentGuidePanel";
 import { getGuideEntryForClip } from "@/config/ascentGuide.js";
 
@@ -49,6 +50,22 @@ function getWistiaVideoId(url: string): string | null {
   } catch {
     return null;
   }
+}
+
+/** Retry an async fn up to `maxAttempts` times with exponential backoff (500ms, 1s, 2s). */
+async function withRetry<T>(fn: () => Promise<T>, maxAttempts = 3): Promise<T> {
+  let lastErr: unknown;
+  for (let i = 0; i < maxAttempts; i++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastErr = err;
+      if (i < maxAttempts - 1) {
+        await new Promise((r) => setTimeout(r, 500 * Math.pow(2, i)));
+      }
+    }
+  }
+  throw lastErr;
 }
 
 export default function WatchPage() {
@@ -108,6 +125,15 @@ export default function WatchPage() {
   const lowVolumeSecondsRef = useRef(0);
   const isLowVolumeRef = useRef(false);
   const [showTranscript, setShowTranscript] = useState(false);
+
+  // ─── Completion error state (visible retry) ────────────────────────────────
+  const [completionError, setCompletionError] = useState<"lite" | "first_pass" | "search_rescue" | "weather_storm" | null>(null);
+
+  // ─── Pause modal state ─────────────────────────────────────────────────────
+  // Once play starts, "Back to Clips" moves from header into a pause modal.
+  const [hasStartedPlaying, setHasStartedPlaying] = useState(false);
+  const [showPauseModal, setShowPauseModal] = useState(false);
+  const programmaticPauseRef = useRef(false); // flag to skip modal on non-manual pauses
 
   // ─── Play-start fade toast ─────────────────────────────────────────────────
   // Shows a brief reminder on first play, then fades out automatically.
@@ -194,10 +220,26 @@ export default function WatchPage() {
     [clipData]
   );
 
+  // ─── Refs for autosave / visibility handlers (stale-closure-safe) ─────────
+  // These refs always hold the latest counter values so that timer callbacks
+  // (setInterval, visibilitychange, beforeunload) never read stale closures.
+  const sessionIdRef = useRef<string | null>(null);
+  const elapsedSecondsRef = useRef(0);
+  const focusSecondsRef = useRef(0);
+  const blurSecondsRef = useRef(0);
+  const watchedSecondsRef = useRef(0);
+  const correctCountRef = useRef(0);
+
   // Keep refs in sync with latest state on every render
   useEffect(() => { phaseRef.current = phase; }, [phase]);
   useEffect(() => { trailMarkersRef.current = trailMarkers; }, [trailMarkers]);
   useEffect(() => { answeredQuestionsRef.current = answeredQuestions; }, [answeredQuestions]);
+  useEffect(() => { sessionIdRef.current = sessionId; }, [sessionId]);
+  useEffect(() => { elapsedSecondsRef.current = elapsedSeconds; }, [elapsedSeconds]);
+  useEffect(() => { focusSecondsRef.current = focusSeconds; }, [focusSeconds]);
+  useEffect(() => { blurSecondsRef.current = blurSeconds; }, [blurSeconds]);
+  useEffect(() => { watchedSecondsRef.current = watchedSeconds; }, [watchedSeconds]);
+  useEffect(() => { correctCountRef.current = correctCount; }, [correctCount]);
 
   // Focus/blur + low-volume time tracking
   useEffect(() => {
@@ -236,6 +278,8 @@ export default function WatchPage() {
   // regardless of web component lifecycle timing. They use refs for stale-closure safety.
   const handleWistiaPlay = useCallback(() => {
     setIsVideoPlaying(true);
+    setHasStartedPlaying(true);
+    setShowPauseModal(false);
     // Show fade toast on first play only (not on resume from pause modal)
     if (!hasShownPlayToastRef.current && phaseRef.current === "watching") {
       hasShownPlayToastRef.current = true;
@@ -246,7 +290,17 @@ export default function WatchPage() {
       setTimeout(() => { setPlayToastVisible(false); setPlayToastFading(false); }, 4000);
     }
   }, []);
-  const handleWistiaPause = useCallback(() => setIsVideoPlaying(false), []);
+  const handleWistiaPause = useCallback(() => {
+    setIsVideoPlaying(false);
+    // Show pause modal only on manual pauses during active watching
+    if (
+      phaseRef.current === "watching" &&
+      !programmaticPauseRef.current
+    ) {
+      setShowPauseModal(true);
+    }
+    programmaticPauseRef.current = false;
+  }, []);
   const handleWistiaEnded = useCallback(() => {
     setIsVideoPlaying(false);
     // When Wistia fires "ended", the video reached the end — trigger completion
@@ -302,6 +356,7 @@ export default function WatchPage() {
     // A delta of -5 or more (allowing for small jitter) signals a deliberate backward seek.
     if (highWaterMarkRef.current > 5 && t < highWaterMarkRef.current - 5 && !showSeekWarningRef.current) {
       if (phaseRef.current === "watching") {
+        programmaticPauseRef.current = true;
         playerRef.current?.pause();
         seekSnapbackTimeRef.current = highWaterMarkRef.current;
         showSeekWarningRef.current = true;
@@ -336,6 +391,7 @@ export default function WatchPage() {
     if (next) {
       const idx = trailMarkersRef.current.indexOf(next);
       setCurrentQuestionIdx(idx);
+      programmaticPauseRef.current = true;
       playerRef.current?.pause();
       setPhase("trail_marker");
     }
@@ -505,6 +561,7 @@ export default function WatchPage() {
         return; // Don't navigate — Ranger Report will show
       }
 
+      programmaticPauseRef.current = true;
       playerRef.current?.pause();
       try {
         await pauseSession({
@@ -525,57 +582,62 @@ export default function WatchPage() {
     navigate(getLibraryPath());
   }, [sessionId, phase, clipData, pauseSession, elapsedSeconds, focusSeconds, blurSeconds, watchedSeconds, answeredQuestions, correctCount, navigate]);
 
-  // 30-second autosave
+  // 30-second autosave — reads from refs so the interval never resets
   useEffect(() => {
     if (phase !== "watching" || !sessionId) return;
     const autosaveInterval = setInterval(() => {
       executeApi("PauseSession", {
-        sessionId,
-        elapsedSeconds,
-        focusSeconds,
-        blurSeconds,
-        watchedSeconds,
-        answeredQuestionIds: Array.from(answeredQuestions),
-        correctCount,
+        sessionId: sessionIdRef.current!,
+        elapsedSeconds: elapsedSecondsRef.current,
+        focusSeconds: focusSecondsRef.current,
+        blurSeconds: blurSecondsRef.current,
+        watchedSeconds: watchedSecondsRef.current,
+        answeredQuestionIds: Array.from(answeredQuestionsRef.current),
+        correctCount: correctCountRef.current,
         phase: "watching",
         lowVolumeSeconds: lowVolumeSecondsRef.current,
       }).catch(() => {});
     }, 30_000);
     return () => clearInterval(autosaveInterval);
-  }, [phase, sessionId, elapsedSeconds, focusSeconds, blurSeconds, watchedSeconds, answeredQuestions, correctCount]);
+  }, [phase, sessionId]); // Only phase + sessionId — counter refs are always fresh
 
-  // Save on hide/unload
+  // Save on hide/unload — refs-based so handlers are stable and always current
   // Layer 4: If learner is at ≥85% watched + all markers answered, save with
   // phase "near_complete" so the Library can auto-complete on next visit.
+  const clipDurationRef = useRef<number | null>(null);
+  useEffect(() => { clipDurationRef.current = clipData?.clip?.durationSeconds ?? null; }, [clipData?.clip?.durationSeconds]);
+
   useEffect(() => {
     if (phase !== "watching" || !sessionId) return;
 
     const getNearCompletePhase = (): string => {
-      const clipDuration = clipData?.clip?.durationSeconds;
-      if (!clipDuration || clipDuration <= 0) return "watching";
-      const pct = watchedSeconds / clipDuration;
+      const dur = clipDurationRef.current;
+      if (!dur || dur <= 0) return "watching";
+      const pct = watchedSecondsRef.current / dur;
       const allAnswered = trailMarkersRef.current.length === 0 ||
         trailMarkersRef.current.every((q: any) => answeredQuestionsRef.current.has(q.id));
       return (pct >= 0.85 && allAnswered) ? "near_complete" : "watching";
     };
 
+    const buildPayload = () => ({
+      sessionId: sessionIdRef.current!,
+      elapsedSeconds: elapsedSecondsRef.current,
+      focusSeconds: focusSecondsRef.current,
+      blurSeconds: blurSecondsRef.current,
+      watchedSeconds: watchedSecondsRef.current,
+      answeredQuestionIds: Array.from(answeredQuestionsRef.current),
+      correctCount: correctCountRef.current,
+      phase: getNearCompletePhase(),
+      lowVolumeSeconds: lowVolumeSecondsRef.current,
+    });
+
     const saveOnHide = () => {
       if (document.visibilityState === "hidden") {
-        executeApi("PauseSession", {
-          sessionId, elapsedSeconds, focusSeconds, blurSeconds, watchedSeconds,
-          answeredQuestionIds: Array.from(answeredQuestions),
-          correctCount, phase: getNearCompletePhase(),
-          lowVolumeSeconds: lowVolumeSecondsRef.current,
-        }).catch(() => {});
+        executeApi("PauseSession", buildPayload()).catch(() => {});
       }
     };
     const saveOnUnload = () => {
-      executeApi("PauseSession", {
-        sessionId, elapsedSeconds, focusSeconds, blurSeconds, watchedSeconds,
-        answeredQuestionIds: Array.from(answeredQuestions),
-        correctCount, phase: getNearCompletePhase(),
-        lowVolumeSeconds: lowVolumeSecondsRef.current,
-      }).catch(() => {});
+      executeApi("PauseSession", buildPayload()).catch(() => {});
     };
     document.addEventListener("visibilitychange", saveOnHide);
     window.addEventListener("beforeunload", saveOnUnload);
@@ -583,7 +645,7 @@ export default function WatchPage() {
       document.removeEventListener("visibilitychange", saveOnHide);
       window.removeEventListener("beforeunload", saveOnUnload);
     };
-  }, [phase, sessionId, clipData, elapsedSeconds, focusSeconds, blurSeconds, watchedSeconds, answeredQuestions, correctCount]);
+  }, [phase, sessionId]); // Only phase + sessionId — all data read from refs
 
   // Tab visibility — pause video when tab hidden
   useEffect(() => {
@@ -591,6 +653,7 @@ export default function WatchPage() {
       if (document.visibilityState === "hidden") {
         isFocusedRef.current = false;
         if (phaseRef.current === "watching") {
+          programmaticPauseRef.current = true;
           playerRef.current?.pause();
           tabAwayCountRef.current += 1;
           setTabAway(true);
@@ -648,6 +711,11 @@ export default function WatchPage() {
 
   const handleDismissTabOverlay = useCallback(() => {
     setTabAway(false);
+    playerRef.current?.play();
+  }, []);
+
+  const handlePauseModalResume = useCallback(() => {
+    setShowPauseModal(false);
     playerRef.current?.play();
   }, []);
 
@@ -733,22 +801,27 @@ export default function WatchPage() {
   }, [clipData]);
 
   const handleFinishWatching = useCallback(async () => {
+    programmaticPauseRef.current = true;
     playerRef.current?.pause();
 
     // ── Lite clip path: skip engagement, skip Ranger Report, complete & go back ──
     if (isLite) {
       if (viewer?.id && clipId && sessionId) {
         try {
-          await completeClipPath({
+          await withRetry(() => completeClipPath({
             viewerId: viewer.id,
             clipId,
             sessionId,
             path: "first_pass",
-          });
+          }));
         } catch (err) {
-          console.error("completeClipPath failed for lite clip:", err);
+          console.error("completeClipPath failed for lite clip after retries:", err);
+          toast.error("We couldn't mark this clip as complete. Your watching progress is safe — tap Try Again.");
+          setCompletionError("lite");
+          return; // Don't advance — let learner retry
         }
       }
+      setCompletionError(null);
       setPhase("lite_complete");
       return;
     }
@@ -765,7 +838,7 @@ export default function WatchPage() {
     if (sessionId) {
       const clipDuration = clipData?.clip?.durationSeconds ?? elapsedSeconds;
       try {
-        const res: any = await endSession({
+        const res: any = await withRetry(() => endSession({
           sessionId,
           totalFocusSeconds: focusSeconds,
           totalBlurSeconds: blurSeconds,
@@ -773,7 +846,7 @@ export default function WatchPage() {
           clipDurationSeconds: clipDuration,
           tabAwayCount: tabAwayCountRef.current,
           lowVolumeSeconds: lowVolumeSecondsRef.current,
-        });
+        }));
         if (res?.engagementScore !== undefined) {
           setEngagementScore(res.engagementScore);
           setScore(res.engagementScore);
@@ -781,8 +854,8 @@ export default function WatchPage() {
         setReportReady(true);
         passedFirstPass = res?.passed === true;
       } catch (err) {
-        console.error("endSession failed:", err);
-        // Fallback: use trail marker % if EndSession fails
+        console.error("endSession failed after retries:", err);
+        // Fallback: use trail marker % if EndSession fails completely
         passedFirstPass = pct >= 80;
         setReportReady(true);
       }
@@ -790,12 +863,20 @@ export default function WatchPage() {
 
     if (passedFirstPass && viewer?.id && clipId && sessionId) {
       // First-pass success → CompleteClipPath is the sole gatekeeper for completion
-      completeClipPath({
-        viewerId: viewer.id,
-        clipId,
-        sessionId,
-        path: "first_pass",
-      }).catch(console.error);
+      try {
+        await withRetry(() => completeClipPath({
+          viewerId: viewer.id,
+          clipId,
+          sessionId,
+          path: "first_pass",
+        }));
+        setCompletionError(null);
+      } catch (err) {
+        console.error("completeClipPath failed after retries:", err);
+        toast.error("We couldn't mark this clip as complete. Your watching progress is safe — tap Try Again.");
+        setCompletionError("first_pass");
+        // Still show Ranger Report so they see their score, but the error banner will appear
+      }
 
       const clipDuration = clipData?.clip?.durationSeconds ?? elapsedSeconds;
       // Award XP with retry — ensures XP is reliably written even on transient failures
@@ -868,6 +949,29 @@ export default function WatchPage() {
   const handleFinishWatchingRef = useRef(handleFinishWatching);
   useEffect(() => { handleFinishWatchingRef.current = handleFinishWatching; }, [handleFinishWatching]);
 
+  // ─── Retry completion after total failure ──────────────────────────────────
+  const retryCompletion = useCallback(async () => {
+    if (!completionError || !viewer?.id || !clipId || !sessionId) return;
+    setCompletionError(null);
+    try {
+      await withRetry(() => completeClipPath({
+        viewerId: viewer.id,
+        clipId,
+        sessionId,
+        path: completionError === "lite" ? "first_pass" : completionError,
+      }));
+      toast.success("Progress saved successfully!");
+      // For lite clips that were blocked, advance to complete phase now
+      if (completionError === "lite") {
+        setPhase("lite_complete");
+      }
+    } catch (err) {
+      console.error("retryCompletion still failed:", err);
+      toast.error("Still unable to save. Contact your enablement manager if this continues.");
+      setCompletionError(completionError); // restore error state
+    }
+  }, [completionError, viewer?.id, clipId, sessionId, completeClipPath]);
+
   const handleSearchRescueComplete = useCallback(
     async (passed: boolean, rescueScore: number) => {
       setSearchRescueTriggered(true);
@@ -931,17 +1035,19 @@ export default function WatchPage() {
         // CompleteClipPath recalculates engagement with combined trail + S&R quiz
         if (passed) {
           try {
-            const cpResult: any = await completeClipPath({
+            const cpResult: any = await withRetry(() => completeClipPath({
               viewerId: viewer.id,
               clipId,
               sessionId,
               path: "search_rescue",
-            });
+            }));
             if (cpResult?.newEngagementScore != null) {
               setNewEngagementScore(cpResult.newEngagementScore);
             }
           } catch (err) {
-            console.error("completeClipPath failed:", err);
+            console.error("completeClipPath (S&R) failed after retries:", err);
+            toast.error("We couldn't mark this clip as complete. Your watching progress is safe — tap Try Again.");
+            setCompletionError("search_rescue");
           }
         }
       }
@@ -959,14 +1065,16 @@ export default function WatchPage() {
     if (viewer?.id && clipId && sessionId) {
       // Await completeClipPath so completed=true is written BEFORE navigating to Library
       try {
-        await completeClipPath({
+        await withRetry(() => completeClipPath({
           viewerId: viewer.id,
           clipId,
           sessionId,
           path: "weather_storm",
-        });
+        }));
       } catch (err) {
-        console.error("completeClipPath failed:", err);
+        console.error("completeClipPath (WtS) failed after retries:", err);
+        toast.error("We couldn't mark this clip as complete. Your watching progress is safe — tap Try Again.");
+        setCompletionError("weather_storm");
       }
 
       const clipDuration = clipData?.clip?.durationSeconds ?? elapsedSeconds;
@@ -1091,6 +1199,20 @@ export default function WatchPage() {
 
   return (
     <div className="flex flex-col h-[calc(100dvh-57px)] overflow-hidden">
+      {/* Completion save error — visible retry banner */}
+      {completionError && (
+        <div className="bg-red-50 border-b border-red-200 px-4 py-3 flex items-center justify-between gap-3">
+          <p className="text-sm text-red-800">
+            We couldn't mark this clip as complete. Your watching progress is safe — tap <strong>Try Again</strong>. If the issue continues, contact your enablement manager.
+          </p>
+          <button
+            onClick={retryCompletion}
+            className="shrink-0 px-4 py-1.5 text-sm font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      )}
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
         <div className="px-4 py-2">
@@ -1169,8 +1291,8 @@ export default function WatchPage() {
             📄 Transcript
           </button>
 
-          {/* Back to Clips — hidden during locked phases (S&R / WtS / Ranger Report) */}
-          {!isLocked && (
+          {/* Back to Clips — hidden during locked phases and once playback starts */}
+          {!isLocked && !hasStartedPlaying && (
             <button
               onClick={handlePauseAndBack}
               className="text-sm font-semibold px-4 py-1.5 rounded-lg bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition-colors"
@@ -1295,6 +1417,16 @@ export default function WatchPage() {
                 </button>
               </div>
             </div>
+          )}
+
+          {/* Manual pause modal */}
+          {showPauseModal && phase === "watching" && (
+            <PauseModal
+              clipTitle={clip.title}
+              onResume={handlePauseModalResume}
+              onStartFresh={handleStartFresh}
+              onBackToClips={handlePauseAndBack}
+            />
           )}
         </div>
 
