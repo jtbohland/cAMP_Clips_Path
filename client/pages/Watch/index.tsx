@@ -10,6 +10,7 @@ import SearchRescue from "@/components/SearchRescue";
 import WeatherStorm from "@/components/WeatherStorm";
 import SearchRescuePassPopup from "@/components/SearchRescuePassPopup";
 import ResumePrompt from "@/components/ResumePrompt";
+import PauseModal from "@/components/PauseModal";
 import AscentGuidePanel from "@/components/AscentGuidePanel";
 import { getGuideEntryForClip } from "@/config/ascentGuide.js";
 
@@ -127,6 +128,12 @@ export default function WatchPage() {
 
   // ─── Completion error state (visible retry) ────────────────────────────────
   const [completionError, setCompletionError] = useState<"lite" | "first_pass" | "search_rescue" | "weather_storm" | null>(null);
+
+  // ─── Pause modal state ─────────────────────────────────────────────────────
+  // Once play starts, "Back to Clips" moves from header into a pause modal.
+  const [hasStartedPlaying, setHasStartedPlaying] = useState(false);
+  const [showPauseModal, setShowPauseModal] = useState(false);
+  const programmaticPauseRef = useRef(false); // flag to skip modal on non-manual pauses
 
   // ─── Play-start fade toast ─────────────────────────────────────────────────
   // Shows a brief reminder on first play, then fades out automatically.
@@ -271,6 +278,8 @@ export default function WatchPage() {
   // regardless of web component lifecycle timing. They use refs for stale-closure safety.
   const handleWistiaPlay = useCallback(() => {
     setIsVideoPlaying(true);
+    setHasStartedPlaying(true);
+    setShowPauseModal(false);
     // Show fade toast on first play only (not on resume from pause modal)
     if (!hasShownPlayToastRef.current && phaseRef.current === "watching") {
       hasShownPlayToastRef.current = true;
@@ -281,7 +290,17 @@ export default function WatchPage() {
       setTimeout(() => { setPlayToastVisible(false); setPlayToastFading(false); }, 4000);
     }
   }, []);
-  const handleWistiaPause = useCallback(() => setIsVideoPlaying(false), []);
+  const handleWistiaPause = useCallback(() => {
+    setIsVideoPlaying(false);
+    // Show pause modal only on manual pauses during active watching
+    if (
+      phaseRef.current === "watching" &&
+      !programmaticPauseRef.current
+    ) {
+      setShowPauseModal(true);
+    }
+    programmaticPauseRef.current = false;
+  }, []);
   const handleWistiaEnded = useCallback(() => {
     setIsVideoPlaying(false);
     // When Wistia fires "ended", the video reached the end — trigger completion
@@ -337,6 +356,7 @@ export default function WatchPage() {
     // A delta of -5 or more (allowing for small jitter) signals a deliberate backward seek.
     if (highWaterMarkRef.current > 5 && t < highWaterMarkRef.current - 5 && !showSeekWarningRef.current) {
       if (phaseRef.current === "watching") {
+        programmaticPauseRef.current = true;
         playerRef.current?.pause();
         seekSnapbackTimeRef.current = highWaterMarkRef.current;
         showSeekWarningRef.current = true;
@@ -371,6 +391,7 @@ export default function WatchPage() {
     if (next) {
       const idx = trailMarkersRef.current.indexOf(next);
       setCurrentQuestionIdx(idx);
+      programmaticPauseRef.current = true;
       playerRef.current?.pause();
       setPhase("trail_marker");
     }
@@ -540,6 +561,7 @@ export default function WatchPage() {
         return; // Don't navigate — Ranger Report will show
       }
 
+      programmaticPauseRef.current = true;
       playerRef.current?.pause();
       try {
         await pauseSession({
@@ -631,6 +653,7 @@ export default function WatchPage() {
       if (document.visibilityState === "hidden") {
         isFocusedRef.current = false;
         if (phaseRef.current === "watching") {
+          programmaticPauseRef.current = true;
           playerRef.current?.pause();
           tabAwayCountRef.current += 1;
           setTabAway(true);
@@ -688,6 +711,11 @@ export default function WatchPage() {
 
   const handleDismissTabOverlay = useCallback(() => {
     setTabAway(false);
+    playerRef.current?.play();
+  }, []);
+
+  const handlePauseModalResume = useCallback(() => {
+    setShowPauseModal(false);
     playerRef.current?.play();
   }, []);
 
@@ -773,6 +801,7 @@ export default function WatchPage() {
   }, [clipData]);
 
   const handleFinishWatching = useCallback(async () => {
+    programmaticPauseRef.current = true;
     playerRef.current?.pause();
 
     // ── Lite clip path: skip engagement, skip Ranger Report, complete & go back ──
@@ -1262,8 +1291,8 @@ export default function WatchPage() {
             📄 Transcript
           </button>
 
-          {/* Back to Clips — hidden during locked phases (S&R / WtS / Ranger Report) */}
-          {!isLocked && (
+          {/* Back to Clips — hidden during locked phases and once playback starts */}
+          {!isLocked && !hasStartedPlaying && (
             <button
               onClick={handlePauseAndBack}
               className="text-sm font-semibold px-4 py-1.5 rounded-lg bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition-colors"
@@ -1388,6 +1417,16 @@ export default function WatchPage() {
                 </button>
               </div>
             </div>
+          )}
+
+          {/* Manual pause modal */}
+          {showPauseModal && phase === "watching" && (
+            <PauseModal
+              clipTitle={clip.title}
+              onResume={handlePauseModalResume}
+              onStartFresh={handleStartFresh}
+              onBackToClips={handlePauseAndBack}
+            />
           )}
         </div>
 
