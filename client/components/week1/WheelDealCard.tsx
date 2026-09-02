@@ -50,7 +50,7 @@ export default function WheelDealCard({ isVerified, verificationData, isLegacy, 
     } finally {
       setSubmitting(false);
     }
-  }, [product, scenario, score, onSubmit]);
+  }, [product, scenario, score, aiCoachScore, onSubmit]);
 
   return (
     <div className="rounded-xl border border-gray-200 shadow-sm overflow-hidden">
