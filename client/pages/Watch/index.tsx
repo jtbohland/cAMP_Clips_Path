@@ -132,6 +132,7 @@ export default function WatchPage() {
   // ─── Pause modal state ─────────────────────────────────────────────────────
   // Once play starts, "Back to Clips" moves from header into a pause modal.
   const [hasStartedPlaying, setHasStartedPlaying] = useState(false);
+  const hasStartedPlayingRef = useRef(false);
   const [showPauseModal, setShowPauseModal] = useState(false);
   const programmaticPauseRef = useRef(false); // flag to skip modal on non-manual pauses
 
@@ -279,6 +280,7 @@ export default function WatchPage() {
   const handleWistiaPlay = useCallback(() => {
     setIsVideoPlaying(true);
     setHasStartedPlaying(true);
+    hasStartedPlayingRef.current = true;
     setShowPauseModal(false);
     // Show fade toast on first play only (not on resume from pause modal)
     if (!hasShownPlayToastRef.current && phaseRef.current === "watching") {
@@ -293,8 +295,10 @@ export default function WatchPage() {
   const handleWistiaPause = useCallback(() => {
     setIsVideoPlaying(false);
     // Show pause modal only on manual pauses during active watching
+    // Guard: don't show if the player just mounted paused (e.g. after Start Fresh)
     if (
       phaseRef.current === "watching" &&
+      hasStartedPlayingRef.current &&
       !programmaticPauseRef.current
     ) {
       setShowPauseModal(true);
@@ -531,6 +535,8 @@ export default function WatchPage() {
     setAnsweredQuestions(new Set());
     setWatchedSeconds(0);
     lastWatchedTimeRef.current = 0;
+    hasStartedPlayingRef.current = false;
+    setHasStartedPlaying(false);
     // Use ResetSession to wipe responses + reset existing session row (not create a new one)
     resetSession({ clipId, viewerId: viewer.id, adminForce: false })
       .then((res: any) => {

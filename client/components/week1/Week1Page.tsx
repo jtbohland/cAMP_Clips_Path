@@ -454,7 +454,7 @@ export default function Week1Page({ viewerId, viewerName, viewerRole, isAdmin, p
                     : "bg-white text-purple-700 border border-purple-300 hover:bg-purple-100"
                 }`}
               >
-                {testMode ? "👁️ Show My Progress" : "🧪 Test as New Learner"}
+                {testMode ? "👁️ Show My Progress" : "🧪 Test as New AE"}
               </button>
             )}
             {(!testMode || sdrTestMode) && !vpTestMode && onToggleSdrTest && (
