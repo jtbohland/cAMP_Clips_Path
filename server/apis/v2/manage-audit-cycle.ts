@@ -11,7 +11,7 @@ export default api({
   },
 
   input: z.object({
-    action: z.enum(["create", "close", "list"]),
+    action: z.enum(["create", "close", "list", "update"]),
     cycleId: z.string().uuid().nullable().optional(),
     label: z.string().nullable().optional(),
     deadline: z.string().nullable().optional(),
@@ -54,6 +54,14 @@ export default api({
         `UPDATE cliptracker_v2_audit_cycles SET status = 'closed', closed_at = NOW() WHERE id = $1`,
         [input.cycleId],
         { label: "Close audit cycle" }
+      );
+    }
+
+    if (action === "update" && input.cycleId) {
+      await ctx.integrations.apps_db.execute(
+        `UPDATE cliptracker_v2_audit_cycles SET label = COALESCE($2, label), deadline = COALESCE($3::timestamptz, deadline), description = COALESCE($4, description) WHERE id = $1`,
+        [input.cycleId, input.label, input.deadline, input.description],
+        { label: "Update audit cycle" }
       );
     }
 

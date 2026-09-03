@@ -167,7 +167,15 @@ export default function AscentAuditTab() {
 
         {cycles.length > 0 && (
           <div className="space-y-2">
-            {cycles.map((c: any) => (
+            {cycles.map((c: any) => {
+              // Parse deadline as local date to avoid UTC off-by-one
+              const deadlineDisplay = c.deadline
+                ? (() => {
+                    const parts = c.deadline.slice(0, 10).split("-");
+                    return new Date(+parts[0], +parts[1] - 1, +parts[2]).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+                  })()
+                : null;
+              return (
               <div key={c.id} className={`flex items-center justify-between px-4 py-3 rounded-lg border ${
                 c.status === "active" ? "border-emerald-200 bg-emerald-50/50" : "border-gray-100 bg-gray-50/50"
               }`}>
@@ -176,19 +184,33 @@ export default function AscentAuditTab() {
                   <span className={`ml-2 text-[10px] font-semibold px-2 py-0.5 rounded-full ${
                     c.status === "active" ? "bg-emerald-100 text-emerald-700" : "bg-gray-200 text-gray-600"
                   }`}>{c.status}</span>
-                  {c.deadline && <span className="text-xs text-gray-400 ml-2">Due: {new Date(c.deadline).toLocaleDateString()}</span>}
+                  {deadlineDisplay && <span className="text-xs text-gray-400 ml-2">Due: {deadlineDisplay}</span>}
                   <span className="text-xs text-gray-400 ml-2">({c.signoffCount} sign-offs)</span>
                 </div>
                 {c.status === "active" && (
-                  <button
-                    onClick={() => handleCloseCycle(c.id)}
-                    className="text-xs text-red-600 hover:text-red-800 font-medium"
-                  >
-                    Close Cycle
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => {
+                        const newLabel = prompt("Edit cycle label:", c.label);
+                        if (newLabel && newLabel !== c.label) {
+                          manageCycle({ action: "update", cycleId: c.id, label: newLabel, deadline: c.deadline, description: c.description, cycleType: c.cycleType, createdBy: null });
+                        }
+                      }}
+                      className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+                    >
+                      ✏️ Edit
+                    </button>
+                    <button
+                      onClick={() => handleCloseCycle(c.id)}
+                      className="text-xs text-red-600 hover:text-red-800 font-medium"
+                    >
+                      End Cycle
+                    </button>
+                  </div>
                 )}
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
