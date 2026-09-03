@@ -6,6 +6,7 @@ import { useViewer } from "@/components/ViewerContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import PageHeader from "@/components/PageHeader";
+import Confetti from "@/components/audit/Confetti";
 import {
   TrailMarkersSection,
   SearchRescueSection,
@@ -149,13 +150,41 @@ export default function AuditDayPage() {
   // ─── Post Sign-Off Thank You ─────────────────────────────────
   if (signedOff) {
     const smeNames = topic.smes?.map((s: any) => s.name).join(" & ") ?? "SME";
+    const badgeCardRef = (el: HTMLDivElement | null) => {
+      if (el) (window as any).__auditBadgeCard = el;
+    };
+    const handleShareBadge = () => {
+      const text = `${badge.emoji} ${badge.name}\n"${badge.vibe}"\n\nJust completed my SME audit of "${topic.title}" in cAMP Ascent! 🍁`;
+      navigator.clipboard.writeText(text).then(
+        () => toast.success("Badge copied! Paste it in Slack to share. 🎉"),
+        () => toast.error("Failed to copy — try manually.")
+      );
+    };
     return (
       <div className="flex flex-col h-full overflow-auto" style={{ backgroundColor: "#ECFDF5" }}>
+        <Confetti />
         <PageHeader emoji="🍁" title="Audit Complete" subtitle={topic.title} />
         <div className="p-6 max-w-2xl mx-auto w-full text-center space-y-6">
-          <div className="text-7xl">{badge.emoji}</div>
-          <h2 className="text-2xl font-bold text-gray-900">{badge.name}</h2>
-          <p className="text-gray-600 italic text-lg">{badge.vibe}</p>
+          {/* Shareable Badge Card */}
+          <div ref={badgeCardRef} className="rounded-2xl bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 p-8 shadow-xl text-white">
+            <div className="text-6xl mb-3">{badge.emoji}</div>
+            <h2 className="text-2xl font-extrabold">{badge.name}</h2>
+            <p className="text-emerald-100 italic text-base mt-1">"{badge.vibe}"</p>
+            <div className="mt-4 border-t border-emerald-500/40 pt-4">
+              <p className="text-emerald-200 text-sm">Topic audited:</p>
+              <p className="font-bold text-lg text-white">{topic.title}</p>
+            </div>
+            <p className="text-[10px] text-emerald-300 mt-4">cAMP Ascent · SME Audit Program</p>
+          </div>
+
+          {/* Share button */}
+          <button
+            onClick={handleShareBadge}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-indigo-600 text-white font-semibold text-sm hover:bg-indigo-700 transition-colors shadow-md"
+          >
+            📋 Copy Badge to Clipboard
+          </button>
+
           <div className="rounded-xl bg-white border border-emerald-200 p-6 shadow-sm">
             <p className="text-gray-700 text-lg leading-relaxed">
               Thank you, <strong>{smeNames}</strong> — your time and expertise make cAMP Ascent better for every new Ampliteer. 🙏
@@ -205,6 +234,29 @@ export default function AuditDayPage() {
           </span>
         )}
 
+        {/* ─── Peer Progress ─── */}
+        {data.peerProgress && data.peerProgress.length > 0 && (
+          <div className="rounded-lg bg-blue-50 border border-blue-200 px-4 py-3">
+            <p className="text-xs font-semibold text-blue-800 mb-1.5">👥 Co-SME Progress</p>
+            <div className="space-y-1">
+              {data.peerProgress.map((peer, i) => {
+                const pct = peer.totalSections > 0 ? Math.round((peer.approvedCount / peer.totalSections) * 100) : 0;
+                return (
+                  <div key={i} className="flex items-center gap-2 text-sm">
+                    <span className="font-medium text-blue-900">{peer.viewerName}</span>
+                    <span className="text-blue-600">—</span>
+                    {peer.signedOff ? (
+                      <span className="text-emerald-600 font-semibold text-xs">✅ Signed off</span>
+                    ) : (
+                      <span className="text-blue-600 text-xs">{peer.approvedCount}/{peer.totalSections} sections approved ({pct}%)</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Resource-only note */}
         {!topic.hasVideo && (
           <div className="rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800">
@@ -217,7 +269,7 @@ export default function AuditDayPage() {
         {clips.map((clip: any) => (
           <div key={clip.clipId} className="space-y-4">
             {/* Clip (summary + objectives + SMEs + notes) */}
-            <ClipSection clip={clip} topicKey={topicKey!} onSaved={refetch}
+            <ClipSection clip={clip} topicKey={topicKey!} topicTitle={topic.title} onSaved={refetch}
               smes={topic.smes}
               isApproved={approvedSections.has(`summary_${clip.clipId}`)}
               onApproved={refetch}

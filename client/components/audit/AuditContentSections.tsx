@@ -5,6 +5,15 @@ import { toast } from "sonner";
 import { useViewer } from "@/components/ViewerContext";
 import { getGuideEntryForClip } from "@/config/ascentGuide";
 
+// ─── Invite helper ─────────────────────────────────────────────────
+function copyInvite(smeName: string, topicLabel: string) {
+  const appUrl = window.location.origin;
+  const msg = `Hey ${smeName}! You've been added as a Subject Matter Expert on "${topicLabel}" in cAMP Ascent. Register here to get started:\n\n${appUrl}\n\nSelect "Subject Matter Expert (SME)" as your role when registering. The audit deadline is October 9, 2026 — the clock is ticking! ⏱`;
+  navigator.clipboard.writeText(msg).then(() => {
+    toast.success(`Invite copied! Send it to ${smeName} via Slack or email.`);
+  }).catch(() => toast.error("Failed to copy — try manually."));
+}
+
 // ─── Shared hooks ──────────────────────────────────────────────────
 function useSaveAudit(topicKey: string, onSaved?: () => void) {
   const { viewer } = useViewer();
@@ -497,9 +506,9 @@ export function GearSection({ resources, clipTitle, clipId, topicKey, onSaved, s
 }
 
 // ─── Clip Section (editable summary + objectives + SMEs + notes) ──
-export function ClipSection({ clip, topicKey, onSaved, smes, isApproved, onApproved, sectionKey }: {
+export function ClipSection({ clip, topicKey, topicTitle, onSaved, smes, isApproved, onApproved, sectionKey }: {
   clip: { clipId: string; title: string; videoUrl: string | null; sortOrder: number };
-  topicKey: string; onSaved?: () => void;
+  topicKey: string; topicTitle?: string; onSaved?: () => void;
   smes?: Array<{ name: string; title: string; note?: string | null }>;
   isApproved?: boolean; onApproved?: () => void; sectionKey?: string;
 }) {
@@ -609,7 +618,10 @@ export function ClipSection({ clip, topicKey, onSaved, smes, isApproved, onAppro
                 <div className="mt-3 pt-3 border-t border-gray-200">
                   <p className="text-xs font-semibold text-gray-600 mb-1">Subject Matter Experts:</p>
                   {smes.map((sme, i) => (
-                    <p key={i} className="text-sm text-gray-700"><span className="font-medium">{sme.name}</span><span className="text-gray-400"> · {sme.title}</span>{sme.note && <span className="text-amber-500 italic"> ({sme.note})</span>}</p>
+                    <div key={i} className="flex items-center gap-2 text-sm text-gray-700">
+                      <span className="font-medium">{sme.name}</span><span className="text-gray-400"> · {sme.title}</span>{sme.note && <span className="text-amber-500 italic"> ({sme.note})</span>}
+                      <button onClick={(e) => { e.stopPropagation(); copyInvite(sme.name, topicTitle ?? topicKey); }} className="text-xs text-indigo-500 hover:text-indigo-700 ml-1" title="Copy invite message">📨</button>
+                    </div>
                   ))}
                 </div>
               )}
@@ -619,7 +631,10 @@ export function ClipSection({ clip, topicKey, onSaved, smes, isApproved, onAppro
             <div className="rounded-lg bg-gray-50 border border-gray-200 px-4 py-3 mb-3">
               <p className="text-xs font-semibold text-gray-600 mb-1">Subject Matter Experts:</p>
               {smes.map((sme, i) => (
-                <p key={i} className="text-sm text-gray-700"><span className="font-medium">{sme.name}</span><span className="text-gray-400"> · {sme.title}</span>{sme.note && <span className="text-amber-500 italic"> ({sme.note})</span>}</p>
+                <div key={i} className="flex items-center gap-2 text-sm text-gray-700">
+                  <span className="font-medium">{sme.name}</span><span className="text-gray-400"> · {sme.title}</span>{sme.note && <span className="text-amber-500 italic"> ({sme.note})</span>}
+                  <button onClick={(e) => { e.stopPropagation(); copyInvite(sme.name, topicTitle ?? topicKey); }} className="text-xs text-indigo-500 hover:text-indigo-700 ml-1" title="Copy invite message">📨</button>
+                </div>
               ))}
             </div>
           )}

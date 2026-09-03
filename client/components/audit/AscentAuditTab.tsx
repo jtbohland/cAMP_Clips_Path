@@ -101,6 +101,31 @@ export default function AscentAuditTab() {
     <div className={`space-y-6 ${fetching && !loading ? "opacity-70" : ""}`}>
       {fetching && !loading && <div className="text-xs text-gray-600">Updating…</div>}
 
+      {/* ─── Escalation Alert ─── */}
+      {(() => {
+        const inactive: string[] = [];
+        for (const t of topics) {
+          for (const sme of (t as any).smes ?? []) {
+            const match = smeViewerMap.get(sme.name.toLowerCase());
+            if (!match?.registered) continue;
+            const lastDate = match.lastActivity ? new Date(match.lastActivity) : null;
+            const daysSince = lastDate ? Math.floor((Date.now() - lastDate.getTime()) / 86400000) : null;
+            if (daysSince === null || daysSince >= 10) {
+              if (!inactive.includes(sme.name)) inactive.push(sme.name);
+            }
+          }
+        }
+        if (inactive.length === 0) return null;
+        return (
+          <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3">
+            <p className="text-sm font-bold text-red-800 flex items-center gap-1.5">⚠️ Needs Attention ({inactive.length})</p>
+            <p className="text-xs text-red-700 mt-1">
+              {inactive.join(", ")} {inactive.length === 1 ? "has" : "have"} not been active for 10+ days. Consider sending a follow-up.
+            </p>
+          </div>
+        );
+      })()}
+
       {/* ─── Admin Quick Actions ─── */}
       <div className="flex items-center gap-3">
         <button
@@ -287,9 +312,17 @@ export default function AscentAuditTab() {
                         <div className="space-y-1">
                           {t.smes.map((sme: any, si: number) => {
                             const match = smeViewerMap.get(sme.name.toLowerCase());
+                            const lastDate = match?.lastActivity ? new Date(match.lastActivity) : null;
+                            const daysSince = lastDate ? Math.floor((Date.now() - lastDate.getTime()) / 86400000) : null;
+                            const needsAttention = match?.registered && (daysSince === null || daysSince >= 10);
                             return (
-                              <div key={si}>
-                                {match?.lastActivity ? new Date(match.lastActivity).toLocaleDateString() : "—"}
+                              <div key={si} className="flex items-center gap-1.5">
+                                <span>{lastDate ? lastDate.toLocaleDateString() : "—"}</span>
+                                {needsAttention && (
+                                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-200 whitespace-nowrap" title={daysSince !== null ? `${daysSince} days since last activity` : "No activity recorded"}>
+                                    ⚠️ {daysSince !== null ? `${daysSince}d` : "No activity"}
+                                  </span>
+                                )}
                               </div>
                             );
                           })}
