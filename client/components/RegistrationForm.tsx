@@ -287,11 +287,9 @@ export default function RegistrationForm() {
               </select>
             </div>
 
-            {!isSME && (
-              <>
             {/* Manager */}
             <div className="space-y-1">
-              <label htmlFor="reg-manager" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="reg-manager" className={`block text-sm font-medium ${isSME ? "text-gray-400" : "text-gray-700"}`}>
                 Manager
               </label>
               <select
@@ -302,13 +300,14 @@ export default function RegistrationForm() {
                   setManagerName(selected?.name ?? "");
                   setManagerEmail(selected?.email ?? "");
                 }}
-                required
-                className={selectClasses}
+                required={!isSME}
+                disabled={isSME}
+                className={isSME ? "w-full rounded-lg border border-gray-200 bg-gray-100 px-3 py-2.5 text-sm text-gray-400 cursor-not-allowed" : selectClasses}
               >
                 <option value="" disabled>
-                  Select your manager
+                  {isSME ? "Not applicable for SME auditors" : "Select your manager"}
                 </option>
-                {MANAGERS.map((m) => (
+                {!isSME && MANAGERS.map((m) => (
                   <option key={m.email} value={m.name}>
                     {m.name}
                   </option>
@@ -318,39 +317,43 @@ export default function RegistrationForm() {
 
             {/* Belay Buddy */}
             <div className="space-y-1">
-              <label htmlFor="reg-belay" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="reg-belay" className={`block text-sm font-medium ${isSME ? "text-gray-400" : "text-gray-700"}`}>
                 Belay Buddy
               </label>
               <input
                 id="reg-belay"
                 type="text"
-                placeholder="First and last name"
+                placeholder={isSME ? "Not applicable for SME auditors" : "First and last name"}
                 value={belayBuddy}
                 onChange={(e) => setBelayBuddy(e.target.value)}
-                required
-                className={inputClasses}
+                required={!isSME}
+                disabled={isSME}
+                className={isSME ? "w-full rounded-lg border border-gray-200 bg-gray-100 px-3 py-2.5 text-sm text-gray-400 cursor-not-allowed placeholder:text-gray-400" : inputClasses}
               />
-              <p className="text-xs text-gray-500">
-                If your manager has decided to be your mentor, type their name in.
-              </p>
+              {!isSME && (
+                <p className="text-xs text-gray-500">
+                  If your manager has decided to be your mentor, type their name in.
+                </p>
+              )}
             </div>
 
             {/* Timezone */}
             <div className="space-y-1">
-              <label htmlFor="reg-timezone" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="reg-timezone" className={`block text-sm font-medium ${isSME ? "text-gray-400" : "text-gray-700"}`}>
                 Timezone Region
               </label>
               <select
                 id="reg-timezone"
                 value={timezone}
                 onChange={(e) => setTimezone(e.target.value)}
-                required
-                className={selectClasses}
+                required={!isSME}
+                disabled={isSME}
+                className={isSME ? "w-full rounded-lg border border-gray-200 bg-gray-100 px-3 py-2.5 text-sm text-gray-400 cursor-not-allowed" : selectClasses}
               >
                 <option value="" disabled>
-                  Select your timezone region
+                  {isSME ? "Not applicable for SME auditors" : "Select your timezone region"}
                 </option>
-                {TIMEZONES.map((tz) => (
+                {!isSME && TIMEZONES.map((tz) => (
                   <option key={tz.value} value={tz.value}>
                     {tz.label}
                   </option>
@@ -360,23 +363,24 @@ export default function RegistrationForm() {
 
             {/* Day 1 of Ascent */}
             <div className="space-y-1">
-              <label htmlFor="reg-day1" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="reg-day1" className={`block text-sm font-medium ${isSME ? "text-gray-400" : "text-gray-700"}`}>
                 Day 1 of Ascent
               </label>
               <input
                 id="reg-day1"
                 type="date"
-                value={ascentDay1}
+                value={isSME ? "" : ascentDay1}
                 readOnly
                 tabIndex={-1}
-                className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-600 cursor-not-allowed"
+                disabled={isSME}
+                className="w-full rounded-lg border border-gray-200 bg-gray-100 px-3 py-2.5 text-sm text-gray-400 cursor-not-allowed"
               />
-              <p className="text-xs text-amber-600 font-medium">
-                ⚠️ Defaults to today. Do not click "Start the Ascent" if you are not ready to begin!
-              </p>
+              {!isSME && (
+                <p className="text-xs text-amber-600 font-medium">
+                  ⚠️ Defaults to today. Do not click "Start the Ascent" if you are not ready to begin!
+                </p>
+              )}
             </div>
-              </>
-            )}
 
             {/* Submit CTA */}
             <button
