@@ -505,6 +505,7 @@ export function ClipSection({ clip, topicKey, onSaved, smes, isApproved, onAppro
 }) {
   const [notes, setNotes] = useState("");
   const [videoLink, setVideoLink] = useState("");
+  const [savedLinks, setSavedLinks] = useState<string[]>([]);
   const [linkSaved, setLinkSaved] = useState(false);
   const { doSave, saving } = useSaveAudit(topicKey, onSaved);
   const [saved, setSaved] = useState(false);
@@ -549,7 +550,10 @@ export function ClipSection({ clip, topicKey, onSaved, smes, isApproved, onAppro
   const handleSaveVideoLink = useCallback(async () => {
     if (!videoLink.trim()) return;
     await doSave({ editType: "video_link", clipId: clip.clipId, fieldName: "video_link", oldValue: null, newValue: videoLink.trim() });
+    setSavedLinks((prev) => [...prev, videoLink.trim()]);
+    setVideoLink("");
     setLinkSaved(true);
+    setTimeout(() => setLinkSaved(false), 2000);
   }, [doSave, clip.clipId, videoLink]);
 
   const approved = isApproved ?? false;
@@ -681,7 +685,8 @@ export function ClipSection({ clip, topicKey, onSaved, smes, isApproved, onAppro
       </div>
 
       <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-        <label className="text-xs font-semibold text-gray-600 mb-1 block">🎬 Supplemental / Re-recorded Video Link</label>
+        <label className="text-xs font-semibold text-gray-600 mb-1 block">🎬 Supplemental / Re-recorded Video Links</label>
+        <p className="text-[10px] text-gray-500 mb-2">Paste a link below and click <strong>Save Link</strong>. The link will appear in the list and the field will clear so you can add more.</p>
         <div className="flex gap-2 items-center">
           <input
             type="url"
@@ -698,7 +703,22 @@ export function ClipSection({ clip, topicKey, onSaved, smes, isApproved, onAppro
             {saving ? "Saving…" : linkSaved ? "✅ Saved" : "Save Link"}
           </button>
         </div>
-        <p className="text-[10px] text-amber-700 mt-2 leading-relaxed">
+
+        {/* Saved links list */}
+        {savedLinks.length > 0 && (
+          <div className="mt-3 space-y-1.5">
+            <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Saved Links ({savedLinks.length})</p>
+            {savedLinks.map((link, i) => (
+              <div key={i} className="flex items-center gap-2 rounded-md bg-white border border-gray-200 px-3 py-1.5">
+                <span className="text-xs text-gray-400">#{i + 1}</span>
+                <a href={link} target="_blank" rel="noopener noreferrer" className="text-xs text-indigo-600 hover:underline truncate flex-1">{link}</a>
+                <span className="text-[10px] text-emerald-600 font-medium">✅</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <p className="text-[10px] text-amber-700 mt-3 leading-relaxed">
           ⚠️ <strong>Important:</strong> The link you share must allow your admin to <strong>download the video as an MP4</strong>.
           For Zoom → use the cloud recording share link with download enabled.
           For Google Drive → set sharing to "Anyone with the link can view" + enable download.
