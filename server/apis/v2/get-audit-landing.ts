@@ -34,7 +34,7 @@ export default api({
   },
 
   input: z.object({
-    viewerId: z.string().uuid(),
+    viewerId: z.string().nullable(),
   }),
 
   output: z.object({
@@ -93,13 +93,16 @@ export default api({
 
     // Get SME assignments for this viewer
     const AssignmentRow = z.object({ topic_key: z.string() });
-    const myAssignments = await ctx.integrations.apps_db.query(
-      `SELECT topic_key FROM cliptracker_v2_sme_assignments WHERE viewer_id = $1`,
-      AssignmentRow,
-      [viewerId],
-      { label: "Get my SME assignments" }
-    );
-    const myTopicKeys = new Set(myAssignments.map(a => a.topic_key));
+    let myTopicKeys = new Set<string>();
+    if (viewerId) {
+      const myAssignments = await ctx.integrations.apps_db.query(
+        `SELECT topic_key FROM cliptracker_v2_sme_assignments WHERE viewer_id = $1`,
+        AssignmentRow,
+        [viewerId],
+        { label: "Get my SME assignments" }
+      );
+      myTopicKeys = new Set(myAssignments.map(a => a.topic_key));
+    }
 
     // Get sign-offs for active cycle (or all if no cycle)
     const SignoffRow = z.object({

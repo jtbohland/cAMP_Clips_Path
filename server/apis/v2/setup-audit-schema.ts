@@ -112,6 +112,21 @@ export default api({
     );
     ctx.log.info("Created cliptracker_v2_day_metadata");
 
-    return { success: true, message: "All 5 audit tables created successfully" };
+    // ── 6. Audit section approvals ─────────────────────────────────
+    await ctx.integrations.apps_db.execute(
+      `CREATE TABLE IF NOT EXISTS cliptracker_v2_audit_approvals (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        viewer_id UUID NOT NULL REFERENCES cliptracker_v2_viewers(id) ON DELETE CASCADE,
+        topic_key TEXT NOT NULL,
+        section_key TEXT NOT NULL,
+        approved_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(viewer_id, topic_key, section_key)
+      )`,
+      undefined,
+      { label: "Create audit_approvals table" }
+    );
+    ctx.log.info("Created cliptracker_v2_audit_approvals");
+
+    return { success: true, message: "All 6 audit tables created successfully" };
   },
 });

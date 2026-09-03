@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router";
 import { useApiData } from "@/hooks/useApiData";
 import { useApi } from "@/hooks/useApi";
@@ -23,9 +23,27 @@ export default function AuditDayPage() {
 
   const { data, loading, fetching, isError, error, refetch } = useApiData("GetAuditDayContent", {
     topicKey: topicKey ?? "",
+    viewerId: viewer?.id ?? null,
   }, { enabled: !!topicKey });
 
+  // Sync approvals from API
+  const approvedSections = useMemo(() => new Set(data?.approvedSections ?? []), [data?.approvedSections]);
+
   const { run: signOff, loading: signingOff } = useApi("SignOffAudit");
+
+  // Compute required sections and sign-off readiness
+  const requiredSections = data ? (() => {
+    const sections: string[] = ["summary"];
+    for (const clip of data.clips) {
+      if (clip.trailMarkers?.length > 0) sections.push(`markers_${clip.clipId}`);
+      if (clip.searchRescue?.length > 0) sections.push(`sr_${clip.clipId}`);
+      if (clip.weatherStorm) sections.push(`wts_${clip.clipId}`);
+      if (Array.isArray(clip.resources) && clip.resources.length > 0) sections.push(`gear_${clip.clipId}`);
+    }
+    return sections;
+  })() : [];
+  const allApproved = requiredSections.length > 0 && requiredSections.every(s => approvedSections.has(s));
+  const pendingSections = requiredSections.filter(s => !approvedSections.has(s));
 
   const handleSignOff = useCallback(async () => {
     if (!viewer?.id || !topicKey) return;
@@ -125,6 +143,8 @@ export default function AuditDayPage() {
           smes={topic.smes}
           topicKey={topicKey!}
           onSaved={refetch}
+          isApproved={approvedSections.has("summary")}
+          onApproved={refetch}
         />
 
         {/* Clip-level content */}
@@ -134,16 +154,20 @@ export default function AuditDayPage() {
             <ClipSection clip={clip} topicKey={topicKey!} onSaved={refetch} />
 
             {/* Trail Markers */}
-            <TrailMarkersSection markers={clip.trailMarkers} clipTitle={clip.title} topicKey={topicKey!} onSaved={refetch} />
+            <TrailMarkersSection markers={clip.trailMarkers} clipTitle={clip.title} topicKey={topicKey!} onSaved={refetch}
+              isApproved={approvedSections.has(`markers_${clip.clipId}`)} onApproved={refetch} sectionKey={`markers_${clip.clipId}`} />
 
             {/* Search & Rescue */}
-            <SearchRescueSection questions={clip.searchRescue} clipTitle={clip.title} topicKey={topicKey!} onSaved={refetch} />
+            <SearchRescueSection questions={clip.searchRescue} clipTitle={clip.title} topicKey={topicKey!} onSaved={refetch}
+              isApproved={approvedSections.has(`sr_${clip.clipId}`)} onApproved={refetch} sectionKey={`sr_${clip.clipId}`} />
 
             {/* Weather the Storm */}
-            <WeatherStormSection wts={clip.weatherStorm} clipTitle={clip.title} clipId={clip.clipId} topicKey={topicKey!} onSaved={refetch} />
+            <WeatherStormSection wts={clip.weatherStorm} clipTitle={clip.title} clipId={clip.clipId} topicKey={topicKey!} onSaved={refetch}
+              isApproved={approvedSections.has(`wts_${clip.clipId}`)} onApproved={refetch} sectionKey={`wts_${clip.clipId}`} />
 
             {/* cAMP Gear */}
-            <GearSection resources={clip.resources} clipTitle={clip.title} clipId={clip.clipId} topicKey={topicKey!} onSaved={refetch} />
+            <GearSection resources={clip.resources} clipTitle={clip.title} clipId={clip.clipId} topicKey={topicKey!} onSaved={refetch}
+              isApproved={approvedSections.has(`gear_${clip.clipId}`)} onApproved={refetch} sectionKey={`gear_${clip.clipId}`} />
           </div>
         ))}
 
@@ -156,6 +180,24 @@ export default function AuditDayPage() {
             By signing off, you confirm that you have reviewed all content for <strong>{topic.title}</strong> and
             it is accurate as of today. Any notes you leave will be visible to the program administrator.
           </p>
+
+          {/* Approval checklist */}
+          {!allApproved && pendingSections.length > 0 && (
+            <div className="rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 mb-4">
+              <p className="text-xs font-semibold text-amber-800 mb-1">⏳ Sections still need approval:</p>
+              <ul className="space-y-0.5">
+                {pendingSections.map(s => (
+                  <li key={s} className="text-xs text-amber-700 flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0" />
+                    {s === "summary" ? "Summary & Objectives" : s.replace(/_/g, " ").replace(/^(markers|sr|wts|gear) /, (_, t) => {
+                      const labels: Record<string, string> = { markers: "Trail Markers · ", sr: "S&R · ", wts: "Weather the Storm · ", gear: "cAMP Gear · " };
+                      return labels[t] ?? t + " · ";
+                    })}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {/* Notes textarea */}
           <div className="mb-4">
@@ -173,10 +215,14 @@ export default function AuditDayPage() {
 
           <button
             onClick={handleSignOff}
-            disabled={signingOff}
-            className="w-full py-3 rounded-lg text-sm font-bold bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white transition-colors shadow-md"
+            disabled={signingOff || !allApproved}
+            className={`w-full py-3 rounded-lg text-sm font-bold transition-colors shadow-md ${
+              allApproved
+                ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                : "bg-gray-200 text-gray-400 cursor-not-allowed"
+            }`}
           >
-            {signingOff ? "Signing off…" : "✅ Sign & Complete Audit"}
+            {signingOff ? "Signing off…" : !allApproved ? "🔒 Approve all sections first" : "✅ Sign & Complete Audit"}
           </button>
         </div>
       </div>

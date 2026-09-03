@@ -12,6 +12,7 @@ export default api({
 
   input: z.object({
     topicKey: z.string(),
+    viewerId: z.string().nullable().optional(),
   }),
 
   output: z.object({
@@ -55,9 +56,10 @@ export default api({
         timerMinutes: z.number(),
       }).nullable(),
     })),
+    approvedSections: z.array(z.string()),
   }),
 
-  async run(ctx, { topicKey }) {
+  async run(ctx, { topicKey, viewerId }) {
     // 1. Get topic metadata
     const MetaRow = z.object({
       topic_key: z.string(),
@@ -189,6 +191,20 @@ export default api({
       };
     });
 
+    // 5. Get approvals for this viewer + topic
+    const approvedSections: string[] = [];
+    if (viewerId) {
+      const ApprovalRow = z.object({ section_key: z.string() });
+      const approvals = await ctx.integrations.apps_db.query(
+        `SELECT section_key FROM cliptracker_v2_audit_approvals
+         WHERE viewer_id = $1 AND topic_key = $2`,
+        ApprovalRow,
+        [viewerId, topicKey],
+        { label: "Get section approvals" }
+      );
+      approvedSections.push(...approvals.map(a => a.section_key));
+    }
+
     return {
       topic: {
         topicKey: meta.topic_key,
@@ -202,6 +218,7 @@ export default api({
         smes: (meta.smes ?? []) as Array<{ name: string; title: string; note?: string | null }>,
       },
       clips: enrichedClips,
+      approvedSections,
     };
   },
 });

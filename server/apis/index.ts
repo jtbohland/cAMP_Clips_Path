@@ -143,6 +143,7 @@ import SignOffAudit from './v2/sign-off-audit.js';
 import ManageAuditCycle from './v2/manage-audit-cycle.js';
 import UpdateAuditSmes from './v2/update-audit-smes.js';
 import SaveAuditContent from './v2/save-audit-content.js';
+import SaveAuditApproval from './v2/save-audit-approval.js';
 
 
 
@@ -290,6 +291,7 @@ SignOffAudit,
 ManageAuditCycle,
 UpdateAuditSmes,
 SaveAuditContent,
+SaveAuditApproval,
 } as const;
 
 export default apis;
