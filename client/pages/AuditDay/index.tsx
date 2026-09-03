@@ -15,11 +15,47 @@ import {
   ClipSection,
 } from "@/components/audit/AuditContentSections";
 
+// ─── Audit Badge System ───────────────────────────────────────────
+const AUDIT_BADGES = [
+  { key: "trailwright",  emoji: "🛠️", name: "Trailwright",   vibe: "You rebuilt this stretch of the Ascent.", minEdits: 5 },
+  { key: "cartographer", emoji: "🗺️", name: "Cartographer",  vibe: "You redrew the map for future hikers.", minEdits: 3 },
+  { key: "peak_spotter", emoji: "🔭", name: "Peak Spotter",  vibe: "Sharp eye — you caught what needed fixing.", minEdits: 1 },
+  { key: "brush_cutter", emoji: "🪓", name: "Brush Cutter",  vibe: "You cleared the small stuff off the path.", minEdits: 0, needsTextEdits: true },
+  { key: "wise_owl",     emoji: "🦉", name: "Wise Owl",      vibe: "You confirmed the route and shared your wisdom.", minEdits: 0, needsNotes: true },
+  { key: "smoke_signal", emoji: "🏕️", name: "Smoke Signal",  vibe: "Sent up the all-clear — this trail is solid.", minEdits: 0 },
+] as const;
+
+function computeAuditBadge(editCount: number, hasNotes: boolean) {
+  if (editCount >= 5) return AUDIT_BADGES[0]; // Trailwright
+  if (editCount >= 3) return AUDIT_BADGES[1]; // Cartographer
+  if (editCount >= 1) return AUDIT_BADGES[2]; // Peak Spotter
+  // 0 edits
+  if (hasNotes) return AUDIT_BADGES[4]; // Wise Owl
+  return AUDIT_BADGES[5]; // Smoke Signal
+}
+
+/** Make human-readable section label from section key + clip map */
+function sectionLabel(key: string, clipMap: Map<string, string>): string {
+  if (key === "summary") return "Summary & Objectives";
+  const parts = key.split("_");
+  const prefix = parts[0];
+  const clipId = parts.slice(1).join("_");
+  const clipTitle = clipMap.get(clipId) ?? "Unknown Clip";
+  const labels: Record<string, string> = {
+    markers: "Trail Markers",
+    sr: "S&R",
+    wts: "Weather the Storm",
+    gear: "cAMP Gear",
+  };
+  return `${labels[prefix] ?? prefix} · ${clipTitle}`;
+}
+
 export default function AuditDayPage() {
   const { topicKey } = useParams<{ topicKey: string }>();
   const navigate = useNavigate();
   const { viewer } = useViewer();
   const [signOffNotes, setSignOffNotes] = useState("");
+  const [signedOff, setSignedOff] = useState(false);
 
   const { data, loading, fetching, isError, error, refetch } = useApiData("GetAuditDayContent", {
     topicKey: topicKey ?? "",
@@ -30,6 +66,17 @@ export default function AuditDayPage() {
   const approvedSections = useMemo(() => new Set(data?.approvedSections ?? []), [data?.approvedSections]);
 
   const { run: signOff, loading: signingOff } = useApi("SignOffAudit");
+
+  // Build clip ID→title map for readable section names
+  const clipMap = useMemo(() => {
+    const m = new Map<string, string>();
+    if (data?.clips) {
+      for (const clip of data.clips) {
+        m.set(clip.clipId, clip.title);
+      }
+    }
+    return m;
+  }, [data?.clips]);
 
   // Compute required sections and sign-off readiness
   const requiredSections = data ? (() => {
@@ -45,6 +92,13 @@ export default function AuditDayPage() {
   const allApproved = requiredSections.length > 0 && requiredSections.every(s => approvedSections.has(s));
   const pendingSections = requiredSections.filter(s => !approvedSections.has(s));
 
+  // Compute audit badge — count approved sections as a proxy for engagement
+  const editCount = useMemo(() => {
+    if (!data) return 0;
+    return data.approvedSections?.length ?? 0;
+  }, [data]);
+  const badge = computeAuditBadge(editCount, signOffNotes.trim().length > 0);
+
   const handleSignOff = useCallback(async () => {
     if (!viewer?.id || !topicKey) return;
     try {
@@ -53,15 +107,15 @@ export default function AuditDayPage() {
         topicKey,
         notes: signOffNotes.trim() || null,
       });
+      setSignedOff(true);
       toast.success("Audit signed off successfully!");
-      navigate("/audit");
     } catch (err) {
       const message = err && typeof err === "object" && "message" in err
         ? String((err as { message: unknown }).message)
         : String(err);
       toast.error("Sign-off failed: " + message);
     }
-  }, [viewer?.id, topicKey, signOffNotes, signOff, navigate]);
+  }, [viewer?.id, topicKey, signOffNotes, signOff]);
 
   if (loading) {
     return (
@@ -91,6 +145,29 @@ export default function AuditDayPage() {
   }
 
   const { topic, clips } = data;
+
+  // ─── Post Sign-Off Thank You ─────────────────────────────────
+  if (signedOff) {
+    const smeNames = topic.smes?.map((s: any) => s.name).join(" & ") ?? "SME";
+    return (
+      <div className="flex flex-col h-full overflow-auto" style={{ backgroundColor: "#ECFDF5" }}>
+        <PageHeader emoji="🍁" title="Audit Complete" subtitle={topic.title} />
+        <div className="p-6 max-w-2xl mx-auto w-full text-center space-y-6">
+          <div className="text-7xl">{badge.emoji}</div>
+          <h2 className="text-2xl font-bold text-gray-900">{badge.name}</h2>
+          <p className="text-gray-600 italic text-lg">{badge.vibe}</p>
+          <div className="rounded-xl bg-white border border-emerald-200 p-6 shadow-sm">
+            <p className="text-gray-700 text-lg leading-relaxed">
+              Thank you, <strong>{smeNames}</strong> — your time and expertise make cAMP Ascent better for every new Ampliteer. 🙏
+            </p>
+          </div>
+          <button onClick={() => navigate("/audit")} className="text-sm font-semibold text-indigo-600 bg-indigo-50 border border-indigo-200 px-4 py-2 rounded-lg hover:bg-indigo-100">
+            ← Back to all topics
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full overflow-auto" style={{ backgroundColor: "#ECFDF5" }}>
@@ -136,7 +213,7 @@ export default function AuditDayPage() {
           </div>
         )}
 
-        {/* Summary & Objectives */}
+        {/* Summary & Objectives (with editable SMEs) */}
         <SummarySection
           summary={topic.summary}
           objectives={topic.learningObjectives}
@@ -171,6 +248,21 @@ export default function AuditDayPage() {
           </div>
         ))}
 
+        {/* ─── Audit Badge Preview ─── */}
+        <div className="rounded-xl border border-gray-200 bg-white p-5">
+          <div className="flex items-center gap-3 mb-2">
+            <span className="text-3xl">{badge.emoji}</span>
+            <div>
+              <p className="text-xs text-gray-400 font-medium">Your audit badge</p>
+              <p className="text-base font-bold text-gray-900">{badge.name}</p>
+            </div>
+          </div>
+          <p className="text-sm text-gray-600 italic">{badge.vibe}</p>
+          {editCount > 0 && (
+            <p className="text-xs text-gray-400 mt-1">{editCount} section edit{editCount !== 1 ? "s" : ""} made during this audit</p>
+          )}
+        </div>
+
         {/* ─── Sign Off Section ─── */}
         <div className="rounded-xl border-2 border-emerald-300 bg-emerald-50/50 p-6 mt-6">
           <h3 className="text-base font-bold text-gray-900 mb-2 flex items-center gap-2">
@@ -181,18 +273,15 @@ export default function AuditDayPage() {
             it is accurate as of today. Any notes you leave will be visible to the program administrator.
           </p>
 
-          {/* Approval checklist */}
+          {/* Approval checklist — human-readable names */}
           {!allApproved && pendingSections.length > 0 && (
-            <div className="rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 mb-4">
-              <p className="text-xs font-semibold text-amber-800 mb-1">⏳ Sections still need approval:</p>
+            <div className="rounded-lg bg-red-50 border border-red-300 px-4 py-3 mb-4">
+              <p className="text-xs font-semibold text-red-800 mb-1">⏳ Sections still need approval:</p>
               <ul className="space-y-0.5">
                 {pendingSections.map(s => (
-                  <li key={s} className="text-xs text-amber-700 flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0" />
-                    {s === "summary" ? "Summary & Objectives" : s.replace(/_/g, " ").replace(/^(markers|sr|wts|gear) /, (_, t) => {
-                      const labels: Record<string, string> = { markers: "Trail Markers · ", sr: "S&R · ", wts: "Weather the Storm · ", gear: "cAMP Gear · " };
-                      return labels[t] ?? t + " · ";
-                    })}
+                  <li key={s} className="text-xs text-red-700 flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-400 flex-shrink-0" />
+                    {sectionLabel(s, clipMap)}
                   </li>
                 ))}
               </ul>

@@ -76,7 +76,7 @@ function SectionHeader({ title, emoji, isApproved, onApprove, approving, editing
   );
 }
 
-// ─── Summary & Objectives ─────────────────────────────────────────
+// ─── Summary & Objectives (merged into topic header — NOT a separate card) ──
 export function SummarySection({ summary, objectives, smes, topicKey, onSaved, isApproved, onApproved }: {
   summary: string | null; objectives: string[];
   smes: Array<{ name: string; title: string; note?: string | null }>;
@@ -86,20 +86,32 @@ export function SummarySection({ summary, objectives, smes, topicKey, onSaved, i
   const [editing, setEditing] = useState(false);
   const [editSummary, setEditSummary] = useState(summary ?? "");
   const [editObjectives, setEditObjectives] = useState<string[]>(objectives);
+  const [editSmes, setEditSmes] = useState(smes.map(s => ({ ...s })));
+  const [addingSme, setAddingSme] = useState(false);
+  const [newSmeName, setNewSmeName] = useState("");
+  const [newSmeTitle, setNewSmeTitle] = useState("");
   const { doSave, saving } = useSaveAudit(topicKey, onSaved);
   const { handleApprove, approving } = useApproval(topicKey, "summary", isApproved, onApproved);
 
   const handleSaveAll = useCallback(async () => {
     if (editSummary !== (summary ?? "")) await doSave({ editType: "summary", fieldName: "summary", oldValue: summary, newValue: editSummary });
     if (JSON.stringify(editObjectives) !== JSON.stringify(objectives)) await doSave({ editType: "objectives", fieldName: "objectives", oldValue: JSON.stringify(objectives), newValue: JSON.stringify(editObjectives) });
+    if (JSON.stringify(editSmes) !== JSON.stringify(smes)) await doSave({ editType: "smes", fieldName: "smes", oldValue: JSON.stringify(smes), newValue: JSON.stringify(editSmes) });
     setEditing(false);
-  }, [doSave, editSummary, summary, editObjectives, objectives]);
+  }, [doSave, editSummary, summary, editObjectives, objectives, editSmes, smes]);
+
+  const handleAddSme = () => {
+    if (newSmeName.trim() && newSmeTitle.trim()) {
+      setEditSmes([...editSmes, { name: newSmeName.trim(), title: newSmeTitle.trim(), note: null }]);
+      setNewSmeName(""); setNewSmeTitle(""); setAddingSme(false);
+    }
+  };
 
   return (
     <div className={`rounded-xl border ${isApproved ? "border-emerald-200 bg-emerald-50/20" : "border-gray-200 bg-white"} p-5`}>
       <SectionHeader title="Summary & Learning Objectives" emoji="📝" isApproved={isApproved} onApprove={handleApprove} approving={approving}
-        editing={editing} onStartEdit={() => { setEditSummary(summary ?? ""); setEditObjectives([...objectives]); setEditing(true); }}
-        onCancel={() => setEditing(false)} onSave={handleSaveAll} saving={saving} />
+        editing={editing} onStartEdit={() => { setEditSummary(summary ?? ""); setEditObjectives([...objectives]); setEditSmes(smes.map(s => ({ ...s }))); setEditing(true); }}
+        onCancel={() => { setEditing(false); setAddingSme(false); }} onSave={handleSaveAll} saving={saving} />
       {!editing ? (
         <>
           {summary ? <p className="text-sm text-gray-700 leading-relaxed mb-4">{summary}</p> : <p className="text-sm text-gray-400 italic mb-4">No summary yet — click Edit to add one.</p>}
@@ -107,6 +119,14 @@ export function SummarySection({ summary, objectives, smes, topicKey, onSaved, i
             <div className="mb-4">
               <p className="text-xs font-semibold text-gray-600 mb-2">Learning Objectives:</p>
               <ol className="list-decimal list-inside space-y-1">{objectives.map((obj, i) => <li key={i} className="text-sm text-gray-700">{obj}</li>)}</ol>
+            </div>
+          )}
+          {smes.length > 0 && (
+            <div className="mt-3 pt-3 border-t border-gray-100">
+              <p className="text-xs font-semibold text-gray-600 mb-2">Subject Matter Experts:</p>
+              {smes.map((sme, i) => (
+                <p key={i} className="text-sm text-gray-700"><span className="font-medium">{sme.name}</span><span className="text-gray-400"> · {sme.title}</span>{sme.note && <span className="text-amber-500 italic"> ({sme.note})</span>}</p>
+              ))}
             </div>
           )}
         </>
@@ -122,16 +142,28 @@ export function SummarySection({ summary, objectives, smes, topicKey, onSaved, i
               <button onClick={() => setEditObjectives(editObjectives.filter((_, j) => j !== i))} className="text-xs text-red-400 hover:text-red-600 px-2">✕</button>
             </div>
           ))}
-          <button onClick={() => setEditObjectives([...editObjectives, ""])} className="text-xs text-indigo-600 hover:underline">+ Add objective</button>
-        </>
-      )}
-      {smes.length > 0 && (
-        <div className="mt-3 pt-3 border-t border-gray-100">
-          <p className="text-xs font-semibold text-gray-600 mb-2">Subject Matter Experts:</p>
-          {smes.map((sme, i) => (
-            <p key={i} className="text-sm text-gray-700"><span className="font-medium">{sme.name}</span><span className="text-gray-400"> · {sme.title}</span>{sme.note && <span className="text-amber-500 italic"> ({sme.note})</span>}</p>
+          <button onClick={() => setEditObjectives([...editObjectives, ""])} className="text-xs text-indigo-600 hover:underline mb-4">+ Add objective</button>
+
+          {/* Editable SMEs */}
+          <label className="block text-xs font-semibold text-gray-600 mb-1 mt-2">Subject Matter Experts</label>
+          {editSmes.map((sme, i) => (
+            <div key={i} className="flex gap-2 mb-2 items-center">
+              <input value={sme.name} onChange={(e) => { const n = [...editSmes]; n[i] = { ...n[i], name: e.target.value }; setEditSmes(n); }} placeholder="Name" className="flex-1 text-sm border border-gray-300 rounded px-2 py-1.5 focus:ring-2 focus:ring-indigo-300 outline-none" />
+              <input value={sme.title} onChange={(e) => { const n = [...editSmes]; n[i] = { ...n[i], title: e.target.value }; setEditSmes(n); }} placeholder="Title" className="flex-1 text-sm border border-gray-300 rounded px-2 py-1.5 focus:ring-2 focus:ring-indigo-300 outline-none" />
+              <button onClick={() => setEditSmes(editSmes.filter((_, j) => j !== i))} className="text-xs text-red-400 hover:text-red-600 px-2">✕</button>
+            </div>
           ))}
-        </div>
+          {addingSme ? (
+            <div className="flex gap-2 mb-2 items-center">
+              <input value={newSmeName} onChange={(e) => setNewSmeName(e.target.value)} placeholder="Name" className="flex-1 text-sm border border-gray-300 rounded px-2 py-1.5 focus:ring-2 focus:ring-indigo-300 outline-none" />
+              <input value={newSmeTitle} onChange={(e) => setNewSmeTitle(e.target.value)} placeholder="Title" className="flex-1 text-sm border border-gray-300 rounded px-2 py-1.5 focus:ring-2 focus:ring-indigo-300 outline-none" />
+              <button onClick={handleAddSme} className="text-xs font-semibold text-emerald-600 hover:underline">Add</button>
+              <button onClick={() => { setAddingSme(false); setNewSmeName(""); setNewSmeTitle(""); }} className="text-xs text-gray-400 hover:underline">Cancel</button>
+            </div>
+          ) : (
+            <button onClick={() => setAddingSme(true)} className="text-xs text-indigo-600 hover:underline">+ Add SME</button>
+          )}
+        </>
       )}
     </div>
   );
@@ -230,10 +262,10 @@ export function TrailMarkersSection({ markers, clipTitle, topicKey, onSaved, sec
           {approving ? "…" : isApproved ? "Undo Approve" : "✅ Approve"}
         </button>
       </div>
-      {/* Context note */}
-      <div className="rounded-lg bg-indigo-50 border border-indigo-200 px-3 py-2 text-xs text-indigo-700 mb-3">
+      {/* Context note — RED tile with bold warning */}
+      <div className="rounded-lg bg-red-50 border border-red-300 px-3 py-2 text-xs text-red-800 mb-3">
         <strong>📌 These are in-video questions</strong> that appear at specific timestamps during the clip. The time shown next to each question is when it pops up for learners.
-        <em className="block mt-1 text-indigo-500">If you change a question, the video itself may need to be re-recorded to match.</em>
+        <p className="mt-1 font-bold text-red-700">⚠️ If you change a question, the video itself may need to be re-recorded to match.</p>
       </div>
       <div className="space-y-4">
         {markers.map((m, idx) => (
@@ -263,10 +295,10 @@ export function SearchRescueSection({ questions, clipTitle, topicKey, onSaved, s
           {approving ? "…" : isApproved ? "Undo Approve" : "✅ Approve"}
         </button>
       </div>
-      {/* Context note */}
-      <div className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-700 mb-3">
+      {/* Context note — RED tile with bold warning */}
+      <div className="rounded-lg bg-red-50 border border-red-300 px-3 py-2 text-xs text-red-800 mb-3">
         <strong>📌 S&R questions are recovery questions</strong> — they appear when a learner's engagement score drops below the threshold. These are also in-video questions with timestamps.
-        <em className="block mt-1 text-amber-600">Changing these may require a re-recorded video to stay in sync.</em>
+        <p className="mt-1 font-bold text-red-700">⚠️ Changing these may require a re-recorded video to stay in sync.</p>
       </div>
       <div className="space-y-3">
         {questions.map((q, idx) => (
@@ -330,7 +362,7 @@ export function WeatherStormSection({ wts, clipTitle, clipId, topicKey, onSaved,
   );
 }
 
-// ─── cAMP Gear (safer buttons) ─────────────────────────────────────
+// ─── cAMP Gear (with SME responsibility note) ─────────────────────
 export function GearSection({ resources, clipTitle, clipId, topicKey, onSaved, sectionKey, isApproved, onApproved }: {
   resources: any; clipTitle: string; clipId: string; topicKey: string; onSaved?: () => void;
   sectionKey: string; isApproved: boolean; onApproved?: () => void;
@@ -380,6 +412,10 @@ export function GearSection({ resources, clipTitle, clipId, topicKey, onSaved, s
             {approving ? "…" : isApproved ? "Undo Approve" : !allChecked ? "✅ Review all first" : "✅ Approve"}
           </button>
         </div>
+      </div>
+      {/* SME responsibility note — RED tile */}
+      <div className="rounded-lg bg-red-50 border border-red-300 px-3 py-2 text-xs text-red-800 mb-3">
+        <strong>📋 SME Responsibility:</strong> Any changes needed to slides, decks, or docs linked below are <strong>your responsibility</strong> — not the enablement team's. If you identify necessary corrections, please fix them directly before approving this section.
       </div>
       {items.length === 0 && !adding && <p className="text-sm text-gray-400 italic">No gear attached.</p>}
       <div className="space-y-2">
@@ -479,9 +515,10 @@ export function ClipSection({ clip, topicKey, onSaved }: {
         </div>
       )}
 
-      <div className="rounded-lg bg-blue-50 border border-blue-200 px-4 py-3 text-sm text-blue-800 mb-3">
+      {/* About this clip — RED tile */}
+      <div className="rounded-lg bg-red-50 border border-red-300 px-4 py-3 text-sm text-red-800 mb-3">
         <p className="font-semibold">📹 About this clip</p>
-        <p className="text-xs text-blue-700 mt-1">
+        <p className="text-xs text-red-700 mt-1">
           Clips cannot be edited or removed directly — too many systems depend on them (trail markers, engagement scoring, XP, etc.).
           If this clip is outdated, you have two options: <strong>(1)</strong> re-record the content, or <strong>(2)</strong> record a supplemental video.
           Upload your MP4 below and your admin will add it to the learning path.

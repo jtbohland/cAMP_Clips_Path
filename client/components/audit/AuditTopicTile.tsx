@@ -1,4 +1,5 @@
 /** Audit topic tile for the SME landing page grid */
+import { getPathForTopic, PATH_STYLES } from "@/config/auditPaths";
 
 interface AuditTopic {
   topicKey: string;
@@ -30,6 +31,8 @@ export default function AuditTopicTile({
 }) {
   const s = STATUS_CONFIG[topic.status];
   const isClickable = isAdmin || topic.isAssignedToMe;
+  const audiencePath = getPathForTopic(topic.topicKey);
+  const pathStyle = audiencePath ? PATH_STYLES[audiencePath] : null;
 
   return (
     <button
@@ -57,10 +60,10 @@ export default function AuditTopicTile({
         </span>
       </div>
 
-      {/* Path label */}
-      {topic.pathLabel && (
-        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-purple-50 border border-purple-200 text-[10px] font-medium text-purple-700 mb-2">
-          {topic.pathLabel}
+      {/* Audience path pill */}
+      {pathStyle && (
+        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${pathStyle.bg} ${pathStyle.text} border ${pathStyle.border} mb-2`}>
+          {pathStyle.label}
         </span>
       )}
 
