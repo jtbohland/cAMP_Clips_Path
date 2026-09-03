@@ -168,7 +168,7 @@ export default function ModuleCard({
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100 transition-colors shadow-sm"
           >
-            <span className="text-lg">🧠</span>
+            <span className="text-lg">🦉</span>
             {courseLabel} ↗
           </a>
         </div>

@@ -382,7 +382,7 @@ export default function PairedClipCard({
             onClick={(e) => { e.stopPropagation(); onCampQuiz(clipA.dayLabel); }}
             className="w-full py-2.5 rounded-lg text-sm font-semibold bg-[#EA580C] hover:bg-[#C2410C] text-white transition-colors"
           >
-            🧠 Take cAMP Quiz
+            🦉 Take cAMP Quiz
           </button>
         )}
         {showCampQuiz && onCampQuiz && (
