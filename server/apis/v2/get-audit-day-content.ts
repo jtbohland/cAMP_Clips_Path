@@ -57,6 +57,12 @@ export default api({
       }).nullable(),
     })),
     approvedSections: z.array(z.string()),
+    peerProgress: z.array(z.object({
+      viewerName: z.string(),
+      approvedCount: z.number(),
+      totalSections: z.number(),
+      signedOff: z.boolean(),
+    })),
   }),
 
   async run(ctx, { topicKey, viewerId }) {
@@ -205,6 +211,43 @@ export default api({
       approvedSections.push(...approvals.map(a => a.section_key));
     }
 
+    // 6. Peer progress — other SMEs' approval counts and sign-off status
+    const PeerRow = z.object({
+      viewer_id: z.string(),
+      viewer_name: z.string(),
+      approved_count: z.coerce.number(),
+      signed_off: z.boolean(),
+    });
+    const peers = await ctx.integrations.apps_db.query(
+      `SELECT
+         a.viewer_id::text,
+         COALESCE(v.name, 'Unknown') AS viewer_name,
+         COUNT(DISTINCT a.section_key)::int AS approved_count,
+         EXISTS(
+           SELECT 1 FROM cliptracker_v2_audit_signoffs s
+           WHERE s.viewer_id = a.viewer_id AND s.topic_key = $1
+         ) AS signed_off
+       FROM cliptracker_v2_audit_approvals a
+       LEFT JOIN cliptracker_v2_viewers v ON v.id = a.viewer_id
+       WHERE a.topic_key = $1
+         AND ($2::uuid IS NULL OR a.viewer_id != $2::uuid)
+       GROUP BY a.viewer_id, v.name
+       LIMIT 20`,
+      PeerRow,
+      [topicKey, viewerId],
+      { label: "Get peer SME progress" }
+    );
+
+    // Total sections count for peer progress denominator
+    const totalSections = enrichedClips.reduce((sum, c) => {
+      let count = 1; // summary
+      if (c.trailMarkers.length > 0) count++;
+      if (c.searchRescue.length > 0) count++;
+      if (c.weatherStorm) count++;
+      if (Array.isArray(c.resources) && (c.resources as any[]).length > 0) count++;
+      return sum + count;
+    }, 0);
+
     return {
       topic: {
         topicKey: meta.topic_key,
@@ -219,6 +262,12 @@ export default api({
       },
       clips: enrichedClips,
       approvedSections,
+      peerProgress: peers.map(p => ({
+        viewerName: p.viewer_name,
+        approvedCount: p.approved_count,
+        totalSections,
+        signedOff: p.signed_off,
+      })),
     };
   },
 });
