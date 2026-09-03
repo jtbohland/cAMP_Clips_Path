@@ -12,6 +12,7 @@ import {
   SearchRescueSection,
   WeatherStormSection,
   GearSection,
+  ClipSection,
 } from "@/components/audit/AuditContentSections";
 
 export default function AuditDayPage() {
@@ -20,7 +21,7 @@ export default function AuditDayPage() {
   const { viewer } = useViewer();
   const [signOffNotes, setSignOffNotes] = useState("");
 
-  const { data, loading, fetching, isError, error } = useApiData("GetAuditDayContent", {
+  const { data, loading, fetching, isError, error, refetch } = useApiData("GetAuditDayContent", {
     topicKey: topicKey ?? "",
   }, { enabled: !!topicKey });
 
@@ -90,6 +91,18 @@ export default function AuditDayPage() {
           ← Back to all topics
         </button>
 
+        {/* ⚠️ Production warning banner */}
+        <div className="rounded-lg bg-orange-50 border border-orange-300 px-4 py-3 text-sm text-orange-800 flex items-start gap-3">
+          <span className="text-lg flex-shrink-0">⚠️</span>
+          <div>
+            <p className="font-bold">Changes go live immediately</p>
+            <p className="text-orange-700 text-xs mt-0.5">
+              Any edits you make here will be pushed directly into the production training experience.
+              If a mistake is made, your admin can revert individual changes.
+            </p>
+          </div>
+        </div>
+
         {/* Path label */}
         {topic.pathLabel && (
           <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-purple-50 border border-purple-200 text-xs font-medium text-purple-700">
@@ -110,42 +123,27 @@ export default function AuditDayPage() {
           summary={topic.summary}
           objectives={topic.learningObjectives}
           smes={topic.smes}
+          topicKey={topicKey!}
+          onSaved={refetch}
         />
 
         {/* Clip-level content */}
         {clips.map((clip: any) => (
           <div key={clip.clipId} className="space-y-4">
-            {/* Clip header */}
-            <div className="rounded-xl border border-gray-200 bg-white p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-gray-400 font-medium">Clip (sort {clip.sortOrder})</p>
-                  <h3 className="text-sm font-bold text-gray-900">{clip.title}</h3>
-                </div>
-                {clip.videoUrl && (
-                  <a
-                    href={clip.videoUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs font-semibold text-indigo-600 bg-indigo-50 border border-indigo-200 px-3 py-1.5 rounded-lg hover:bg-indigo-100 transition-colors"
-                  >
-                    ▶️ Watch Clip
-                  </a>
-                )}
-              </div>
-            </div>
+            {/* Clip (watch-only + notes) */}
+            <ClipSection clip={clip} topicKey={topicKey!} onSaved={refetch} />
 
             {/* Trail Markers */}
-            <TrailMarkersSection markers={clip.trailMarkers} clipTitle={clip.title} />
+            <TrailMarkersSection markers={clip.trailMarkers} clipTitle={clip.title} topicKey={topicKey!} onSaved={refetch} />
 
             {/* Search & Rescue */}
-            <SearchRescueSection questions={clip.searchRescue} clipTitle={clip.title} />
+            <SearchRescueSection questions={clip.searchRescue} clipTitle={clip.title} topicKey={topicKey!} onSaved={refetch} />
 
             {/* Weather the Storm */}
-            <WeatherStormSection wts={clip.weatherStorm} clipTitle={clip.title} />
+            <WeatherStormSection wts={clip.weatherStorm} clipTitle={clip.title} clipId={clip.clipId} topicKey={topicKey!} onSaved={refetch} />
 
             {/* cAMP Gear */}
-            <GearSection resources={clip.resources} clipTitle={clip.title} />
+            <GearSection resources={clip.resources} clipTitle={clip.title} clipId={clip.clipId} topicKey={topicKey!} onSaved={refetch} />
           </div>
         ))}
 

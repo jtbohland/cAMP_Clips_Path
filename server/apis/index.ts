@@ -141,6 +141,8 @@ import GetAuditLanding from './v2/get-audit-landing.js';
 import GetAuditDayContent from './v2/get-audit-day-content.js';
 import SignOffAudit from './v2/sign-off-audit.js';
 import ManageAuditCycle from './v2/manage-audit-cycle.js';
+import UpdateAuditSmes from './v2/update-audit-smes.js';
+import SaveAuditContent from './v2/save-audit-content.js';
 
 
 
@@ -286,6 +288,8 @@ GetAuditLanding,
 GetAuditDayContent,
 SignOffAudit,
 ManageAuditCycle,
+UpdateAuditSmes,
+SaveAuditContent,
 } as const;
 
 export default apis;
