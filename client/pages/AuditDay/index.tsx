@@ -287,6 +287,14 @@ export default function AuditDayPage() {
             />
           </div>
 
+          {/* Spekit reminder */}
+          <div className="rounded-lg bg-purple-50 border border-purple-200 px-4 py-3 mb-3">
+            <p className="text-sm text-purple-800">
+              <span className="font-semibold">🐙 Before you sign off</span> — ask yourself: should any updates made today also be updated in <strong>Spekit</strong>?
+              Changes to content, new resources, updated processes — if it lives in Spekit too, make sure both sources stay in sync.
+            </p>
+          </div>
+
           <button
             onClick={handleSignOff}
             disabled={signingOff || !allApproved}
