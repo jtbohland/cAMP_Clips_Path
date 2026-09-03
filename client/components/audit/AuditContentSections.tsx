@@ -471,15 +471,48 @@ export function GearSection({ resources, clipTitle, clipId, topicKey, onSaved, s
   );
 }
 
-// ─── Clip Section (watch-only + notes + guide summary) ──────────────
-export function ClipSection({ clip, topicKey, onSaved }: {
+// ─── Clip Section (editable summary + objectives + SMEs + notes) ──
+export function ClipSection({ clip, topicKey, onSaved, smes, isApproved, onApproved, sectionKey }: {
   clip: { clipId: string; title: string; videoUrl: string | null; sortOrder: number };
   topicKey: string; onSaved?: () => void;
+  smes?: Array<{ name: string; title: string; note?: string | null }>;
+  isApproved?: boolean; onApproved?: () => void; sectionKey?: string;
 }) {
   const [notes, setNotes] = useState("");
   const { doSave, saving } = useSaveAudit(topicKey, onSaved);
   const [saved, setSaved] = useState(false);
   const guideEntry = useMemo(() => getGuideEntryForClip(clip.sortOrder), [clip.sortOrder]);
+
+  // Editable state for summary + objectives + SMEs
+  const [editing, setEditing] = useState(false);
+  const [editSummary, setEditSummary] = useState(guideEntry?.summary ?? "");
+  const [editObjectives, setEditObjectives] = useState<string[]>(guideEntry?.learningObjectives ?? []);
+  const [editSmes, setEditSmes] = useState<Array<{ name: string; title: string; note?: string | null }>>(smes ?? []);
+  const [addingSme, setAddingSme] = useState(false);
+  const [newSmeName, setNewSmeName] = useState("");
+  const [newSmeTitle, setNewSmeTitle] = useState("");
+
+  const { handleApprove, approving } = useApproval(topicKey, sectionKey ?? `summary_${clip.clipId}`, isApproved ?? false, onApproved);
+
+  const handleSaveAll = useCallback(async () => {
+    if (guideEntry && editSummary !== guideEntry.summary) {
+      await doSave({ editType: "clip_summary", clipId: clip.clipId, fieldName: "summary", oldValue: guideEntry.summary, newValue: editSummary });
+    }
+    if (guideEntry && JSON.stringify(editObjectives) !== JSON.stringify(guideEntry.learningObjectives)) {
+      await doSave({ editType: "clip_objectives", clipId: clip.clipId, fieldName: "objectives", oldValue: JSON.stringify(guideEntry.learningObjectives), newValue: JSON.stringify(editObjectives) });
+    }
+    if (smes && JSON.stringify(editSmes) !== JSON.stringify(smes)) {
+      await doSave({ editType: "smes", fieldName: "smes", oldValue: JSON.stringify(smes), newValue: JSON.stringify(editSmes) });
+    }
+    setEditing(false);
+  }, [doSave, clip.clipId, guideEntry, editSummary, editObjectives, editSmes, smes]);
+
+  const handleAddSme = () => {
+    if (newSmeName.trim() && newSmeTitle.trim()) {
+      setEditSmes([...editSmes, { name: newSmeName.trim(), title: newSmeTitle.trim(), note: null }]);
+      setNewSmeName(""); setNewSmeTitle(""); setAddingSme(false);
+    }
+  };
 
   const handleSaveNotes = useCallback(async () => {
     if (!notes.trim()) return;
@@ -487,31 +520,111 @@ export function ClipSection({ clip, topicKey, onSaved }: {
     setSaved(true);
   }, [doSave, clip.clipId, notes]);
 
+  const approved = isApproved ?? false;
+
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4">
+    <div className={`rounded-xl border ${approved ? "border-emerald-200 bg-emerald-50/20" : "border-gray-200 bg-white"} p-4`}>
       <div className="flex items-center justify-between mb-3">
         <div>
           <p className="text-xs text-gray-400 font-medium">🎬 Clip (sort {clip.sortOrder})</p>
-          <h3 className="text-sm font-bold text-gray-900">{clip.title}</h3>
+          <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+            {clip.title}
+            {approved && <span className="text-xs text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full font-semibold">✅ Approved</span>}
+          </h3>
         </div>
-        {clip.videoUrl && (
-          <a href={clip.videoUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-indigo-600 bg-indigo-50 border border-indigo-200 px-3 py-1.5 rounded-lg hover:bg-indigo-100">▶ Watch Clip</a>
-        )}
-      </div>
-
-      {/* Clip-level summary from Ascent Guide */}
-      {guideEntry && (
-        <div className="rounded-lg bg-gray-50 border border-gray-200 px-4 py-3 mb-3">
-          <p className="text-xs font-semibold text-gray-600 mb-1">📋 Clip Summary</p>
-          <p className="text-sm text-gray-700 leading-relaxed mb-2">{guideEntry.summary}</p>
-          {guideEntry.learningObjectives.length > 0 && (
+        <div className="flex items-center gap-2">
+          {clip.videoUrl && (
+            <a href={clip.videoUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-indigo-600 bg-indigo-50 border border-indigo-200 px-3 py-1.5 rounded-lg hover:bg-indigo-100">▶ Watch Clip</a>
+          )}
+          {!editing ? (
             <>
-              <p className="text-xs font-semibold text-gray-600 mb-1">Learning Objectives:</p>
-              <ol className="list-decimal list-inside space-y-0.5">
-                {guideEntry.learningObjectives.map((obj, i) => <li key={i} className="text-xs text-gray-600">{obj}</li>)}
-              </ol>
+              <button onClick={() => { setEditSummary(guideEntry?.summary ?? ""); setEditObjectives([...(guideEntry?.learningObjectives ?? [])]); setEditSmes((smes ?? []).map(s => ({ ...s }))); setEditing(true); }}
+                className="text-xs font-semibold text-indigo-600 bg-indigo-50 border border-indigo-200 px-2.5 py-1 rounded-lg hover:bg-indigo-100">✏️ Edit</button>
+              <button onClick={handleApprove} disabled={approving} className={`text-xs font-semibold px-2.5 py-1 rounded-lg border ${approved ? "text-gray-500 bg-gray-50 border-gray-200 hover:bg-gray-100" : "text-emerald-700 bg-emerald-50 border-emerald-200 hover:bg-emerald-100"}`}>
+                {approving ? "…" : approved ? "Undo Approve" : "✅ Approve"}
+              </button>
+            </>
+          ) : (
+            <>
+              <button onClick={() => { setEditing(false); setAddingSme(false); }} className="text-xs text-gray-500 hover:underline" disabled={saving}>Cancel</button>
+              <button onClick={handleSaveAll} disabled={saving} className="text-xs font-semibold text-white bg-emerald-600 px-3 py-1 rounded-lg hover:bg-emerald-700 disabled:opacity-50">{saving ? "Saving…" : "💾 Save"}</button>
             </>
           )}
+        </div>
+      </div>
+
+      {/* Clip-level summary from Ascent Guide — editable */}
+      {!editing ? (
+        <>
+          {guideEntry && (
+            <div className="rounded-lg bg-gray-50 border border-gray-200 px-4 py-3 mb-3">
+              <p className="text-xs font-semibold text-gray-600 mb-1">📋 Clip Summary</p>
+              <p className="text-sm text-gray-700 leading-relaxed mb-2">{guideEntry.summary}</p>
+              {guideEntry.learningObjectives.length > 0 && (
+                <>
+                  <p className="text-xs font-semibold text-gray-600 mb-1">Learning Objectives:</p>
+                  <ol className="list-decimal list-inside space-y-0.5">
+                    {guideEntry.learningObjectives.map((obj, i) => <li key={i} className="text-xs text-gray-600">{obj}</li>)}
+                  </ol>
+                </>
+              )}
+              {/* SMEs inline below objectives */}
+              {smes && smes.length > 0 && (
+                <div className="mt-3 pt-3 border-t border-gray-200">
+                  <p className="text-xs font-semibold text-gray-600 mb-1">Subject Matter Experts:</p>
+                  {smes.map((sme, i) => (
+                    <p key={i} className="text-sm text-gray-700"><span className="font-medium">{sme.name}</span><span className="text-gray-400"> · {sme.title}</span>{sme.note && <span className="text-amber-500 italic"> ({sme.note})</span>}</p>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+          {!guideEntry && smes && smes.length > 0 && (
+            <div className="rounded-lg bg-gray-50 border border-gray-200 px-4 py-3 mb-3">
+              <p className="text-xs font-semibold text-gray-600 mb-1">Subject Matter Experts:</p>
+              {smes.map((sme, i) => (
+                <p key={i} className="text-sm text-gray-700"><span className="font-medium">{sme.name}</span><span className="text-gray-400"> · {sme.title}</span>{sme.note && <span className="text-amber-500 italic"> ({sme.note})</span>}</p>
+              ))}
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="rounded-lg bg-gray-50 border border-gray-200 px-4 py-3 mb-3 space-y-3">
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">📋 Clip Summary</label>
+            <textarea value={editSummary} onChange={(e) => setEditSummary(e.target.value)} rows={4} className="w-full text-sm border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none" />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">Learning Objectives</label>
+            {editObjectives.map((obj, i) => (
+              <div key={i} className="flex gap-2 mb-2">
+                <span className="text-xs text-gray-400 mt-2 w-4">{i + 1}.</span>
+                <input value={obj} onChange={(e) => { const n = [...editObjectives]; n[i] = e.target.value; setEditObjectives(n); }} className="flex-1 text-sm border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-indigo-300 outline-none" />
+                <button onClick={() => setEditObjectives(editObjectives.filter((_, j) => j !== i))} className="text-xs text-red-400 hover:text-red-600 px-2">✕</button>
+              </div>
+            ))}
+            <button onClick={() => setEditObjectives([...editObjectives, ""])} className="text-xs text-indigo-600 hover:underline">+ Add objective</button>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">Subject Matter Experts</label>
+            {editSmes.map((sme, i) => (
+              <div key={i} className="flex gap-2 mb-2 items-center">
+                <input value={sme.name} onChange={(e) => { const n = [...editSmes]; n[i] = { ...n[i], name: e.target.value }; setEditSmes(n); }} placeholder="Name" className="flex-1 text-sm border border-gray-300 rounded px-2 py-1.5 focus:ring-2 focus:ring-indigo-300 outline-none" />
+                <input value={sme.title} onChange={(e) => { const n = [...editSmes]; n[i] = { ...n[i], title: e.target.value }; setEditSmes(n); }} placeholder="Title" className="flex-1 text-sm border border-gray-300 rounded px-2 py-1.5 focus:ring-2 focus:ring-indigo-300 outline-none" />
+                <button onClick={() => setEditSmes(editSmes.filter((_, j) => j !== i))} className="text-xs text-red-400 hover:text-red-600 px-2">✕</button>
+              </div>
+            ))}
+            {addingSme ? (
+              <div className="flex gap-2 mb-2 items-center">
+                <input value={newSmeName} onChange={(e) => setNewSmeName(e.target.value)} placeholder="Name" className="flex-1 text-sm border border-gray-300 rounded px-2 py-1.5 focus:ring-2 focus:ring-indigo-300 outline-none" />
+                <input value={newSmeTitle} onChange={(e) => setNewSmeTitle(e.target.value)} placeholder="Title" className="flex-1 text-sm border border-gray-300 rounded px-2 py-1.5 focus:ring-2 focus:ring-indigo-300 outline-none" />
+                <button onClick={handleAddSme} className="text-xs font-semibold text-emerald-600 hover:underline">Add</button>
+                <button onClick={() => { setAddingSme(false); setNewSmeName(""); setNewSmeTitle(""); }} className="text-xs text-gray-400 hover:underline">Cancel</button>
+              </div>
+            ) : (
+              <button onClick={() => setAddingSme(true)} className="text-xs text-indigo-600 hover:underline">+ Add SME</button>
+            )}
+          </div>
         </div>
       )}
 

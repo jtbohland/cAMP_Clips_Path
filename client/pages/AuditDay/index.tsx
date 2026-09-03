@@ -7,7 +7,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import PageHeader from "@/components/PageHeader";
 import {
-  SummarySection,
   TrailMarkersSection,
   SearchRescueSection,
   WeatherStormSection,
@@ -80,8 +79,9 @@ export default function AuditDayPage() {
 
   // Compute required sections and sign-off readiness
   const requiredSections = data ? (() => {
-    const sections: string[] = ["summary"];
+    const sections: string[] = [];
     for (const clip of data.clips) {
+      sections.push(`summary_${clip.clipId}`);
       if (clip.trailMarkers?.length > 0) sections.push(`markers_${clip.clipId}`);
       if (clip.searchRescue?.length > 0) sections.push(`sr_${clip.clipId}`);
       if (clip.weatherStorm) sections.push(`wts_${clip.clipId}`);
@@ -213,22 +213,15 @@ export default function AuditDayPage() {
           </div>
         )}
 
-        {/* Summary & Objectives (with editable SMEs) */}
-        <SummarySection
-          summary={topic.summary}
-          objectives={topic.learningObjectives}
-          smes={topic.smes}
-          topicKey={topicKey!}
-          onSaved={refetch}
-          isApproved={approvedSections.has("summary")}
-          onApproved={refetch}
-        />
-
         {/* Clip-level content */}
         {clips.map((clip: any) => (
           <div key={clip.clipId} className="space-y-4">
-            {/* Clip (watch-only + notes) */}
-            <ClipSection clip={clip} topicKey={topicKey!} onSaved={refetch} />
+            {/* Clip (summary + objectives + SMEs + notes) */}
+            <ClipSection clip={clip} topicKey={topicKey!} onSaved={refetch}
+              smes={topic.smes}
+              isApproved={approvedSections.has(`summary_${clip.clipId}`)}
+              onApproved={refetch}
+              sectionKey={`summary_${clip.clipId}`} />
 
             {/* Trail Markers */}
             <TrailMarkersSection markers={clip.trailMarkers} clipTitle={clip.title} topicKey={topicKey!} onSaved={refetch}

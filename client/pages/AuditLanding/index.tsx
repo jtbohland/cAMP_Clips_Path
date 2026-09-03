@@ -58,9 +58,15 @@ export default function AuditLandingPage() {
 
         {/* Admin back link */}
         {isAdmin && (
-          <button onClick={() => navigate("/analytics")} className="text-sm text-indigo-600 hover:underline flex items-center gap-1">
-            ← Back to Analytics
-          </button>
+          <div className="flex items-center gap-4">
+            <button onClick={() => navigate("/analytics")} className="text-sm text-indigo-600 hover:underline flex items-center gap-1">
+              ← Back to Analytics
+            </button>
+            <span className="text-gray-300">|</span>
+            <button onClick={() => navigate("/analytics?tab=audit")} className="text-sm text-indigo-600 hover:underline flex items-center gap-1">
+              📊 Audit Progress Dashboard
+            </button>
+          </div>
         )}
 
         {/* ─── Intro Section ─── */}

@@ -1,5 +1,5 @@
 /** Admin Ascent Audit tab for Analytics page */
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router";
 import { useApiData } from "@/hooks/useApiData";
 import { useApi } from "@/hooks/useApi";
@@ -25,6 +25,18 @@ export default function AscentAuditTab() {
     label: null, deadline: null, description: null, cycleType: "quarterly",
     cycleId: null, createdBy: null,
   });
+
+  const { data: viewerData } = useApiData("GetViewers", {});
+
+  // Build a name→viewer lookup for SME registration status
+  const smeViewerMap = useMemo(() => {
+    const map = new Map<string, { registered: boolean; lastActivity: string | null }>();
+    const viewers = viewerData?.viewers ?? [];
+    for (const v of viewers) {
+      map.set(v.name.toLowerCase(), { registered: true, lastActivity: (v as any).lastActivity ?? (v as any).createdAt ?? null });
+    }
+    return map;
+  }, [viewerData]);
 
   const { run: manageCycle, loading: managingCycle } = useApi("ManageAuditCycle");
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -195,6 +207,8 @@ export default function AscentAuditTab() {
                 <th className="text-left py-2 px-2 text-xs font-semibold text-gray-500">Topic</th>
                 <th className="text-left py-2 px-2 text-xs font-semibold text-gray-500">Path</th>
                 <th className="text-left py-2 px-2 text-xs font-semibold text-gray-500">SMEs</th>
+                <th className="text-left py-2 px-2 text-xs font-semibold text-gray-500">Registered</th>
+                <th className="text-left py-2 px-2 text-xs font-semibold text-gray-500">Last Active</th>
                 <th className="text-left py-2 px-2 text-xs font-semibold text-gray-500">Status</th>
                 <th className="text-left py-2 px-2 text-xs font-semibold text-gray-500">Sign-offs</th>
               </tr>
@@ -220,6 +234,26 @@ export default function AscentAuditTab() {
                     </td>
                     <td className="py-2 px-2 text-xs text-gray-600">
                       {t.smes.length > 0 ? t.smes.map((sme: any) => sme.name).join(", ") : "—"}
+                    </td>
+                    <td className="py-2 px-2 text-xs">
+                      {t.smes.length > 0 ? t.smes.map((sme: any, si: number) => {
+                        const match = smeViewerMap.get(sme.name.toLowerCase());
+                        return (
+                          <span key={si} className={`block ${match?.registered ? "text-emerald-600" : "text-red-500 font-semibold"}`}>
+                            {match?.registered ? "✅" : "❌ Not Registered"}
+                          </span>
+                        );
+                      }) : "—"}
+                    </td>
+                    <td className="py-2 px-2 text-xs text-gray-500">
+                      {t.smes.length > 0 ? t.smes.map((sme: any, si: number) => {
+                        const match = smeViewerMap.get(sme.name.toLowerCase());
+                        return (
+                          <span key={si} className="block">
+                            {match?.lastActivity ? new Date(match.lastActivity).toLocaleDateString() : "—"}
+                          </span>
+                        );
+                      }) : "—"}
                     </td>
                     <td className="py-2 px-2">
                       <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${s.bg} ${s.text}`}>
