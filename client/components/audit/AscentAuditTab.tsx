@@ -250,99 +250,86 @@ export default function AscentAuditTab() {
 
         {/* Topic status table */}
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-[13px]">
             <thead>
               <tr className="border-b border-gray-200">
-                <th className="text-left py-2 px-3 text-xs font-semibold text-gray-500">Topic</th>
-                <th className="text-left py-2 px-3 text-xs font-semibold text-gray-500">Path</th>
-                <th className="text-left py-2 px-3 text-xs font-semibold text-gray-500">SMEs</th>
-                <th className="text-left py-2 px-3 text-xs font-semibold text-gray-500">Registered</th>
-                <th className="text-left py-2 px-3 text-xs font-semibold text-gray-500">Last Active</th>
-                <th className="text-left py-2 px-3 text-xs font-semibold text-gray-500">Status</th>
-                <th className="text-left py-2 px-3 text-xs font-semibold text-gray-500">Sign-offs</th>
+                <th className="text-left py-2.5 px-3 text-xs font-semibold text-gray-500 whitespace-nowrap">Topic</th>
+                <th className="text-left py-2.5 px-3 text-xs font-semibold text-gray-500 whitespace-nowrap">Path</th>
+                <th className="text-left py-2.5 px-3 text-xs font-semibold text-gray-500 whitespace-nowrap">SMEs</th>
+                <th className="text-left py-2.5 px-3 text-xs font-semibold text-gray-500 whitespace-nowrap">Status</th>
+                <th className="text-left py-2.5 px-3 text-xs font-semibold text-gray-500 whitespace-nowrap">Sign-offs</th>
               </tr>
             </thead>
             <tbody>
               {topics.map((t: any) => {
                 const s = STATUS_PILL[t.status] ?? STATUS_PILL.not_started;
+                const pct = t.status === "complete" ? 100 : t.status === "not_started" ? 0 : (t.totalSections > 0 ? Math.round((t.approvedCount / t.totalSections) * 100) : 0);
                 return (
-                  <tr key={t.topicKey} className="border-b border-gray-50 hover:bg-indigo-50/40 cursor-pointer transition-colors" onClick={() => navigate(`/audit/${t.topicKey}`)}>
-                    <td className="py-2.5 px-3">
-                      <span className="mr-1">{t.emoji}</span>
-                      <span className="font-medium text-gray-900">{t.dayLabel}:</span>{" "}
-                      <span className="text-indigo-700 hover:underline font-medium">{t.title}</span>
+                  <tr key={t.topicKey} className="border-b border-gray-100 hover:bg-indigo-50/40 cursor-pointer transition-colors align-top" onClick={() => navigate(`/audit/${t.topicKey}`)}>
+                    {/* Topic */}
+                    <td className="py-3 px-3 max-w-[280px]">
+                      <div className="flex items-start gap-1.5">
+                        <span className="flex-shrink-0">{t.emoji}</span>
+                        <div>
+                          <span className="font-semibold text-gray-900">{t.dayLabel}:</span>{" "}
+                          <span className="text-indigo-700 hover:underline font-medium">{t.title}</span>
+                        </div>
+                      </div>
                     </td>
-                    <td className="py-2.5 px-3">
+                    {/* Path */}
+                    <td className="py-3 px-3">
                       {(() => {
                         const pathKey = TOPIC_PATH_MAP[t.topicKey];
                         if (pathKey) {
                           const ps = PATH_STYLES[pathKey];
-                          return <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${ps.bg} ${ps.text} ${ps.border}`}>{ps.label}</span>;
+                          return <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border whitespace-nowrap ${ps.bg} ${ps.text} ${ps.border}`}>{ps.label}</span>;
                         }
-                        return <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full border bg-blue-100 text-blue-700 border-blue-300">All Roles</span>;
+                        return <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full border whitespace-nowrap bg-blue-100 text-blue-700 border-blue-300">All Roles</span>;
                       })()}
                     </td>
-                    <td className="py-2.5 px-3 text-xs text-gray-700">
+                    {/* SMEs — unified column with name, reg, activity per row */}
+                    <td className="py-3 px-3">
                       {t.smes.length > 0 ? (
-                        <div className="space-y-1">
-                          {t.smes.map((sme: any, si: number) => (
-                            <div key={si} className="font-medium">{sme.name}</div>
-                          ))}
-                        </div>
-                      ) : <span className="text-gray-400">—</span>}
-                    </td>
-                    <td className="py-2.5 px-3 text-xs">
-                      {t.smes.length > 0 ? (
-                        <div className="space-y-1">
+                        <div className="space-y-2">
                           {t.smes.map((sme: any, si: number) => {
                             const match = smeViewerMap.get(sme.name.toLowerCase());
-                            return (
-                              <div key={si}>
-                                {match?.registered
-                                  ? <span className="text-emerald-600">✅</span>
-                                  : <span className="text-red-500">❌</span>}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      ) : <span className="text-gray-400">—</span>}
-                    </td>
-                    <td className="py-2.5 px-3 text-xs text-gray-500">
-                      {t.smes.length > 0 ? (
-                        <div className="space-y-1">
-                          {t.smes.map((sme: any, si: number) => {
-                            const match = smeViewerMap.get(sme.name.toLowerCase());
+                            const isRegistered = !!match?.registered;
                             const lastDate = match?.lastActivity ? new Date(match.lastActivity) : null;
                             const daysSince = lastDate ? Math.floor((Date.now() - lastDate.getTime()) / 86400000) : null;
-                            const needsAttention = match?.registered && (daysSince === null || daysSince >= 10);
+                            const needsAttention = isRegistered && (daysSince === null || daysSince >= 10);
                             return (
-                              <div key={si} className="flex items-center gap-1.5">
-                                <span>{lastDate ? lastDate.toLocaleDateString() : "—"}</span>
+                              <div key={si} className="flex items-center gap-2 text-[13px] leading-tight">
+                                <span className="text-gray-400 text-[11px] font-mono w-3 flex-shrink-0">{si + 1}.</span>
+                                <span className="font-medium text-gray-900 whitespace-nowrap">{sme.name}</span>
+                                {isRegistered
+                                  ? <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">✓ Reg</span>
+                                  : <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-red-50 text-red-600 border border-red-200 whitespace-nowrap">✗ Not reg</span>
+                                }
+                                {isRegistered && lastDate && !needsAttention && (
+                                  <span className="text-[11px] text-gray-400 whitespace-nowrap">{lastDate.toLocaleDateString()}</span>
+                                )}
                                 {needsAttention && (
-                                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-200 whitespace-nowrap" title={daysSince !== null ? `${daysSince} days since last activity` : "No activity recorded"}>
-                                    ⚠️ {daysSince !== null ? `${daysSince}d` : "No activity"}
+                                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-700 border border-red-200 whitespace-nowrap" title={daysSince !== null ? `${daysSince} days since last activity` : "No activity recorded"}>
+                                    ⚠️ {daysSince !== null ? `${daysSince}d inactive` : "No activity"}
                                   </span>
                                 )}
                               </div>
                             );
                           })}
                         </div>
-                      ) : <span className="text-gray-400">—</span>}
+                      ) : <span className="text-gray-400 text-xs">No SME assigned</span>}
                     </td>
-                    <td className="py-2.5 px-3">
-                      {(() => {
-                        const pct = t.status === "complete" ? 100 : t.status === "not_started" ? 0 : (t.totalSections > 0 ? Math.round((t.approvedCount / t.totalSections) * 100) : 0);
-                        return (
-                          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${s.bg} ${s.text}`}>
-                            {s.label} · {pct}%
-                          </span>
-                        );
-                      })()}
+                    {/* Status */}
+                    <td className="py-3 px-3">
+                      <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full whitespace-nowrap ${s.bg} ${s.text}`}>
+                        {s.label} · {pct}%
+                      </span>
                     </td>
-                    <td className="py-2.5 px-3 text-xs text-gray-600">
+                    {/* Sign-offs */}
+                    <td className="py-3 px-3 text-xs text-gray-600">
                       {t.signoffs.length > 0
                         ? t.signoffs.map((so: any) => `${so.viewerName} (${new Date(so.signedAt).toLocaleDateString()})`).join(", ")
-                        : "—"}
+                        : <span className="text-gray-400">—</span>}
                     </td>
                   </tr>
                 );
