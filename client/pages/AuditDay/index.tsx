@@ -241,19 +241,11 @@ export default function AuditDayPage() {
           </div>
         ))}
 
-        {/* ─── Audit Badge Preview ─── */}
-        <div className="rounded-xl border border-gray-200 bg-white p-5">
-          <div className="flex items-center gap-3 mb-2">
-            <span className="text-3xl">{badge.emoji}</span>
-            <div>
-              <p className="text-xs text-gray-400 font-medium">Your audit badge</p>
-              <p className="text-base font-bold text-gray-900">{badge.name}</p>
-            </div>
-          </div>
-          <p className="text-sm text-gray-600 italic">{badge.vibe}</p>
-          {editCount > 0 && (
-            <p className="text-xs text-gray-400 mt-1">{editCount} section edit{editCount !== 1 ? "s" : ""} made during this audit</p>
-          )}
+        {/* ─── Audit Badge Preview / Placeholder ─── */}
+        <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-5 text-center">
+          <p className="text-3xl mb-2">🏕️</p>
+          <p className="text-sm font-semibold text-amber-800">Complete your Ascent Audit to earn your trail crew badge + impact summary.</p>
+          <p className="text-xs text-amber-600 mt-1">Approve all sections and sign off below to see your badge.</p>
         </div>
 
         {/* ─── Sign Off Section ─── */}

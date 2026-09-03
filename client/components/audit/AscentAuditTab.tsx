@@ -6,6 +6,7 @@ import { useApi } from "@/hooks/useApi";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
+import { TOPIC_PATH_MAP, PATH_STYLES } from "@/config/auditPaths";
 
 const STATUS_PILL: Record<string, { bg: string; text: string; label: string }> = {
   not_started: { bg: "bg-gray-100", text: "text-gray-600", label: "Not Started" },
@@ -224,26 +225,35 @@ export default function AscentAuditTab() {
                       <span className="text-indigo-700 hover:underline font-medium">{t.title}</span>
                     </td>
                     <td className="py-2 px-2">
-                      {t.pathLabel ? (
-                        <span className="text-[10px] font-medium text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded-full border border-purple-200">
-                          {t.pathLabel}
-                        </span>
-                      ) : (
-                        <span className="text-xs text-gray-400">All</span>
-                      )}
+                      {(() => {
+                        const pathKey = TOPIC_PATH_MAP[t.topicKey];
+                        if (pathKey) {
+                          const ps = PATH_STYLES[pathKey];
+                          return <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${ps.bg} ${ps.text} ${ps.border}`}>{ps.label}</span>;
+                        }
+                        return <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full border bg-blue-100 text-blue-700 border-blue-300">All Roles</span>;
+                      })()}
                     </td>
                     <td className="py-2 px-2 text-xs text-gray-600">
                       {t.smes.length > 0 ? t.smes.map((sme: any) => sme.name).join(", ") : "—"}
                     </td>
                     <td className="py-2 px-2 text-xs">
-                      {t.smes.length > 0 ? t.smes.map((sme: any, si: number) => {
-                        const match = smeViewerMap.get(sme.name.toLowerCase());
-                        return (
-                          <span key={si} className={`block ${match?.registered ? "text-emerald-600" : "text-red-500 font-semibold"}`}>
-                            {match?.registered ? "✅" : "❌ Not Registered"}
-                          </span>
-                        );
-                      }) : "—"}
+                      {t.smes.length > 0 ? (
+                        <div className="space-y-1">
+                          {t.smes.map((sme: any, si: number) => {
+                            const match = smeViewerMap.get(sme.name.toLowerCase());
+                            return (
+                              <div key={si} className="flex items-center gap-1.5">
+                                <span className="text-gray-700 font-medium">{sme.name}</span>
+                                <span className="text-[10px]">—</span>
+                                {match?.registered
+                                  ? <span className="text-emerald-600">✅ Registered</span>
+                                  : <span className="text-red-500 font-semibold">❌ Not Registered</span>}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : "—"}
                     </td>
                     <td className="py-2 px-2 text-xs text-gray-500">
                       {t.smes.length > 0 ? t.smes.map((sme: any, si: number) => {

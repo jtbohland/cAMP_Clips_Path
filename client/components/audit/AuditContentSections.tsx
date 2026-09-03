@@ -379,7 +379,31 @@ export function GearSection({ resources, clipTitle, clipId, topicKey, onSaved, s
   const { doSave, saving } = useSaveAudit(topicKey, onSaved);
   const { handleApprove, approving } = useApproval(topicKey, sectionKey, isApproved, onApproved);
 
-  const typeEmoji: Record<string, string> = { slides: "💻", spekit: "🐙", sfdc: "☁️", gdrive: "📑", link: "🔗", sheets: "📊", mindtickle: "🧠", slack: "💬" };
+  // Colored type badges matching Ranger Report's CampGearSection
+  const GEAR_BADGE_STYLES: Record<string, string> = {
+    slides: "bg-yellow-100 text-yellow-800",
+    spekit: "bg-pink-100 text-pink-800",
+    gdrive: "bg-green-100 text-green-800",
+    zoom: "bg-blue-100 text-blue-800",
+    slack: "bg-orange-200 text-orange-900",
+    glean: "bg-indigo-100 text-indigo-800",
+    mindtickle: "bg-orange-100 text-orange-800",
+    sfdc: "bg-sky-100 text-sky-800",
+    link: "bg-gray-100 text-gray-700",
+    sheets: "bg-teal-100 text-teal-800",
+  };
+  const GEAR_TYPE_LABELS: Record<string, string> = {
+    slides: "Slides",
+    spekit: "Spekit",
+    gdrive: "Google Drive",
+    zoom: "Zoom",
+    slack: "Slack",
+    glean: "Glean",
+    mindtickle: "MindTickle",
+    sfdc: "Salesforce",
+    link: "Link",
+    sheets: "Sheets",
+  };
 
   const handleCheck = (i: number) => { const next = new Set(checkedItems); next.has(i) ? next.delete(i) : next.add(i); setCheckedItems(next); };
   const handleUpdate = useCallback(async (i: number) => {
@@ -440,7 +464,8 @@ export function GearSection({ resources, clipTitle, clipId, topicKey, onSaved, s
                 ) : (
                   <>
                     <a href={r.url} target="_blank" rel="noopener noreferrer" className={`flex-1 flex items-center gap-2 text-sm font-medium ${checkedItems.has(i) ? "text-gray-400 line-through" : "text-gray-800"}`}>
-                      <span>{typeEmoji[r.type ?? "link"] ?? "📎"}</span><span>{r.label}</span>
+                      <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${GEAR_BADGE_STYLES[r.type ?? "link"] ?? "bg-gray-100 text-gray-700"}`}>{GEAR_TYPE_LABELS[r.type ?? "link"] ?? r.type ?? "Link"}</span>
+                      <span>{r.label}</span>
                     </a>
                     <div className="flex items-center gap-1">
                       <button onClick={() => { setEditLabel(r.label); setEditUrl(r.url); setEditingIdx(i); }} className="text-xs text-indigo-600 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded hover:bg-indigo-100 font-medium">Edit</button>
