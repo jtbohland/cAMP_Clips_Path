@@ -135,6 +135,15 @@ import SubmitPriceResponse from './v2/submit-price-response.js';
 import CompletePriceGame from './v2/complete-price-game.js';
 import GetPriceGameHistory from './v2/get-price-game-history.js';
 import GetRidgeGameHistory from './v2/get-ridge-game-history.js';
+import SetupAuditSchema from './v2/setup-audit-schema.js';
+import SeedAuditTopics from './v2/seed-audit-topics.js';
+import GetAuditLanding from './v2/get-audit-landing.js';
+import GetAuditDayContent from './v2/get-audit-day-content.js';
+import SignOffAudit from './v2/sign-off-audit.js';
+import ManageAuditCycle from './v2/manage-audit-cycle.js';
+import UpdateAuditSmes from './v2/update-audit-smes.js';
+import SaveAuditContent from './v2/save-audit-content.js';
+import SaveAuditApproval from './v2/save-audit-approval.js';
 
 
 
@@ -274,6 +283,15 @@ ResetJTSessions,
   CompletePriceGame,
   GetPriceGameHistory,
   GetRidgeGameHistory,
+  SetupAuditSchema,
+SeedAuditTopics,
+GetAuditLanding,
+GetAuditDayContent,
+SignOffAudit,
+ManageAuditCycle,
+UpdateAuditSmes,
+SaveAuditContent,
+SaveAuditApproval,
 } as const;
 
 export default apis;

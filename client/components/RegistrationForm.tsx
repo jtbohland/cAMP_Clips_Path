@@ -20,6 +20,7 @@ const ROLES = [
   "PSM",
   "Renewals",
   "Admin",
+  "Subject Matter Expert (SME)",
 ] as const;
 
 const MANAGERS = [
@@ -134,19 +135,22 @@ export default function RegistrationForm() {
   const [showWelcome, setShowWelcome] = useState(false);
   const [registeredViewerId, setRegisteredViewerId] = useState<string | null>(null);
 
+  const isSME = role === "Subject Matter Expert (SME)";
+
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
-      if (
-        !name.trim() ||
-        !email.trim() ||
+      if (!name.trim() || !email.trim() || !role) {
+        toast.error("Please fill in all fields");
+        return;
+      }
+      if (!isSME && (
         !timezone ||
-        !role ||
         !managerName.trim() ||
         !managerEmail.trim() ||
         !belayBuddy.trim() ||
         !ascentDay1
-      ) {
+      )) {
         toast.error("Please fill in all fields");
         return;
       }
@@ -154,12 +158,12 @@ export default function RegistrationForm() {
         const result = await registerViewer({
           email: email.trim().toLowerCase(),
           name: name.trim(),
-          role: role as any,
-          timezone,
-          managerName: managerName.trim(),
-          managerEmail: managerEmail.trim().toLowerCase(),
-          belayBuddy: belayBuddy.trim(),
-          ascentDay1,
+          role: (isSME ? "SME" : role) as any,
+          timezone: isSME ? "NAMER" : timezone,
+          managerName: isSME ? "N/A" : managerName.trim(),
+          managerEmail: isSME ? "n/a@amplitude.com" : managerEmail.trim().toLowerCase(),
+          belayBuddy: isSME ? "N/A" : belayBuddy.trim(),
+          ascentDay1: isSME ? getTodayString() : ascentDay1,
         });
         if (result?.viewer) {
           setViewer(result.viewer);
@@ -283,6 +287,8 @@ export default function RegistrationForm() {
               </select>
             </div>
 
+            {!isSME && (
+              <>
             {/* Manager */}
             <div className="space-y-1">
               <label htmlFor="reg-manager" className="block text-sm font-medium text-gray-700">
@@ -369,6 +375,8 @@ export default function RegistrationForm() {
                 ⚠️ Defaults to today. Do not click "Start the Ascent" if you are not ready to begin!
               </p>
             </div>
+              </>
+            )}
 
             {/* Submit CTA */}
             <button
@@ -376,7 +384,7 @@ export default function RegistrationForm() {
               disabled={loading}
               className="w-full py-3 rounded-lg text-sm font-bold bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white transition-colors shadow-md mt-1"
             >
-              {loading ? "Hitting the trail..." : "🥾 Start the Ascent"}
+              {loading ? "Hitting the trail..." : isSME ? "🍁 Start the Ascent Audit" : "🥾 Start the Ascent"}
             </button>
           </form>
         </div>

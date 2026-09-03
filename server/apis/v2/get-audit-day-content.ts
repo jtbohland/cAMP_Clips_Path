@@ -1,0 +1,224 @@
+import { api, z, postgres } from "@superblocksteam/sdk-api";
+
+const APPS_DB = "c6e32cf4-ca66-42ae-aeb3-58c84ffae574";
+
+export default api({
+  name: "GetAuditDayContent",
+  description: "Loads all auditable content for a topic: clips, markers, S&R, WtS, gear",
+
+  integrations: {
+    apps_db: postgres(APPS_DB),
+  },
+
+  input: z.object({
+    topicKey: z.string(),
+    viewerId: z.string().nullable().optional(),
+  }),
+
+  output: z.object({
+    topic: z.object({
+      topicKey: z.string(),
+      dayLabel: z.string(),
+      title: z.string(),
+      emoji: z.string().nullable(),
+      pathLabel: z.string().nullable(),
+      hasVideo: z.boolean(),
+      summary: z.string().nullable(),
+      learningObjectives: z.array(z.string()),
+      smes: z.array(z.object({ name: z.string(), title: z.string(), note: z.string().nullable().optional() })),
+    }),
+    clips: z.array(z.object({
+      clipId: z.string(),
+      title: z.string(),
+      sortOrder: z.number(),
+      videoUrl: z.string().nullable(),
+      resources: z.any(),
+      trailMarkers: z.array(z.object({
+        id: z.string(),
+        questionText: z.string(),
+        options: z.any(),
+        correctOption: z.number(),
+        correctFeedback: z.string().nullable(),
+        triggerAtSeconds: z.number().nullable(),
+        sortOrder: z.number(),
+      })),
+      searchRescue: z.array(z.object({
+        id: z.string(),
+        questionText: z.string(),
+        options: z.any(),
+        correctOption: z.number(),
+        correctFeedback: z.string().nullable(),
+        sortOrder: z.number(),
+      })),
+      weatherStorm: z.object({
+        overview: z.string(),
+        takeaways: z.any(),
+        timerMinutes: z.number(),
+      }).nullable(),
+    })),
+    approvedSections: z.array(z.string()),
+  }),
+
+  async run(ctx, { topicKey, viewerId }) {
+    // 1. Get topic metadata
+    const MetaRow = z.object({
+      topic_key: z.string(),
+      day_label: z.string(),
+      title: z.string(),
+      emoji: z.string().nullable(),
+      path_label: z.string().nullable(),
+      has_video: z.boolean(),
+      summary: z.string().nullable(),
+      learning_objectives: z.any(),
+      smes: z.any(),
+      sort_orders: z.array(z.coerce.number()),
+    });
+    const metaRows = await ctx.integrations.apps_db.query(
+      `SELECT * FROM cliptracker_v2_day_metadata WHERE topic_key = $1`,
+      MetaRow,
+      [topicKey],
+      { label: "Get topic metadata" }
+    );
+    if (metaRows.length === 0) throw new Error(`Topic not found: ${topicKey}`);
+    const meta = metaRows[0];
+
+    // 2. Get clips for this topic's sort_orders
+    const ClipRow = z.object({
+      id: z.string(),
+      title: z.string(),
+      sort_order: z.coerce.number(),
+      video_url: z.string().nullable(),
+      resources: z.any(),
+    });
+    const clips = await ctx.integrations.apps_db.query(
+      `SELECT id::text, title, sort_order, video_url, resources
+       FROM cliptracker_v2_clips
+       WHERE sort_order = ANY($1::int[]) AND status = 'live'
+       ORDER BY sort_order`,
+      ClipRow,
+      [`{${meta.sort_orders.join(",")}}`],
+      { label: "Get clips for topic" }
+    );
+
+    // 3. For each clip, get trail markers and S&R questions
+    const QuestionRow = z.object({
+      id: z.string(),
+      question_text: z.string(),
+      options: z.any(),
+      correct_option: z.coerce.number(),
+      correct_feedback: z.string().nullable(),
+      trigger_at_seconds: z.coerce.number().nullable(),
+      sort_order: z.coerce.number(),
+      is_recovery: z.boolean(),
+    });
+
+    const clipIds = clips.map(c => c.id);
+    const allQuestions = clipIds.length > 0
+      ? await ctx.integrations.apps_db.query(
+          `SELECT id::text, clip_id::text, question_text, options, correct_option,
+                  correct_feedback, trigger_at_seconds, sort_order, is_recovery
+           FROM cliptracker_v2_questions
+           WHERE clip_id = ANY($1::uuid[])
+           ORDER BY clip_id, sort_order`,
+          z.object({ ...QuestionRow.shape, clip_id: z.string() }),
+          [`{${clipIds.join(",")}}`],
+          { label: "Get questions for clips" }
+        )
+      : [];
+
+    // 4. Get Weather the Storm data
+    const WtsRow = z.object({
+      clip_id: z.string(),
+      overview: z.string(),
+      takeaways: z.any(),
+      timer_minutes: z.coerce.number(),
+    });
+    const allWts = clipIds.length > 0
+      ? await ctx.integrations.apps_db.query(
+          `SELECT clip_id::text, overview, takeaways, timer_minutes
+           FROM cliptracker_v2_weather_storm
+           WHERE clip_id = ANY($1::uuid[])`,
+          WtsRow,
+          [`{${clipIds.join(",")}}`],
+          { label: "Get WtS for clips" }
+        )
+      : [];
+
+    // Group questions and WtS by clip
+    const questionsByClip = new Map<string, typeof allQuestions>();
+    for (const q of allQuestions) {
+      const arr = questionsByClip.get(q.clip_id) ?? [];
+      arr.push(q);
+      questionsByClip.set(q.clip_id, arr);
+    }
+    const wtsByClip = new Map(allWts.map(w => [w.clip_id, w]));
+
+    // Build output
+    const enrichedClips = clips.map(clip => {
+      const questions = questionsByClip.get(clip.id) ?? [];
+      const trailMarkers = questions.filter(q => !q.is_recovery).map(q => ({
+        id: q.id,
+        questionText: q.question_text,
+        options: q.options,
+        correctOption: q.correct_option,
+        correctFeedback: q.correct_feedback,
+        triggerAtSeconds: q.trigger_at_seconds,
+        sortOrder: q.sort_order,
+      }));
+      const searchRescue = questions.filter(q => q.is_recovery).map(q => ({
+        id: q.id,
+        questionText: q.question_text,
+        options: q.options,
+        correctOption: q.correct_option,
+        correctFeedback: q.correct_feedback,
+        sortOrder: q.sort_order,
+      }));
+      const wts = wtsByClip.get(clip.id);
+
+      return {
+        clipId: clip.id,
+        title: clip.title,
+        sortOrder: clip.sort_order,
+        videoUrl: clip.video_url,
+        resources: clip.resources,
+        trailMarkers,
+        searchRescue,
+        weatherStorm: wts ? {
+          overview: wts.overview,
+          takeaways: wts.takeaways,
+          timerMinutes: wts.timer_minutes,
+        } : null,
+      };
+    });
+
+    // 5. Get approvals for this viewer + topic
+    const approvedSections: string[] = [];
+    if (viewerId) {
+      const ApprovalRow = z.object({ section_key: z.string() });
+      const approvals = await ctx.integrations.apps_db.query(
+        `SELECT section_key FROM cliptracker_v2_audit_approvals
+         WHERE viewer_id = $1 AND topic_key = $2`,
+        ApprovalRow,
+        [viewerId, topicKey],
+        { label: "Get section approvals" }
+      );
+      approvedSections.push(...approvals.map(a => a.section_key));
+    }
+
+    return {
+      topic: {
+        topicKey: meta.topic_key,
+        dayLabel: meta.day_label,
+        title: meta.title,
+        emoji: meta.emoji,
+        pathLabel: meta.path_label,
+        hasVideo: meta.has_video,
+        summary: meta.summary,
+        learningObjectives: (meta.learning_objectives ?? []) as string[],
+        smes: (meta.smes ?? []) as Array<{ name: string; title: string; note?: string | null }>,
+      },
+      clips: enrichedClips,
+      approvedSections,
+    };
+  },
+});

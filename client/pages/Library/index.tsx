@@ -968,6 +968,12 @@ export default function LibraryPage() {
     return <RegistrationForm />;
   }
 
+  // 3b. SME viewer → redirect to Ascent Audit landing page
+  if (viewer.role === "SME") {
+    navigate("/audit", { replace: true });
+    return null;
+  }
+
   // 4. Data still loading → skeleton (prevents ANY modal from rendering prematurely)
   if (!dataReady) {
     return <LoadingSkeleton />;
