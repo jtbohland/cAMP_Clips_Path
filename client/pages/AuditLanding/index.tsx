@@ -98,15 +98,6 @@ export default function AuditLandingPage() {
               )}
             </div>
           </div>
-
-          {/* Progress bar */}
-          <div className="mt-4 pt-3 border-t border-gray-100">
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-xs font-medium text-gray-600">Audit Progress</span>
-              <span className="text-xs font-bold text-gray-700">{completedTopics} / {totalTopics} topics complete</span>
-            </div>
-            <Progress value={progressPct} className="h-2" />
-          </div>
         </div>
 
         {/* ─── Countdown Timer ─── */}
