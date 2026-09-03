@@ -117,7 +117,7 @@ export default function AuditLandingPage() {
           <h3 className="text-sm font-bold text-gray-700 mb-3">
             All Training Topics ({totalTopics})
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 items-stretch">
             {topics.map((topic: any) => (
               <AuditTopicTile
                 key={topic.topicKey}
