@@ -24,6 +24,7 @@ const TopicSchema = z.object({
   status: z.enum(["not_started", "in_progress", "complete"]),
   approvedCount: z.number(),
   totalSections: z.number(),
+  lastActivity: z.string().nullable(),
   isAssignedToMe: z.boolean(),
 });
 
@@ -140,6 +141,20 @@ export default api({
     );
     const approvalCountMap = new Map(approvalCounts.map(a => [a.topic_key, a.cnt]));
 
+    // Get last activity per topic (most recent approval or changelog entry)
+    const LastActivityRow = z.object({ topic_key: z.string(), last_at: z.string() });
+    const lastActivities = await ctx.integrations.apps_db.query(
+      `SELECT topic_key, MAX(ts)::text as last_at FROM (
+        SELECT topic_key, approved_at as ts FROM cliptracker_v2_audit_approvals
+        UNION ALL
+        SELECT topic_key, created_at as ts FROM cliptracker_v2_audit_changelog
+      ) sub GROUP BY topic_key`,
+      LastActivityRow,
+      undefined,
+      { label: "Get last activity per topic" }
+    );
+    const lastActivityMap = new Map(lastActivities.map(a => [a.topic_key, a.last_at]));
+
     // Get total expected sections per topic: for each sort_order, check which sections exist
     // Each clip can have: summary, trail_markers, search_rescue, weather_storm, gear
     // We count: 1 (summary) per clip always + 1 if has questions + 1 if has recovery questions + 1 if has WtS + 1 if has resources
@@ -211,6 +226,7 @@ export default api({
         status,
         approvedCount,
         totalSections,
+        lastActivity: lastActivityMap.get(row.topic_key) ?? null,
         isAssignedToMe: myTopicKeys.has(row.topic_key),
       };
     });

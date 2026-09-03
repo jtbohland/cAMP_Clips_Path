@@ -12,6 +12,7 @@ interface AuditTopic {
   status: "not_started" | "in_progress" | "complete";
   approvedCount: number;
   totalSections: number;
+  lastActivity: string | null;
   isAssignedToMe: boolean;
   signoffs: Array<{ viewerName: string; signedAt: string }>;
 }
@@ -35,82 +36,87 @@ export default function AuditTopicTile({
   const isClickable = isAdmin || topic.isAssignedToMe;
   const audiencePath = getPathForTopic(topic.topicKey);
   const pathStyle = audiencePath ? PATH_STYLES[audiencePath] : null;
+  const pct = topic.status === "complete" ? 100 : topic.status === "not_started" ? 0 : (topic.totalSections > 0 ? Math.round((topic.approvedCount / topic.totalSections) * 100) : 0);
 
   return (
     <button
       onClick={() => isClickable && onClick(topic.topicKey)}
       disabled={!isClickable}
-      className={`w-full text-left rounded-xl border p-4 transition-all ${
+      className={`w-full text-left rounded-xl border overflow-hidden transition-all ${
         isClickable
           ? "border-gray-200 bg-white hover:shadow-md hover:border-indigo-300 cursor-pointer"
           : "border-gray-100 bg-gray-50/60 cursor-default opacity-75"
       }`}
     >
-      {/* Header row */}
-      <div className="flex items-start justify-between gap-2 mb-2">
+      {/* ─── Header bar (darker green) ─── */}
+      <div className="bg-emerald-800 px-4 py-2.5 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
-          <span className="text-xl flex-shrink-0">{topic.emoji ?? "📋"}</span>
+          <span className="text-lg flex-shrink-0">{topic.emoji ?? "📋"}</span>
           <div className="min-w-0">
-            <p className="text-xs font-semibold text-indigo-600">{topic.dayLabel}</p>
-            <h3 className="text-sm font-bold text-gray-900 leading-snug truncate">{topic.title}</h3>
+            <p className="text-[10px] font-semibold text-emerald-300 uppercase tracking-wider">{topic.dayLabel}</p>
+            <h3 className="text-sm font-bold text-white leading-snug truncate">{topic.title}</h3>
           </div>
         </div>
-        {/* Status badge with % */}
-        {(() => {
-          const pct = topic.status === "complete" ? 100 : topic.status === "not_started" ? 0 : (topic.totalSections > 0 ? Math.round((topic.approvedCount / topic.totalSections) * 100) : 0);
-          return (
-            <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold ${s.bg} ${s.text} border ${s.border} flex-shrink-0`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
-              {s.label} · {pct}%
-            </span>
-          );
-        })()}
+        {/* Status pill */}
+        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold ${s.bg} ${s.text} border ${s.border} flex-shrink-0`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
+          {s.label} · {pct}%
+        </span>
       </div>
 
-      {/* Audience path pill */}
-      {pathStyle && (
-        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${pathStyle.bg} ${pathStyle.text} border ${pathStyle.border} mb-2`}>
-          {pathStyle.label}
-        </span>
-      )}
-
-      {/* Resource-only note */}
-      {!topic.hasVideo && (
-        <p className="text-[11px] text-amber-600 italic mb-2">
-          📂 Resource-only training day — no video clip attached
-        </p>
-      )}
-
-      {/* SMEs */}
-      {topic.smes.length > 0 && (
-        <div className="space-y-0.5 mt-1">
-          {topic.smes.map((sme, i) => (
-            <p key={i} className="text-xs text-gray-500">
-              <span className="font-medium text-gray-700">{sme.name}</span>
-              <span className="text-gray-400"> · {sme.title}</span>
-              {sme.note && <span className="text-amber-500 italic"> ({sme.note})</span>}
-            </p>
-          ))}
+      {/* ─── Body ─── */}
+      <div className="px-4 py-3 space-y-2">
+        {/* Pills row: path + last activity */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {pathStyle && (
+            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${pathStyle.bg} ${pathStyle.text} border ${pathStyle.border}`}>
+              {pathStyle.label}
+            </span>
+          )}
+          {topic.lastActivity && (
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-600 border border-gray-200">
+              Last activity: {new Date(topic.lastActivity).toLocaleDateString()}
+            </span>
+          )}
         </div>
-      )}
 
-      {/* Sign-offs */}
-      {topic.signoffs.length > 0 && (
-        <div className="mt-2 pt-2 border-t border-gray-100">
-          {topic.signoffs.map((so, i) => (
-            <p key={i} className="text-[10px] text-emerald-600">
-              ✅ {so.viewerName} — {new Date(so.signedAt).toLocaleDateString()}
-            </p>
-          ))}
-        </div>
-      )}
+        {/* Resource-only note */}
+        {!topic.hasVideo && (
+          <p className="text-[11px] text-amber-600 italic">
+            📂 Resource-only training day — no video clip attached
+          </p>
+        )}
 
-      {/* Assigned indicator */}
-      {topic.isAssignedToMe && topic.status !== "complete" && (
-        <div className="mt-2 pt-2 border-t border-gray-100">
-          <p className="text-[10px] font-semibold text-indigo-600">🎯 Assigned to you</p>
-        </div>
-      )}
+        {/* SMEs */}
+        {topic.smes.length > 0 && (
+          <div className="space-y-0.5">
+            {topic.smes.map((sme, i) => (
+              <p key={i} className="text-xs text-gray-500">
+                <span className="font-medium text-gray-700">{sme.name}</span>
+                <span className="text-gray-400"> · {sme.title}</span>
+              </p>
+            ))}
+          </div>
+        )}
+
+        {/* Sign-offs */}
+        {topic.signoffs.length > 0 && (
+          <div className="pt-2 border-t border-gray-100">
+            {topic.signoffs.map((so, i) => (
+              <p key={i} className="text-[10px] text-emerald-600">
+                ✅ {so.viewerName} — {new Date(so.signedAt).toLocaleDateString()}
+              </p>
+            ))}
+          </div>
+        )}
+
+        {/* Assigned indicator */}
+        {topic.isAssignedToMe && topic.status !== "complete" && (
+          <div className="pt-2 border-t border-gray-100">
+            <p className="text-[10px] font-semibold text-indigo-600">🎯 Assigned to you</p>
+          </div>
+        )}
+      </div>
     </button>
   );
 }
