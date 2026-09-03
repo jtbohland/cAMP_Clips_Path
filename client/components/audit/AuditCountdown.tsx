@@ -4,6 +4,8 @@ import { useState, useEffect, useMemo } from "react";
 interface Props {
   cycleLabel: string | null;
   deadline: string | null;
+  completedTopics?: number;
+  totalTopics?: number;
 }
 
 function parseDeadlineAsLocalEOD(deadline: string): Date {
@@ -67,7 +69,7 @@ function Separator({ theme }: { theme: string }) {
   return <span className={`text-2xl font-black ${colorMap[theme]} -mt-3 mx-0.5`}>:</span>;
 }
 
-export default function AuditCountdown({ cycleLabel, deadline }: Props) {
+export default function AuditCountdown({ cycleLabel, deadline, completedTopics = 0, totalTopics = 0 }: Props) {
   const deadlineDate = useMemo(() => (deadline ? parseDeadlineAsLocalEOD(deadline) : null), [deadline]);
   const [time, setTime] = useState(() => (deadlineDate ? getTimeRemaining(deadlineDate) : null));
 
@@ -126,7 +128,7 @@ export default function AuditCountdown({ cycleLabel, deadline }: Props) {
   return (
     <div className={`rounded-2xl bg-gradient-to-r ${outerBg[theme]} px-6 py-5 shadow-xl ${flash ? "animate-pulse" : ""}`}>
       <div className="flex items-center justify-between flex-wrap gap-4">
-        {/* Left: Label + date */}
+        {/* Left: Label + date + progress */}
         <div>
           <p className={`text-[10px] font-black uppercase tracking-[0.2em] ${accentText[theme]}`}>
             ⏱ {cycleLabel ?? "Audit"} Deadline
@@ -134,6 +136,11 @@ export default function AuditCountdown({ cycleLabel, deadline }: Props) {
           <p className="text-lg font-bold text-white mt-0.5">
             {displayDate}
           </p>
+          {totalTopics > 0 && (
+            <p className="text-xs text-white/70 mt-1 font-semibold">
+              🏔️ {completedTopics} / {totalTopics} topics complete
+            </p>
+          )}
         </div>
 
         {/* Right: Timer digits */}

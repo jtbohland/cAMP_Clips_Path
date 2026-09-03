@@ -89,11 +89,6 @@ export default function AuditLandingPage() {
                   <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-xs font-semibold text-indigo-700">
                     📋 {activeCycle.label}
                   </span>
-                  {activeCycle.deadline && (
-                    <span className="text-xs text-gray-500">
-                      Deadline: <strong className="text-gray-700">{new Date(activeCycle.deadline).toLocaleDateString()}</strong>
-                    </span>
-                  )}
                 </div>
               )}
               {!activeCycle && (
@@ -118,6 +113,8 @@ export default function AuditLandingPage() {
         <AuditCountdown
           cycleLabel={activeCycle?.label ?? null}
           deadline={activeCycle?.deadline ?? null}
+          completedTopics={completedTopics}
+          totalTopics={totalTopics}
         />
 
         {/* ─── MV-SME Leaderboard ─── */}
