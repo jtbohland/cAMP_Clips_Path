@@ -88,6 +88,20 @@ export const router = createBrowserRouter([
           })),
       },
       {
+        path: "/audit",
+        lazy: () =>
+          import("./pages/AuditLanding/index.js").then((mod) => ({
+            Component: mod.default,
+          })),
+      },
+      {
+        path: "/audit/:topicKey",
+        lazy: () =>
+          import("./pages/AuditDay/index.js").then((mod) => ({
+            Component: mod.default,
+          })),
+      },
+      {
         path: "/podcasts",
         lazy: () =>
           import("./pages/Podcasts/index.js").then((mod) => ({

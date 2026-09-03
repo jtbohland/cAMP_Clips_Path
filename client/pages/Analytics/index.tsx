@@ -9,6 +9,7 @@ import LearnerDetailView from "@/components/analytics/LearnerDetailView";
 import { type LearnerTileData } from "@/components/analytics/LearnerTile";
 import ManagerFeedbackSection from "@/components/analytics/ManagerFeedbackSection";
 import PacingDeepDiveModal from "@/components/analytics/PacingDeepDiveModal";
+import AscentAuditTab from "@/components/audit/AscentAuditTab";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -64,7 +65,7 @@ function getTier(xp: number) {
 
 // ─── Page entry ──────────────────────────────────────────────────────────────
 
-type MainTab = "dashboard" | "clips";
+type MainTab = "dashboard" | "clips" | "audit";
 
 export default function AnalyticsPage() {
   return (
@@ -215,6 +216,16 @@ function AnalyticsContent() {
           >
             🎬 Clip Analytics
           </button>
+          <button
+            onClick={() => setMainTab("audit")}
+            className={`px-5 py-2.5 text-sm font-semibold transition-colors border-b-2 ${
+              mainTab === "audit"
+                ? "border-indigo-600 text-indigo-700"
+                : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            🍁 Ascent Audit
+          </button>
         </div>
       </div>
 
@@ -247,7 +258,7 @@ function AnalyticsContent() {
               <ManagerFeedbackSection />
             </Section>
           </>
-        ) : (
+        ) : mainTab === "clips" ? (
           <>
             {/* Clip Analytics tab */}
             <Section title="Clip Performance" emoji="🎬" defaultOpen>
@@ -258,6 +269,8 @@ function AnalyticsContent() {
               <QuestionsSection questions={questions ?? []} />
             </Section>
           </>
+        ) : (
+          <AscentAuditTab />
         )}
       </div>
 
