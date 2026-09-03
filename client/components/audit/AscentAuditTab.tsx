@@ -29,11 +29,12 @@ export default function AscentAuditTab() {
 
   const { data: viewerData } = useApiData("GetViewers", {});
 
-  // Build a name→viewer lookup for SME registration status
+  // Build a name→viewer lookup for SME registration status (only SME-role viewers count)
   const smeViewerMap = useMemo(() => {
     const map = new Map<string, { registered: boolean; lastActivity: string | null }>();
     const viewers = viewerData?.viewers ?? [];
     for (const v of viewers) {
+      if ((v as any).role !== "SME") continue; // Only count actual SME registrations
       map.set(v.name.toLowerCase(), { registered: true, lastActivity: (v as any).lastActivity ?? (v as any).createdAt ?? null });
     }
     return map;
