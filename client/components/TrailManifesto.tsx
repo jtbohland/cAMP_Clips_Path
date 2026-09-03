@@ -81,7 +81,7 @@ export default function TrailManifesto({ viewerId }: TrailManifestoProps) {
 
         {/* cAMP Quizzes */}
         <div className="flex items-start gap-3 rounded-lg bg-emerald-50/60 border border-emerald-100 px-4 py-3">
-          <span className="text-lg mt-0.5 shrink-0">🧠</span>
+          <span className="text-lg mt-0.5 shrink-0">🦉</span>
           <div>
             <p className="font-semibold text-gray-900">cAMP Quizzes</p>
             <p className="text-xs text-gray-600 mt-0.5">

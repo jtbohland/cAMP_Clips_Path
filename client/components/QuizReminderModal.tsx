@@ -46,7 +46,7 @@ export default function QuizReminderModal({
         {/* Header */}
         <div className="bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-4">
           <h2 className="text-white text-lg font-bold flex items-center gap-2">
-            🧠 Quiz Check
+            🦉 Quiz Check
           </h2>
         </div>
 
@@ -65,7 +65,7 @@ export default function QuizReminderModal({
             onClick={handleTakeQuiz}
             className="w-full py-3 rounded-lg text-sm font-bold bg-[#EA580C] hover:bg-[#C2410C] text-white transition-colors"
           >
-            🧠 Take {missingQuizDay} cAMP Quiz
+            🦉 Take {missingQuizDay} cAMP Quiz
           </button>
         </div>
       </div>

@@ -20,7 +20,7 @@ export default function CampQuizSection({
   return (
     <div>
       <div className="flex items-center gap-2 mb-3">
-        <span className="text-xl">🧠</span>
+        <span className="text-xl">🦉</span>
         <h2 className="text-base font-bold text-gray-900">
           cAMP Quiz{quizName ? ` — ${quizName}` : ""}
         </h2>
@@ -69,7 +69,7 @@ export default function CampQuizSection({
         <div className="bg-gray-50 rounded-xl p-4 text-center">
           <p className="text-sm text-gray-600">
             Quiz not completed yet. Return to the clips home screen and click{" "}
-            <span className="font-semibold">🧠 Take cAMP Quiz</span> to complete.
+            <span className="font-semibold">🦉 Take cAMP Quiz</span> to complete.
             Once finished, return here to see your results.
           </p>
         </div>

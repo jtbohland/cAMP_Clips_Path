@@ -63,7 +63,7 @@ export default function AuditLandingPage() {
         {isAdmin && (
           <div className="flex items-center gap-4">
             <button onClick={() => navigate("/analytics")} className="text-sm text-indigo-600 hover:underline flex items-center gap-1">
-              ← Back to Analytics
+              ← Back to Admin
             </button>
             <span className="text-gray-300">|</span>
             <button onClick={() => navigate("/analytics?tab=audit")} className="text-sm text-indigo-600 hover:underline flex items-center gap-1">

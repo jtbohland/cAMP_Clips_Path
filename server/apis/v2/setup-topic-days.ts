@@ -137,7 +137,7 @@ export default api({
         label: "MindTickle: Introduction to new Pricing & Packaging (6-lessons, 55m)",
         url: "https://amplitude.mindtickle.com/new/ui/learner/training/files/2026021170074268112?loSeriesId=2026020954479627972&loModuleId=2026021077838173257",
         type: "mindtickle",
-        emoji: "🧠"
+        emoji: "🦉"
       },
       {
         label: "2026 Sales Finance & PPL Enablement Deck",

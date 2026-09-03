@@ -348,7 +348,7 @@ function LearnerCheckinModalInner({ viewerId, checkinType, onClose, onSent, allo
       body += `Overall engagement: ${data.engagement.overallEngagement}% — average\n\n`;
 
       if (qs.totalAttempts > 0) {
-        body += `🧠 Quiz performance:\n`;
+        body += `🦉 Quiz performance:\n`;
         body += `Quizzes passed: ${qs.quizzesPassed} / ${qs.totalQuizzes}\n`;
         body += `Average quiz score: ${qs.avgScorePct}%\n`;
         body += `First-pass rate: ${qs.quizzesPassed > 0 ? Math.round((qs.firstPassCount / qs.quizzesPassed) * 100) : 0}%\n`;
@@ -663,7 +663,7 @@ function SummitCelebrateView({ data, jtQuote }: { data: any; jtQuote: string }) 
           <div className="space-y-2">
             <div className="rounded-xl bg-gray-50 border border-gray-200 px-5 py-4">
               <div className="flex items-start gap-3">
-                <span className="text-2xl mt-0.5">🧠</span>
+                <span className="text-2xl mt-0.5">🦉</span>
                 <div>
                   <p className="text-sm font-bold text-gray-900">Complete your final cAMP Quiz</p>
                   <p className="text-xs text-gray-500 mt-1">Your last content check is waiting — head to cAMP Quizzes to finish strong before cAMP 201.</p>
@@ -805,7 +805,7 @@ function StatsView({ data, checkinType }: { data: any; checkinType: CheckinType 
             </div>
           </div>
           <div className="rounded-xl border border-orange-200 bg-orange-50/60 p-4 shadow-sm">
-            <h3 className="text-sm font-bold text-orange-900 mb-3 flex items-center gap-1.5"><span className="w-1 h-4 rounded-full bg-orange-500 inline-block" />🧠 Week 4 Quizzes</h3>
+            <h3 className="text-sm font-bold text-orange-900 mb-3 flex items-center gap-1.5"><span className="w-1 h-4 rounded-full bg-orange-500 inline-block" />🦉 Week 4 Quizzes</h3>
             <div className="grid grid-cols-3 gap-3 text-center">
               <div className="rounded-lg bg-white/70 py-2">
                 <p className="text-xl font-bold text-orange-700">{data.week4.quizzesPassed}/{data.week4.totalQuizzes}</p>
@@ -859,7 +859,7 @@ function StatsView({ data, checkinType }: { data: any; checkinType: CheckinType 
       {/* cAMP Quiz Stats (not shown in approach — no quizzes in week 1) */}
       {checkinType !== "approach" && data.quizStats.totalAttempts > 0 && (
         <div className="rounded-xl border border-orange-200 bg-orange-50/60 p-4 shadow-sm">
-          <h3 className="text-sm font-bold text-orange-900 mb-3 flex items-center gap-1.5"><span className="w-1 h-4 rounded-full bg-orange-500 inline-block" />🧠 {isSummit ? "All Quizzes" : "cAMP Quiz Stats"}</h3>
+          <h3 className="text-sm font-bold text-orange-900 mb-3 flex items-center gap-1.5"><span className="w-1 h-4 rounded-full bg-orange-500 inline-block" />🦉 {isSummit ? "All Quizzes" : "cAMP Quiz Stats"}</h3>
           <div className="grid grid-cols-3 gap-3 text-center">
             <div className="rounded-lg bg-white/70 py-2">
               <p className="text-xl font-bold text-orange-700">
@@ -1138,7 +1138,7 @@ function EmailView({
               <p>Trail Markers: {data.engagement.avgQuestionScore}% · Focus: {data.engagement.avgFocusScore}% · Time: {data.engagement.avgTimeScore}% · Overall: {data.engagement.overallEngagement}%</p>
               {qs.totalAttempts > 0 && (
                 <>
-                  <p className="mt-1 font-semibold">🧠 Quiz performance:</p>
+                  <p className="mt-1 font-semibold">🦉 Quiz performance:</p>
                   <p>Passed: {qs.quizzesPassed}/{qs.totalQuizzes} · Avg: {qs.avgScorePct}% · 1st Pass: {qs.quizzesPassed > 0 ? Math.round((qs.firstPassCount / qs.quizzesPassed) * 100) : 0}% · Retakes: {qs.retakes}</p>
                 </>
               )}

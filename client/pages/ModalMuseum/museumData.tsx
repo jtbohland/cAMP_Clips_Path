@@ -626,7 +626,7 @@ export const MUSEUM_SECTIONS: MuseumSectionData[] = [
   },
   {
     id: "quiz-reminder",
-    emoji: "🧠",
+    emoji: "🦉",
     title: "Quiz Reminder",
     subtitle: "Hard gate — must click quiz before advancing to next day's clip",
     exhibits: quizReminderExhibits,
@@ -691,7 +691,7 @@ function WelcomeMockup() {
               <div><span className="font-semibold text-indigo-600">cAMP Clips</span> (this app!) is where you watch the videos and complete Trail Markers.</div>
             </div>
             <div className="flex items-start gap-3 rounded-lg bg-gray-50 px-4 py-3">
-              <span className="text-lg mt-0.5 shrink-0">🧠</span>
+              <span className="text-lg mt-0.5 shrink-0">🦉</span>
               <div><span className="font-semibold text-indigo-600">cAMP Quizzes</span> are your content-retention checks after each session.</div>
             </div>
             <div className="flex items-start gap-3 rounded-lg bg-gray-50 px-4 py-3">
@@ -897,7 +897,7 @@ function SummitGrandFinaleMockup() {
                 <div className="space-y-2">
                   <div className="rounded-xl bg-gray-50 border border-gray-200 px-5 py-4">
                     <div className="flex items-start gap-3">
-                      <span className="text-2xl mt-0.5">🧠</span>
+                      <span className="text-2xl mt-0.5">🦉</span>
                       <div>
                         <p className="text-sm font-bold text-gray-900">Complete your final cAMP Quiz</p>
                         <p className="text-xs text-gray-500 mt-1">Your last content check is waiting — head to cAMP Quizzes to finish strong before cAMP 201.</p>
@@ -1193,7 +1193,7 @@ function CheckinMockup({ type }: { type: "approach" | "week2" | "week3" | "summi
                     </div>
                   </div>
                   <div className="rounded-xl border border-orange-200 bg-orange-50/60 p-4 shadow-sm">
-                    <h3 className="text-sm font-bold text-orange-900 mb-3 flex items-center gap-1.5"><span className="w-1 h-4 rounded-full bg-orange-500 inline-block" />🧠 Week 4 Quizzes</h3>
+                    <h3 className="text-sm font-bold text-orange-900 mb-3 flex items-center gap-1.5"><span className="w-1 h-4 rounded-full bg-orange-500 inline-block" />🦉 Week 4 Quizzes</h3>
                     <div className="grid grid-cols-3 gap-3 text-center">
                       <div className="rounded-lg bg-white/70 py-2"><p className="text-xl font-bold text-orange-700">5/5</p><p className="text-xs text-gray-500">Passed</p></div>
                       <div className="rounded-lg bg-white/70 py-2"><p className="text-xl font-bold text-orange-700">85%</p><p className="text-xs text-gray-500">Avg Score</p></div>
@@ -1234,7 +1234,7 @@ function CheckinMockup({ type }: { type: "approach" | "week2" | "week3" | "summi
               {/* Quiz stats (not shown in approach — no quizzes in week 1) */}
               {type !== "approach" && (
                 <div className="rounded-xl border border-orange-200 bg-orange-50/60 p-4 shadow-sm">
-                  <h3 className="text-sm font-bold text-orange-900 mb-3 flex items-center gap-1.5"><span className="w-1 h-4 rounded-full bg-orange-500 inline-block" />🧠 {type === "summit" ? "All Quizzes" : "cAMP Quiz Stats"}</h3>
+                  <h3 className="text-sm font-bold text-orange-900 mb-3 flex items-center gap-1.5"><span className="w-1 h-4 rounded-full bg-orange-500 inline-block" />🦉 {type === "summit" ? "All Quizzes" : "cAMP Quiz Stats"}</h3>
                   <div className="grid grid-cols-3 gap-4 text-center">
                     <div className="rounded-lg bg-white/70 py-2"><p className="text-xl font-bold text-orange-700">{type === "week2" ? "8/9" : "14/15"}</p><p className="text-xs text-gray-500">Passed</p></div>
                     <div className="rounded-lg bg-white/70 py-2"><p className="text-xl font-bold text-orange-700">82%</p><p className="text-xs text-gray-500">Avg Score</p></div>
@@ -1374,7 +1374,7 @@ function CheckinMockup({ type }: { type: "approach" | "week2" | "week3" | "summi
                       <div className="pl-3 border-l-2 border-green-300 bg-green-50/50 rounded py-1 space-y-1">
                         <p className="font-semibold text-gray-800">⛰️ Week 4 Performance</p>
                         <p>• 🎞️ Clips: 7/7 · Avg Engagement: 89%</p>
-                        <p>• 🧠 Quizzes: 5/5 · Avg Score: 85%</p>
+                        <p>• 🦉 Quizzes: 5/5 · Avg Score: 85%</p>
                       </div>
                       <div className="pl-3 border-l-2 border-amber-200 space-y-1 bg-amber-50/50 rounded py-1">
                         <p className="font-semibold text-gray-800">🏔️ Overall Journey</p>
@@ -1386,7 +1386,7 @@ function CheckinMockup({ type }: { type: "approach" | "week2" | "week3" | "summi
                         <p>• 🥾 Trail Markers: 82% · 👀 Focus: 91% · ⏱️ Time: 78% · 🎯 Overall: 84%</p>
                       </div>
                       <div className="pl-3 border-l-2 border-gray-200 space-y-1">
-                        <p className="font-semibold text-gray-800">🧠 All Quizzes (15 Days):</p>
+                        <p className="font-semibold text-gray-800">🦉 All Quizzes (15 Days):</p>
                         <p>• Passed: 14/15 · Avg: 82% · 1st Pass: 79%</p>
                       </div>
                     </>
@@ -1407,7 +1407,7 @@ function CheckinMockup({ type }: { type: "approach" | "week2" | "week3" | "summi
                         <p>• 🥾 Trail Markers: 82% · 👀 Focus: 91% · ⏱️ Time: 78% · 🎯 Overall: 84%</p>
                       </div>
                       <div className="pl-3 border-l-2 border-gray-200 space-y-1">
-                        <p className="font-semibold text-gray-800">🧠 cAMP Quiz:</p>
+                        <p className="font-semibold text-gray-800">🦉 cAMP Quiz:</p>
                         <p>• Passed: {type === "week2" ? "8/9" : "14/15"} · Avg: 82% · 1st Pass: 79%</p>
                       </div>
                     </>
