@@ -22,6 +22,8 @@ const TopicSchema = z.object({
     signedAt: z.string(),
   })),
   status: z.enum(["not_started", "in_progress", "complete"]),
+  approvedCount: z.number(),
+  totalSections: z.number(),
   isAssignedToMe: z.boolean(),
 });
 
@@ -128,20 +130,70 @@ export default api({
       signoffMap.set(so.topic_key, arr);
     }
 
+    // Get approval counts per topic
+    const ApprovalCountRow = z.object({ topic_key: z.string(), cnt: z.coerce.number() });
+    const approvalCounts = await ctx.integrations.apps_db.query(
+      `SELECT topic_key, COUNT(*)::int as cnt FROM cliptracker_v2_audit_approvals GROUP BY topic_key`,
+      ApprovalCountRow,
+      undefined,
+      { label: "Get approval counts per topic" }
+    );
+    const approvalCountMap = new Map(approvalCounts.map(a => [a.topic_key, a.cnt]));
+
+    // Get total expected sections per topic: for each sort_order, check which sections exist
+    // Each clip can have: summary, trail_markers, search_rescue, weather_storm, gear
+    // We count: 1 (summary) per clip always + 1 if has questions + 1 if has recovery questions + 1 if has WtS + 1 if has resources
+    const allSortOrders = topicRows.flatMap(r => r.sort_orders);
+    const SectionCountRow = z.object({
+      sort_order: z.coerce.number(),
+      has_markers: z.boolean(),
+      has_sr: z.boolean(),
+      has_wts: z.boolean(),
+      has_gear: z.boolean(),
+    });
+    const sectionCounts = allSortOrders.length > 0
+      ? await ctx.integrations.apps_db.query(
+          `SELECT c.sort_order,
+            EXISTS(SELECT 1 FROM cliptracker_v2_questions q WHERE q.clip_id = c.id AND NOT q.is_recovery) as has_markers,
+            EXISTS(SELECT 1 FROM cliptracker_v2_questions q WHERE q.clip_id = c.id AND q.is_recovery) as has_sr,
+            EXISTS(SELECT 1 FROM cliptracker_v2_weather_storm w WHERE w.clip_id = c.id) as has_wts,
+            (c.resources IS NOT NULL AND jsonb_array_length(c.resources) > 0) as has_gear
+           FROM cliptracker_v2_clips c
+           WHERE c.sort_order = ANY($1::int[]) AND c.status = 'live'`,
+          SectionCountRow,
+          [`{${allSortOrders.join(",")}}`],
+          { label: "Get section counts per clip" }
+        )
+      : [];
+    // Build sort_order → section count map
+    const sectionCountBySort = new Map<number, number>();
+    for (const sc of sectionCounts) {
+      let count = 1; // summary always counts
+      if (sc.has_markers) count++;
+      if (sc.has_sr) count++;
+      if (sc.has_wts) count++;
+      if (sc.has_gear) count++;
+      sectionCountBySort.set(sc.sort_order, count);
+    }
+
     // Build output
     let completedTopics = 0;
     const topics = topicRows.map(row => {
       const topicSignoffs = signoffMap.get(row.topic_key) ?? [];
       const smes = Array.isArray(row.smes) ? row.smes : [];
       const objectives = Array.isArray(row.learning_objectives) ? row.learning_objectives : [];
+      const approvedCount = approvalCountMap.get(row.topic_key) ?? 0;
+      const totalSections = row.sort_orders.reduce((sum, so) => sum + (sectionCountBySort.get(so) ?? 0), 0);
 
       // Status logic: complete if at least one sign-off exists for this topic
-      // in_progress if someone is assigned but hasn't signed off
+      // in_progress if someone has approved at least one section but hasn't signed off
       // not_started otherwise
       let status: "not_started" | "in_progress" | "complete" = "not_started";
       if (topicSignoffs.length > 0) {
         status = "complete";
         completedTopics++;
+      } else if (approvedCount > 0) {
+        status = "in_progress";
       }
 
       return {
@@ -157,6 +209,8 @@ export default api({
         smes: smes as Array<{ name: string; title: string; note?: string | null }>,
         signoffs: topicSignoffs,
         status,
+        approvedCount,
+        totalSections,
         isAssignedToMe: myTopicKeys.has(row.topic_key),
       };
     });

@@ -1,4 +1,5 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
+import { useSearchParams } from "react-router";
 import PasswordGate from "@/components/PasswordGate";
 import PageHeader from "@/components/PageHeader";
 import { useApiData } from "@/hooks/useApiData";
@@ -107,7 +108,11 @@ function Section({ title, subtitle, emoji, defaultOpen = true, children }: {
 function AnalyticsContent() {
   const { data, loading, fetching, isError, error } = useApiData("GetAnalyticsV3", {});
   const [selectedLearnerId, setSelectedLearnerId] = useState<string | null>(null);
-  const [mainTab, setMainTab] = useState<MainTab>("dashboard");
+  const [searchParams] = useSearchParams();
+  const initialTab = searchParams.get("tab");
+  const [mainTab, setMainTab] = useState<MainTab>(
+    initialTab === "audit" ? "audit" : initialTab === "clips" ? "clips" : "dashboard"
+  );
   const [showPacingDeepDive, setShowPacingDeepDive] = useState(false);
 
   const handleLearnerClick = useCallback((viewerId: string) => {

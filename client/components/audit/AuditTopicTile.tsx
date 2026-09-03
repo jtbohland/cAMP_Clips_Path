@@ -10,6 +10,8 @@ interface AuditTopic {
   hasVideo: boolean;
   smes: Array<{ name: string; title: string; note?: string | null }>;
   status: "not_started" | "in_progress" | "complete";
+  approvedCount: number;
+  totalSections: number;
   isAssignedToMe: boolean;
   signoffs: Array<{ viewerName: string; signedAt: string }>;
 }
@@ -53,11 +55,16 @@ export default function AuditTopicTile({
             <h3 className="text-sm font-bold text-gray-900 leading-snug truncate">{topic.title}</h3>
           </div>
         </div>
-        {/* Status badge */}
-        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold ${s.bg} ${s.text} border ${s.border} flex-shrink-0`}>
-          <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
-          {s.label}
-        </span>
+        {/* Status badge with % */}
+        {(() => {
+          const pct = topic.status === "complete" ? 100 : topic.status === "not_started" ? 0 : (topic.totalSections > 0 ? Math.round((topic.approvedCount / topic.totalSections) * 100) : 0);
+          return (
+            <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold ${s.bg} ${s.text} border ${s.border} flex-shrink-0`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
+              {s.label} · {pct}%
+            </span>
+          );
+        })()}
       </div>
 
       {/* Audience path pill */}
