@@ -5,6 +5,8 @@ import { useViewer } from "@/components/ViewerContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import AuditTopicTile from "@/components/audit/AuditTopicTile";
+import AuditCountdown from "@/components/audit/AuditCountdown";
+import AuditLeaderboard from "@/components/audit/AuditLeaderboard";
 import PageHeader from "@/components/PageHeader";
 
 export default function AuditLandingPage() {
@@ -111,6 +113,15 @@ export default function AuditLandingPage() {
             <Progress value={progressPct} className="h-2" />
           </div>
         </div>
+
+        {/* ─── Countdown Timer ─── */}
+        <AuditCountdown
+          cycleLabel={activeCycle?.label ?? null}
+          deadline={activeCycle?.deadline ?? null}
+        />
+
+        {/* ─── MV-SME Leaderboard ─── */}
+        <AuditLeaderboard entries={data?.leaderboard ?? []} />
 
         {/* ─── Topic Tile Grid ─── */}
         <div>

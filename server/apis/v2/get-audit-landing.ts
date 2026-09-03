@@ -50,6 +50,15 @@ export default api({
     }).nullable(),
     totalTopics: z.number(),
     completedTopics: z.number(),
+    leaderboard: z.array(z.object({
+      name: z.string(),
+      topicsAssigned: z.number(),
+      topicsCompleted: z.number(),
+      sectionsApproved: z.number(),
+      editsMade: z.number(),
+      progressPct: z.number(),
+      badge: z.string().nullable(),
+    })),
   }),
 
   async run(ctx, { viewerId }) {
@@ -231,11 +240,98 @@ export default api({
       };
     });
 
+    // ── Build leaderboard ──
+    // Collect unique SMEs from all topics with their assigned topic keys
+    const smeTopicMap = new Map<string, Set<string>>(); // name → set of topicKeys
+    for (const row of topicRows) {
+      const smes = Array.isArray(row.smes) ? row.smes : [];
+      for (const sme of smes as Array<{ name: string }>) {
+        const existing = smeTopicMap.get(sme.name) ?? new Set();
+        existing.add(row.topic_key);
+        smeTopicMap.set(sme.name, existing);
+      }
+    }
+
+    // Get per-viewer edit counts and approval counts from changelog/approvals
+    // We join on viewer name since SMEs may not have viewer IDs yet
+    const EditCountRow = z.object({ viewer_name: z.string(), cnt: z.coerce.number() });
+    const editCounts = await ctx.integrations.apps_db.query(
+      `SELECT v.name as viewer_name, COUNT(*)::int as cnt
+       FROM cliptracker_v2_audit_changelog cl
+       JOIN cliptracker_v2_viewers v ON v.id = cl.viewer_id
+       GROUP BY v.name`,
+      EditCountRow,
+      undefined,
+      { label: "Get edit counts per SME" }
+    );
+    const editCountMap = new Map(editCounts.map(e => [e.viewer_name, e.cnt]));
+
+    const ApprovalBySmeRow = z.object({ viewer_name: z.string(), cnt: z.coerce.number() });
+    const approvalsBySme = await ctx.integrations.apps_db.query(
+      `SELECT v.name as viewer_name, COUNT(*)::int as cnt
+       FROM cliptracker_v2_audit_approvals ap
+       JOIN cliptracker_v2_viewers v ON v.id = ap.viewer_id
+       GROUP BY v.name`,
+      ApprovalBySmeRow,
+      undefined,
+      { label: "Get approval counts per SME" }
+    );
+    const approvalBySmeMap = new Map(approvalsBySme.map(a => [a.viewer_name, a.cnt]));
+
+    // Sign-offs per SME name
+    const signoffBySme = new Map<string, number>();
+    for (const so of signoffs) {
+      signoffBySme.set(so.viewer_name, (signoffBySme.get(so.viewer_name) ?? 0) + 1);
+    }
+
+    // Build leaderboard rows
+    const BADGES = [
+      { key: "trailwright", emoji: "🛠️", name: "Trailwright", minEdits: 5 },
+      { key: "cartographer", emoji: "🗺️", name: "Cartographer", minEdits: 3 },
+      { key: "peak_spotter", emoji: "🔭", name: "Peak Spotter", minEdits: 1 },
+      { key: "smoke_signal", emoji: "🏕️", name: "Smoke Signal", minEdits: 0 },
+    ];
+    function getBadge(edits: number, completed: number, assigned: number) {
+      if (completed === 0) return null; // No badge until at least one topic signed off
+      for (const b of BADGES) { if (edits >= b.minEdits) return `${b.emoji} ${b.name}`; }
+      return null;
+    }
+
+    const leaderboard = Array.from(smeTopicMap.entries()).map(([name, topicKeys]) => {
+      const topicsAssigned = topicKeys.size;
+      const topicsCompleted = signoffBySme.get(name) ?? 0;
+      const editsMade = editCountMap.get(name) ?? 0;
+      const sectionsApproved = approvalBySmeMap.get(name) ?? 0;
+
+      // Progress: total approved / total sections across assigned topics
+      let totalSects = 0;
+      let totalApproved = 0;
+      for (const tk of topicKeys) {
+        const t = topics.find(t => t.topicKey === tk);
+        if (t) {
+          totalSects += t.totalSections;
+          totalApproved += Math.min(t.approvedCount, t.totalSections);
+        }
+      }
+      const progressPct = totalSects > 0 ? Math.round((totalApproved / totalSects) * 100) : 0;
+
+      return {
+        name,
+        topicsAssigned,
+        topicsCompleted,
+        sectionsApproved,
+        editsMade,
+        progressPct,
+        badge: getBadge(editsMade, topicsCompleted, topicsAssigned),
+      };
+    }).sort((a, b) => b.progressPct - a.progressPct || b.editsMade - a.editsMade);
+
     return {
       topics,
       activeCycle,
       totalTopics: topics.length,
       completedTopics,
+      leaderboard,
     };
   },
 });
