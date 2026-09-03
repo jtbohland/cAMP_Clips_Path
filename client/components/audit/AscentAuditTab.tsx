@@ -207,7 +207,9 @@ export default function AscentAuditTab() {
               <tr className="border-b border-gray-200">
                 <th className="text-left py-2 px-3 text-xs font-semibold text-gray-500">Topic</th>
                 <th className="text-left py-2 px-3 text-xs font-semibold text-gray-500">Path</th>
-                <th className="text-left py-2 px-3 text-xs font-semibold text-gray-500 min-w-[220px]">SMEs &amp; Registration</th>
+                <th className="text-left py-2 px-3 text-xs font-semibold text-gray-500">SMEs</th>
+                <th className="text-left py-2 px-3 text-xs font-semibold text-gray-500">Registered</th>
+                <th className="text-left py-2 px-3 text-xs font-semibold text-gray-500">Last Active</th>
                 <th className="text-left py-2 px-3 text-xs font-semibold text-gray-500">Status</th>
                 <th className="text-left py-2 px-3 text-xs font-semibold text-gray-500">Sign-offs</th>
               </tr>
@@ -232,20 +234,39 @@ export default function AscentAuditTab() {
                         return <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full border bg-blue-100 text-blue-700 border-blue-300">All Roles</span>;
                       })()}
                     </td>
+                    <td className="py-2.5 px-3 text-xs text-gray-700">
+                      {t.smes.length > 0 ? (
+                        <div className="space-y-1">
+                          {t.smes.map((sme: any, si: number) => (
+                            <div key={si} className="font-medium">{sme.name}</div>
+                          ))}
+                        </div>
+                      ) : <span className="text-gray-400">—</span>}
+                    </td>
                     <td className="py-2.5 px-3 text-xs">
                       {t.smes.length > 0 ? (
-                        <div className="space-y-1.5">
+                        <div className="space-y-1">
                           {t.smes.map((sme: any, si: number) => {
                             const match = smeViewerMap.get(sme.name.toLowerCase());
                             return (
-                              <div key={si} className="flex items-center gap-2 whitespace-nowrap">
-                                <span className="text-gray-800 font-medium">{sme.name}</span>
+                              <div key={si}>
                                 {match?.registered
-                                  ? <span className="text-emerald-600 text-[10px]">✅</span>
-                                  : <span className="text-red-500 font-semibold text-[10px]">❌</span>}
-                                {match?.lastActivity && (
-                                  <span className="text-gray-400 text-[10px]">{new Date(match.lastActivity).toLocaleDateString()}</span>
-                                )}
+                                  ? <span className="text-emerald-600">✅</span>
+                                  : <span className="text-red-500">❌</span>}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : <span className="text-gray-400">—</span>}
+                    </td>
+                    <td className="py-2.5 px-3 text-xs text-gray-500">
+                      {t.smes.length > 0 ? (
+                        <div className="space-y-1">
+                          {t.smes.map((sme: any, si: number) => {
+                            const match = smeViewerMap.get(sme.name.toLowerCase());
+                            return (
+                              <div key={si}>
+                                {match?.lastActivity ? new Date(match.lastActivity).toLocaleDateString() : "—"}
                               </div>
                             );
                           })}
