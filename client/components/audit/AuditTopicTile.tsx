@@ -73,11 +73,26 @@ export default function AuditTopicTile({
               {pathStyle.label}
             </span>
           )}
-          {topic.lastActivity && (
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-600 border border-gray-200">
-              Last activity: {new Date(topic.lastActivity).toLocaleDateString()}
-            </span>
-          )}
+          {(() => {
+            if (!topic.lastActivity) {
+              return (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-500 border border-gray-200">
+                  No activity yet
+                </span>
+              );
+            }
+            const daysAgo = Math.floor((Date.now() - new Date(topic.lastActivity).getTime()) / (1000 * 60 * 60 * 24));
+            const style =
+              daysAgo <= 7  ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
+              daysAgo <= 14 ? "bg-yellow-50 text-yellow-700 border-yellow-200" :
+              daysAgo <= 21 ? "bg-orange-50 text-orange-700 border-orange-200" :
+                              "bg-red-50 text-red-700 border-red-200";
+            return (
+              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border ${style}`}>
+                Last activity: {new Date(topic.lastActivity).toLocaleDateString()}
+              </span>
+            );
+          })()}
         </div>
 
         {/* Resource-only note */}
