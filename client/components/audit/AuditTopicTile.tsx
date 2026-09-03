@@ -22,12 +22,14 @@ const STATUS_CONFIG = {
 export default function AuditTopicTile({
   topic,
   onClick,
+  isAdmin = false,
 }: {
   topic: AuditTopic;
   onClick: (topicKey: string) => void;
+  isAdmin?: boolean;
 }) {
   const s = STATUS_CONFIG[topic.status];
-  const isClickable = topic.isAssignedToMe;
+  const isClickable = isAdmin || topic.isAssignedToMe;
 
   return (
     <button

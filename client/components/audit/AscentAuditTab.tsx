@@ -1,5 +1,6 @@
 /** Admin Ascent Audit tab for Analytics page */
 import { useState, useCallback } from "react";
+import { useNavigate } from "react-router";
 import { useApiData } from "@/hooks/useApiData";
 import { useApi } from "@/hooks/useApi";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,6 +14,7 @@ const STATUS_PILL: Record<string, { bg: string; text: string; label: string }> =
 };
 
 export default function AscentAuditTab() {
+  const navigate = useNavigate();
   // Use a dummy viewerId since this is admin view — all topics shown regardless of assignment
   const { data, loading, fetching, isError, refetch } = useApiData("GetAuditLanding", {
     viewerId: "00000000-0000-0000-0000-000000000000",
@@ -84,6 +86,17 @@ export default function AscentAuditTab() {
   return (
     <div className={`space-y-6 ${fetching && !loading ? "opacity-70" : ""}`}>
       {fetching && !loading && <div className="text-xs text-gray-600">Updating…</div>}
+
+      {/* ─── Admin Quick Actions ─── */}
+      <div className="flex items-center gap-3">
+        <button
+          onClick={() => navigate("/audit")}
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border-2 border-indigo-300 bg-indigo-50 text-sm font-bold text-indigo-700 hover:bg-indigo-100 hover:border-indigo-400 transition-colors"
+        >
+          🍁 View SME Landing Page →
+        </button>
+        <span className="text-xs text-gray-400">See the full tile grid and click into any topic to review content</span>
+      </div>
 
       {/* ─── Cycle Management ─── */}
       <div className="rounded-xl border border-gray-200 bg-white p-5">
@@ -190,11 +203,11 @@ export default function AscentAuditTab() {
               {topics.map((t: any) => {
                 const s = STATUS_PILL[t.status] ?? STATUS_PILL.not_started;
                 return (
-                  <tr key={t.topicKey} className="border-b border-gray-50 hover:bg-gray-50/50">
+                  <tr key={t.topicKey} className="border-b border-gray-50 hover:bg-indigo-50/40 cursor-pointer transition-colors" onClick={() => navigate(`/audit/${t.topicKey}`)}>
                     <td className="py-2 px-2">
                       <span className="mr-1">{t.emoji}</span>
                       <span className="font-medium text-gray-900">{t.dayLabel}:</span>{" "}
-                      <span className="text-gray-700">{t.title}</span>
+                      <span className="text-indigo-700 hover:underline font-medium">{t.title}</span>
                     </td>
                     <td className="py-2 px-2">
                       {t.pathLabel ? (

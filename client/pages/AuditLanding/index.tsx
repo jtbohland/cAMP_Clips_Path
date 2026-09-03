@@ -10,6 +10,7 @@ import PageHeader from "@/components/PageHeader";
 export default function AuditLandingPage() {
   const { viewer } = useViewer();
   const navigate = useNavigate();
+  const isAdmin = viewer?.isAdmin === true || viewer?.role === "Admin";
 
   const { data, loading, fetching, isError, error } = useApiData("GetAuditLanding", {
     viewerId: viewer?.id ?? "",
@@ -54,6 +55,13 @@ export default function AuditLandingPage() {
       {fetching && !loading && <div className="text-xs text-gray-600 px-6 pt-3">Updating…</div>}
 
       <div className={`p-6 max-w-6xl mx-auto w-full space-y-6 ${fetching && !loading ? "opacity-70" : ""}`}>
+
+        {/* Admin back link */}
+        {isAdmin && (
+          <button onClick={() => navigate("/analytics")} className="text-sm text-indigo-600 hover:underline flex items-center gap-1">
+            ← Back to Analytics
+          </button>
+        )}
 
         {/* ─── Intro Section ─── */}
         <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
@@ -109,6 +117,7 @@ export default function AuditLandingPage() {
                 key={topic.topicKey}
                 topic={topic}
                 onClick={handleTileClick}
+                isAdmin={isAdmin}
               />
             ))}
           </div>
