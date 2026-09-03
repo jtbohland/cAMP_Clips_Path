@@ -89,11 +89,6 @@ export default function AuditLandingPage() {
                   <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-xs font-semibold text-indigo-700">
                     📋 {activeCycle.label}
                   </span>
-                  {activeCycle.deadline && (
-                    <span className="text-xs text-gray-500">
-                      Deadline: <strong className="text-gray-700">{new Date(activeCycle.deadline).toLocaleDateString()}</strong>
-                    </span>
-                  )}
                 </div>
               )}
               {!activeCycle && (
@@ -103,21 +98,14 @@ export default function AuditLandingPage() {
               )}
             </div>
           </div>
-
-          {/* Progress bar */}
-          <div className="mt-4 pt-3 border-t border-gray-100">
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-xs font-medium text-gray-600">Audit Progress</span>
-              <span className="text-xs font-bold text-gray-700">{completedTopics} / {totalTopics} topics complete</span>
-            </div>
-            <Progress value={progressPct} className="h-2" />
-          </div>
         </div>
 
         {/* ─── Countdown Timer ─── */}
         <AuditCountdown
           cycleLabel={activeCycle?.label ?? null}
           deadline={activeCycle?.deadline ?? null}
+          completedTopics={completedTopics}
+          totalTopics={totalTopics}
         />
 
         {/* ─── MV-SME Leaderboard ─── */}
