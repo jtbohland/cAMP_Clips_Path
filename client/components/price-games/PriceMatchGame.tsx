@@ -11,51 +11,71 @@ type Props = {
 export default function PriceMatchGame({ narrative, gameData, onComplete }: Props) {
   const items = useMemo(() => gameData.pairs.map((p) => p.item), [gameData]);
 
-  // Shuffle the prices (deterministic from pair content)
-  const shuffledPrices = useMemo(() => {
-    const prices = gameData.pairs.map((p) => p.price);
-    return [...prices].sort((a, b) => {
-      const hashA = a.split("").reduce((acc, c, i) => acc + c.charCodeAt(0) * (i + 7), 0);
-      const hashB = b.split("").reduce((acc, c, i) => acc + c.charCodeAt(0) * (i + 7), 0);
+  // Shuffle the prices — keep index-based so duplicates stay separate
+  const shuffledPriceSlots = useMemo(() => {
+    const slots = gameData.pairs.map((p, i) => ({ idx: i, price: p.price }));
+    return [...slots].sort((a, b) => {
+      const hashA = a.price.split("").reduce((acc, c, i) => acc + c.charCodeAt(0) * (i + 7), 0) + a.idx;
+      const hashB = b.price.split("").reduce((acc, c, i) => acc + c.charCodeAt(0) * (i + 7), 0) + b.idx;
       return hashA - hashB;
     });
   }, [gameData]);
 
-  // matches: item → price
-  const [matches, setMatches] = useState<Record<string, string>>({});
+  // matches: item → slot index (not price string)
+  const [matches, setMatches] = useState<Record<string, number>>({});
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
 
-  const usedPrices = useMemo(() => new Set(Object.values(matches)), [matches]);
+  const usedSlotIndices = useMemo(() => new Set(Object.values(matches)), [matches]);
 
-  const handleItemClick = useCallback((item: string) => {
-    if (matches[item]) {
-      // Unassign
-      setMatches((prev) => {
-        const next = { ...prev };
-        delete next[item];
-        return next;
-      });
+  const getMatchedPrice = useCallback(
+    (item: string) => {
+      const slotIdx = matches[item];
+      if (slotIdx == null) return null;
+      return shuffledPriceSlots.find((s) => s.idx === slotIdx)?.price ?? null;
+    },
+    [matches, shuffledPriceSlots]
+  );
+
+  const handleItemClick = useCallback(
+    (item: string) => {
+      if (matches[item] != null) {
+        // Unassign
+        setMatches((prev) => {
+          const next = { ...prev };
+          delete next[item];
+          return next;
+        });
+        setSelectedItem(null);
+      } else {
+        setSelectedItem(item);
+      }
+    },
+    [matches]
+  );
+
+  const handlePriceClick = useCallback(
+    (slotIdx: number) => {
+      if (!selectedItem) return;
+      if (usedSlotIndices.has(slotIdx)) return;
+      setMatches((prev) => ({ ...prev, [selectedItem]: slotIdx }));
       setSelectedItem(null);
-    } else {
-      setSelectedItem(item);
-    }
-  }, [matches]);
-
-  const handlePriceClick = useCallback((price: string) => {
-    if (!selectedItem) return;
-    if (usedPrices.has(price)) return;
-    setMatches((prev) => ({ ...prev, [selectedItem]: price }));
-    setSelectedItem(null);
-  }, [selectedItem, usedPrices]);
+    },
+    [selectedItem, usedSlotIndices]
+  );
 
   const allMatched = Object.keys(matches).length === items.length;
 
   const handleSubmit = () => {
     if (!allMatched) return;
-    // Check correctness
     const correctMap = new Map(gameData.pairs.map((p) => [p.item, p.price]));
-    const allCorrect = items.every((item) => matches[item] === correctMap.get(item));
-    onComplete({ matched: matches }, allCorrect);
+    const matchedDisplay: Record<string, string> = {};
+    for (const item of items) {
+      matchedDisplay[item] = getMatchedPrice(item) ?? "";
+    }
+    const allCorrect = items.every(
+      (item) => matchedDisplay[item] === correctMap.get(item)
+    );
+    onComplete({ matched: matchedDisplay }, allCorrect);
   };
 
   return (
@@ -71,7 +91,8 @@ export default function PriceMatchGame({ narrative, gameData, onComplete }: Prop
         <div className="space-y-2">
           <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Items</p>
           {items.map((item) => {
-            const isMatched = !!matches[item];
+            const matchedPrice = getMatchedPrice(item);
+            const isMatched = matchedPrice != null;
             const isSelected = selectedItem === item;
             return (
               <button
@@ -88,7 +109,7 @@ export default function PriceMatchGame({ narrative, gameData, onComplete }: Prop
                 {isMatched && <span className="mr-1">✓</span>}
                 {item}
                 {isMatched && (
-                  <span className="block text-xs text-green-500 mt-0.5">→ {matches[item]}</span>
+                  <span className="block text-xs text-green-500 mt-0.5">→ {matchedPrice}</span>
                 )}
               </button>
             );
@@ -98,12 +119,12 @@ export default function PriceMatchGame({ narrative, gameData, onComplete }: Prop
         {/* Right: prices */}
         <div className="space-y-2">
           <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Prices</p>
-          {shuffledPrices.map((price) => {
-            const isUsed = usedPrices.has(price);
+          {shuffledPriceSlots.map((slot) => {
+            const isUsed = usedSlotIndices.has(slot.idx);
             return (
               <button
-                key={price}
-                onClick={() => handlePriceClick(price)}
+                key={slot.idx}
+                onClick={() => handlePriceClick(slot.idx)}
                 disabled={isUsed || !selectedItem}
                 className={`w-full text-left px-3 py-2.5 rounded-lg text-sm border-2 transition-all ${
                   isUsed
@@ -113,7 +134,7 @@ export default function PriceMatchGame({ narrative, gameData, onComplete }: Prop
                     : "border-gray-200 bg-white text-gray-700 cursor-not-allowed opacity-60"
                 }`}
               >
-                {price}
+                {slot.price}
               </button>
             );
           })}
