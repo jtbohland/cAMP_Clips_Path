@@ -274,7 +274,7 @@ export function TrailMarkersSection({ markers, clipTitle, topicKey, onSaved, sec
     <div className={`rounded-xl border ${locked ? "border-red-200 bg-red-50/30 opacity-75" : isApproved ? "border-emerald-200 bg-emerald-50/20" : "border-gray-200 bg-white"} p-5 ${locked ? "pointer-events-none" : ""}`}>
       {locked && (
         <div className="rounded-lg bg-red-100 border border-red-300 px-3 py-2 text-xs text-red-800 mb-3 pointer-events-auto">
-          <strong>🔒 Locked — Replacement video submitted.</strong> These questions will need to be re-created once the new recording is finalized.
+          <strong>🔒 Locked — Replacement video submitted.</strong> Once finalized, <strong>JT Bohland</strong> will rewrite these questions and ask you to approve the new versions.
         </div>
       )}
       <div className="flex items-center justify-between mb-2">
@@ -314,7 +314,7 @@ export function SearchRescueSection({ questions, clipTitle, topicKey, onSaved, s
     <div className={`rounded-xl border ${locked ? "border-red-200 bg-red-50/30 opacity-75" : isApproved ? "border-emerald-200 bg-emerald-50/20" : "border-amber-200 bg-amber-50/30"} p-5 ${locked ? "pointer-events-none" : ""}`}>
       {locked && (
         <div className="rounded-lg bg-red-100 border border-red-300 px-3 py-2 text-xs text-red-800 mb-3 pointer-events-auto">
-          <strong>🔒 Locked — Replacement video submitted.</strong> These questions will need to be re-created once the new recording is finalized.
+          <strong>🔒 Locked — Replacement video submitted.</strong> Once finalized, <strong>JT Bohland</strong> will rewrite these questions and ask you to approve the new versions.
         </div>
       )}
       <div className="flex items-center justify-between mb-2">
@@ -367,7 +367,7 @@ export function WeatherStormSection({ wts, clipTitle, clipId, topicKey, onSaved,
     <div className={`rounded-xl border ${locked ? "border-red-200 bg-red-50/30 opacity-75" : isApproved ? "border-emerald-200 bg-emerald-50/20" : "border-blue-200 bg-blue-50/30"} p-5 ${locked ? "pointer-events-none" : ""}`}>
       {locked && (
         <div className="rounded-lg bg-red-100 border border-red-300 px-3 py-2 text-xs text-red-800 mb-3 pointer-events-auto">
-          <strong>🔒 Locked — Replacement video submitted.</strong> This section will need to be re-created once the new recording is finalized.
+          <strong>🔒 Locked — Replacement video submitted.</strong> Once finalized, <strong>JT Bohland</strong> will rewrite this section and ask you to approve the new version.
         </div>
       )}
       <SectionHeader title={`Weather the Storm — ${clipTitle}`} emoji="⛈️" isApproved={isApproved} onApprove={handleApprove} approving={approving}
@@ -801,7 +801,7 @@ export function ClipSection({ clip, topicKey, topicTitle, onSaved, smes, isAppro
               >
                 <p className="text-sm font-bold text-gray-900">🔄 Replace Current Clip</p>
                 <p className="text-[10px] text-gray-600 mt-1">
-                  This video is intended to replace the current recording. <strong className="text-red-600">Trail Markers, S&R, and Weather the Storm will be locked</strong> — they'll need to be re-done for the new video.
+                  This video is intended to replace the current recording. <strong className="text-red-600">Trail Markers, S&R, and Weather the Storm will be locked</strong> — <strong>JT Bohland</strong> will rewrite them once the new video is finalized.
                 </p>
               </button>
             </div>
@@ -820,7 +820,7 @@ export function ClipSection({ clip, topicKey, topicTitle, onSaved, smes, isAppro
         {/* Replacement active banner */}
         {clipReplaced && (
           <div className="mt-3 rounded-lg bg-red-100 border border-red-300 px-3 py-2.5 text-xs text-red-800">
-            <strong>🔄 Replacement video submitted.</strong> Trail Markers, Search & Rescue, and Weather the Storm sections for this clip are now locked and will need to be re-created once the new video is finalized by your admin.
+            <strong>🔄 Replacement video submitted.</strong> Trail Markers, Search & Rescue, and Weather the Storm sections for this clip are now locked. Once the new recording is finalized, <strong>JT Bohland</strong> will rewrite those sections and ask you to approve the new versions.
           </div>
         )}
 

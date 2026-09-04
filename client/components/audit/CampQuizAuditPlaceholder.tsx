@@ -66,7 +66,7 @@ export default function CampQuizAuditPlaceholder({ topicTitle, isApproved }: Cam
           className="inline-flex items-center gap-2 text-sm font-semibold text-white px-5 py-2.5 rounded-lg hover:brightness-110 transition-all"
           style={{ backgroundColor: "#C2590A" }}
         >
-          🦉 Open Quiz Audit Tool
+          🦉 Open cAMP Quiz Audit
         </a>
       </div>
     </div>
