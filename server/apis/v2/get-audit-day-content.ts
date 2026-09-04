@@ -63,6 +63,11 @@ export default api({
       totalSections: z.number(),
       signedOff: z.boolean(),
     })),
+    topicResources: z.array(z.object({
+      label: z.string(),
+      url: z.string(),
+      type: z.string(),
+    })),
   }),
 
   async run(ctx, { topicKey, viewerId }) {
@@ -248,6 +253,26 @@ export default api({
       return sum + count;
     }, 0);
 
+    // Topic-level resources for topics without clips (e.g. product_101 / Approach)
+    const TOPIC_RESOURCES: Record<string, Array<{ label: string; url: string; type: string }>> = {
+      product_101: [
+        { label: "🎓 Academy: Getting Started with Analytics", url: "https://academy.amplitude.com/amplitude-getting-started-with-analytics", type: "academy" },
+        { label: "🎓 Academy: Experiment & Statsig", url: "https://academy.amplitude.com/getting-started-with-amplitude-experiment-learning-path", type: "academy" },
+        { label: "🎓 Academy: Statsig Overview", url: "https://academy.amplitude.com/statsig-overview", type: "academy" },
+        { label: "🎓 Academy: Session Replay", url: "https://academy.amplitude.com/contextualize-user-experience-with-session-replay", type: "academy" },
+        { label: "🎓 Academy: Guides & Surveys", url: "https://academy.amplitude.com/engage-your-users-with-guides-and-surveys", type: "academy" },
+        { label: "🎡 Wheel & Deal Simulation", url: "https://app.superblocks.com/code-mode/applications/fef97ebe-4fb9-401f-b97c-c52c1693b31b/", type: "app" },
+        { label: "🔭 Spekit: Platform & Products Hub", url: "https://app.spekit.co/app/wiki/?&topic=1d04d90d-e516-408c-bab2-837788fed772&tag=Platform%20and%20Products", type: "spekit" },
+        { label: "🔭 Spekit: cAMP 101 Cheat Sheet", url: "https://app.spekit.co/app/wiki/asset/8a45c361-c2a2-4f57-95ec-6c09a93e8d0d?type=asset&expanded=true", type: "spekit" },
+        { label: "🔭 Spekit: Use Case Library", url: "https://app.spekit.co/app/wiki/asset/a36c9b70-dfb7-440d-be25-b2b7060b1728?type=asset&expanded=true", type: "spekit" },
+        { label: "📝 cAMP 101 Study Guide", url: "https://docs.google.com/document/d/1ty44HjkNk3Wxc4UqO9yfmuErq-aaZcwwcN22qAf7A5o/edit?tab=t.0", type: "gdrive" },
+        { label: "🔭 Spekit: Getting Started with Amplitude", url: "https://app.spekit.co/app/wiki/asset/fdc1993a-7446-457d-881c-5ed1069f42ef?type=asset&expanded=true", type: "spekit" },
+        { label: "📊 GTM POD Model Deck", url: "https://docs.google.com/presentation/d/1WF9CXT9P5pI8CoxAxvBJKFX8Oe9F1H3S30hDVWeJPgY/edit?slide=id.p1#slide=id.p1", type: "slides" },
+        { label: "🔭 Spekit: Amplitude Demo Environments", url: "https://app.spekit.co/app/wiki/asset/5044cec5-ccef-45b4-9ad8-27e7fe81b7ce?type=asset&expanded=true", type: "spekit" },
+      ],
+    };
+    const topicResources = TOPIC_RESOURCES[topicKey] ?? [];
+
     return {
       topic: {
         topicKey: meta.topic_key,
@@ -268,6 +293,7 @@ export default api({
         totalSections,
         signedOff: p.signed_off,
       })),
+      topicResources,
     };
   },
 });
