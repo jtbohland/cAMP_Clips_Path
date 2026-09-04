@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { useNavigate } from "react-router";
 import { useApi } from "@/hooks/useApi";
 import { useViewer } from "@/components/ViewerContext";
 import { toast } from "sonner";
@@ -123,6 +124,7 @@ function WelcomeMemoTile2() {
 
 export default function RegistrationForm() {
   const { setViewer } = useViewer();
+  const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [timezone, setTimezone] = useState("");
@@ -167,7 +169,10 @@ export default function RegistrationForm() {
         });
         if (result?.viewer) {
           setViewer(result.viewer);
-          if (result.isNew) {
+          if (isSME) {
+            // SMEs skip welcome modal — go straight to audit
+            navigate("/audit", { replace: true });
+          } else if (result.isNew) {
             setRegisteredViewerId(result.viewer.id);
             setShowWelcome(true);
           } else {
