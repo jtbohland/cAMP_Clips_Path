@@ -127,6 +127,7 @@ export default function AuditLandingPage() {
                 topic={topic}
                 onClick={handleTileClick}
                 isAdmin={isAdmin}
+                viewerName={viewer?.name}
               />
             ))}
           </div>
