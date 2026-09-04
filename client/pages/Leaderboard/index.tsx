@@ -426,9 +426,7 @@ export default function LeaderboardPage() {
             <span className="text-2xl">🏆</span>
             <div>
               <h1 className="text-xl font-bold text-white leading-tight">Leaderboard</h1>
-              <span className="inline-flex items-center gap-1 mt-1 px-2.5 py-0.5 rounded-full bg-green-100/15 border border-green-300/40 text-xs font-semibold text-green-50 tracking-wide">
-                📊 Ranked by % of max possible XP for your role
-              </span>
+              <p className="text-sm text-green-200 mt-0.5">Camp XP Leaderboard</p>
             </div>
           </div>
           <button
@@ -460,7 +458,9 @@ export default function LeaderboardPage() {
                 <div className="flex items-center gap-2 mb-3">
                   <span className="text-lg">🌍</span>
                   <h2 className="text-base font-bold text-gray-900">All Campers</h2>
-                  <span className="text-xs text-gray-500">Ranked by % of max XP</span>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-[11px] font-semibold text-emerald-700">
+                    📊 Ranked by % of max possible XP for your role
+                  </span>
                 </div>
 
                 <div className="space-y-1">
