@@ -84,6 +84,9 @@ export default api({
       url: z.string(),
       type: z.string(),
     })),
+    /** Game flags — indicates which games this topic has */
+    hasRidgeGame: z.boolean(),
+    hasPriceGame: z.boolean(),
   }),
 
   async run(ctx, { topicKey, viewerId }) {
@@ -360,6 +363,8 @@ export default api({
       academyCourses,
       wheelProducts,
       campGearResources,
+      hasRidgeGame: topicKey === "day13_sdr_roe",
+      hasPriceGame: topicKey === "day9_pricing",
     };
   },
 });

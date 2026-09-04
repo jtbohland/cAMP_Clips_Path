@@ -21,6 +21,7 @@ export default api({
       "summary", "objectives", "question", "weather_storm",
       "gear_update", "gear_remove", "gear_add", "clip_notes",
       "academy_notes", "wheel_notes", "smes", "clip_summary", "clip_objectives", "video_link",
+      "game_scenario_edit",
     ]),
     // For summary/objectives edits
     fieldName: z.string().nullable(),
@@ -141,7 +142,8 @@ export default api({
       case "smes":
       case "clip_summary":
       case "clip_objectives":
-      case "video_link": {
+      case "video_link":
+      case "game_scenario_edit": {
         // Store in the changelog only (no table column needed)
         break;
       }
