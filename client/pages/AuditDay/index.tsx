@@ -293,6 +293,20 @@ export default function AuditDayPage() {
           </div>
         ))}
 
+        {/* Topic-level resources for topics without clips (e.g. Product 101) */}
+        {clips.length === 0 && data.topicResources && data.topicResources.length > 0 && (
+          <GearSection
+            resources={data.topicResources}
+            clipTitle={topic.title}
+            clipId="topic"
+            topicKey={topicKey!}
+            onSaved={refetch}
+            isApproved={approvedSections.has("gear_topic")}
+            onApproved={refetch}
+            sectionKey="gear_topic"
+          />
+        )}
+
         {/* ─── Audit Badge Preview / Placeholder ─── */}
         <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-5 text-center">
           <p className="text-3xl mb-2">🏕️</p>
