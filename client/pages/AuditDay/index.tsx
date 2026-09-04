@@ -411,7 +411,30 @@ export default function AuditDayPage() {
             it is accurate as of today. Any notes you leave will be visible to the program administrator.
           </p>
 
-          {/* Approval checklist — human-readable names */}
+          {/* Approved sections */}
+          {requiredSections.filter(s => approvedSections.has(s)).length > 0 && (
+            <div className="rounded-lg bg-emerald-50 border border-emerald-300 px-4 py-3 mb-4">
+              <p className="text-xs font-semibold text-emerald-800 mb-1">✅ Sections approved:</p>
+              <ul className="space-y-0.5">
+                {requiredSections.filter(s => approvedSections.has(s)).map(s => {
+                  const detail = (data.sectionApprovalDetails ?? []).find((d: any) => d.sectionKey === s);
+                  return (
+                    <li key={s} className="text-xs text-emerald-700 flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0" />
+                      <span>{sectionLabel(s, clipMap)}</span>
+                      {detail && (
+                        <span className="text-emerald-500 text-[10px]">
+                          — {detail.viewerName} · {new Date(detail.approvedAt).toLocaleDateString()}
+                        </span>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+
+          {/* Pending sections */}
           {!allApproved && pendingSections.length > 0 && (
             <div className="rounded-lg bg-red-50 border border-red-300 px-4 py-3 mb-4">
               <p className="text-xs font-semibold text-red-800 mb-1">⏳ Sections still need approval:</p>

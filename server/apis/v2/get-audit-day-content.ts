@@ -57,6 +57,11 @@ export default api({
       }).nullable(),
     })),
     approvedSections: z.array(z.string()),
+    sectionApprovalDetails: z.array(z.object({
+      sectionKey: z.string(),
+      viewerName: z.string(),
+      approvedAt: z.string(),
+    })),
     peerProgress: z.array(z.object({
       viewerName: z.string(),
       approvedCount: z.number(),
@@ -231,17 +236,31 @@ export default api({
 
     // 5. Get approvals for this viewer + topic
     const approvedSections: string[] = [];
+    const sectionApprovalDetails: Array<{ sectionKey: string; viewerName: string; approvedAt: string }> = [];
+    // Get ALL approvals for this topic (any SME), not just the current viewer
+    const ApprovalRow = z.object({ section_key: z.string(), viewer_name: z.string(), approved_at: z.string() });
+    const allApprovals = await ctx.integrations.apps_db.query(
+      `SELECT a.section_key, v.name AS viewer_name, a.approved_at::text
+       FROM cliptracker_v2_audit_approvals a
+       JOIN cliptracker_v2_viewers v ON v.id = a.viewer_id
+       WHERE a.topic_key = $1
+       ORDER BY a.approved_at DESC`,
+      ApprovalRow,
+      [topicKey],
+      { label: "Get all section approvals" }
+    );
+    // For the current viewer, track their specific approvals
     if (viewerId) {
-      const ApprovalRow = z.object({ section_key: z.string() });
-      const approvals = await ctx.integrations.apps_db.query(
-        `SELECT section_key FROM cliptracker_v2_audit_approvals
-         WHERE viewer_id = $1 AND topic_key = $2`,
-        ApprovalRow,
-        [viewerId, topicKey],
-        { label: "Get section approvals" }
-      );
-      approvedSections.push(...approvals.map(a => a.section_key));
+      const myApprovals = allApprovals.filter(a => true); // all approvals count for display
+      approvedSections.push(...new Set(allApprovals.map(a => a.section_key)));
+    } else {
+      approvedSections.push(...new Set(allApprovals.map(a => a.section_key)));
     }
+    sectionApprovalDetails.push(...allApprovals.map(a => ({
+      sectionKey: a.section_key,
+      viewerName: a.viewer_name,
+      approvedAt: a.approved_at,
+    })));
 
     // 6. Peer progress — other SMEs' approval counts and sign-off status
     const PeerRow = z.object({
@@ -388,6 +407,7 @@ export default api({
       },
       clips: enrichedClips,
       approvedSections,
+      sectionApprovalDetails,
       peerProgress: peers.map(p => ({
         viewerName: p.viewer_name,
         approvedCount: p.approved_count,
