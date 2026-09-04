@@ -37,9 +37,6 @@ export default function AcademyAuditTile({
 
   // Per-course notes (local state — persisted on save)
   const [courseNotes, setCourseNotes] = useState<Record<number, string>>({});
-  const [screenshotStatus, setScreenshotStatus] = useState<Record<number, boolean>>(
-    () => Object.fromEntries(courses.map((c, i) => [i, c.screenshotUploaded]))
-  );
 
   // Add new academy course
   const [adding, setAdding] = useState(false);
@@ -87,10 +84,6 @@ export default function AcademyAuditTile({
     }
   }, [saveContent, viewer, topicKey, courses, onSaved]);
 
-  const handleToggleScreenshot = useCallback((index: number) => {
-    setScreenshotStatus(prev => ({ ...prev, [index]: !prev[index] }));
-  }, []);
-
   const handleAddCourse = useCallback(async () => {
     if (!newLabel.trim() || !newUrl.trim()) return;
     try {
@@ -120,8 +113,6 @@ export default function AcademyAuditTile({
     }
   }, [saveContent, viewer, topicKey, newLabel, newUrl, onSaved]);
 
-  const completedCount = Object.values(screenshotStatus).filter(Boolean).length;
-
   return (
     <div className={`rounded-xl border ${isApproved ? "border-emerald-200 bg-emerald-50/20" : "border-gray-200 bg-white"} overflow-hidden`}>
       {/* Header */}
@@ -129,9 +120,9 @@ export default function AcademyAuditTile({
         <div className="flex items-center gap-2">
           <span className="text-xl">🎓</span>
           <div>
-            <h3 className="text-sm font-bold text-white">Academy Course Screenshots</h3>
+            <h3 className="text-sm font-bold text-white">Academy Courses</h3>
             <p className="text-[10px] text-amber-200">
-              {completedCount}/{courses.length} uploaded
+              {courses.length} course{courses.length !== 1 ? "s" : ""}
             </p>
           </div>
         </div>
@@ -164,8 +155,6 @@ export default function AcademyAuditTile({
               key={idx}
               course={course}
               index={idx}
-              screenshotUploaded={screenshotStatus[idx] ?? false}
-              onToggleScreenshot={() => handleToggleScreenshot(idx)}
               notes={courseNotes[idx] ?? ""}
               onNotesChange={(val) => setCourseNotes(prev => ({ ...prev, [idx]: val }))}
               onSaveNotes={() => handleSaveNotes(idx, courseNotes[idx] ?? "")}
@@ -221,8 +210,6 @@ export default function AcademyAuditTile({
 function CourseCard({
   course,
   index,
-  screenshotUploaded,
-  onToggleScreenshot,
   notes,
   onNotesChange,
   onSaveNotes,
@@ -230,8 +217,6 @@ function CourseCard({
 }: {
   course: AcademyCourse;
   index: number;
-  screenshotUploaded: boolean;
-  onToggleScreenshot: () => void;
   notes: string;
   onNotesChange: (val: string) => void;
   onSaveNotes: () => void;
@@ -240,7 +225,7 @@ function CourseCard({
   const [showNotes, setShowNotes] = useState(false);
 
   return (
-    <div className={`rounded-lg border ${screenshotUploaded ? "border-emerald-200 bg-emerald-50/30" : "border-gray-200 bg-white"} p-4 space-y-2`}>
+    <div className="rounded-lg border border-gray-200 bg-white p-4 space-y-2">
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           <h4 className="text-sm font-bold text-gray-900">{course.label}</h4>
@@ -250,24 +235,10 @@ function CourseCard({
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 mt-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors"
           >
-            🌲 Go to Academy Course ↗
+            🎓 Go to Academy Course ↗
           </a>
         </div>
-        {screenshotUploaded && (
-          <span className="text-emerald-500 text-lg flex-shrink-0">✅</span>
-        )}
       </div>
-
-      {/* Screenshot uploaded toggle */}
-      <label className="flex items-center gap-2 cursor-pointer text-xs text-gray-600">
-        <input
-          type="checkbox"
-          checked={screenshotUploaded}
-          onChange={onToggleScreenshot}
-          className="accent-emerald-600 h-3.5 w-3.5"
-        />
-        Screenshot uploaded
-      </label>
 
       {/* Notes toggle + input */}
       {!showNotes ? (
