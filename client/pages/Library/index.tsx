@@ -231,6 +231,8 @@ export default function LibraryPage() {
   }, [viewer?.id, logClick]);
 
   const CAMP_QUIZ_URL = "https://app.superblocks.com/code-mode/applications/11b66d3d-da48-45dd-b8fa-9f686d4ec72a";
+  // Track quiz clicks locally so navigation checks work immediately (before API cache refreshes)
+  const [localQuizClicks, setLocalQuizClicks] = useState<Set<string>>(new Set());
   const handleCampQuiz = useCallback((dayLabel?: string | null) => {
     const pitchName = dayLabel ? `cAMP Quiz::${dayLabel}` : "cAMP Quiz";
     if (viewer?.id) logClick({ viewerId: viewer.id, pitchName });
@@ -402,9 +404,7 @@ export default function LibraryPage() {
   const pairedSortOrders = new Set(AB_PAIRS.flat());
 
   // ── cAMP Quiz Reminder ──
-  // quizClickedDays from API = ["Day 1", "Day 3", ...] (days where quiz was clicked)
-  // Also track days clicked locally this session (so stale API cache doesn't re-trigger)
-  const [localQuizClicks, setLocalQuizClicks] = useState<Set<string>>(new Set());
+  // quizClickedDays = API data + local clicks (merged so stale cache doesn't re-trigger)
   const quizClickedDays = useMemo(() => {
     const merged = new Set(data?.quizClickedDays ?? []);
     localQuizClicks.forEach((d) => merged.add(d));
