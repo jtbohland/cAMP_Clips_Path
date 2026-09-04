@@ -351,6 +351,7 @@ export default function AuditDayPage() {
                 onApproved={refetch}
                 onSaved={refetch}
                 sectionKey="gear_topic"
+                smeNotes={data.smeNotes}
               />
             )}
           </div>
