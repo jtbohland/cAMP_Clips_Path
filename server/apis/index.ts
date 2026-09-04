@@ -139,6 +139,7 @@ import SetupAuditSchema from './v2/setup-audit-schema.js';
 import SeedAuditTopics from './v2/seed-audit-topics.js';
 import GetAuditLanding from './v2/get-audit-landing.js';
 import GetAuditDayContent from './v2/get-audit-day-content.js';
+import GetGameScenariosForAudit from './v2/get-game-scenarios-audit.js';
 import SignOffAudit from './v2/sign-off-audit.js';
 import ManageAuditCycle from './v2/manage-audit-cycle.js';
 import UpdateAuditSmes from './v2/update-audit-smes.js';
@@ -287,6 +288,7 @@ ResetJTSessions,
 SeedAuditTopics,
 GetAuditLanding,
 GetAuditDayContent,
+GetGameScenariosForAudit,
 SignOffAudit,
 ManageAuditCycle,
 UpdateAuditSmes,

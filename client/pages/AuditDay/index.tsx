@@ -17,6 +17,8 @@ import {
 import AcademyAuditTile from "@/components/audit/AcademyAuditTile";
 import WheelAndDealAuditTile from "@/components/audit/WheelAndDealAuditTile";
 import CampGearAuditTile from "@/components/audit/CampGearAuditTile";
+import RidgeGameAuditTile from "@/components/audit/RidgeGameAuditTile";
+import PriceGameAuditTile from "@/components/audit/PriceGameAuditTile";
 
 // ─── Audit Badge System ───────────────────────────────────────────
 const AUDIT_BADGES = [
@@ -43,6 +45,8 @@ function sectionLabel(key: string, clipMap: Map<string, string>): string {
   if (key === "academy_topic") return "Academy Course Screenshots";
   if (key === "wheel_topic") return "Wheel & Deal";
   if (key === "gear_topic") return "cAMP Gear";
+  if (key === "ridge_game") return "Rules of the Ridge";
+  if (key === "price_game") return "The Price is Right";
   const parts = key.split("_");
   const prefix = parts[0];
   const clipId = parts.slice(1).join("_");
@@ -101,6 +105,9 @@ export default function AuditDayPage() {
       if (data.wheelProducts?.length > 0) sections.push("wheel_topic");
       if (data.campGearResources?.length > 0) sections.push("gear_topic");
     }
+    // Game sections
+    if (data.hasRidgeGame) sections.push("ridge_game");
+    if (data.hasPriceGame) sections.push("price_game");
     return sections;
   })() : [];
   const allApproved = requiredSections.length > 0 && requiredSections.every(s => approvedSections.has(s));
@@ -358,6 +365,26 @@ export default function AuditDayPage() {
             sectionKey="gear_topic"
           />
         ) : null}
+
+        {/* ─── Game Tiles (Ridge / Price) ─── */}
+        {data.hasRidgeGame && (
+          <RidgeGameAuditTile
+            topicKey={topicKey!}
+            isApproved={approvedSections.has("ridge_game")}
+            onApproved={refetch}
+            onSaved={refetch}
+            sectionKey="ridge_game"
+          />
+        )}
+        {data.hasPriceGame && (
+          <PriceGameAuditTile
+            topicKey={topicKey!}
+            isApproved={approvedSections.has("price_game")}
+            onApproved={refetch}
+            onSaved={refetch}
+            sectionKey="price_game"
+          />
+        )}
 
         {/* ─── Audit Badge Preview / Placeholder ─── */}
         <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-5 text-center">

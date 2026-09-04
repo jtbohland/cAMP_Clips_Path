@@ -21,6 +21,7 @@ export default api({
       "summary", "objectives", "question", "weather_storm",
       "gear_update", "gear_remove", "gear_add", "clip_notes",
       "academy_notes", "wheel_notes", "smes", "clip_summary", "clip_objectives", "video_link",
+      "game_scenario_edit",
     ]),
     // For summary/objectives edits
     fieldName: z.string().nullable(),
@@ -98,6 +99,7 @@ export default api({
       }
       case "gear_update": {
         if (!clipId || gearIndex === null || gearIndex === undefined) throw new Error("clipId and gearIndex required");
+        if (clipId === "topic") break; // Topic-level resources — changelog only
         // Update a specific gear item's label and url
         const parsed = JSON.parse(newValue ?? "{}");
         await ctx.integrations.apps_db.execute(
@@ -111,6 +113,7 @@ export default api({
       }
       case "gear_remove": {
         if (!clipId || gearIndex === null || gearIndex === undefined) throw new Error("clipId and gearIndex required");
+        if (clipId === "topic") break; // Topic-level resources — changelog only
         // Remove gear item at index by rebuilding array without that index
         await ctx.integrations.apps_db.execute(
           `UPDATE cliptracker_v2_clips
@@ -127,6 +130,7 @@ export default api({
       }
       case "gear_add": {
         if (!clipId) throw new Error("clipId required");
+        if (clipId === "topic") break; // Topic-level resources — changelog only
         const newGear = JSON.stringify({ label: gearLabel, type: gearType ?? "link", url: gearUrl });
         await ctx.integrations.apps_db.execute(
           `UPDATE cliptracker_v2_clips SET resources = COALESCE(resources, '[]'::jsonb) || $1::jsonb WHERE id = $2`,
@@ -141,7 +145,8 @@ export default api({
       case "smes":
       case "clip_summary":
       case "clip_objectives":
-      case "video_link": {
+      case "video_link":
+      case "game_scenario_edit": {
         // Store in the changelog only (no table column needed)
         break;
       }
