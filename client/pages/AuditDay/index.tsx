@@ -325,6 +325,7 @@ export default function AuditDayPage() {
               onApproved={refetch}
               onSaved={refetch}
               sectionKey="academy_topic"
+              smeNotes={data.smeNotes}
             />
 
             {/* Wheel & Deal Tile */}
@@ -337,6 +338,7 @@ export default function AuditDayPage() {
                 onApproved={refetch}
                 onSaved={refetch}
                 sectionKey="wheel_topic"
+                smeNotes={data.smeNotes}
               />
             )}
 

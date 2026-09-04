@@ -87,6 +87,14 @@ export default api({
     /** Game flags — indicates which games this topic has */
     hasRidgeGame: z.boolean(),
     hasPriceGame: z.boolean(),
+    /** Changelog notes from SMEs — keyed by field_name, most recent per field */
+    smeNotes: z.array(z.object({
+      fieldName: z.string(),
+      value: z.string(),
+      viewerName: z.string(),
+      changeType: z.string(),
+      createdAt: z.string(),
+    })),
   }),
 
   async run(ctx, { topicKey, viewerId }) {
@@ -339,6 +347,33 @@ export default api({
     }));
     const campGearResources = CAMP_GEAR[topicKey] ?? [];
 
+    // Fetch SME changelog notes for this topic
+    const NoteRow = z.object({
+      field_name: z.string(),
+      new_value: z.string().nullable(),
+      viewer_name: z.string().nullable(),
+      change_type: z.string(),
+      created_at: z.string(),
+    });
+    const noteRows = await ctx.integrations.apps_db.query(
+      `SELECT c.field_name, c.new_value::text, v.name AS viewer_name, c.change_type, c.created_at::text
+       FROM cliptracker_v2_audit_changelog c
+       LEFT JOIN cliptracker_v2_viewers v ON v.id = c.viewer_id
+       WHERE c.topic_key = $1 AND c.new_value IS NOT NULL
+       ORDER BY c.created_at DESC
+       LIMIT 200`,
+      NoteRow,
+      [topicKey],
+      { label: "Fetch SME notes for topic" }
+    );
+    const smeNotes = noteRows.map(r => ({
+      fieldName: r.field_name ?? "",
+      value: r.new_value ?? "",
+      viewerName: r.viewer_name ?? "Unknown",
+      changeType: r.change_type,
+      createdAt: r.created_at,
+    }));
+
     return {
       topic: {
         topicKey: meta.topic_key,
@@ -365,6 +400,7 @@ export default api({
       campGearResources,
       hasRidgeGame: topicKey === "day13_sdr_roe",
       hasPriceGame: topicKey === "day9_pricing",
+      smeNotes,
     };
   },
 });

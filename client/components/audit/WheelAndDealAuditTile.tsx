@@ -13,6 +13,8 @@ interface WheelProduct {
   flaggedForRemoval: boolean;
 }
 
+type SmeNote = { fieldName: string; value: string; viewerName: string; changeType: string; createdAt: string };
+
 interface WheelAndDealAuditTileProps {
   products: WheelProduct[];
   wheelUrl: string;
@@ -21,6 +23,7 @@ interface WheelAndDealAuditTileProps {
   onApproved?: () => void;
   onSaved?: () => void;
   sectionKey: string;
+  smeNotes?: SmeNote[];
 }
 
 export default function WheelAndDealAuditTile({
@@ -31,6 +34,7 @@ export default function WheelAndDealAuditTile({
   onApproved,
   onSaved,
   sectionKey,
+  smeNotes = [],
 }: WheelAndDealAuditTileProps) {
   const { viewer } = useViewer();
   const { run: saveApproval, loading: approving } = useApi("SaveAuditApproval");
@@ -286,6 +290,20 @@ export default function WheelAndDealAuditTile({
 
         {/* General notes */}
         <div>
+          {/* Saved SME notes */}
+          {smeNotes.filter(n => n.fieldName.startsWith("wheel_")).length > 0 && (
+            <div className="mb-3 space-y-1.5">
+              {smeNotes.filter(n => n.fieldName.startsWith("wheel_")).map((note, ni) => (
+                <div key={ni} className="bg-indigo-50 border border-indigo-200 rounded-md px-3 py-2">
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <span className="text-[10px] font-bold text-indigo-700">💬 {note.viewerName}</span>
+                    <span className="text-[10px] text-indigo-500">{new Date(note.createdAt).toLocaleDateString()}</span>
+                  </div>
+                  <p className="text-xs text-gray-800 whitespace-pre-wrap">{note.value}</p>
+                </div>
+              ))}
+            </div>
+          )}
           <label className="block text-xs font-semibold text-gray-600 mb-1">📝 Notes for Admin</label>
           <textarea
             value={notes}

@@ -14,6 +14,8 @@ interface AcademyCourse {
   notes: string | null;
 }
 
+type SmeNote = { fieldName: string; value: string; viewerName: string; changeType: string; createdAt: string };
+
 interface AcademyAuditTileProps {
   courses: AcademyCourse[];
   topicKey: string;
@@ -21,6 +23,7 @@ interface AcademyAuditTileProps {
   onApproved?: () => void;
   onSaved?: () => void;
   sectionKey: string;
+  smeNotes?: SmeNote[];
 }
 
 export default function AcademyAuditTile({
@@ -30,6 +33,7 @@ export default function AcademyAuditTile({
   onApproved,
   onSaved,
   sectionKey,
+  smeNotes = [],
 }: AcademyAuditTileProps) {
   const { viewer } = useViewer();
   const { run: saveApproval, loading: approving } = useApi("SaveAuditApproval");
@@ -159,6 +163,7 @@ export default function AcademyAuditTile({
               onNotesChange={(val) => setCourseNotes(prev => ({ ...prev, [idx]: val }))}
               onSaveNotes={() => handleSaveNotes(idx, courseNotes[idx] ?? "")}
               saving={saving}
+              savedNotes={smeNotes.filter(n => n.fieldName === `academy_course_${idx}`)}
             />
           ))}
         </div>
@@ -214,6 +219,7 @@ function CourseCard({
   onNotesChange,
   onSaveNotes,
   saving,
+  savedNotes = [],
 }: {
   course: AcademyCourse;
   index: number;
@@ -221,6 +227,7 @@ function CourseCard({
   onNotesChange: (val: string) => void;
   onSaveNotes: () => void;
   saving: boolean;
+  savedNotes?: SmeNote[];
 }) {
   const [showNotes, setShowNotes] = useState(false);
 
@@ -239,6 +246,21 @@ function CourseCard({
           </a>
         </div>
       </div>
+
+      {/* Saved SME notes — displayed inline */}
+      {savedNotes.length > 0 && (
+        <div className="space-y-1.5">
+          {savedNotes.map((note, ni) => (
+            <div key={ni} className="bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <span className="text-[10px] font-bold text-amber-700">💬 {note.viewerName}</span>
+                <span className="text-[10px] text-amber-500">{new Date(note.createdAt).toLocaleDateString()}</span>
+              </div>
+              <p className="text-xs text-gray-800 whitespace-pre-wrap">{note.value}</p>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Notes toggle + input */}
       {!showNotes ? (
