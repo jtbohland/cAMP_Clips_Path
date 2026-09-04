@@ -43,7 +43,7 @@ export default function CampQuizAuditPlaceholder({ topicTitle, isApproved }: Cam
             </li>
             <li className="flex items-start gap-1.5">
               <span className="flex-shrink-0">🚁</span>
-              <span><strong>Search & Rescue</strong> — recovery questions that appear <em>during</em> the video when a learner's engagement score drops.</span>
+              <span><strong>Search & Rescue</strong> — recovery questions that appear <em>after</em> the video when a learner's engagement score drops.</span>
             </li>
             <li className="flex items-start gap-1.5">
               <span className="flex-shrink-0">🦉</span>

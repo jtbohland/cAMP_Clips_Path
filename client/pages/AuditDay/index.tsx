@@ -137,6 +137,16 @@ export default function AuditDayPage() {
   }, [data]);
   const badge = computeAuditBadge(editCount, signOffNotes.trim().length > 0);
 
+  // ─── Detect clips with replacement videos flagged ─────────────
+  const replacedClipIds = useMemo(() => {
+    const set = new Set<string>();
+    if (!data?.smeNotes) return set;
+    for (const note of data.smeNotes as Array<{ changeType: string; clipId?: string }>) {
+      if (note.changeType === "video_replace" && note.clipId) set.add(note.clipId);
+    }
+    return set;
+  }, [data]);
+
   // ─── Detect 2+ question edits per clip section → re-record modal ─
   useEffect(() => {
     if (!data?.clips || !data?.smeNotes) return;
@@ -358,16 +368,19 @@ export default function AuditDayPage() {
             {/* Trail Markers */}
             <TrailMarkersSection markers={clip.trailMarkers} clipTitle={clip.title} topicKey={topicKey!} onSaved={refetch}
               isApproved={approvedSections.has(`markers_${clip.clipId}`)} onApproved={refetch} sectionKey={`markers_${clip.clipId}`}
+              locked={replacedClipIds.has(clip.clipId)}
               smeNotes={(data.smeNotes ?? []).filter((n: any) => n.changeType === 'question' && clip.trailMarkers.some((m: any) => m.id === n.fieldName))} />
 
             {/* Search & Rescue */}
             <SearchRescueSection questions={clip.searchRescue} clipTitle={clip.title} topicKey={topicKey!} onSaved={refetch}
               isApproved={approvedSections.has(`sr_${clip.clipId}`)} onApproved={refetch} sectionKey={`sr_${clip.clipId}`}
+              locked={replacedClipIds.has(clip.clipId)}
               smeNotes={(data.smeNotes ?? []).filter((n: any) => n.changeType === 'question' && clip.searchRescue.some((q: any) => q.id === n.fieldName))} />
 
             {/* Weather the Storm */}
             <WeatherStormSection wts={clip.weatherStorm} clipTitle={clip.title} clipId={clip.clipId} topicKey={topicKey!} onSaved={refetch}
               isApproved={approvedSections.has(`wts_${clip.clipId}`)} onApproved={refetch} sectionKey={`wts_${clip.clipId}`}
+              locked={replacedClipIds.has(clip.clipId)}
               smeNotes={(data.smeNotes ?? []).filter((n: any) => n.changeType === 'weather_storm')} />
 
             {/* cAMP Gear */}
@@ -490,12 +503,14 @@ export default function AuditDayPage() {
                     <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${
                       note.changeType === "question" ? "bg-indigo-50 text-indigo-700" :
                       note.changeType === "sme_note" ? "bg-amber-50 text-amber-700" :
-                      note.changeType === "video_link" ? "bg-red-50 text-red-700" :
+                      note.changeType === "video_replace" ? "bg-red-100 text-red-700" :
+                      note.changeType === "video_link" ? "bg-blue-50 text-blue-700" :
                       "bg-gray-100 text-gray-600"
                     }`}>
                       {note.changeType === "question" ? "🪧 Question Edit" :
                        note.changeType === "sme_note" ? "📝 Note" :
-                       note.changeType === "video_link" ? "🎬 Re-record Link" :
+                       note.changeType === "video_replace" ? "🔄 Replacement Video" :
+                       note.changeType === "video_link" ? "🎬 Additional Video" :
                        note.changeType}
                     </span>
                   </div>

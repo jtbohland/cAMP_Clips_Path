@@ -263,15 +263,20 @@ function EditableQuestion({ q, idx, label, topicKey, onSaved, accent, smeNotes =
 }
 
 // ─── Trail Markers ─────────────────────────────────────────────────
-export function TrailMarkersSection({ markers, clipTitle, topicKey, onSaved, sectionKey, isApproved, onApproved, smeNotes = [] }: {
+export function TrailMarkersSection({ markers, clipTitle, topicKey, onSaved, sectionKey, isApproved, onApproved, smeNotes = [], locked = false }: {
   markers: Array<any>; clipTitle: string; topicKey: string; onSaved?: () => void;
   sectionKey: string; isApproved: boolean; onApproved?: () => void;
-  smeNotes?: ChangeEntry[];
+  smeNotes?: ChangeEntry[]; locked?: boolean;
 }) {
   if (markers.length === 0) return null;
   const { handleApprove, approving } = useApproval(topicKey, sectionKey, isApproved, onApproved);
   return (
-    <div className={`rounded-xl border ${isApproved ? "border-emerald-200 bg-emerald-50/20" : "border-gray-200 bg-white"} p-5`}>
+    <div className={`rounded-xl border ${locked ? "border-red-200 bg-red-50/30 opacity-75" : isApproved ? "border-emerald-200 bg-emerald-50/20" : "border-gray-200 bg-white"} p-5 ${locked ? "pointer-events-none" : ""}`}>
+      {locked && (
+        <div className="rounded-lg bg-red-100 border border-red-300 px-3 py-2 text-xs text-red-800 mb-3 pointer-events-auto">
+          <strong>🔒 Locked — Replacement video submitted.</strong> These questions will need to be re-created once the new recording is finalized.
+        </div>
+      )}
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
           <span>🌲</span> Trail Markers — {clipTitle}
@@ -298,15 +303,20 @@ export function TrailMarkersSection({ markers, clipTitle, topicKey, onSaved, sec
 }
 
 // ─── Search & Rescue ────────────────────────────────────────────────
-export function SearchRescueSection({ questions, clipTitle, topicKey, onSaved, sectionKey, isApproved, onApproved, smeNotes = [] }: {
+export function SearchRescueSection({ questions, clipTitle, topicKey, onSaved, sectionKey, isApproved, onApproved, smeNotes = [], locked = false }: {
   questions: Array<any>; clipTitle: string; topicKey: string; onSaved?: () => void;
   sectionKey: string; isApproved: boolean; onApproved?: () => void;
-  smeNotes?: ChangeEntry[];
+  smeNotes?: ChangeEntry[]; locked?: boolean;
 }) {
   if (questions.length === 0) return null;
   const { handleApprove, approving } = useApproval(topicKey, sectionKey, isApproved, onApproved);
   return (
-    <div className={`rounded-xl border ${isApproved ? "border-emerald-200 bg-emerald-50/20" : "border-amber-200 bg-amber-50/30"} p-5`}>
+    <div className={`rounded-xl border ${locked ? "border-red-200 bg-red-50/30 opacity-75" : isApproved ? "border-emerald-200 bg-emerald-50/20" : "border-amber-200 bg-amber-50/30"} p-5 ${locked ? "pointer-events-none" : ""}`}>
+      {locked && (
+        <div className="rounded-lg bg-red-100 border border-red-300 px-3 py-2 text-xs text-red-800 mb-3 pointer-events-auto">
+          <strong>🔒 Locked — Replacement video submitted.</strong> These questions will need to be re-created once the new recording is finalized.
+        </div>
+      )}
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
           <span>🚁</span> Search & Rescue — {clipTitle}
@@ -318,7 +328,7 @@ export function SearchRescueSection({ questions, clipTitle, topicKey, onSaved, s
       </div>
       {/* Context note — RED tile with bold warning */}
       <div className="rounded-lg bg-red-50 border border-red-300 px-3 py-2 text-xs text-red-800 mb-3">
-        <strong>📌 S&R questions are recovery questions</strong> — they appear when a learner's engagement score drops below the threshold. These are also in-video questions with timestamps.
+        <strong>📌 S&R questions are recovery questions</strong> — they appear after the video when a learner's engagement score drops below the threshold. These questions test the same content covered in the clip.
         <p className="mt-1 font-bold text-red-700">⚠️ Changing these may require a re-recorded video to stay in sync. Editing 2 or more questions usually means it's time for a new recording.</p>
       </div>
       <div className="space-y-3">
@@ -333,11 +343,11 @@ export function SearchRescueSection({ questions, clipTitle, topicKey, onSaved, s
 }
 
 // ─── Weather the Storm ─────────────────────────────────────────────
-export function WeatherStormSection({ wts, clipTitle, clipId, topicKey, onSaved, sectionKey, isApproved, onApproved, smeNotes = [] }: {
+export function WeatherStormSection({ wts, clipTitle, clipId, topicKey, onSaved, sectionKey, isApproved, onApproved, smeNotes = [], locked = false }: {
   wts: { overview: string; takeaways: any; timerMinutes: number } | null;
   clipTitle: string; clipId: string; topicKey: string; onSaved?: () => void;
   sectionKey: string; isApproved: boolean; onApproved?: () => void;
-  smeNotes?: ChangeEntry[];
+  smeNotes?: ChangeEntry[]; locked?: boolean;
 }) {
   if (!wts) return null;
   const takeaways: string[] = Array.isArray(wts.takeaways) ? wts.takeaways : [];
@@ -354,7 +364,12 @@ export function WeatherStormSection({ wts, clipTitle, clipId, topicKey, onSaved,
   }, [doSave, wts, clipId, editOverview, editTakeaways, takeaways]);
 
   return (
-    <div className={`rounded-xl border ${isApproved ? "border-emerald-200 bg-emerald-50/20" : "border-blue-200 bg-blue-50/30"} p-5`}>
+    <div className={`rounded-xl border ${locked ? "border-red-200 bg-red-50/30 opacity-75" : isApproved ? "border-emerald-200 bg-emerald-50/20" : "border-blue-200 bg-blue-50/30"} p-5 ${locked ? "pointer-events-none" : ""}`}>
+      {locked && (
+        <div className="rounded-lg bg-red-100 border border-red-300 px-3 py-2 text-xs text-red-800 mb-3 pointer-events-auto">
+          <strong>🔒 Locked — Replacement video submitted.</strong> This section will need to be re-created once the new recording is finalized.
+        </div>
+      )}
       <SectionHeader title={`Weather the Storm — ${clipTitle}`} emoji="⛈️" isApproved={isApproved} onApprove={handleApprove} approving={approving}
         editing={editing} onStartEdit={() => { setEditOverview(wts.overview); setEditTakeaways([...takeaways]); setEditing(true); }}
         onCancel={() => setEditing(false)} onSave={handleSave} saving={saving} />
@@ -538,6 +553,9 @@ export function ClipSection({ clip, topicKey, topicTitle, onSaved, smes, isAppro
   const [videoLink, setVideoLink] = useState("");
   const [savedLinks, setSavedLinks] = useState<string[]>([]);
   const [linkSaved, setLinkSaved] = useState(false);
+  const [videoLinkType, setVideoLinkType] = useState<"additional" | "replacement" | null>(null);
+  const [showLinkTypePrompt, setShowLinkTypePrompt] = useState(false);
+  const [clipReplaced, setClipReplaced] = useState(false);
   const { doSave, saving } = useSaveAudit(topicKey, onSaved);
   const [saved, setSaved] = useState(false);
   const guideEntry = useMemo(() => getGuideEntryForClip(clip.sortOrder), [clip.sortOrder]);
@@ -580,12 +598,20 @@ export function ClipSection({ clip, topicKey, topicTitle, onSaved, smes, isAppro
 
   const handleSaveVideoLink = useCallback(async () => {
     if (!videoLink.trim()) return;
-    await doSave({ editType: "video_link", clipId: clip.clipId, fieldName: "video_link", oldValue: null, newValue: videoLink.trim() });
+    if (!videoLinkType) { setShowLinkTypePrompt(true); return; }
+    const editType = videoLinkType === "replacement" ? "video_replace" : "video_link";
+    await doSave({ editType, clipId: clip.clipId, fieldName: editType, oldValue: null, newValue: videoLink.trim() });
     setSavedLinks((prev) => [...prev, videoLink.trim()]);
+    if (videoLinkType === "replacement") {
+      setClipReplaced(true);
+      toast.success("Replacement flagged — Trail Markers, S&R, and Weather the Storm will need to be re-done for the new video.");
+    }
     setVideoLink("");
+    setVideoLinkType(null);
+    setShowLinkTypePrompt(false);
     setLinkSaved(true);
     setTimeout(() => setLinkSaved(false), 2000);
-  }, [doSave, clip.clipId, videoLink]);
+  }, [doSave, clip.clipId, videoLink, videoLinkType]);
 
   const approved = isApproved ?? false;
 
@@ -711,7 +737,7 @@ export function ClipSection({ clip, topicKey, topicTitle, onSaved, smes, isAppro
         </p>
         <p className="text-xs text-red-700 mt-2 italic">
           🎬 <strong>Freshness check:</strong> If you notice a former employee, an outdated process, or an SME who is no longer in their role appearing in this recording,
-          please flag it in the notes below and consider scheduling a re-record. Keeping videos current strengthens the entire learning path.
+          please flag it in the notes below and consider recording a fresh version of the content. Keeping videos current strengthens the entire learning path.
         </p>
       </div>
 
@@ -728,11 +754,21 @@ export function ClipSection({ clip, topicKey, topicTitle, onSaved, smes, isAppro
       <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
         <label className="text-xs font-semibold text-gray-600 mb-1 block">🎬 Supplemental / Re-recorded Video Links</label>
         <p className="text-[10px] text-gray-500 mb-2">Paste a link below and click <strong>Save Link</strong>. The link will appear in the list and the field will clear so you can add more.</p>
+
+        {/* Time recommendations */}
+        <div className="rounded-md bg-blue-50 border border-blue-200 px-3 py-2 mb-3 text-[10px] text-blue-800">
+          <strong>⏱ Recording length guidelines:</strong>
+          <ul className="mt-1 ml-3 list-disc space-y-0.5">
+            <li><strong>Short demos</strong> (tool walkthroughs, feature demos) — as long as it takes, no minimum</li>
+            <li><strong>Training sessions</strong> (slides, process, operations, day-to-day, walkthroughs) — <strong>minimum 15 minutes, maximum 45 minutes</strong></li>
+          </ul>
+        </div>
+
         <div className="flex gap-2 items-center">
           <input
             type="url"
             value={videoLink}
-            onChange={(e) => { setVideoLink(e.target.value); setLinkSaved(false); }}
+            onChange={(e) => { setVideoLink(e.target.value); setLinkSaved(false); setShowLinkTypePrompt(false); setVideoLinkType(null); }}
             placeholder="Paste Zoom, Wistia, or Google Drive link…"
             className="flex-1 text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-300 outline-none"
           />
@@ -744,6 +780,49 @@ export function ClipSection({ clip, topicKey, topicTitle, onSaved, smes, isAppro
             {saving ? "Saving…" : linkSaved ? "✅ Saved" : "Save Link"}
           </button>
         </div>
+
+        {/* Video type prompt — shown when saving a link */}
+        {showLinkTypePrompt && videoLink.trim() && (
+          <div className="mt-3 rounded-lg border-2 border-amber-300 bg-amber-50 p-4 space-y-3">
+            <p className="text-sm font-bold text-amber-900">📹 What kind of video is this?</p>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => { setVideoLinkType("additional"); }}
+                className={`rounded-lg border-2 p-3 text-left transition-all ${videoLinkType === "additional" ? "border-blue-500 bg-blue-50 ring-2 ring-blue-200" : "border-gray-200 bg-white hover:border-blue-300"}`}
+              >
+                <p className="text-sm font-bold text-gray-900">➕ Additional Clip</p>
+                <p className="text-[10px] text-gray-600 mt-1">
+                  A supplemental video that adds to the existing training. The current clip stays as-is.
+                </p>
+              </button>
+              <button
+                onClick={() => { setVideoLinkType("replacement"); }}
+                className={`rounded-lg border-2 p-3 text-left transition-all ${videoLinkType === "replacement" ? "border-red-500 bg-red-50 ring-2 ring-red-200" : "border-gray-200 bg-white hover:border-red-300"}`}
+              >
+                <p className="text-sm font-bold text-gray-900">🔄 Replace Current Clip</p>
+                <p className="text-[10px] text-gray-600 mt-1">
+                  This video is intended to replace the current recording. <strong className="text-red-600">Trail Markers, S&R, and Weather the Storm will be locked</strong> — they'll need to be re-done for the new video.
+                </p>
+              </button>
+            </div>
+            {videoLinkType && (
+              <button
+                onClick={handleSaveVideoLink}
+                disabled={saving}
+                className={`w-full py-2 rounded-lg text-sm font-bold text-white transition-colors ${videoLinkType === "replacement" ? "bg-red-600 hover:bg-red-700" : "bg-blue-600 hover:bg-blue-700"}`}
+              >
+                {saving ? "Saving…" : videoLinkType === "replacement" ? "🔄 Save as Replacement" : "➕ Save as Additional"}
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Replacement active banner */}
+        {clipReplaced && (
+          <div className="mt-3 rounded-lg bg-red-100 border border-red-300 px-3 py-2.5 text-xs text-red-800">
+            <strong>🔄 Replacement video submitted.</strong> Trail Markers, Search & Rescue, and Weather the Storm sections for this clip are now locked and will need to be re-created once the new video is finalized by your admin.
+          </div>
+        )}
 
         {/* Saved links list */}
         {savedLinks.length > 0 && (
