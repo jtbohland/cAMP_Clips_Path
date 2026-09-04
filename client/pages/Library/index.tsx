@@ -234,6 +234,8 @@ export default function LibraryPage() {
   const handleCampQuiz = useCallback((dayLabel?: string | null) => {
     const pitchName = dayLabel ? `cAMP Quiz::${dayLabel}` : "cAMP Quiz";
     if (viewer?.id) logClick({ viewerId: viewer.id, pitchName });
+    // Track locally so quiz check doesn't re-trigger before API cache refreshes
+    if (dayLabel) setLocalQuizClicks((prev) => new Set(prev).add(dayLabel));
     window.open(CAMP_QUIZ_URL, "_blank");
   }, [viewer?.id, logClick]);
 
