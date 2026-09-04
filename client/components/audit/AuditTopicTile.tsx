@@ -27,14 +27,17 @@ export default function AuditTopicTile({
   topic,
   onClick,
   isAdmin = false,
+  viewerName,
 }: {
   topic: AuditTopic;
   onClick: (topicKey: string) => void;
   isAdmin?: boolean;
+  viewerName?: string;
 }) {
   const s = STATUS_CONFIG[topic.status];
-  // All SMEs can click into any tile to view — editing is gated inside the day view
-  const isClickable = true;
+  // SME can click their own tile (name on the tile) or admin can click any
+  const isMyTile = !!viewerName && topic.smes.some(sme => sme.name.toLowerCase() === viewerName.toLowerCase());
+  const isClickable = isAdmin || isMyTile;
   const audiencePath = getPathForTopic(topic.topicKey);
   const pathStyle = audiencePath ? PATH_STYLES[audiencePath] : null;
   const pct = topic.status === "complete" ? 100 : topic.status === "not_started" ? 0 : (topic.totalSections > 0 ? Math.round((topic.approvedCount / topic.totalSections) * 100) : 0);
