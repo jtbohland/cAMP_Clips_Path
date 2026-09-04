@@ -199,7 +199,7 @@ export default api({
         (SELECT COUNT(*)::int FROM cliptracker_v2_clips c2 WHERE c2.status = 'live') AS total_clips
        FROM cliptracker_v2_sessions s
        JOIN cliptracker_v2_viewers v ON v.id = s.viewer_id
-       WHERE v.is_admin = false`,
+       WHERE v.is_admin = false AND v.role != 'SME'`,
       OverviewRow,
       undefined,
       { label: "Overview stats" }
@@ -227,7 +227,7 @@ export default api({
         v.last_login_at::text AS last_login_at
        FROM cliptracker_v2_viewers v
        LEFT JOIN cliptracker_v2_sessions s ON s.viewer_id = v.id
-       WHERE v.is_admin = false
+       WHERE v.is_admin = false AND v.role != 'SME'
        GROUP BY v.id, v.name, v.email, v.role, v.timezone, v.manager_name, v.ascent_day_1, v.extension_days, v.last_login_at
        ORDER BY v.name ASC
        LIMIT 500`,
@@ -597,7 +597,7 @@ export default api({
         COALESCE((SELECT COUNT(*)::int FROM cliptracker_v2_badges b WHERE b.viewer_id = v.id), 0) AS badges_earned
        FROM cliptracker_v2_viewers v
        LEFT JOIN cliptracker_v2_sessions s ON s.viewer_id = v.id
-       WHERE v.is_admin = false
+       WHERE v.is_admin = false AND v.role != 'SME'
        GROUP BY v.id, v.name, v.role, v.timezone
        ORDER BY total_xp DESC
        LIMIT 50`,

@@ -83,7 +83,7 @@ export default api({
       `SELECT xe.viewer_id, xe.clip_id, xe.source_id
        FROM cliptracker_v2_xp_events xe
        JOIN cliptracker_v2_viewers v ON v.id = xe.viewer_id
-       WHERE v.is_admin = false
+       WHERE v.is_admin = false AND v.role != 'SME'
        ORDER BY xe.created_at ASC
        LIMIT 2000`,
       XpEventRow,
@@ -162,7 +162,7 @@ export default api({
        FROM cliptracker_v2_sessions s
        JOIN cliptracker_v2_clips c ON c.id = s.clip_id
        JOIN cliptracker_v2_viewers v ON v.id = s.viewer_id
-       WHERE v.is_admin = false AND s.completed = true
+       WHERE v.is_admin = false AND v.role != 'SME' AND s.completed = true
        ORDER BY c.sort_order ASC, s.started_at ASC
        LIMIT 500`,
       SessionRow,
