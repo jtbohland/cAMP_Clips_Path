@@ -14,6 +14,9 @@ import {
   GearSection,
   ClipSection,
 } from "@/components/audit/AuditContentSections";
+import AcademyAuditTile from "@/components/audit/AcademyAuditTile";
+import WheelAndDealAuditTile from "@/components/audit/WheelAndDealAuditTile";
+import CampGearAuditTile from "@/components/audit/CampGearAuditTile";
 
 // ─── Audit Badge System ───────────────────────────────────────────
 const AUDIT_BADGES = [
@@ -37,6 +40,9 @@ function computeAuditBadge(editCount: number, hasNotes: boolean) {
 /** Make human-readable section label from section key + clip map */
 function sectionLabel(key: string, clipMap: Map<string, string>): string {
   if (key === "summary") return "Summary & Objectives";
+  if (key === "academy_topic") return "Academy Course Screenshots";
+  if (key === "wheel_topic") return "Wheel & Deal";
+  if (key === "gear_topic") return "cAMP Gear";
   const parts = key.split("_");
   const prefix = parts[0];
   const clipId = parts.slice(1).join("_");
@@ -81,12 +87,19 @@ export default function AuditDayPage() {
   // Compute required sections and sign-off readiness
   const requiredSections = data ? (() => {
     const sections: string[] = [];
+    // Clip-based sections (standard topics)
     for (const clip of data.clips) {
       sections.push(`summary_${clip.clipId}`);
       if (clip.trailMarkers?.length > 0) sections.push(`markers_${clip.clipId}`);
       if (clip.searchRescue?.length > 0) sections.push(`sr_${clip.clipId}`);
       if (clip.weatherStorm) sections.push(`wts_${clip.clipId}`);
       if (Array.isArray(clip.resources) && clip.resources.length > 0) sections.push(`gear_${clip.clipId}`);
+    }
+    // Product 101 tiled sections
+    if (data.clips.length === 0) {
+      if (data.academyCourses?.length > 0) sections.push("academy_topic");
+      if (data.wheelProducts?.length > 0) sections.push("wheel_topic");
+      if (data.campGearResources?.length > 0) sections.push("gear_topic");
     }
     return sections;
   })() : [];
@@ -294,7 +307,46 @@ export default function AuditDayPage() {
         ))}
 
         {/* Topic-level resources for topics without clips (e.g. Product 101) */}
-        {clips.length === 0 && data.topicResources && data.topicResources.length > 0 && (
+        {clips.length === 0 && data.academyCourses && data.academyCourses.length > 0 ? (
+          /* ─── Product 101 Tiled Layout ─── */
+          <div className="space-y-4">
+            {/* Academy Tile */}
+            <AcademyAuditTile
+              courses={data.academyCourses}
+              topicKey={topicKey!}
+              isApproved={approvedSections.has("academy_topic")}
+              onApproved={refetch}
+              onSaved={refetch}
+              sectionKey="academy_topic"
+            />
+
+            {/* Wheel & Deal Tile */}
+            {data.wheelProducts && data.wheelProducts.length > 0 && (
+              <WheelAndDealAuditTile
+                products={data.wheelProducts}
+                wheelUrl="https://app.superblocks.com/code-mode/applications/fef97ebe-4fb9-401f-b97c-c52c1693b31b/"
+                topicKey={topicKey!}
+                isApproved={approvedSections.has("wheel_topic")}
+                onApproved={refetch}
+                onSaved={refetch}
+                sectionKey="wheel_topic"
+              />
+            )}
+
+            {/* cAMP Gear Tile */}
+            {data.campGearResources && data.campGearResources.length > 0 && (
+              <CampGearAuditTile
+                resources={data.campGearResources}
+                topicKey={topicKey!}
+                isApproved={approvedSections.has("gear_topic")}
+                onApproved={refetch}
+                onSaved={refetch}
+                sectionKey="gear_topic"
+              />
+            )}
+          </div>
+        ) : clips.length === 0 && data.topicResources && data.topicResources.length > 0 ? (
+          /* Fallback: flat gear section for topics without structured data */
           <GearSection
             resources={data.topicResources}
             clipTitle={topic.title}
@@ -305,7 +357,7 @@ export default function AuditDayPage() {
             onApproved={refetch}
             sectionKey="gear_topic"
           />
-        )}
+        ) : null}
 
         {/* ─── Audit Badge Preview / Placeholder ─── */}
         <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-5 text-center">
