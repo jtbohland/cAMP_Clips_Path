@@ -29,13 +29,32 @@ export default function CampQuizAuditPlaceholder({ topicTitle, isApproved }: Cam
       {/* Body */}
       <div className="p-4 space-y-3">
         <p className="text-sm text-gray-700">
-          Each cAMP topic has an end-of-day quiz that learners take to reinforce key concepts. 
+          Each cAMP topic has an end-of-day quiz that learners take to reinforce key concepts.
           As an SME, you need to review the quiz questions for accuracy and relevance.
         </p>
 
+        {/* Differentiation callout */}
+        <div className="rounded-lg bg-gray-50 border border-gray-200 px-3 py-2.5 text-xs text-gray-700 space-y-1.5">
+          <p className="font-semibold text-gray-800">🔑 How is this different from Trail Markers & S&R?</p>
+          <ul className="space-y-1 ml-1">
+            <li className="flex items-start gap-1.5">
+              <span className="flex-shrink-0">🪧</span>
+              <span><strong>Trail Markers</strong> — pop-up questions <em>during</em> the video that check engagement in real time.</span>
+            </li>
+            <li className="flex items-start gap-1.5">
+              <span className="flex-shrink-0">🚁</span>
+              <span><strong>Search & Rescue</strong> — recovery questions that appear <em>during</em> the video when a learner's engagement score drops.</span>
+            </li>
+            <li className="flex items-start gap-1.5">
+              <span className="flex-shrink-0">🦉</span>
+              <span><strong>cAMP Quiz</strong> — an end-of-day knowledge check covering <em>cAMP Gear resources</em> (not the video clip). This is a separate assessment.</span>
+            </li>
+          </ul>
+        </div>
+
         <div className="rounded-lg bg-orange-50 border border-orange-200 px-3 py-2.5">
           <p className="text-xs text-orange-800">
-            <strong>🔗 Quiz audit happens in a separate app.</strong> Click below to open the cAMP Quiz Audit tool, 
+            <strong>🔗 Quiz audit happens in a separate app.</strong> Click below to open the cAMP Quiz Audit tool,
             register with the same email you used here, then review the questions for <strong>{topicTitle}</strong>.
           </p>
         </div>

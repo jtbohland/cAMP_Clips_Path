@@ -284,7 +284,7 @@ export function TrailMarkersSection({ markers, clipTitle, topicKey, onSaved, sec
       {/* Context note — RED tile with bold warning */}
       <div className="rounded-lg bg-red-50 border border-red-300 px-3 py-2 text-xs text-red-800 mb-3">
         <strong>📌 These are in-video questions</strong> that appear at specific timestamps during the clip. The time shown next to each question is when it pops up for learners.
-        <p className="mt-1 font-bold text-red-700">⚠️ If you change a question, the video itself may need to be re-recorded to match.</p>
+        <p className="mt-1 font-bold text-red-700">⚠️ If you change a question, the video itself may need to be re-recorded to match. Editing 2 or more questions usually means it's time for a new recording.</p>
       </div>
       <div className="space-y-4">
         {markers.map((m, idx) => (
@@ -319,7 +319,7 @@ export function SearchRescueSection({ questions, clipTitle, topicKey, onSaved, s
       {/* Context note — RED tile with bold warning */}
       <div className="rounded-lg bg-red-50 border border-red-300 px-3 py-2 text-xs text-red-800 mb-3">
         <strong>📌 S&R questions are recovery questions</strong> — they appear when a learner's engagement score drops below the threshold. These are also in-video questions with timestamps.
-        <p className="mt-1 font-bold text-red-700">⚠️ Changing these may require a re-recorded video to stay in sync.</p>
+        <p className="mt-1 font-bold text-red-700">⚠️ Changing these may require a re-recorded video to stay in sync. Editing 2 or more questions usually means it's time for a new recording.</p>
       </div>
       <div className="space-y-3">
         {questions.map((q, idx) => (
@@ -702,12 +702,16 @@ export function ClipSection({ clip, topicKey, topicTitle, onSaved, smes, isAppro
       )}
 
       {/* About this clip — RED tile */}
-      <div className="rounded-lg bg-red-50 border border-red-300 px-4 py-3 text-sm text-red-800 mb-3">
+      <div data-about-clip className="rounded-lg bg-red-50 border border-red-300 px-4 py-3 text-sm text-red-800 mb-3">
         <p className="font-semibold">📹 About this clip</p>
         <p className="text-xs text-red-700 mt-1">
           Clips cannot be edited or removed directly — too many systems depend on them (trail markers, engagement scoring, XP, etc.).
           If this clip is outdated, you have two options: <strong>(1)</strong> re-record the content, or <strong>(2)</strong> record a supplemental video.
           Upload your MP4 below and your admin will add it to the learning path.
+        </p>
+        <p className="text-xs text-red-700 mt-2 italic">
+          🎬 <strong>Freshness check:</strong> If you notice a former employee, an outdated process, or an SME who is no longer in their role appearing in this recording,
+          please flag it in the notes below and consider scheduling a re-record. Keeping videos current strengthens the entire learning path.
         </p>
       </div>
 
