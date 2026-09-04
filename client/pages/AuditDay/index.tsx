@@ -293,23 +293,28 @@ export default function AuditDayPage() {
               smes={topic.smes}
               isApproved={approvedSections.has(`summary_${clip.clipId}`)}
               onApproved={refetch}
-              sectionKey={`summary_${clip.clipId}`} />
+              sectionKey={`summary_${clip.clipId}`}
+              smeNotes={(data.smeNotes ?? []).filter((n: any) => n.fieldName?.includes(clip.clipId) || n.value?.includes(clip.clipId))} />
 
             {/* Trail Markers */}
             <TrailMarkersSection markers={clip.trailMarkers} clipTitle={clip.title} topicKey={topicKey!} onSaved={refetch}
-              isApproved={approvedSections.has(`markers_${clip.clipId}`)} onApproved={refetch} sectionKey={`markers_${clip.clipId}`} />
+              isApproved={approvedSections.has(`markers_${clip.clipId}`)} onApproved={refetch} sectionKey={`markers_${clip.clipId}`}
+              smeNotes={(data.smeNotes ?? []).filter((n: any) => n.changeType === 'question' && clip.trailMarkers.some((m: any) => m.id === n.fieldName))} />
 
             {/* Search & Rescue */}
             <SearchRescueSection questions={clip.searchRescue} clipTitle={clip.title} topicKey={topicKey!} onSaved={refetch}
-              isApproved={approvedSections.has(`sr_${clip.clipId}`)} onApproved={refetch} sectionKey={`sr_${clip.clipId}`} />
+              isApproved={approvedSections.has(`sr_${clip.clipId}`)} onApproved={refetch} sectionKey={`sr_${clip.clipId}`}
+              smeNotes={(data.smeNotes ?? []).filter((n: any) => n.changeType === 'question' && clip.searchRescue.some((q: any) => q.id === n.fieldName))} />
 
             {/* Weather the Storm */}
             <WeatherStormSection wts={clip.weatherStorm} clipTitle={clip.title} clipId={clip.clipId} topicKey={topicKey!} onSaved={refetch}
-              isApproved={approvedSections.has(`wts_${clip.clipId}`)} onApproved={refetch} sectionKey={`wts_${clip.clipId}`} />
+              isApproved={approvedSections.has(`wts_${clip.clipId}`)} onApproved={refetch} sectionKey={`wts_${clip.clipId}`}
+              smeNotes={(data.smeNotes ?? []).filter((n: any) => n.changeType === 'weather_storm')} />
 
             {/* cAMP Gear */}
             <GearSection resources={clip.resources} clipTitle={clip.title} clipId={clip.clipId} topicKey={topicKey!} onSaved={refetch}
-              isApproved={approvedSections.has(`gear_${clip.clipId}`)} onApproved={refetch} sectionKey={`gear_${clip.clipId}`} />
+              isApproved={approvedSections.has(`gear_${clip.clipId}`)} onApproved={refetch} sectionKey={`gear_${clip.clipId}`}
+              smeNotes={(data.smeNotes ?? []).filter((n: any) => ['gear_add','gear_update','gear_remove'].includes(n.changeType))} />
           </div>
         ))}
 
