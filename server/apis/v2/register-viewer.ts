@@ -27,7 +27,7 @@ export default api({
     role: z.enum(ROLES),
     ascentDay1: z.string(),
     managerName: z.string().min(1),
-    managerEmail: z.string().email(),
+    managerEmail: z.string(),
     belayBuddy: z.string().min(1),
     timezone: z.string().min(1),
   }),
