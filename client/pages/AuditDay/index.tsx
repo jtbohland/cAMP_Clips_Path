@@ -18,6 +18,7 @@ import AcademyAuditTile from "@/components/audit/AcademyAuditTile";
 import WheelAndDealAuditTile from "@/components/audit/WheelAndDealAuditTile";
 import CampGearAuditTile from "@/components/audit/CampGearAuditTile";
 import RidgeGameAuditTile from "@/components/audit/RidgeGameAuditTile";
+import CampQuizAuditPlaceholder from "@/components/audit/CampQuizAuditPlaceholder";
 import PriceGameAuditTile from "@/components/audit/PriceGameAuditTile";
 
 // ─── Audit Badge System ───────────────────────────────────────────
@@ -47,6 +48,7 @@ function sectionLabel(key: string, clipMap: Map<string, string>): string {
   if (key === "gear_topic") return "cAMP Gear";
   if (key === "ridge_game") return "Rules of the Ridge";
   if (key === "price_game") return "The Price is Right";
+  if (key === "camp_quiz_audit") return "cAMP Quiz Audit";
   const parts = key.split("_");
   const prefix = parts[0];
   const clipId = parts.slice(1).join("_");
@@ -98,6 +100,10 @@ export default function AuditDayPage() {
       if (clip.searchRescue?.length > 0) sections.push(`sr_${clip.clipId}`);
       if (clip.weatherStorm) sections.push(`wts_${clip.clipId}`);
       if (Array.isArray(clip.resources) && clip.resources.length > 0) sections.push(`gear_${clip.clipId}`);
+    }
+    // cAMP Quiz Audit — required for all clip-based topics
+    if (data.clips.length > 0) {
+      sections.push("camp_quiz_audit");
     }
     // Product 101 tiled sections
     if (data.clips.length === 0) {
@@ -317,6 +323,14 @@ export default function AuditDayPage() {
               smeNotes={(data.smeNotes ?? []).filter((n: any) => ['gear_add','gear_update','gear_remove'].includes(n.changeType))} />
           </div>
         ))}
+
+        {/* cAMP Quiz Audit — for clip-based topics only */}
+        {clips.length > 0 && (
+          <CampQuizAuditPlaceholder
+            topicTitle={topic.title}
+            isApproved={approvedSections.has("camp_quiz_audit")}
+          />
+        )}
 
         {/* Topic-level resources for topics without clips (e.g. Product 101) */}
         {clips.length === 0 && data.academyCourses && data.academyCourses.length > 0 ? (
