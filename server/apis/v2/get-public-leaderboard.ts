@@ -165,7 +165,7 @@ export default api({
         COALESCE((SELECT COUNT(*)::int FROM cliptracker_v2_badges b WHERE b.viewer_id = v.id), 0) AS badges_earned
        FROM cliptracker_v2_viewers v
        LEFT JOIN cliptracker_v2_sessions s ON s.viewer_id = v.id
-       WHERE v.is_admin = false
+       WHERE v.is_admin = false AND v.role != 'SME'
        GROUP BY v.id, v.name, v.role, v.timezone, v.ascent_day_1, v.extension_days
        ORDER BY total_xp DESC
        LIMIT 50`,
@@ -232,7 +232,7 @@ export default api({
           (SELECT CASE WHEN EXISTS (SELECT 1 FROM cliptracker_v2_wd_verifications wd WHERE wd.viewer_id = v.id) THEN 1 ELSE 0 END)
         )::int AS approach_items
        FROM cliptracker_v2_viewers v
-       WHERE v.is_admin = false
+       WHERE v.is_admin = false AND v.role != 'SME'
        LIMIT 100`,
       ApproachCountRow,
       undefined,

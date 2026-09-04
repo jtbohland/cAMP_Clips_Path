@@ -106,7 +106,7 @@ export default api({
         v.week3_checkin_sent_at::text as week3_checkin_sent_at
        FROM cliptracker_v2_viewers v
        LEFT JOIN cliptracker_v2_sessions s ON s.viewer_id = v.id
-       WHERE v.is_admin = false
+       WHERE v.is_admin = false AND v.role != 'SME'
        GROUP BY v.id, v.name, v.email, v.role
        ORDER BY v.name ASC
        LIMIT 200`,
@@ -128,7 +128,7 @@ export default api({
         ROUND(AVG(s.focus_score) FILTER (WHERE s.completed = true), 1)::text as avg_focus
        FROM cliptracker_v2_viewers v
        LEFT JOIN cliptracker_v2_sessions s ON s.viewer_id = v.id
-       WHERE v.is_admin = false
+       WHERE v.is_admin = false AND v.role != 'SME'
        GROUP BY v.role
        ORDER BY v.role ASC`,
       RoleStatSchema,

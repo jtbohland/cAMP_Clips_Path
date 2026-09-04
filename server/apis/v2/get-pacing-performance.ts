@@ -159,12 +159,12 @@ export default api({
         v.ascent_day_1::text AS ascent_day_1,
         COALESCE(v.extension_days, 0)::int AS extension_days
        FROM cliptracker_v2_viewers v
-       WHERE v.is_admin = false
+       WHERE v.is_admin = false AND v.role != 'SME'
        ORDER BY v.created_at ASC
        LIMIT 100`,
       LearnerRow,
       undefined,
-      { label: "All non-admin learners" }
+      { label: "All non-admin learners (excluding SMEs)" }
     );
 
     // 2. Max sort_order completed per viewer (for legacy exemptions)
@@ -226,7 +226,7 @@ export default api({
           (SELECT CASE WHEN EXISTS (SELECT 1 FROM cliptracker_v2_wd_verifications wd WHERE wd.viewer_id = v.id) THEN 1 ELSE 0 END)
         )::int AS approach_items
        FROM cliptracker_v2_viewers v
-       WHERE v.is_admin = false
+       WHERE v.is_admin = false AND v.role != 'SME'
        LIMIT 100`,
       ApproachCountRow,
       undefined,

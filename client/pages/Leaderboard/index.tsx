@@ -49,6 +49,7 @@ const ROLE_PILL: Record<string, { bg: string; text: string; border: string }> = 
   "Majors AE":   { bg: "bg-purple-50",  text: "text-purple-700",  border: "border-purple-200" },
   "Strat AE":    { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200" },
   "SDR":         { bg: "bg-indigo-50",  text: "text-indigo-700",  border: "border-indigo-200" },
+  "SDR>Velocity Promo": { bg: "bg-pink-50", text: "text-pink-700", border: "border-pink-200" },
   "PSM":         { bg: "bg-orange-50",  text: "text-orange-700",  border: "border-orange-200" },
   "Renewals":    { bg: "bg-yellow-50",  text: "text-yellow-700",  border: "border-yellow-300" },
 };
@@ -62,18 +63,24 @@ const TZ_PILL: Record<string, { emoji: string; label: string; bg: string; text: 
 // ─── Role group display config ───────────────────────────────────────────────
 
 const ROLE_GROUP_CONFIG: Record<string, { label: string; emoji: string; headerBg: string; headerText: string }> = {
-  AE:       { label: "Account Executives", emoji: "💰", headerBg: "#3B82F6",  headerText: "#EFF6FF" },
-  SDR:      { label: "SDRs",               emoji: "📞", headerBg: "#8B5CF6",  headerText: "#F5F3FF" },
-  PSM:      { label: "PSMs",               emoji: "🤝", headerBg: "#F97316",  headerText: "#FFF7ED" },
-  Renewals: { label: "Renewals",           emoji: "🔄", headerBg: "#EAB308",  headerText: "#FEFCE8" },
+  AE:             { label: "Account Executives", emoji: "💰", headerBg: "#3B82F6",  headerText: "#EFF6FF" },
+  SDR:            { label: "SDRs",               emoji: "📞", headerBg: "#8B5CF6",  headerText: "#F5F3FF" },
+  VelocityPromo:  { label: "Promo Path",          emoji: "🚀", headerBg: "#EC4899",  headerText: "#FDF2F8" },
+  PSM:            { label: "PSMs",               emoji: "🤝", headerBg: "#F97316",  headerText: "#FFF7ED" },
+  Renewals:       { label: "Renewals",           emoji: "🔄", headerBg: "#EAB308",  headerText: "#FEFCE8" },
+};
+
+const ROLE_DISPLAY: Record<string, string> = {
+  "SDR>Velocity Promo": "Promo Path",
 };
 
 function RolePill({ role }: { role: string }) {
   const r = ROLE_PILL[role];
-  if (!r) return <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-gray-100 border border-gray-200 text-[10px] font-medium text-gray-600 whitespace-nowrap">{role}</span>;
+  const displayLabel = ROLE_DISPLAY[role] ?? role;
+  if (!r) return <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-gray-100 border border-gray-200 text-[10px] font-medium text-gray-600 whitespace-nowrap">{displayLabel}</span>;
   return (
     <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full ${r.bg} border ${r.border} ${r.text} text-[10px] font-medium whitespace-nowrap`}>
-      {role}
+      {displayLabel}
     </span>
   );
 }
@@ -408,7 +415,7 @@ export default function LeaderboardPage() {
   }, [leaderboard]);
 
   // Ordered role groups
-  const ROLE_GROUP_ORDER = ["AE", "SDR", "PSM", "Renewals"];
+  const ROLE_GROUP_ORDER = ["AE", "SDR", "VelocityPromo", "PSM", "Renewals"];
 
   return (
     <div className="flex flex-col w-full" style={{ backgroundColor: "#ECFDF5", minHeight: "100vh" }}>
@@ -419,7 +426,7 @@ export default function LeaderboardPage() {
             <span className="text-2xl">🏆</span>
             <div>
               <h1 className="text-xl font-bold text-white leading-tight">Leaderboard</h1>
-              <p className="text-sm text-green-200 mt-0.5">Ranked by % of max possible XP for your role</p>
+              <p className="text-sm text-green-200 mt-0.5">Camp XP Leaderboard</p>
             </div>
           </div>
           <button
@@ -451,7 +458,9 @@ export default function LeaderboardPage() {
                 <div className="flex items-center gap-2 mb-3">
                   <span className="text-lg">🌍</span>
                   <h2 className="text-base font-bold text-gray-900">All Campers</h2>
-                  <span className="text-xs text-gray-500">Ranked by % of max XP</span>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-[11px] font-semibold text-emerald-700">
+                    📊 Ranked by % of max possible XP for your role
+                  </span>
                 </div>
 
                 <div className="space-y-1">

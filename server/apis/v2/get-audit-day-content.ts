@@ -100,6 +100,7 @@ export default api({
       changeType: z.string(),
       createdAt: z.string(),
     })),
+    viewerSignedOff: z.boolean(),
   }),
 
   async run(ctx, { topicKey, viewerId }) {
@@ -289,6 +290,22 @@ export default api({
       { label: "Get peer SME progress" }
     );
 
+    // 6b. Check if current viewer already signed off
+    let viewerSignedOff = false;
+    if (viewerId) {
+      const SignOffCheck = z.object({ exists: z.boolean() });
+      const [check] = await ctx.integrations.apps_db.query(
+        `SELECT EXISTS(
+          SELECT 1 FROM cliptracker_v2_audit_signoffs
+          WHERE viewer_id = $1::uuid AND topic_key = $2
+        ) AS exists`,
+        SignOffCheck,
+        [viewerId, topicKey],
+        { label: "Check viewer sign-off status" }
+      );
+      viewerSignedOff = check?.exists ?? false;
+    }
+
     // Total sections count for peer progress denominator
     const totalSections = enrichedClips.reduce((sum, c) => {
       let count = 1; // summary
@@ -421,6 +438,7 @@ export default api({
       hasRidgeGame: topicKey === "day13_sdr_roe",
       hasPriceGame: topicKey === "day9_pricing",
       smeNotes,
+      viewerSignedOff,
     };
   },
 });

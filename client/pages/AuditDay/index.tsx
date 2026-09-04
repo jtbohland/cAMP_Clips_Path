@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router";
 import { useApiData } from "@/hooks/useApiData";
 import { useApi } from "@/hooks/useApi";
@@ -19,6 +19,7 @@ import WheelAndDealAuditTile from "@/components/audit/WheelAndDealAuditTile";
 import CampGearAuditTile from "@/components/audit/CampGearAuditTile";
 import RidgeGameAuditTile from "@/components/audit/RidgeGameAuditTile";
 import CampQuizAuditPlaceholder from "@/components/audit/CampQuizAuditPlaceholder";
+import ReRecordModal from "@/components/audit/ReRecordModal";
 import PriceGameAuditTile from "@/components/audit/PriceGameAuditTile";
 
 // ─── Audit Badge System ───────────────────────────────────────────
@@ -68,6 +69,7 @@ export default function AuditDayPage() {
   const { viewer } = useViewer();
   const [signOffNotes, setSignOffNotes] = useState("");
   const [signedOff, setSignedOff] = useState(false);
+  const [justSignedOff, setJustSignedOff] = useState(false);
 
   const { data, loading, fetching, isError, error, refetch } = useApiData("GetAuditDayContent", {
     topicKey: topicKey ?? "",
@@ -77,7 +79,16 @@ export default function AuditDayPage() {
   // Sync approvals from API
   const approvedSections = useMemo(() => new Set(data?.approvedSections ?? []), [data?.approvedSections]);
 
+  // Sync sign-off status from API (persisted)
+  useEffect(() => {
+    if (data?.viewerSignedOff && !signedOff) setSignedOff(true);
+  }, [data?.viewerSignedOff]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const { run: signOff, loading: signingOff } = useApi("SignOffAudit");
+
+  // ─── Re-record modal state ────────────────────────────────────
+  const [reRecordModal, setReRecordModal] = useState<{ clipTitle: string; editCount: number; sectionType: "markers" | "sr" } | null>(null);
+  const reRecordDismissed = useRef<Set<string>>(new Set());
 
   // Build clip ID→title map for readable section names
   const clipMap = useMemo(() => {
@@ -126,6 +137,42 @@ export default function AuditDayPage() {
   }, [data]);
   const badge = computeAuditBadge(editCount, signOffNotes.trim().length > 0);
 
+  // ─── Detect clips with replacement videos flagged ─────────────
+  const replacedClipIds = useMemo(() => {
+    const set = new Set<string>();
+    if (!data?.smeNotes) return set;
+    for (const note of data.smeNotes as Array<{ changeType: string; clipId?: string }>) {
+      if (note.changeType === "video_replace" && note.clipId) set.add(note.clipId);
+    }
+    return set;
+  }, [data]);
+
+  // ─── Detect 2+ question edits per clip section → re-record modal ─
+  useEffect(() => {
+    if (!data?.clips || !data?.smeNotes) return;
+    const notes = data.smeNotes as Array<{ changeType: string; fieldName: string; clipId?: string }>;
+    for (const clip of data.clips) {
+      // Count unique marker question edits for this clip
+      const markerIds = new Set((clip.trailMarkers ?? []).map((m: any) => m.id));
+      const markerEdits = new Set(notes.filter(n => n.changeType === "question" && markerIds.has(n.fieldName)).map(n => n.fieldName)).size;
+      const markerKey = `markers_${clip.clipId}`;
+      if (markerEdits >= 2 && !reRecordDismissed.current.has(markerKey)) {
+        reRecordDismissed.current.add(markerKey);
+        setReRecordModal({ clipTitle: clip.title, editCount: markerEdits, sectionType: "markers" });
+        return;
+      }
+      // Count unique S&R question edits for this clip
+      const srIds = new Set((clip.searchRescue ?? []).map((q: any) => q.id));
+      const srEdits = new Set(notes.filter(n => n.changeType === "question" && srIds.has(n.fieldName)).map(n => n.fieldName)).size;
+      const srKey = `sr_${clip.clipId}`;
+      if (srEdits >= 2 && !reRecordDismissed.current.has(srKey)) {
+        reRecordDismissed.current.add(srKey);
+        setReRecordModal({ clipTitle: clip.title, editCount: srEdits, sectionType: "sr" });
+        return;
+      }
+    }
+  }, [data]);
+
   const handleSignOff = useCallback(async () => {
     if (!viewer?.id || !topicKey) return;
     try {
@@ -135,6 +182,7 @@ export default function AuditDayPage() {
         notes: signOffNotes.trim() || null,
       });
       setSignedOff(true);
+      setJustSignedOff(true);
       toast.success("Audit signed off successfully!");
     } catch (err) {
       const message = err && typeof err === "object" && "message" in err
@@ -173,8 +221,8 @@ export default function AuditDayPage() {
 
   const { topic, clips } = data;
 
-  // ─── Post Sign-Off Thank You ─────────────────────────────────
-  if (signedOff) {
+  // ─── Post Sign-Off Thank You (just completed) ────────────────
+  if (justSignedOff) {
     const smeNames = topic.smes?.map((s: any) => s.name).join(" & ") ?? "SME";
     const badgeCardRef = (el: HTMLDivElement | null) => {
       if (el) (window as any).__auditBadgeCard = el;
@@ -241,6 +289,20 @@ export default function AuditDayPage() {
           ← Back to all topics
         </button>
 
+        {/* 🔒 Signed-off lock banner */}
+        {signedOff && (
+          <div className="rounded-lg bg-emerald-100 border-2 border-emerald-400 px-4 py-3 text-sm text-emerald-900 flex items-start gap-3">
+            <span className="text-lg flex-shrink-0">🔒</span>
+            <div>
+              <p className="font-bold">Audit signed off — content is locked</p>
+              <p className="text-emerald-700 text-xs mt-0.5">
+                Your review for this topic has been submitted. All sections are now read-only.
+                If you need to make further changes, contact your admin to reopen the audit.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* ⚠️ Production warning banner */}
         <div className="rounded-lg bg-orange-50 border border-orange-300 px-4 py-3 text-sm text-orange-800 flex items-start gap-3">
           <span className="text-lg flex-shrink-0">⚠️</span>
@@ -292,6 +354,7 @@ export default function AuditDayPage() {
         )}
 
         {/* Clip-level content */}
+        <div className={signedOff ? "pointer-events-none opacity-80" : ""}>
         {clips.map((clip: any) => (
           <div key={clip.clipId} className="space-y-4">
             {/* Clip (summary + objectives + SMEs + notes) */}
@@ -305,16 +368,19 @@ export default function AuditDayPage() {
             {/* Trail Markers */}
             <TrailMarkersSection markers={clip.trailMarkers} clipTitle={clip.title} topicKey={topicKey!} onSaved={refetch}
               isApproved={approvedSections.has(`markers_${clip.clipId}`)} onApproved={refetch} sectionKey={`markers_${clip.clipId}`}
+              locked={replacedClipIds.has(clip.clipId)}
               smeNotes={(data.smeNotes ?? []).filter((n: any) => n.changeType === 'question' && clip.trailMarkers.some((m: any) => m.id === n.fieldName))} />
 
             {/* Search & Rescue */}
             <SearchRescueSection questions={clip.searchRescue} clipTitle={clip.title} topicKey={topicKey!} onSaved={refetch}
               isApproved={approvedSections.has(`sr_${clip.clipId}`)} onApproved={refetch} sectionKey={`sr_${clip.clipId}`}
+              locked={replacedClipIds.has(clip.clipId)}
               smeNotes={(data.smeNotes ?? []).filter((n: any) => n.changeType === 'question' && clip.searchRescue.some((q: any) => q.id === n.fieldName))} />
 
             {/* Weather the Storm */}
             <WeatherStormSection wts={clip.weatherStorm} clipTitle={clip.title} clipId={clip.clipId} topicKey={topicKey!} onSaved={refetch}
               isApproved={approvedSections.has(`wts_${clip.clipId}`)} onApproved={refetch} sectionKey={`wts_${clip.clipId}`}
+              locked={replacedClipIds.has(clip.clipId)}
               smeNotes={(data.smeNotes ?? []).filter((n: any) => n.changeType === 'weather_storm')} />
 
             {/* cAMP Gear */}
@@ -408,14 +474,65 @@ export default function AuditDayPage() {
           />
         )}
 
-        {/* ─── Audit Badge Preview / Placeholder ─── */}
-        <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-5 text-center">
-          <p className="text-3xl mb-2">🏕️</p>
-          <p className="text-sm font-semibold text-amber-800">Complete your Ascent Audit to earn your trail crew badge + impact summary.</p>
-          <p className="text-xs text-amber-600 mt-1">Approve all sections and sign off below to see your badge.</p>
-        </div>
+        {/* ─── Audit Badge Preview / Placeholder (only when not signed off) ─── */}
+        </div>{/* end locked wrapper */}
+        {!signedOff && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-5 text-center">
+            <p className="text-3xl mb-2">🏕️</p>
+            <p className="text-sm font-semibold text-amber-800">Complete your Ascent Audit to earn your trail crew badge + impact summary.</p>
+            <p className="text-xs text-amber-600 mt-1">Approve all sections and sign off below to see your badge.</p>
+          </div>
+        )}
 
-        {/* ─── Sign Off Section ─── */}
+        {/* ─── Change Report (when signed off) ─── */}
+        {signedOff && data.smeNotes && data.smeNotes.length > 0 && (
+          <div className="rounded-xl border-2 border-blue-300 bg-blue-50/30 p-6">
+            <h3 className="text-base font-bold text-gray-900 mb-2 flex items-center gap-2">
+              <span>📋</span> Audit Change Report
+            </h3>
+            <p className="text-xs text-gray-600 mb-4">
+              Summary of all changes made during this audit. Your admin will review these and acknowledge below.
+            </p>
+            <div className="space-y-2 max-h-[400px] overflow-y-auto">
+              {data.smeNotes.map((note: any, i: number) => (
+                <div key={i} className="rounded-lg bg-white border border-blue-200 px-3 py-2.5 text-xs">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-semibold text-blue-800">{note.viewerName}</span>
+                    <span className="text-gray-400">·</span>
+                    <span className="text-gray-500">{new Date(note.createdAt).toLocaleDateString()}</span>
+                    <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${
+                      note.changeType === "question" ? "bg-indigo-50 text-indigo-700" :
+                      note.changeType === "sme_note" ? "bg-amber-50 text-amber-700" :
+                      note.changeType === "video_replace" ? "bg-red-100 text-red-700" :
+                      note.changeType === "video_link" ? "bg-blue-50 text-blue-700" :
+                      "bg-gray-100 text-gray-600"
+                    }`}>
+                      {note.changeType === "question" ? "🪧 Question Edit" :
+                       note.changeType === "sme_note" ? "📝 Note" :
+                       note.changeType === "video_replace" ? "🔄 Replacement Video" :
+                       note.changeType === "video_link" ? "🎬 Additional Video" :
+                       note.changeType}
+                    </span>
+                  </div>
+                  <p className="text-gray-700">{note.value}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Admin acknowledgment section */}
+            <div className="mt-4 pt-4 border-t border-blue-200">
+              <p className="text-xs text-gray-500 mb-2">
+                <strong>Admin action required:</strong> Review the changes above and acknowledge to complete the audit cycle.
+              </p>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-400 italic">Admin sign-off is managed from the Analytics → Ascent Audit panel.</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ─── Sign Off Section (hidden when already signed off) ─── */}
+        {!signedOff && (
         <div className="rounded-xl border-2 border-emerald-300 bg-emerald-50/50 p-6 mt-6">
           <h3 className="text-base font-bold text-gray-900 mb-2 flex items-center gap-2">
             <span>✍️</span> Sign & Complete Audit
@@ -497,7 +614,26 @@ export default function AuditDayPage() {
             {signingOff ? "Signing off…" : !allApproved ? "🔒 Approve all sections first" : "✅ Sign & Complete Audit"}
           </button>
         </div>
+        )}
       </div>
+
+      {/* Re-record modal */}
+      {reRecordModal && (
+        <ReRecordModal
+          clipTitle={reRecordModal.clipTitle}
+          editCount={reRecordModal.editCount}
+          sectionType={reRecordModal.sectionType}
+          onDismiss={() => setReRecordModal(null)}
+          onAcknowledge={() => {
+            setReRecordModal(null);
+            // Scroll to the "About this clip" area so the SME can leave notes
+            setTimeout(() => {
+              const el = document.querySelector("[data-about-clip]");
+              if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+            }, 100);
+          }}
+        />
+      )}
     </div>
   );
 }

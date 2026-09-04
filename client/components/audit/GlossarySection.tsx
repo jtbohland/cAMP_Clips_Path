@@ -3,7 +3,7 @@ import { useState } from "react";
 
 const GLOSSARY = [
   { term: "Clips", emoji: "🎬", desc: "Short training videos (9–60 min) that new hires watch as part of their learning path." },
-  { term: "Trail Markers", emoji: "🥾", desc: "Pop-up knowledge-check questions that appear during a clip to keep learners engaged and verify comprehension in real time." },
+  { term: "Trail Markers", emoji: "🪧", desc: "Pop-up knowledge-check questions that appear during a clip to keep learners engaged and verify comprehension in real time." },
   { term: "S&R (Search & Rescue)", emoji: "🚁", desc: "A follow-up quiz triggered when a learner's overall engagement score falls below the required threshold. They must pass to continue." },
   { term: "WtS (Weather the Storm)", emoji: "⛈️", desc: "A required reading activity assigned when a learner shows concerning engagement or lack of focus. It reinforces key concepts before they can move on." },
   { term: "cAMP Gear", emoji: "🎒", desc: "Linked resources attached to each topic — slides, docs, tools, videos, and other materials new hires reference during and after training." },
