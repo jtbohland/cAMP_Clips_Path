@@ -33,7 +33,8 @@ export default function AuditTopicTile({
   isAdmin?: boolean;
 }) {
   const s = STATUS_CONFIG[topic.status];
-  const isClickable = isAdmin || topic.isAssignedToMe;
+  // All SMEs can click into any tile to view — editing is gated inside the day view
+  const isClickable = true;
   const audiencePath = getPathForTopic(topic.topicKey);
   const pathStyle = audiencePath ? PATH_STYLES[audiencePath] : null;
   const pct = topic.status === "complete" ? 100 : topic.status === "not_started" ? 0 : (topic.totalSections > 0 ? Math.round((topic.approvedCount / topic.totalSections) * 100) : 0);
