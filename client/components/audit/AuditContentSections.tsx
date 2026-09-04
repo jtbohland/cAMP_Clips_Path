@@ -4,6 +4,8 @@ import { useApi } from "@/hooks/useApi.js";
 import { toast } from "sonner";
 import { useViewer } from "@/components/ViewerContext";
 import { getGuideEntryForClip } from "@/config/ascentGuide";
+import ChangeStamp from "./ChangeStamp";
+import type { ChangeEntry } from "./ChangeStamp";
 
 // ─── Invite helper ─────────────────────────────────────────────────
 function copyInvite(smeName: string, topicLabel: string) {
@@ -179,10 +181,11 @@ export function SummarySection({ summary, objectives, smes, topicKey, onSaved, i
 }
 
 // ─── Editable Question (shared for markers + S&R) ──────────────────
-function EditableQuestion({ q, idx, label, topicKey, onSaved, accent }: {
+function EditableQuestion({ q, idx, label, topicKey, onSaved, accent, smeNotes = [] }: {
   q: { id: string; questionText: string; options: any; correctOption: number; correctFeedback: string | null; triggerAtSeconds?: number | null; sortOrder: number };
   idx: number; label: string; topicKey: string; onSaved?: () => void;
   accent: { bg: string; border: string; badge: string; badgeText: string };
+  smeNotes?: ChangeEntry[];
 }) {
   const [editing, setEditing] = useState(false);
   const opts: string[] = Array.isArray(q.options) ? q.options : [];
@@ -233,6 +236,12 @@ function EditableQuestion({ q, idx, label, topicKey, onSaved, accent }: {
             ))}
           </div>
           {feedback.explanation && <p className="text-xs text-gray-500 italic border-l-2 border-emerald-300 pl-2">{feedback.explanation}</p>}
+          {/* Change history for this question */}
+          {smeNotes.length > 0 && (
+            <div className="mt-2">
+              <ChangeStamp changes={smeNotes} />
+            </div>
+          )}
         </>
       ) : (
         <>
@@ -254,9 +263,10 @@ function EditableQuestion({ q, idx, label, topicKey, onSaved, accent }: {
 }
 
 // ─── Trail Markers ─────────────────────────────────────────────────
-export function TrailMarkersSection({ markers, clipTitle, topicKey, onSaved, sectionKey, isApproved, onApproved }: {
+export function TrailMarkersSection({ markers, clipTitle, topicKey, onSaved, sectionKey, isApproved, onApproved, smeNotes = [] }: {
   markers: Array<any>; clipTitle: string; topicKey: string; onSaved?: () => void;
   sectionKey: string; isApproved: boolean; onApproved?: () => void;
+  smeNotes?: ChangeEntry[];
 }) {
   if (markers.length === 0) return null;
   const { handleApprove, approving } = useApproval(topicKey, sectionKey, isApproved, onApproved);
@@ -279,7 +289,8 @@ export function TrailMarkersSection({ markers, clipTitle, topicKey, onSaved, sec
       <div className="space-y-4">
         {markers.map((m, idx) => (
           <EditableQuestion key={m.id} q={m} idx={idx} label="Q" topicKey={topicKey} onSaved={onSaved}
-            accent={{ bg: "bg-gray-50/50", border: "border-gray-100", badge: "bg-indigo-50", badgeText: "text-indigo-600" }} />
+            accent={{ bg: "bg-gray-50/50", border: "border-gray-100", badge: "bg-indigo-50", badgeText: "text-indigo-600" }}
+            smeNotes={smeNotes.filter(n => n.fieldName === m.id || n.value?.includes(m.id))} />
         ))}
       </div>
     </div>
@@ -287,9 +298,10 @@ export function TrailMarkersSection({ markers, clipTitle, topicKey, onSaved, sec
 }
 
 // ─── Search & Rescue ────────────────────────────────────────────────
-export function SearchRescueSection({ questions, clipTitle, topicKey, onSaved, sectionKey, isApproved, onApproved }: {
+export function SearchRescueSection({ questions, clipTitle, topicKey, onSaved, sectionKey, isApproved, onApproved, smeNotes = [] }: {
   questions: Array<any>; clipTitle: string; topicKey: string; onSaved?: () => void;
   sectionKey: string; isApproved: boolean; onApproved?: () => void;
+  smeNotes?: ChangeEntry[];
 }) {
   if (questions.length === 0) return null;
   const { handleApprove, approving } = useApproval(topicKey, sectionKey, isApproved, onApproved);
@@ -312,7 +324,8 @@ export function SearchRescueSection({ questions, clipTitle, topicKey, onSaved, s
       <div className="space-y-3">
         {questions.map((q, idx) => (
           <EditableQuestion key={q.id} q={q} idx={idx} label="S&R Q" topicKey={topicKey} onSaved={onSaved}
-            accent={{ bg: "bg-white", border: "border-amber-100", badge: "bg-amber-50", badgeText: "text-amber-700" }} />
+            accent={{ bg: "bg-white", border: "border-amber-100", badge: "bg-amber-50", badgeText: "text-amber-700" }}
+            smeNotes={smeNotes.filter(n => n.fieldName === q.id || n.value?.includes(q.id))} />
         ))}
       </div>
     </div>
@@ -320,10 +333,11 @@ export function SearchRescueSection({ questions, clipTitle, topicKey, onSaved, s
 }
 
 // ─── Weather the Storm ─────────────────────────────────────────────
-export function WeatherStormSection({ wts, clipTitle, clipId, topicKey, onSaved, sectionKey, isApproved, onApproved }: {
+export function WeatherStormSection({ wts, clipTitle, clipId, topicKey, onSaved, sectionKey, isApproved, onApproved, smeNotes = [] }: {
   wts: { overview: string; takeaways: any; timerMinutes: number } | null;
   clipTitle: string; clipId: string; topicKey: string; onSaved?: () => void;
   sectionKey: string; isApproved: boolean; onApproved?: () => void;
+  smeNotes?: ChangeEntry[];
 }) {
   if (!wts) return null;
   const takeaways: string[] = Array.isArray(wts.takeaways) ? wts.takeaways : [];
@@ -367,14 +381,21 @@ export function WeatherStormSection({ wts, clipTitle, clipId, topicKey, onSaved,
           <button onClick={() => setEditTakeaways([...editTakeaways, ""])} className="text-xs text-indigo-600 hover:underline">+ Add takeaway</button>
         </>
       )}
+      {/* Change history */}
+      {smeNotes.length > 0 && (
+        <div className="mt-3">
+          <ChangeStamp changes={smeNotes} />
+        </div>
+      )}
     </div>
   );
 }
 
 // ─── cAMP Gear (with SME responsibility note) ─────────────────────
-export function GearSection({ resources, clipTitle, clipId, topicKey, onSaved, sectionKey, isApproved, onApproved }: {
+export function GearSection({ resources, clipTitle, clipId, topicKey, onSaved, sectionKey, isApproved, onApproved, smeNotes = [] }: {
   resources: any; clipTitle: string; clipId: string; topicKey: string; onSaved?: () => void;
   sectionKey: string; isApproved: boolean; onApproved?: () => void;
+  smeNotes?: ChangeEntry[];
 }) {
   const items: Array<{ label: string; type?: string; url: string; note?: string }> = Array.isArray(resources) ? resources : [];
   const [checkedItems, setCheckedItems] = useState<Set<number>>(new Set());
@@ -506,11 +527,12 @@ export function GearSection({ resources, clipTitle, clipId, topicKey, onSaved, s
 }
 
 // ─── Clip Section (editable summary + objectives + SMEs + notes) ──
-export function ClipSection({ clip, topicKey, topicTitle, onSaved, smes, isApproved, onApproved, sectionKey }: {
+export function ClipSection({ clip, topicKey, topicTitle, onSaved, smes, isApproved, onApproved, sectionKey, smeNotes = [] }: {
   clip: { clipId: string; title: string; videoUrl: string | null; sortOrder: number };
   topicKey: string; topicTitle?: string; onSaved?: () => void;
   smes?: Array<{ name: string; title: string; note?: string | null }>;
   isApproved?: boolean; onApproved?: () => void; sectionKey?: string;
+  smeNotes?: ChangeEntry[];
 }) {
   const [notes, setNotes] = useState("");
   const [videoLink, setVideoLink] = useState("");

@@ -14,6 +14,8 @@ interface AcademyCourse {
   notes: string | null;
 }
 
+type SmeNote = { fieldName: string; value: string; viewerName: string; changeType: string; createdAt: string };
+
 interface AcademyAuditTileProps {
   courses: AcademyCourse[];
   topicKey: string;
@@ -21,6 +23,7 @@ interface AcademyAuditTileProps {
   onApproved?: () => void;
   onSaved?: () => void;
   sectionKey: string;
+  smeNotes?: SmeNote[];
 }
 
 export default function AcademyAuditTile({
@@ -30,6 +33,7 @@ export default function AcademyAuditTile({
   onApproved,
   onSaved,
   sectionKey,
+  smeNotes = [],
 }: AcademyAuditTileProps) {
   const { viewer } = useViewer();
   const { run: saveApproval, loading: approving } = useApi("SaveAuditApproval");
@@ -159,6 +163,7 @@ export default function AcademyAuditTile({
               onNotesChange={(val) => setCourseNotes(prev => ({ ...prev, [idx]: val }))}
               onSaveNotes={() => handleSaveNotes(idx, courseNotes[idx] ?? "")}
               saving={saving}
+              savedNotes={smeNotes.filter(n => n.fieldName === `academy_course_${idx}`)}
             />
           ))}
         </div>
@@ -206,6 +211,54 @@ export default function AcademyAuditTile({
   );
 }
 
+/** Strip JSON wrapping quotes from changelog values */
+function cleanNoteValue(val: string): string {
+  let v = val;
+  if (v.startsWith('"') && v.endsWith('"')) {
+    try { v = JSON.parse(v); } catch { /* use as-is */ }
+  }
+  return v;
+}
+
+/** Collapsible note thread — shows latest note, older behind toggle */
+function NoteThread({ notes }: { notes: SmeNote[] }) {
+  const [showAll, setShowAll] = useState(false);
+  const latest = notes[0];
+  const older = notes.slice(1);
+
+  return (
+    <div className="space-y-1">
+      <div className="bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+        <div className="flex items-center gap-1.5 mb-0.5">
+          <span className="text-[10px] font-bold text-amber-700">💬 {latest.viewerName}</span>
+          <span className="text-[10px] text-amber-500">{new Date(latest.createdAt).toLocaleDateString()}</span>
+          {older.length > 0 && <span className="text-[10px] text-amber-400">· latest</span>}
+        </div>
+        <p className="text-xs text-gray-800 whitespace-pre-wrap">{cleanNoteValue(latest.value)}</p>
+      </div>
+      {older.length > 0 && !showAll && (
+        <button onClick={() => setShowAll(true)} className="text-[10px] text-amber-600 hover:underline pl-1">
+          📜 {older.length} older note{older.length !== 1 ? "s" : ""}…
+        </button>
+      )}
+      {showAll && older.map((note, ni) => (
+        <div key={ni} className="bg-amber-50/50 border border-amber-100 rounded-md px-3 py-1.5 opacity-70">
+          <div className="flex items-center gap-1.5 mb-0.5">
+            <span className="text-[10px] font-bold text-amber-600">💬 {note.viewerName}</span>
+            <span className="text-[10px] text-amber-400">{new Date(note.createdAt).toLocaleDateString()}</span>
+          </div>
+          <p className="text-xs text-gray-600 whitespace-pre-wrap">{cleanNoteValue(note.value)}</p>
+        </div>
+      ))}
+      {showAll && (
+        <button onClick={() => setShowAll(false)} className="text-[10px] text-amber-500 hover:underline pl-1">
+          ▲ Hide older
+        </button>
+      )}
+    </div>
+  );
+}
+
 /** Individual course card — mirrors the learner Approach UX */
 function CourseCard({
   course,
@@ -214,6 +267,7 @@ function CourseCard({
   onNotesChange,
   onSaveNotes,
   saving,
+  savedNotes = [],
 }: {
   course: AcademyCourse;
   index: number;
@@ -221,6 +275,7 @@ function CourseCard({
   onNotesChange: (val: string) => void;
   onSaveNotes: () => void;
   saving: boolean;
+  savedNotes?: SmeNote[];
 }) {
   const [showNotes, setShowNotes] = useState(false);
 
@@ -239,6 +294,11 @@ function CourseCard({
           </a>
         </div>
       </div>
+
+      {/* Saved SME notes — latest shown, older behind toggle */}
+      {savedNotes.length > 0 && (
+        <NoteThread notes={savedNotes} />
+      )}
 
       {/* Notes toggle + input */}
       {!showNotes ? (

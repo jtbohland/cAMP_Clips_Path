@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { TOPIC_PATH_MAP, PATH_STYLES } from "@/config/auditPaths";
+import PendingChangesPanel from "./PendingChangesPanel";
 
 const STATUS_PILL: Record<string, { bg: string; text: string; label: string }> = {
   not_started: { bg: "bg-gray-100", text: "text-gray-600", label: "Not Started" },
@@ -338,6 +339,9 @@ export default function AscentAuditTab() {
           </table>
         </div>
       </div>
+
+      {/* ─── Pending SME Changes ─── */}
+      <PendingChangesPanel />
     </div>
   );
 }

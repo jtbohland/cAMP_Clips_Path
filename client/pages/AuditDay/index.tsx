@@ -18,6 +18,7 @@ import AcademyAuditTile from "@/components/audit/AcademyAuditTile";
 import WheelAndDealAuditTile from "@/components/audit/WheelAndDealAuditTile";
 import CampGearAuditTile from "@/components/audit/CampGearAuditTile";
 import RidgeGameAuditTile from "@/components/audit/RidgeGameAuditTile";
+import CampQuizAuditPlaceholder from "@/components/audit/CampQuizAuditPlaceholder";
 import PriceGameAuditTile from "@/components/audit/PriceGameAuditTile";
 
 // ─── Audit Badge System ───────────────────────────────────────────
@@ -47,6 +48,7 @@ function sectionLabel(key: string, clipMap: Map<string, string>): string {
   if (key === "gear_topic") return "cAMP Gear";
   if (key === "ridge_game") return "Rules of the Ridge";
   if (key === "price_game") return "The Price is Right";
+  if (key === "camp_quiz_audit") return "cAMP Quiz Audit";
   const parts = key.split("_");
   const prefix = parts[0];
   const clipId = parts.slice(1).join("_");
@@ -98,6 +100,10 @@ export default function AuditDayPage() {
       if (clip.searchRescue?.length > 0) sections.push(`sr_${clip.clipId}`);
       if (clip.weatherStorm) sections.push(`wts_${clip.clipId}`);
       if (Array.isArray(clip.resources) && clip.resources.length > 0) sections.push(`gear_${clip.clipId}`);
+    }
+    // cAMP Quiz Audit — required for all clip-based topics
+    if (data.clips.length > 0) {
+      sections.push("camp_quiz_audit");
     }
     // Product 101 tiled sections
     if (data.clips.length === 0) {
@@ -293,25 +299,38 @@ export default function AuditDayPage() {
               smes={topic.smes}
               isApproved={approvedSections.has(`summary_${clip.clipId}`)}
               onApproved={refetch}
-              sectionKey={`summary_${clip.clipId}`} />
+              sectionKey={`summary_${clip.clipId}`}
+              smeNotes={(data.smeNotes ?? []).filter((n: any) => n.fieldName?.includes(clip.clipId) || n.value?.includes(clip.clipId))} />
 
             {/* Trail Markers */}
             <TrailMarkersSection markers={clip.trailMarkers} clipTitle={clip.title} topicKey={topicKey!} onSaved={refetch}
-              isApproved={approvedSections.has(`markers_${clip.clipId}`)} onApproved={refetch} sectionKey={`markers_${clip.clipId}`} />
+              isApproved={approvedSections.has(`markers_${clip.clipId}`)} onApproved={refetch} sectionKey={`markers_${clip.clipId}`}
+              smeNotes={(data.smeNotes ?? []).filter((n: any) => n.changeType === 'question' && clip.trailMarkers.some((m: any) => m.id === n.fieldName))} />
 
             {/* Search & Rescue */}
             <SearchRescueSection questions={clip.searchRescue} clipTitle={clip.title} topicKey={topicKey!} onSaved={refetch}
-              isApproved={approvedSections.has(`sr_${clip.clipId}`)} onApproved={refetch} sectionKey={`sr_${clip.clipId}`} />
+              isApproved={approvedSections.has(`sr_${clip.clipId}`)} onApproved={refetch} sectionKey={`sr_${clip.clipId}`}
+              smeNotes={(data.smeNotes ?? []).filter((n: any) => n.changeType === 'question' && clip.searchRescue.some((q: any) => q.id === n.fieldName))} />
 
             {/* Weather the Storm */}
             <WeatherStormSection wts={clip.weatherStorm} clipTitle={clip.title} clipId={clip.clipId} topicKey={topicKey!} onSaved={refetch}
-              isApproved={approvedSections.has(`wts_${clip.clipId}`)} onApproved={refetch} sectionKey={`wts_${clip.clipId}`} />
+              isApproved={approvedSections.has(`wts_${clip.clipId}`)} onApproved={refetch} sectionKey={`wts_${clip.clipId}`}
+              smeNotes={(data.smeNotes ?? []).filter((n: any) => n.changeType === 'weather_storm')} />
 
             {/* cAMP Gear */}
             <GearSection resources={clip.resources} clipTitle={clip.title} clipId={clip.clipId} topicKey={topicKey!} onSaved={refetch}
-              isApproved={approvedSections.has(`gear_${clip.clipId}`)} onApproved={refetch} sectionKey={`gear_${clip.clipId}`} />
+              isApproved={approvedSections.has(`gear_${clip.clipId}`)} onApproved={refetch} sectionKey={`gear_${clip.clipId}`}
+              smeNotes={(data.smeNotes ?? []).filter((n: any) => ['gear_add','gear_update','gear_remove'].includes(n.changeType))} />
           </div>
         ))}
+
+        {/* cAMP Quiz Audit — for clip-based topics only */}
+        {clips.length > 0 && (
+          <CampQuizAuditPlaceholder
+            topicTitle={topic.title}
+            isApproved={approvedSections.has("camp_quiz_audit")}
+          />
+        )}
 
         {/* Topic-level resources for topics without clips (e.g. Product 101) */}
         {clips.length === 0 && data.academyCourses && data.academyCourses.length > 0 ? (
@@ -325,6 +344,7 @@ export default function AuditDayPage() {
               onApproved={refetch}
               onSaved={refetch}
               sectionKey="academy_topic"
+              smeNotes={data.smeNotes}
             />
 
             {/* Wheel & Deal Tile */}
@@ -337,6 +357,7 @@ export default function AuditDayPage() {
                 onApproved={refetch}
                 onSaved={refetch}
                 sectionKey="wheel_topic"
+                smeNotes={data.smeNotes}
               />
             )}
 
@@ -349,6 +370,7 @@ export default function AuditDayPage() {
                 onApproved={refetch}
                 onSaved={refetch}
                 sectionKey="gear_topic"
+                smeNotes={data.smeNotes}
               />
             )}
           </div>
@@ -403,7 +425,30 @@ export default function AuditDayPage() {
             it is accurate as of today. Any notes you leave will be visible to the program administrator.
           </p>
 
-          {/* Approval checklist — human-readable names */}
+          {/* Approved sections */}
+          {requiredSections.filter(s => approvedSections.has(s)).length > 0 && (
+            <div className="rounded-lg bg-emerald-50 border border-emerald-300 px-4 py-3 mb-4">
+              <p className="text-xs font-semibold text-emerald-800 mb-1">✅ Sections approved:</p>
+              <ul className="space-y-0.5">
+                {requiredSections.filter(s => approvedSections.has(s)).map(s => {
+                  const detail = (data.sectionApprovalDetails ?? []).find((d: any) => d.sectionKey === s);
+                  return (
+                    <li key={s} className="text-xs text-emerald-700 flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0" />
+                      <span>{sectionLabel(s, clipMap)}</span>
+                      {detail && (
+                        <span className="text-emerald-500 text-[10px]">
+                          — {detail.viewerName} · {new Date(detail.approvedAt).toLocaleDateString()}
+                        </span>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+
+          {/* Pending sections */}
           {!allApproved && pendingSections.length > 0 && (
             <div className="rounded-lg bg-red-50 border border-red-300 px-4 py-3 mb-4">
               <p className="text-xs font-semibold text-red-800 mb-1">⏳ Sections still need approval:</p>
