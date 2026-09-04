@@ -2,7 +2,7 @@ import { api, z, postgres } from "@superblocksteam/sdk-api";
 
 const APPS_DB = "c6e32cf4-ca66-42ae-aeb3-58c84ffae574";
 
-const ROLES = ['SDR', 'Velocity AE', 'Emerging AE', 'Majors AE', 'Strat AE', 'PSM', 'Renewals', 'SDR>Velocity Promo', 'Admin'] as const;
+const ROLES = ['SDR', 'Velocity AE', 'Emerging AE', 'Majors AE', 'Strat AE', 'PSM', 'Renewals', 'SDR>Velocity Promo', 'Admin', 'SME'] as const;
 
 const ViewerSchema = z.object({
   id: z.string(),
