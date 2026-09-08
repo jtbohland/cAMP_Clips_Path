@@ -696,12 +696,7 @@ export default function LibraryPage() {
       // NOTE: localStorage is set on DISMISS, not here — if the modal never renders
       // (e.g. another modal takes priority), it will retry on next page load
 
-      // Ascent done but Approach incomplete → Summit in Sight
-      if (ascentComplete && approachStatus?.complete === false) {
-        setShowSummitInSight(true);
-        logModal("summit_in_sight", "shown");
-        localStorage.setItem(dismissKey, todayStr); // Summit in Sight has its own dismiss tracking
-      } else if (pacingInfo.tier === "anchor_failure") {
+      if (pacingInfo.tier === "anchor_failure") {
         showAnchorModal(viewer, pacingInfo);
         localStorage.setItem(dismissKey, todayStr); // Anchor modals have their own dismiss tracking
       } else {
@@ -726,11 +721,7 @@ export default function LibraryPage() {
       if (lastDismissed !== todayStr && pacingInfo && !showSummit && tierUnlock === null) {
         // Day 1: no pacing modal at all — let learners explore first
         if (pacingInfo.weekdaysElapsed <= 1) return;
-        if (ascentComplete && approachStatus?.complete === false) {
-          setShowSummitInSight(true);
-          logModal("summit_in_sight", "shown");
-          localStorage.setItem(dismissKey, todayStr);
-        } else if (pacingInfo.tier === "anchor_failure") {
+        if (pacingInfo.tier === "anchor_failure") {
           showAnchorModal(viewer, pacingInfo);
           localStorage.setItem(dismissKey, todayStr);
         } else {
@@ -744,16 +735,31 @@ export default function LibraryPage() {
     return () => document.removeEventListener("visibilitychange", handleVisibility);
   }, [dataReady, viewer, pacingInfo, showSummit, tierUnlock, showAnchorModal, logModal, ascentComplete, approachStatus, week1Data]);
 
-  // Auto-trigger Summit — only after all data ready
+  // Auto-trigger Summit flow — only after all data ready
+  // Two paths:
+  //   A) Ascent ✅ + Approach ❌ → Summit in Sight (hard gate, fires every load)
+  //   B) Ascent ✅ + Approach ✅ → Final Achievement → Grand Finale
   useEffect(() => {
     if (!dataReady || previewMode === "tier") return;
+    if (!ascentComplete) return; // Ascent must be done for either path
+    if (viewer?.isAdmin) return;
+
+    // Path A: Ascent done, Approach incomplete → Summit in Sight (hard gate)
+    if (approachStatus?.complete === false) {
+      // Fire every load — no localStorage dismiss. The learner must complete Approach.
+      if (!showSummitInSight && !showFinalAchievement && !showSummit) {
+        setShowSummitInSight(true);
+        logModal("summit_in_sight", "shown");
+      }
+      return;
+    }
+
+    // Path B: allCompleted (Ascent ✅ + Approach ✅) → Final Achievement → Grand Finale
     const key = `summit_dismissed_${viewer!.id}`;
     const stored = localStorage.getItem(key);
 
     // Self-healing: if DB says no summit email was sent but localStorage
     // says dismissed, reset localStorage so the modal fires again.
-    // This catches edge cases where localStorage was seeded incorrectly
-    // (e.g. first visit after feature deploy with all clips already done).
     if (stored === "true" && allCompleted && progressData && !progressData.summitCheckinSent) {
       localStorage.setItem(key, "false");
       // Fall through to show the modal below
@@ -765,11 +771,11 @@ export default function LibraryPage() {
       return; // Already dismissed AND summit email confirmed sent
     }
 
-    // Not dismissed + all completed = show summit
+    // Not dismissed + all completed = show Final Achievement
     if (allCompleted && !showFinalAchievement && !showSummit) {
       setShowFinalAchievement(true);
     }
-  }, [dataReady, allCompleted, showFinalAchievement, showSummit, previewMode, viewer, progressData]);
+  }, [dataReady, ascentComplete, allCompleted, approachStatus, showFinalAchievement, showSummit, showSummitInSight, previewMode, viewer, progressData, logModal]);
 
   // (Anchor failure detection is now handled by the unified pacing trigger above —
   //  getPacingTier returns "anchor_failure" when past summit day + incomplete)
@@ -1030,7 +1036,27 @@ export default function LibraryPage() {
 
   // ──────────────────── MODALS (only when dataReady) ────────────────────
 
-  // Final Achievement — fires after all clips done, BEFORE Grand Finale
+  // Summit in Sight — hard gate: Ascent done but Approach incomplete
+  // Fires INSTEAD of Final Achievement. Learner must complete Approach first.
+  if (showSummitInSight && approachStatus && !approachStatus.complete && previewMode !== "tier") {
+    return (
+      <SummitInSightModal
+        catchUpItems={approachStatus.catchUpItems}
+        summitDay={pacingInfo?.summitDay}
+        totalTopicDays={totalTopicDays}
+        onGoToApproach={() => {
+          setShowSummitInSight(false);
+          setActiveTab("approach");
+        }}
+        onDismiss={() => {
+          logModal("summit_in_sight", "dismissed");
+          setShowSummitInSight(false);
+        }}
+      />
+    );
+  }
+
+  // Final Achievement — fires after ALL clips + Approach done, BEFORE Grand Finale
   if (showFinalAchievement && previewMode !== "tier") {
     return (
       <FinalAchievementModal
@@ -1148,16 +1174,6 @@ export default function LibraryPage() {
           localStorage.setItem(`pacing_dismissed_${viewer!.id}`, new Date().toLocaleDateString());
           setShowPacing(false);
         }}
-      />
-    )}
-    {/* Summit in Sight — Ascent done, Approach incomplete */}
-    {showSummitInSight && approachStatus && (
-      <SummitInSightModal
-        catchUpItems={approachStatus.catchUpItems}
-        summitDay={pacingInfo?.summitDay}
-        totalTopicDays={totalTopicDays}
-        onGoToApproach={() => setActiveTab("approach")}
-        onDismiss={() => { logModal("summit_in_sight", "dismissed"); setShowSummitInSight(false); }}
       />
     )}
     {/* Anchor Failure #1 — first time past Summit Day */}
