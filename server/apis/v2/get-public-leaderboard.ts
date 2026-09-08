@@ -162,9 +162,15 @@ export default api({
         v.ascent_day_1::text AS ascent_day_1,
         COALESCE(v.extension_days, 0)::int AS extension_days,
         COALESCE((SELECT SUM(xp_amount)::int FROM cliptracker_v2_xp_events x WHERE x.viewer_id = v.id), 0) AS total_xp,
-        (COUNT(DISTINCT s.clip_id) FILTER (WHERE s.completed = true)
-         + COALESCE((SELECT COUNT(*)::int FROM cliptracker_v2_xp_events x WHERE x.viewer_id = v.id AND x.event_type = 'swiss_army_knife'), 0)
-        )::int AS clips_completed,
+        (SELECT COUNT(*)::int FROM (
+          SELECT DISTINCT clip_id FROM cliptracker_v2_sessions ss
+            JOIN cliptracker_v2_clips cc ON cc.id = ss.clip_id
+            WHERE ss.viewer_id = v.id AND ss.completed = true AND cc.status = 'live'
+          UNION
+          SELECT DISTINCT clip_id FROM cliptracker_v2_xp_events xx
+            JOIN cliptracker_v2_clips cc ON cc.id = xx.clip_id
+            WHERE xx.viewer_id = v.id AND xx.event_type = 'swiss_army_knife' AND cc.status = 'live'
+        ) AS all_clips)::int AS clips_completed,
         COALESCE((SELECT COUNT(*)::int FROM cliptracker_v2_badges b WHERE b.viewer_id = v.id), 0) AS badges_earned
        FROM cliptracker_v2_viewers v
        LEFT JOIN cliptracker_v2_sessions s ON s.viewer_id = v.id
@@ -305,7 +311,7 @@ export default api({
         totalXp: r.total_xp,
         xpPct,
         maxXp,
-        clipsCompleted: r.clips_completed,
+        clipsCompleted: Math.min(clipsDone, effectiveTotal),
         badgesEarned: r.badges_earned,
         pacingStatus,
         tierName: currentTier.name,
