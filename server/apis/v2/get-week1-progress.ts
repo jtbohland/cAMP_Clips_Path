@@ -94,10 +94,7 @@ export default api({
     );
 
     const viewer = viewerRows[0];
-    // Legacy learner = has completed clips but no week1_unlock_type set
-    const isLegacyLearner = viewer
-      ? viewer.clips_completed > 0 && viewer.week1_unlock_type === null
-      : false;
+    // NOTE: isLegacyLearner is determined AFTER fetching approach data below
 
     // Get module sign-offs
     const signoffs = await ctx.integrations.db.query(
@@ -144,6 +141,15 @@ export default api({
       { label: "Get approach XP event" }
     );
     const approachXpEvent = approachXpRows[0] ?? null;
+
+    // Legacy learner = has completed clips, no week1_unlock_type, AND zero approach activity.
+    // Previously this only checked clips_completed > 0 && week1_unlock_type === null,
+    // which misclassified learners who started Approach but never had their unlock type stamped
+    // (e.g. Yusuke) — causing the summit gate to be bypassed.
+    const hasApproachActivity = signoffs.length > 0 || screenshots.length > 0 || wdRows.length > 0;
+    const isLegacyLearner = viewer
+      ? viewer.clips_completed > 0 && viewer.week1_unlock_type === null && !hasApproachActivity
+      : false;
 
     return {
       moduleSignoffs: signoffs.map((s) => ({

@@ -159,7 +159,7 @@ export default api({
     if (viewers.length === 0) throw new Error("Viewer not found");
     const viewer = viewers[0];
 
-    const isLegacy = viewer.clips_completed > 0 && viewer.week1_unlock_type === null;
+    const isLegacyPreliminary = viewer.clips_completed > 0 && viewer.week1_unlock_type === null;
     const ascentDay1 = viewer.ascent_day_1 ? new Date(viewer.ascent_day_1) : null;
     const extensionDays = viewer.extension_days;
     const learnerRole = viewer.role;
@@ -180,9 +180,11 @@ export default api({
     // ── 1. SUMMIT REWARD ──
     // Determine approach completion
     // Legacy learners auto-complete approach (they skipped Week 1)
-    let approachComplete = isLegacy;
+    // But only if they have ZERO approach activity — otherwise they started
+    // Approach but their unlock type was never stamped (not truly legacy).
+    let approachComplete = false;
 
-    if (!isLegacy) {
+    if (!isLegacyPreliminary) {
       // Check approach progress tables. VP only requires camp101 (no MEDDPICC/Challenger).
       const SignoffSchema = z.object({ module_key: z.string() });
       const signoffs = await ctx.integrations.db.query(
@@ -216,7 +218,46 @@ export default api({
         approachComplete = signoffKeys.has("meddpicc") && signoffKeys.has("camp101") && signoffKeys.has("challenger")
           && allAcademies && wdDone;
       }
+    } else {
+      // isLegacyPreliminary = true — but only truly legacy if zero approach activity
+      const SignoffSchema = z.object({ module_key: z.string() });
+      const signoffs = await ctx.integrations.db.query(
+        `SELECT module_key FROM cliptracker_v2_module_signoffs WHERE viewer_id = $1`,
+        SignoffSchema, [viewerId], { label: "Check legacy approach signoffs" }
+      );
+      const ScreenshotSchema = z.object({ course_key: z.string() });
+      const screenshots = await ctx.integrations.db.query(
+        `SELECT course_key FROM cliptracker_v2_academy_screenshots WHERE viewer_id = $1 AND course_key IN ('analytics', 'experiment', 'session_replay', 'guides_surveys')`,
+        ScreenshotSchema, [viewerId], { label: "Check legacy academy screenshots" }
+      );
+      const WdSchema = z.object({ count: z.coerce.number() });
+      const wdCheck = await ctx.integrations.db.query(
+        `SELECT COUNT(*)::int as count FROM cliptracker_v2_wd_verifications WHERE viewer_id = $1`,
+        WdSchema, [viewerId], { label: "Check legacy W&D" }
+      );
+      const hasApproachActivity = signoffs.length > 0 || screenshots.length > 0 || wdCheck[0].count > 0;
+
+      if (hasApproachActivity) {
+        // Not truly legacy — they did some Approach work but unlock type was never set.
+        // Must check actual approach completion (same as non-legacy path).
+        const signoffKeys = new Set(signoffs.map(s => s.module_key));
+        const screenshotKeys = new Set(screenshots.map(s => s.course_key));
+        const wdDone = wdCheck[0].count > 0;
+        const allAcademies = screenshotKeys.has("analytics") && screenshotKeys.has("experiment")
+          && screenshotKeys.has("session_replay") && screenshotKeys.has("guides_surveys");
+        if (vpPath) {
+          approachComplete = signoffKeys.has("camp101") && allAcademies && wdDone;
+        } else {
+          approachComplete = signoffKeys.has("meddpicc") && signoffKeys.has("camp101") && signoffKeys.has("challenger")
+            && allAcademies && wdDone;
+        }
+      } else {
+        // Truly legacy — no approach activity at all, auto-complete
+        approachComplete = true;
+      }
     }
+
+    const isLegacy = isLegacyPreliminary && approachComplete;
 
     // Determine timing: summit day vs adjustment day
     const now = new Date();
