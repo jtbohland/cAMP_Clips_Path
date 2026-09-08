@@ -519,6 +519,9 @@ export default function WatchPage() {
     setAnsweredQuestions(new Set(pausedSessionData.answeredQuestionIds));
     setCorrectCount(pausedSessionData.correctCount);
     resumeFromSecondsRef.current = pausedSessionData.elapsedSeconds;
+    // Suppress the pause modal that fires when Wistia seeks to the resume point
+    // (Wistia briefly plays then pauses when currentTime is set — this is not a manual pause)
+    programmaticPauseRef.current = true;
     setPhase("watching");
   }, [pausedSessionData]);
 
@@ -546,6 +549,8 @@ export default function WatchPage() {
           return;
         }
         setSessionId(res?.sessionId ?? null);
+        // Suppress pause modal on initial player load
+        programmaticPauseRef.current = true;
         setPhase("watching");
       })
       .catch(console.error);

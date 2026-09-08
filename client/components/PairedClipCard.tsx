@@ -49,7 +49,7 @@ type PairedClipCardProps = {
 };
 
 // Clips that show the cAMP Quiz button
-const CAMP_QUIZ_SORT_ORDERS = new Set([10, 20, 30, 40, 50, 60, 70, 90, 110, 120, 130, 150, 160, 170, 180, 200]);
+const CAMP_QUIZ_SORT_ORDERS = new Set([10, 20, 30, 40, 50, 56, 60, 70, 90, 110, 120, 130, 150, 160, 170, 180, 200]);
 // Default Wheel & Deal sort orders (AE path — Days 3, 6, 9, 11)
 const DEFAULT_WD_SORT_ORDERS = new Set([40, 70, 120, 140]);
 
