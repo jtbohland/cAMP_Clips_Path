@@ -467,7 +467,7 @@ export default api({
           COALESCE(AVG(CASE WHEN s.completed = true THEN s.engagement_score END)::int, 0) AS avg_engagement
          FROM cliptracker_v2_sessions s
          JOIN cliptracker_v2_clips c ON c.id = s.clip_id
-         WHERE s.viewer_id = $1 AND c.sort_order >= 14 AND c.sort_order <= 20
+         WHERE s.viewer_id = $1 AND c.week_number = 4
            AND s.is_recovery_attempt = false`,
         Week4ClipRow,
         [viewerId],
@@ -495,9 +495,21 @@ export default api({
       const w4c = w4ClipRows[0] ?? { completed: 0, total: 0, avg_engagement: 0 };
       const w4q = w4QuizRows[0] ?? { passed: 0, total_quizzes: 0, avg_score: 0 };
 
+      // Count Week 4 clips for this learner's role
+      const W4CountRow = z.object({ count: z.coerce.number() });
+      const w4CountRows = await ctx.integrations.db.query(
+        `SELECT COUNT(*)::int AS count FROM cliptracker_v2_clips
+         WHERE week_number = 4 AND status = 'live'
+           AND (roles IS NULL OR roles @> $1::jsonb)`,
+        W4CountRow,
+        [JSON.stringify(viewer.role)],
+        { label: "Count Week 4 clips for role" }
+      );
+      const w4Total = w4CountRows[0]?.count ?? 7;
+
       week4 = {
         clipsCompleted: w4c.completed,
-        totalClips: 7, // sort 14-20 = 7 clips in week 4
+        totalClips: w4Total,
         avgEngagement: w4c.avg_engagement,
         avgQuizScore: w4q.avg_score,
         quizzesPassed: w4q.passed,

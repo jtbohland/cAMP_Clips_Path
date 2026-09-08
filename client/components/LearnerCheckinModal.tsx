@@ -320,9 +320,8 @@ function LearnerCheckinModalInner({ viewerId, checkinType, onClose, onSent, allo
 
     // ── TEMPLATE 4: SUMMIT ──
     } else if (checkinType === "summit") {
-      body += `I've completed Week 4 of cAMP Ascent. Here's my current summary:\n\n`;
+      body += `I've completed cAMP Ascent! Here's my final summary:\n\n`;
       body += `Ascent start date: ${fmtDate(startDate)}\n`;
-      body += `Current pacing status: ${pacingLine}\n`;
       body += `Summit Day: ${fmtDate(summitDay)}\n\n`;
 
       if (data.week4) {
@@ -337,7 +336,7 @@ function LearnerCheckinModalInner({ viewerId, checkinType, onClose, onSent, allo
       body += `XP: ${v.totalXp}\n`;
       body += `Tier: ${v.tier}\n`;
       body += `Leaderboard rank: #${data.leaderboard.rank} of ${data.leaderboard.totalLearners}\n`;
-      body += `Sessions completed: ${data.clipStats.completedClips} / ${data.clipStats.totalClips}\n`;
+      body += `Clips completed: ${data.clipStats.totalClips} / ${data.clipStats.totalClips}\n`;
       body += `Search & Rescue triggered: ${data.srCount}\n`;
       body += `Weather the Storm triggered: ${data.wtsCount}\n\n`;
 
@@ -1117,9 +1116,8 @@ function EmailView({
           {/* ── SUMMIT ── */}
           {checkinType === "summit" && (
             <>
-              <p className="mt-2">I've completed Week 4 of cAMP Ascent. Here's my current summary:</p>
+              <p className="mt-2">I've completed cAMP Ascent! Here's my final summary:</p>
               <p>Ascent start date: {fmtDate(startDate)}</p>
-              <p>Current pacing status: {pacingConfig.emoji} {pacingConfig.label}</p>
               <p>Summit Day: {fmtDate(summitDay)}</p>
               {data.week4 && (
                 <>
@@ -1133,7 +1131,7 @@ function EmailView({
               <p className="mt-1 font-semibold">🏞️ Overall journey:</p>
               <p>XP: {v.totalXp} · Tier: {v.tier}</p>
               <p>Leaderboard rank: #{data.leaderboard.rank} of {data.leaderboard.totalLearners}</p>
-              <p>Sessions: {data.clipStats.completedClips}/{data.clipStats.totalClips} · S&R: {data.srCount} · WtS: {data.wtsCount}</p>
+              <p>Sessions: {data.clipStats.totalClips}/{data.clipStats.totalClips} · S&R: {data.srCount} · WtS: {data.wtsCount}</p>
               <p className="mt-1 font-semibold">👀 Engagement:</p>
               <p>Trail Markers: {data.engagement.avgQuestionScore}% · Focus: {data.engagement.avgFocusScore}% · Time: {data.engagement.avgTimeScore}% · Overall: {data.engagement.overallEngagement}%</p>
               {qs.totalAttempts > 0 && (
