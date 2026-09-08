@@ -283,16 +283,23 @@ export default api({
       completed_clips: z.coerce.number(),
       avg_score: z.coerce.number(),
     });
+    const roleJson = JSON.stringify(viewer.role);
     const clipStatsRows = await ctx.integrations.db.query(
       `SELECT
-        (SELECT COUNT(DISTINCT c2.id)::int FROM cliptracker_v2_clips c2 WHERE EXISTS (SELECT 1 FROM cliptracker_v2_questions q WHERE q.clip_id = c2.id)) AS total_clips,
-        COUNT(DISTINCT CASE WHEN s.completed = true AND EXISTS (SELECT 1 FROM cliptracker_v2_questions q2 WHERE q2.clip_id = s.clip_id) THEN s.clip_id END)::int AS completed_clips,
+        (SELECT COUNT(DISTINCT c2.id)::int FROM cliptracker_v2_clips c2
+         WHERE c2.status = 'live'
+           AND (c2.roles IS NULL OR c2.roles @> $2::jsonb)
+           AND EXISTS (SELECT 1 FROM cliptracker_v2_questions q WHERE q.clip_id = c2.id)) AS total_clips,
+        COUNT(DISTINCT CASE WHEN s.completed = true
+          AND EXISTS (SELECT 1 FROM cliptracker_v2_questions q2 WHERE q2.clip_id = s.clip_id)
+          AND EXISTS (SELECT 1 FROM cliptracker_v2_clips cr WHERE cr.id = s.clip_id AND (cr.roles IS NULL OR cr.roles @> $2::jsonb))
+          THEN s.clip_id END)::int AS completed_clips,
         COALESCE(AVG(CASE WHEN s.completed = true AND s.is_recovery_attempt = false THEN s.engagement_score END)::int, 0) AS avg_score
        FROM cliptracker_v2_sessions s
        WHERE s.viewer_id = $1`,
       ClipCountRow,
-      [viewerId],
-      { label: "Get clip stats (distinct clips)" }
+      [viewerId, roleJson],
+      { label: "Get clip stats (distinct clips, role-filtered)" }
     );
 
     // Get max sort_order for legacy exemptions
@@ -331,12 +338,14 @@ export default api({
        FROM cliptracker_v2_clips c
        LEFT JOIN cliptracker_v2_sessions s ON s.clip_id = c.id AND s.viewer_id = $1
        WHERE c.day_label IS NOT NULL
+         AND c.status = 'live'
+         AND (c.roles IS NULL OR c.roles @> $2::jsonb)
        GROUP BY c.day_label
        ORDER BY MIN(c.sort_order)
        LIMIT 20`,
       TopicProgressRow,
-      [viewerId],
-      { label: "Get topic progress for pacing context" }
+      [viewerId, roleJson],
+      { label: "Get topic progress for pacing context (role-filtered)" }
     );
 
     // Count completed topics (all clips for that day done)
@@ -467,10 +476,11 @@ export default api({
           COALESCE(AVG(CASE WHEN s.completed = true THEN s.engagement_score END)::int, 0) AS avg_engagement
          FROM cliptracker_v2_sessions s
          JOIN cliptracker_v2_clips c ON c.id = s.clip_id
-         WHERE s.viewer_id = $1 AND c.week_number = 4
-           AND s.is_recovery_attempt = false`,
-        Week4ClipRow,
-        [viewerId],
+       WHERE s.viewer_id = $1 AND c.week_number = 4
+         AND (c.roles IS NULL OR c.roles @> $2::jsonb)
+         AND s.is_recovery_attempt = false`,
+      Week4ClipRow,
+      [viewerId, roleJson],
         { label: "Get Week 4 clip stats" }
       );
 

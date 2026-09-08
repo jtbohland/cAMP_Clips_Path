@@ -313,10 +313,10 @@ function LearnerCheckinModalInner({ viewerId, checkinType, onClose, onSent, allo
       body += `Remaining Approach modules: ${data.approachStatus?.incompleteModules?.length ?? 0}\n`;
       body += `Ascent unlocked on: ${fmtDate(startDate)}\n\n`;
       body += `🚩Remaining Approach work:\n`;
-      body += `MEDDPICC: ${modStatus("MEDDPICC")}\n`;
-      body += `Product 101: ${modStatus("Product 101")}\n`;
-      body += `Challenger: ${modStatus("Challenger")}\n`;
-      body += `Wheel & Deal: ${modStatus("Wheel & Deal")}\n`;
+      // Dynamic — show each incomplete module from the API (role-aware)
+      for (const mod of (data.approachStatus?.incompleteModules ?? [])) {
+        body += `${mod}: ❌ Incomplete\n`;
+      }
 
     // ── TEMPLATE 4: SUMMIT ──
     } else if (checkinType === "summit") {
@@ -1106,10 +1106,9 @@ function EmailView({
               <p>Remaining Approach modules: {data.approachStatus?.incompleteModules?.length ?? 0}</p>
               <p>Ascent unlocked on: {fmtDate(startDate)}</p>
               <p className="mt-1 font-semibold">🚩Remaining Approach work:</p>
-              <p>MEDDPICC: {modIcon("MEDDPICC")} {incompleteSet.has("MEDDPICC") ? "Incomplete" : "Complete"}</p>
-              <p>Product 101: {modIcon("Product 101")} {incompleteSet.has("Product 101") ? "Incomplete" : "Complete"}</p>
-              <p>Challenger: {modIcon("Challenger")} {incompleteSet.has("Challenger") ? "Incomplete" : "Complete"}</p>
-              <p>Wheel & Deal: {modIcon("Wheel & Deal")} {incompleteSet.has("Wheel & Deal") ? "Incomplete" : "Complete"}</p>
+              {(data.approachStatus?.incompleteModules ?? []).map((mod: string) => (
+                <p key={mod}>{mod}: ❌ Incomplete</p>
+              ))}
             </>
           )}
 
