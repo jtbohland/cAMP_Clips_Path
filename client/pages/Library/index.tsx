@@ -436,6 +436,11 @@ export default function LibraryPage() {
    */
   const checkQuizAndNavigate = useCallback(
     (clipDayLabel: string | null | undefined, action: () => void) => {
+      // Admins bypass quiz check entirely
+      if (viewer?.isAdmin) {
+        action();
+        return;
+      }
       if (!clipDayLabel) {
         action();
         return;
@@ -454,7 +459,7 @@ export default function LibraryPage() {
       // Previous day's quiz not clicked — show hard-gate modal
       setQuizReminder({ missingDay: prevDay, pendingAction: action });
     },
-    [orderedDays, quizClickedDays]
+    [orderedDays, quizClickedDays, viewer?.isAdmin]
   );
 
   // ── Pacing calculation ──

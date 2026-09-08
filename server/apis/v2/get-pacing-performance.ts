@@ -110,9 +110,12 @@ function computePacingStatusFromPercent(
   percent: number,
   allComplete: boolean,
   pastSummitDay: boolean,
+  weekdaysElapsed: number = 99,
 ): string {
   if (allComplete) return "completed";
   if (pastSummitDay) return "anchor_failure";
+  // Day 1: no pacing signal yet — treat as summit_bound (they just started)
+  if (weekdaysElapsed <= 1) return "summit_bound";
   if (percent >= 90) return "summit_bound";
   if (percent >= 80) return "off_the_trail";
   if (percent >= 70) return "lost_in_the_woods";
@@ -269,8 +272,8 @@ export default api({
       // Skip completed learners
       if (allComplete) continue;
 
-      // Weekdays elapsed from their registration (created_at) to now
-      const startDate = new Date(l.created_at);
+      // Weekdays elapsed from their ascent start date (ascent_day_1, falling back to created_at) to now
+      const startDate = l.ascent_day_1 ? new Date(l.ascent_day_1) : new Date(l.created_at);
       const weekdaysElapsed = countWeekdays(startDate, now);
       const effectiveWeekdays = Math.max(0, weekdaysElapsed - l.extension_days);
 
@@ -284,7 +287,7 @@ export default api({
 
       // Pacing status from % brackets + Summit Day gate
       const pacingStatus = l.ascent_day_1 || approachDone > 0 || clipsDone > 0
-        ? computePacingStatusFromPercent(pacingPercent, false, pastSummitDay)
+        ? computePacingStatusFromPercent(pacingPercent, false, pastSummitDay, effectiveWeekdays)
         : "not_started";
 
       results.push({
