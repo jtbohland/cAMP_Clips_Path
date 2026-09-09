@@ -94,10 +94,7 @@ export default function SummitInSightModal({
 
           {/* CTA */}
           <button
-            onClick={() => {
-              onGoToApproach();
-              onDismiss();
-            }}
+            onClick={onGoToApproach}
             className="w-full py-3 rounded-lg text-sm font-bold transition-opacity hover:opacity-90 bg-[#1B4332] text-[#D1FAE5]"
           >
             🚡 Back to Approach
