@@ -75,6 +75,7 @@ export default function LibraryPage() {
   const [firstAchievementData, setFirstAchievementData] = useState<{ earnedXp: number; earnedBadge: boolean }>({ earnedXp: 0, earnedBadge: false });
   const [showCheckin, setShowCheckin] = useState(false);
   const [showSummitInSight, setShowSummitInSight] = useState(false);
+  const summitInSightNavigatedRef = useRef(false); // Suppresses re-trigger after "Back to Approach"
   const [checkinType, setCheckinType] = useState<"approach" | "week2" | "week3" | "summit">("approach");
   const [checkinAdminTest, setCheckinAdminTest] = useState(false);
   const [approachCompleteOverride, setApproachCompleteOverride] = useState<boolean | undefined>(undefined);
@@ -746,8 +747,8 @@ export default function LibraryPage() {
 
     // Path A: Ascent done, Approach incomplete → Summit in Sight (hard gate)
     if (approachStatus?.complete === false) {
-      // Fire every load — no localStorage dismiss. The learner must complete Approach.
-      if (!showSummitInSight && !showFinalAchievement && !showSummit) {
+      // Fire every load — unless learner just clicked "Back to Approach" (ref suppresses until tab switch completes)
+      if (!showSummitInSight && !showFinalAchievement && !showSummit && !summitInSightNavigatedRef.current) {
         setShowSummitInSight(true);
         logModal("summit_in_sight", "shown");
       }
@@ -1045,12 +1046,16 @@ export default function LibraryPage() {
         summitDay={pacingInfo?.summitDay}
         totalTopicDays={totalTopicDays}
         onGoToApproach={() => {
+          summitInSightNavigatedRef.current = true;
           setShowSummitInSight(false);
           setActiveTab("approach");
         }}
         onDismiss={() => {
+          // Backdrop click or close — also navigate to Approach (the only valid action)
+          summitInSightNavigatedRef.current = true;
           logModal("summit_in_sight", "dismissed");
           setShowSummitInSight(false);
+          setActiveTab("approach");
         }}
       />
     );
@@ -1294,7 +1299,10 @@ export default function LibraryPage() {
             🚡 The Approach
           </button>
           <button
-            onClick={() => setActiveTab("ascent")}
+            onClick={() => {
+              summitInSightNavigatedRef.current = false; // Re-arm Summit in Sight if Approach still incomplete
+              setActiveTab("ascent");
+            }}
             className={`flex-1 py-2.5 text-sm font-semibold text-center transition-colors ${
               activeTab === "ascent"
                 ? "text-white border-b-2 border-white bg-white/10"
