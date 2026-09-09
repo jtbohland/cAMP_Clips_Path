@@ -1082,6 +1082,7 @@ export default function LibraryPage() {
         checkinType="summit"
         onClose={() => {
           setShowSummit(false);
+          setShowFinalAchievement(false); // Belt-and-suspenders: clear both gates
           if (previewMode !== "summit") {
             localStorage.setItem(`summit_dismissed_${viewer.id}`, "true");
           }
