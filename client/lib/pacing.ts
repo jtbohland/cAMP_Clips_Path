@@ -606,8 +606,8 @@ export const WEEK1_EXPECTED_BY_DAY_VP = [0, 2, 4, 5];
 export const WEEK1_TOTAL_ITEMS_VP = 5;
 export const WEEK1_WEEKDAYS_VP = 3;
 
-// ─── Exempt clip sort orders (newly added clips) ────────────────────
-const EXEMPT_CLIP_SORT_ORDERS = [45] as const;
+// No exemptions — all clips in every path are required
+const EXEMPT_CLIP_SORT_ORDERS: readonly number[] = [];
 
 const SDR_ROLES = ["SDR"];
 const VELOCITY_PROMO_ROLES = ["SDR>Velocity Promo"];
@@ -640,18 +640,9 @@ export function getRoleTotalClips(role: string): number {
  * Get the effective clip total for a role, accounting for legacy exemptions.
  * Mirrors server/apis/v2/pacing-helpers.ts getEffectiveClipTotal.
  */
-export function getEffectiveClipTotal(role: string, maxSortDone: number): number {
-  if (isVelocityPromo(role)) return TOTAL_ASCENT_CLIPS_VP; // VP has no legacy exemptions
-  const baseTotal = getRoleTotalClips(role);
-  if (maxSortDone <= 0) return baseTotal;
-
-  let exemptions = 0;
-  for (const sortOrder of EXEMPT_CLIP_SORT_ORDERS) {
-    if (maxSortDone > sortOrder) {
-      exemptions++;
-    }
-  }
-  return baseTotal - exemptions;
+export function getEffectiveClipTotal(role: string, _maxSortDone: number): number {
+  if (isVelocityPromo(role)) return TOTAL_ASCENT_CLIPS_VP;
+  return isSDR(role) ? TOTAL_ASCENT_CLIPS_SDR : TOTAL_ASCENT_CLIPS_AE;
 }
 
 /**

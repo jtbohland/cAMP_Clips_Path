@@ -121,11 +121,8 @@ export const WEEK1_WEEKDAYS_VP = 3;
 export const TOTAL_ASCENT_CLIPS_LEGACY_AE = 20;  // old AE total without Pod Tower
 export const TOTAL_ASCENT_CLIPS_LEGACY_SDR = 15;  // old SDR total without Pod Tower
 
-/** Sort orders of clips that were added after the original path launched.
- *  Learners who completed clips beyond these insertion points are exempt.
- *  NOTE: Cold Calling (55) / Nooks (56) are original SDR clips, NOT late additions.
- *  Only Pod Tower (45) was a genuine late addition across all roles. */
-export const EXEMPT_CLIP_SORT_ORDERS = [45] as const;
+/** No exemptions — all clips in every path are required. */
+export const EXEMPT_CLIP_SORT_ORDERS: readonly number[] = [];
 
 // ─── Role grouping ───────────────────────────────────────────────────────────
 
@@ -164,24 +161,9 @@ export function isVelocityPromo(role: string): boolean {
  *                     clips beyond a newly-added clip's sort_order, they're exempt.
  *                     Pass 0 if unknown (no exemption applied).
  */
-export function getEffectiveClipTotal(role: string, maxSortDone: number): number {
-  if (isVelocityPromo(role)) return TOTAL_ASCENT_CLIPS_VP; // VP has no legacy exemptions
-  const sdr = isSDR(role);
-  const baseTotal = sdr ? TOTAL_ASCENT_CLIPS_SDR : TOTAL_ASCENT_CLIPS_AE;
-
-  if (maxSortDone <= 0) return baseTotal;
-
-  // Count how many exempt clips the learner has passed beyond
-  let exemptions = 0;
-  for (const sortOrder of EXEMPT_CLIP_SORT_ORDERS) {
-    // Only exempt if the learner has completed clips beyond this sort_order
-    if (maxSortDone > sortOrder) {
-      // Pod Tower (sort 45) — all roles can be exempt
-      exemptions++;
-    }
-  }
-
-  return baseTotal - exemptions;
+export function getEffectiveClipTotal(role: string, _maxSortDone: number): number {
+  if (isVelocityPromo(role)) return TOTAL_ASCENT_CLIPS_VP;
+  return isSDR(role) ? TOTAL_ASCENT_CLIPS_SDR : TOTAL_ASCENT_CLIPS_AE;
 }
 
 /**
