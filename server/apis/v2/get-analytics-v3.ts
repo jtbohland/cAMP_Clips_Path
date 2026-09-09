@@ -325,13 +325,17 @@ export default api({
         SELECT DISTINCT s.viewer_id, s.clip_id
         FROM cliptracker_v2_sessions s
         JOIN cliptracker_v2_clips c ON c.id = s.clip_id
+        JOIN cliptracker_v2_viewers v ON v.id = s.viewer_id
         WHERE s.completed = true AND c.status = 'live'
+          AND (c.roles IS NULL OR c.roles @> to_jsonb(v.role))
       ),
       resource_completions AS (
         SELECT DISTINCT x.viewer_id, x.clip_id
         FROM cliptracker_v2_xp_events x
         JOIN cliptracker_v2_clips c ON c.id = x.clip_id
+        JOIN cliptracker_v2_viewers v ON v.id = x.viewer_id
         WHERE x.event_type = 'swiss_army_knife' AND c.status = 'live'
+          AND (c.roles IS NULL OR c.roles @> to_jsonb(v.role))
       ),
       all_completions AS (
         SELECT viewer_id, clip_id FROM session_completions
@@ -344,7 +348,7 @@ export default api({
       LIMIT 500`,
       ClipsDoneRow,
       undefined,
-      { label: "Individual clips done per learner (clip-level pacing)" }
+      { label: "Individual clips done per learner (role-filtered)" }
     );
 
     // Build clips done map: viewer_id -> clips_done

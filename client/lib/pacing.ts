@@ -560,7 +560,7 @@ export const CLIPS_EXPECTED_BY_WEEKDAY_SDR = [
 export const CLIPS_EXPECTED_BY_WEEKDAY = CLIPS_EXPECTED_BY_WEEKDAY_AE;
 
 export const TOTAL_ASCENT_CLIPS_AE = 21;
-export const TOTAL_ASCENT_CLIPS_SDR = 17;
+export const TOTAL_ASCENT_CLIPS_SDR = 18;
 export const TOTAL_ASCENT_CLIPS_VP = 9;
 export const TOTAL_WEEKDAYS_AE = 20;
 export const TOTAL_WEEKDAYS_SDR = 19;
@@ -607,7 +607,7 @@ export const WEEK1_TOTAL_ITEMS_VP = 5;
 export const WEEK1_WEEKDAYS_VP = 3;
 
 // ─── Exempt clip sort orders (newly added clips) ────────────────────
-const EXEMPT_CLIP_SORT_ORDERS = [45, 55, 56] as const;
+const EXEMPT_CLIP_SORT_ORDERS = [45] as const;
 
 const SDR_ROLES = ["SDR"];
 const VELOCITY_PROMO_ROLES = ["SDR>Velocity Promo"];
@@ -648,8 +648,7 @@ export function getEffectiveClipTotal(role: string, maxSortDone: number): number
   let exemptions = 0;
   for (const sortOrder of EXEMPT_CLIP_SORT_ORDERS) {
     if (maxSortDone > sortOrder) {
-      if (sortOrder === 45) exemptions++;
-      else if ((sortOrder === 55 || sortOrder === 56) && isSDR(role)) exemptions++;
+      exemptions++;
     }
   }
   return baseTotal - exemptions;

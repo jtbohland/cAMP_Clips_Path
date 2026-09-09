@@ -52,7 +52,7 @@ export const CLIPS_EXPECTED_BY_WEEKDAY_AE = [
 
 // ─── SDR ─────────────────────────────────────────────────────────────────────
 
-export const TOTAL_ASCENT_CLIPS_SDR = 17;
+export const TOTAL_ASCENT_CLIPS_SDR = 18;
 export const TOTAL_WEEKDAYS_SDR = 19; // 5 Approach + 14 Ascent days
 
 /** Cumulative clips expected by weekday for SDR.
@@ -122,8 +122,10 @@ export const TOTAL_ASCENT_CLIPS_LEGACY_AE = 20;  // old AE total without Pod Tow
 export const TOTAL_ASCENT_CLIPS_LEGACY_SDR = 15;  // old SDR total without Pod Tower
 
 /** Sort orders of clips that were added after the original path launched.
- *  Learners who completed clips beyond these insertion points are exempt. */
-export const EXEMPT_CLIP_SORT_ORDERS = [45, 55, 56] as const;
+ *  Learners who completed clips beyond these insertion points are exempt.
+ *  NOTE: Cold Calling (55) / Nooks (56) are original SDR clips, NOT late additions.
+ *  Only Pod Tower (45) was a genuine late addition across all roles. */
+export const EXEMPT_CLIP_SORT_ORDERS = [45] as const;
 
 // ─── Role grouping ───────────────────────────────────────────────────────────
 
@@ -172,17 +174,10 @@ export function getEffectiveClipTotal(role: string, maxSortDone: number): number
   // Count how many exempt clips the learner has passed beyond
   let exemptions = 0;
   for (const sortOrder of EXEMPT_CLIP_SORT_ORDERS) {
-    // Only exempt if:
-    // 1. The learner has completed clips beyond this sort_order
-    // 2. The clip is relevant to their role (Pod Tower is all-roles, SDR clips are SDR-only)
+    // Only exempt if the learner has completed clips beyond this sort_order
     if (maxSortDone > sortOrder) {
-      if (sortOrder === 45) {
-        // Pod Tower (sort 45) — all roles can be exempt
-        exemptions++;
-      } else if (sortOrder === 55 || sortOrder === 56) {
-        // Cold Calling (55) / Nooks (56) — only SDR can be exempt
-        if (sdr) exemptions++;
-      }
+      // Pod Tower (sort 45) — all roles can be exempt
+      exemptions++;
     }
   }
 
