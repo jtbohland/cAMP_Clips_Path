@@ -214,11 +214,11 @@ export function countWeekdays(startDate: Date, endDate: Date): number {
   const start = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
   const end = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
 
-  if (end < start) return 0;
+  if (end <= start) return 0;
 
   let count = 0;
   const cursor = new Date(start);
-  while (cursor <= end) {
+  while (cursor < end) {
     const dow = cursor.getDay(); // 0=Sun, 6=Sat
     if (dow !== 0 && dow !== 6) count++;
     cursor.setDate(cursor.getDate() + 1);

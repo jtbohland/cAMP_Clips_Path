@@ -415,10 +415,10 @@ export default api({
     function countWeekdays(start: Date, end: Date): number {
       const s = new Date(start.getFullYear(), start.getMonth(), start.getDate());
       const e = new Date(end.getFullYear(), end.getMonth(), end.getDate());
-      if (e < s) return 0;
+      if (e <= s) return 0;
       let count = 0;
       const cursor = new Date(s);
-      while (cursor <= e) {
+      while (cursor < e) {
         const dow = cursor.getDay();
         if (dow !== 0 && dow !== 6) count++;
         cursor.setDate(cursor.getDate() + 1);
