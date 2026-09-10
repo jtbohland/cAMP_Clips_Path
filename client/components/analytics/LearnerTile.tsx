@@ -19,6 +19,7 @@ export interface LearnerTileData {
   lastLogin: string | null;
   approachComplete: boolean;
   approachCompletedCount: number;
+  approachTotal?: number;
   tier: { tier: number; name: string; emoji: string; xpMin: number; xpMax: number | null };
   badges: Array<{ badgeId: string }>;
   gearClicks: number;
@@ -170,7 +171,7 @@ const LearnerTile = memo(function LearnerTile({ learner, onClick }: LearnerTileP
           {learner.approachComplete ? (
             <span className="text-emerald-600 font-semibold">🚡 Approach ✓</span>
           ) : (
-            <span className="text-gray-400">🚡 {learner.approachCompletedCount}/8</span>
+            <span className="text-gray-400">🚡 {learner.approachCompletedCount}/{learner.approachTotal ?? 8}</span>
           )}
           {learner.lastLogin && (
             <span title="Last login">🔑 {formatDate(learner.lastLogin)}</span>

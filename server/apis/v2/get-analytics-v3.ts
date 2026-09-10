@@ -3,6 +3,10 @@ import {
   getEffectiveClipTotal,
   getClipsExpectedByWeekday,
   getTotalWeekdays,
+  getApproachTotal,
+  isVelocityPromo,
+  WEEK1_TOTAL_ITEMS_VP,
+  WEEK1_EXPECTED_BY_DAY_VP,
 } from "./pacing-helpers.js";
 
 const APPS_DB = "c6e32cf4-ca66-42ae-aeb3-58c84ffae574";
@@ -34,6 +38,7 @@ const LearnerRow = z.object({
   manager_name: z.string().nullable(),
   ascent_day_1: z.string().nullable(),
   extension_days: z.coerce.number(),
+  first_achievement_shown: z.coerce.boolean(),
   clips_completed: z.coerce.number(),
   total_xp: z.coerce.number(),
   clip_score_avg: z.string().nullable(),
@@ -146,6 +151,7 @@ export default api({
       lastLogin: z.string().nullable(),
       approachComplete: z.boolean(),
       approachCompletedCount: z.number(),
+      approachTotal: z.number(),
       extensionDays: z.number(),
       lastCompletedAt: z.string().nullable(),
     })),
@@ -213,6 +219,7 @@ export default api({
         v.manager_name,
         v.ascent_day_1::text AS ascent_day_1,
         COALESCE(v.extension_days, 0)::int AS extension_days,
+        COALESCE(v.first_achievement_shown, false) AS first_achievement_shown,
         (SELECT COUNT(*)::int FROM (
           SELECT DISTINCT clip_id FROM cliptracker_v2_sessions ss
             JOIN cliptracker_v2_clips cc ON cc.id = ss.clip_id
@@ -234,7 +241,7 @@ export default api({
        FROM cliptracker_v2_viewers v
        LEFT JOIN cliptracker_v2_sessions s ON s.viewer_id = v.id
        WHERE v.is_admin = false AND v.role != 'SME'
-       GROUP BY v.id, v.name, v.email, v.role, v.timezone, v.manager_name, v.ascent_day_1, v.extension_days, v.last_login_at
+       GROUP BY v.id, v.name, v.email, v.role, v.timezone, v.manager_name, v.ascent_day_1, v.extension_days, v.first_achievement_shown, v.last_login_at
        ORDER BY v.name ASC
        LIMIT 500`,
       LearnerRow,
@@ -318,6 +325,18 @@ export default api({
     }
     const TOTAL_APPROACH_MODULES = 8;
 
+    // 2f-b. Summit email records — confirmed completers (legacy learners)
+    const SummitEmailRow2 = z.object({ viewer_id: z.string() });
+    const summitEmailRows = await ctx.integrations.db.query(
+      `SELECT DISTINCT viewer_id FROM cliptracker_v2_checkin_emails
+       WHERE checkin_type = 'summit'
+       LIMIT 100`,
+      SummitEmailRow2,
+      undefined,
+      { label: "Summit email recipients (confirmed completers)" }
+    );
+    const summitEmailSet = new Set(summitEmailRows.map(r => r.viewer_id));
+
     // 2f. Individual clips completed per learner (clip-level pacing).
     const ClipsDoneRow = z.object({ viewer_id: z.string(), clips_done: z.coerce.number() });
     const clipsDoneRows = await ctx.integrations.db.query(
@@ -366,6 +385,31 @@ export default api({
     // SDR: 18 weekdays (5 Approach + 13 Ascent days = 16 clips)
     const WEEK1_EXPECTED_BY_DAY = [0, 2, 4, 5, 6, 7];
     const WEEK1_TOTAL = 7;
+
+    function computeClipPacingPercentLocal(
+      weekdaysElapsed: number,
+      approachDone: number,
+      clipsDone: number,
+      role: string,
+      effectiveTotal: number,
+    ): number {
+      const totalWeekdays = getTotalWeekdays(role);
+      const schedule = getClipsExpectedByWeekday(role);
+      const capped = Math.min(Math.max(weekdaysElapsed, 0), totalWeekdays);
+
+      // Role-aware approach schedule
+      const vpRole = isVelocityPromo(role);
+      const week1ExpByDay = vpRole ? WEEK1_EXPECTED_BY_DAY_VP : WEEK1_EXPECTED_BY_DAY;
+      const week1Total = vpRole ? WEEK1_TOTAL_ITEMS_VP : WEEK1_TOTAL;
+      const approachDays = vpRole ? 3 : 5;
+
+      const approachExpected = capped >= approachDays ? week1Total : (week1ExpByDay[capped] ?? 0);
+      const clipsExpected = schedule[capped] ?? effectiveTotal;
+      const totalExpected = approachExpected + clipsExpected;
+      if (totalExpected <= 0) return 100;
+      const totalDone = Math.min(approachDone, week1Total) + Math.min(clipsDone, effectiveTotal);
+      return Math.round((totalDone / totalExpected) * 100);
+    }
 
     // 2g. Max sort_order completed per learner (for legacy exemptions)
     const MaxSortRow2 = z.object({ viewer_id: z.string(), max_sort_done: z.coerce.number() });
@@ -433,15 +477,7 @@ export default api({
       role: string,
       effectiveTotal: number,
     ): number {
-      const totalWeekdays = getTotalWeekdays(role);
-      const schedule = getClipsExpectedByWeekday(role);
-      const capped = Math.min(Math.max(weekdaysElapsed, 0), totalWeekdays);
-      const approachExpected = capped >= 5 ? WEEK1_TOTAL : (WEEK1_EXPECTED_BY_DAY[capped] ?? 0);
-      const clipsExpected = schedule[capped] ?? effectiveTotal;
-      const totalExpected = approachExpected + clipsExpected;
-      if (totalExpected <= 0) return 100;
-      const totalDone = Math.min(approachDone, WEEK1_TOTAL) + Math.min(clipsDone, effectiveTotal);
-      return Math.round((totalDone / totalExpected) * 100);
+      return computeClipPacingPercentLocal(weekdaysElapsed, approachDone, clipsDone, role, effectiveTotal);
     }
 
     function getPacingStatusFromPercent(percent: number): string {
@@ -470,6 +506,7 @@ export default api({
       // Role-aware effective clip total (accounts for legacy exemptions)
       const effectiveTotal = getEffectiveClipTotal(l.role, maxSortDone);
       const totalWeekdays = getTotalWeekdays(l.role);
+      const approachTotal = getApproachTotal(l.role);
 
       if (l.ascent_day_1) {
         const start = new Date(l.ascent_day_1);
@@ -479,9 +516,11 @@ export default api({
         const summit = getSummitDay(start, totalWeekdays, extDays);
         summitDayStr = summit.toISOString().split("T")[0];
         const pastSummit = isAfterDate(summit);
-        // Completed = all clips done for this role (with exemptions applied)
-        const allComplete = clipsDone >= effectiveTotal
-          && (approachDone >= TOTAL_APPROACH_MODULES || approachDone === 0);
+        // Completed = all clips done for this role, OR confirmed via summit email / achievement flag (legacy completers)
+        const confirmedCompleter = summitEmailSet.has(l.viewer_id) || l.first_achievement_shown;
+        const allComplete = confirmedCompleter
+          || (clipsDone >= effectiveTotal
+            && (approachDone >= approachTotal || approachDone === 0));
 
         if (allComplete) {
           pacingStatus = "completed";
@@ -544,8 +583,9 @@ export default api({
         isAnchorFailure,
         ascentAdjustmentDay: ascentAdjustmentDayStr,
         lastLogin: l.last_login_at,
-        approachComplete: (approachMap.get(l.viewer_id) ?? 0) >= TOTAL_APPROACH_MODULES,
+        approachComplete: (approachMap.get(l.viewer_id) ?? 0) >= approachTotal,
         approachCompletedCount: approachMap.get(l.viewer_id) ?? 0,
+        approachTotal,
         extensionDays: l.extension_days,
         lastCompletedAt: l.last_completed_at,
       };
