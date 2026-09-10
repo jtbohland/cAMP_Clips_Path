@@ -145,6 +145,7 @@ function AnalyticsContent() {
         lastLogin: l.lastLogin,
         approachComplete: l.approachComplete,
         approachCompletedCount: l.approachCompletedCount ?? 0,
+        approachTotal: l.approachTotal,
         tier: l.tier ?? getTier(l.totalXp),
         badges: l.badges ?? [],
         gearClicks: l.gearClicks ?? 0,

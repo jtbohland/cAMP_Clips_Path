@@ -5,8 +5,11 @@ import {
   getTotalWeekdays,
   getRoleGroup,
   isVelocityPromo,
+  getApproachTotal,
   TOTAL_ASCENT_CLIPS_SDR,
   TOTAL_ASCENT_CLIPS_VP,
+  WEEK1_TOTAL_ITEMS_VP,
+  WEEK1_EXPECTED_BY_DAY_VP,
   type RoleGroup,
 } from "./pacing-helpers.js";
 
@@ -29,6 +32,7 @@ const LeaderboardRow = z.object({
   timezone: z.string().nullable(),
   ascent_day_1: z.string().nullable(),
   extension_days: z.coerce.number(),
+  first_achievement_shown: z.coerce.boolean(),
   total_xp: z.coerce.number(),
   clips_completed: z.coerce.number(),
   badges_earned: z.coerce.number(),
@@ -53,7 +57,8 @@ const MaxSortRow = z.object({
 
 const WEEK1_EXPECTED_BY_DAY = [0, 2, 4, 5, 6, 7];
 const WEEK1_TOTAL = 7;
-const TOTAL_APPROACH_MODULES = 8; // meddpicc + camp101 + challenger + 4 academies + W&D
+
+const SummitEmailRow = z.object({ viewer_id: z.string() });
 
 function countWeekdays(start: Date, end: Date): number {
   const s = new Date(start.getFullYear(), start.getMonth(), start.getDate());
@@ -97,11 +102,18 @@ function computeClipPacingPercent(
   const totalWeekdays = getTotalWeekdays(role);
   const schedule = getClipsExpectedByWeekday(role);
   const capped = Math.min(Math.max(weekdaysElapsed, 0), totalWeekdays);
-  const approachExpected = capped >= 5 ? WEEK1_TOTAL : (WEEK1_EXPECTED_BY_DAY[capped] ?? 0);
+
+  // Role-aware approach schedule
+  const vpRole = isVelocityPromo(role);
+  const week1ExpByDay = vpRole ? WEEK1_EXPECTED_BY_DAY_VP : WEEK1_EXPECTED_BY_DAY;
+  const week1Total = vpRole ? WEEK1_TOTAL_ITEMS_VP : WEEK1_TOTAL;
+  const approachDays = vpRole ? 3 : 5;
+
+  const approachExpected = capped >= approachDays ? week1Total : (week1ExpByDay[capped] ?? 0);
   const clipsExpected = schedule[capped] ?? effectiveTotal;
   const totalExpected = approachExpected + clipsExpected;
   if (totalExpected <= 0) return 100;
-  const totalDone = Math.min(approachDone, WEEK1_TOTAL) + Math.min(clipsDone, effectiveTotal);
+  const totalDone = Math.min(approachDone, week1Total) + Math.min(clipsDone, effectiveTotal);
   return Math.round((totalDone / totalExpected) * 100);
 }
 
@@ -161,6 +173,7 @@ export default api({
         v.id AS viewer_id, v.name, v.role, v.timezone,
         v.ascent_day_1::text AS ascent_day_1,
         COALESCE(v.extension_days, 0)::int AS extension_days,
+        COALESCE(v.first_achievement_shown, false) AS first_achievement_shown,
         COALESCE((SELECT SUM(xp_amount)::int FROM cliptracker_v2_xp_events x WHERE x.viewer_id = v.id), 0) AS total_xp,
         (SELECT COUNT(*)::int FROM (
           SELECT DISTINCT clip_id FROM cliptracker_v2_sessions ss
@@ -175,7 +188,7 @@ export default api({
        FROM cliptracker_v2_viewers v
        LEFT JOIN cliptracker_v2_sessions s ON s.viewer_id = v.id
        WHERE v.is_admin = false AND v.role != 'SME'
-       GROUP BY v.id, v.name, v.role, v.timezone, v.ascent_day_1, v.extension_days
+       GROUP BY v.id, v.name, v.role, v.timezone, v.ascent_day_1, v.extension_days, v.first_achievement_shown
        ORDER BY total_xp DESC
        LIMIT 50`,
       LeaderboardRow,
@@ -258,6 +271,19 @@ export default api({
     const approachMap = new Map<string, number>();
     for (const a of approachRows) approachMap.set(a.viewer_id, a.approach_items);
 
+    // 5. Summit email records — learners who received a summit completion email
+    //    are confirmed completers regardless of current clip count (handles legacy
+    //    learners who finished before new clips were added to the curriculum).
+    const summitEmailRows = await ctx.integrations.apps_database.query(
+      `SELECT DISTINCT viewer_id FROM cliptracker_v2_checkin_emails
+       WHERE checkin_type = 'summit'
+       LIMIT 100`,
+      SummitEmailRow,
+      undefined,
+      { label: "Summit email recipients (confirmed completers)" }
+    );
+    const summitEmailSet = new Set(summitEmailRows.map(r => r.viewer_id));
+
     const now = new Date();
 
     // Compute max XP per role group (AE/PSM/Renewals share ~963, SDR needs calculation)
@@ -285,9 +311,12 @@ export default api({
       const effectiveTotal = getEffectiveClipTotal(r.role, maxSortDone);
       const totalWeekdays = getTotalWeekdays(r.role);
 
-      // Completed = all clips done for this role (with exemptions applied)
-      const allComplete = clipsDone >= effectiveTotal
-        && (approachDone >= TOTAL_APPROACH_MODULES || approachDone === 0);
+      // Completed = all clips done for this role, OR confirmed via summit email / achievement flag (legacy completers)
+      const approachTotal = getApproachTotal(r.role);
+      const confirmedCompleter = summitEmailSet.has(r.viewer_id) || r.first_achievement_shown;
+      const allComplete = confirmedCompleter
+        || (clipsDone >= effectiveTotal
+          && (approachDone >= approachTotal || approachDone === 0));
 
       let pacingStatus = "not_started";
       if (r.ascent_day_1 || approachDone > 0 || clipsDone > 0) {

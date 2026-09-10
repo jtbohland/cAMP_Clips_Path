@@ -111,10 +111,27 @@ export const CLIPS_EXPECTED_BY_WEEKDAY_VP = [
 ];
 
 /** Approach schedule for Velocity Promo: 5 items over 3 weekdays.
- *  Day 1: 2 academies, Day 2: 2 academies, Day 3: W&D */
+ *  Day 1: 2 academies, Day 2: 2 academies, Day 3: W&D
+ *
+ *  Week 1 pacing constants:
+ *  - WEEK1_TOTAL_ITEMS_VP = 5 items (4 academy + W&D)
+ *  - WEEK1_WEEKDAYS_VP = 3 weekdays for approach
+ *  - Standard roles use WEEK1_TOTAL = 7 (or 8 modules via getApproachTotal) */
 export const WEEK1_EXPECTED_BY_DAY_VP = [0, 2, 4, 5];
 export const WEEK1_TOTAL_ITEMS_VP = 5;
 export const WEEK1_WEEKDAYS_VP = 3;
+
+// ─── Approach module totals ──────────────────────────────────────────────────
+
+/** AE / PSM / Renewals: MEDDPICC + cAMP101 + Challenger + 4 academies + W&D = 8 */
+export const TOTAL_APPROACH_MODULES_AE = 8;
+/** VP: 4 academies + W&D = 5 (no MEDDPICC, no Challenger, no cAMP101) */
+export const TOTAL_APPROACH_MODULES_VP = 5;
+
+/** Get the required approach module count for a role. */
+export function getApproachTotal(role: string): number {
+  return isVelocityPromo(role) ? TOTAL_APPROACH_MODULES_VP : TOTAL_APPROACH_MODULES_AE;
+}
 
 // ─── Legacy (pre–Pod Tower) ──────────────────────────────────────────────────
 
