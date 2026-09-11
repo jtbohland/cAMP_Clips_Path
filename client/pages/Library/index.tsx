@@ -1752,6 +1752,23 @@ export default function LibraryPage() {
                           bonusClip2Watched={clip.sortOrder === 180 ? bonus2Watched : undefined}
                           reactionSlot={buildReactionSlot(clip.id)}
                           feedbackSlot={buildFeedbackSlot(`day_${clip.sortOrder}`)}
+                          extraContent={clip.sortOrder === 130 && isRealVP ? (
+                            <div className="border-t border-gray-100 pt-3 mt-1">
+                              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">🎒 cAMP Gear — Velocity</p>
+                              <a
+                                href="https://docs.google.com/presentation/d/1RPuVNPDjNV3GpgDpMAcw4DeDuaCin9EssnUapX7NvaA/edit?slide=id.p7#slide=id.p7"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-purple-50 text-purple-800 border border-purple-200 hover:bg-purple-100 transition-colors"
+                              >
+                                🤝 Partner Delivered Services ↗
+                              </a>
+                              <p className="text-[11px] text-gray-400 mt-1.5">
+                                📋 Be sure to check your Ranger Report afterward for Velocity-specific services
+                              </p>
+                            </div>
+                          ) : undefined}
                         />
                       );
                     });
