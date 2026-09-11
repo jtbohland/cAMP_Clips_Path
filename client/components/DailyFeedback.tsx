@@ -58,8 +58,8 @@ export default function DailyFeedback({ dayKey, existingRating, existingUsefulne
     <div className="border-t border-gray-100 mt-3 pt-3 space-y-3">
       {/* Rating row */}
       <div>
-        <p className="text-xs text-gray-500 font-medium mb-1.5">How would you rate this session?</p>
-        <div className="flex gap-2">
+        <p className="text-xs text-gray-500 font-medium mb-1.5 text-center">How would you rate this session?</p>
+        <div className="flex gap-2 justify-center">
           {RATING_OPTIONS.map((opt) => {
             const isSelected = existingRating === opt.value;
             const isLocked = existingRating !== null;
@@ -89,8 +89,8 @@ export default function DailyFeedback({ dayKey, existingRating, existingUsefulne
 
       {/* Usefulness row */}
       <div>
-        <p className="text-xs text-gray-500 font-medium mb-1.5">How useful is this for your role?</p>
-        <div className="flex gap-1.5">
+        <p className="text-xs text-gray-500 font-medium mb-1.5 text-center">How useful is this for your role?</p>
+        <div className="flex gap-1.5 justify-center max-w-md mx-auto">
           {USEFULNESS_OPTIONS.map((opt) => {
             const isSelected = existingUsefulness === opt.value;
             const isLocked = existingUsefulness !== null;
