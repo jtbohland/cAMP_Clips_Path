@@ -1518,7 +1518,11 @@ export default function LibraryPage() {
       {activeTab === "approach" ? (
         <div className="flex-1 overflow-auto">
           {/* Admin toolbar — Approach */}
-          {viewer.isAdmin && adminToolbar}
+          {viewer.isAdmin && (
+            <div className="max-w-4xl mx-auto w-full px-6 pt-4">
+              {adminToolbar}
+            </div>
+          )}
           <Week1Page
             viewerId={viewer.id}
             viewerName={viewer.name}
