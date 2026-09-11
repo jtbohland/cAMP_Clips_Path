@@ -612,6 +612,14 @@ export default function Week1Page({ viewerId, viewerName, viewerRole, isAdmin, p
             reflectionPrompt={camp101Prompt}
             onSignOff={async (d) => handleModuleSignoff("camp101", d, camp101Prompt)}
           />
+
+          {/* Reactions + Daily Feedback for cAMP 101 */}
+          {(buildReactionSlot || buildFeedbackSlot) && (
+            <div className="px-5 pb-4">
+              {buildReactionSlot?.("camp101")}
+              {buildFeedbackSlot?.("approach_camp101")}
+            </div>
+          )}
         </div>
       </div>
 

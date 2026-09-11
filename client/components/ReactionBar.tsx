@@ -34,7 +34,7 @@ export default function ReactionBar({ lessonKey, counts, userReactions, onToggle
 
   return (
     <div className="pt-2">
-      <p className="text-[10px] text-gray-400 font-medium mb-1 text-center">React to the session!</p>
+      <p className="text-[10px] text-gray-400 font-medium mb-1 text-center">Add your cAMP Kudos!</p>
       <div className="flex flex-wrap gap-1 justify-center">
         {REACTION_EMOJIS.map((emoji) => {
           const count = counts[emoji] ?? 0;
