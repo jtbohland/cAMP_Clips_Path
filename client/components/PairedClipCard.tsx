@@ -46,6 +46,10 @@ type PairedClipCardProps = {
   onZoomClipWatch?: () => void;
   onZoomClipReview?: () => void;
   zoomClipWatched?: boolean;
+  /** Slot for emoji reactions (rendered after clip buttons, before Quiz/W&D) */
+  reactionSlot?: React.ReactNode;
+  /** Slot for daily feedback (rendered at very bottom of card) */
+  feedbackSlot?: React.ReactNode;
 };
 
 // Clips that show the cAMP Quiz button
@@ -171,6 +175,8 @@ export default function PairedClipCard({
   onZoomClipWatch,
   onZoomClipReview,
   zoomClipWatched,
+  reactionSlot,
+  feedbackSlot,
 }: PairedClipCardProps) {
   const buttonStateA = getButtonState(stateA.isLocked, stateA.isCompleted, stateA.pausedElapsedSeconds);
   const buttonStateB = getButtonState(stateB.isLocked, stateB.isCompleted, stateB.pausedElapsedSeconds);
@@ -376,6 +382,9 @@ export default function PairedClipCard({
           </div>
         )}
 
+        {/* Emoji reactions — below clip/resource buttons, above Quiz/W&D */}
+        {reactionSlot}
+
         {/* cAMP Quiz button — visible on qualifying tiles */}
         {showCampQuiz && onCampQuiz && (
           <button
@@ -405,6 +414,9 @@ export default function PairedClipCard({
             REMEMBER: product-fluency practice — solo or multiplayer — as prep for cAMP 201.
           </p>
         )}
+
+        {/* Daily Feedback — at the very bottom of the card */}
+        {feedbackSlot}
       </div>
     </div>
   );

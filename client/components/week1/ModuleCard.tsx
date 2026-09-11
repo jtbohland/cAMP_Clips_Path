@@ -32,6 +32,10 @@ type ModuleCardProps = {
     reflectionResponse: string;
     signature: string;
   }) => Promise<void>;
+  /** Slot for emoji reactions */
+  reactionSlot?: React.ReactNode;
+  /** Slot for daily feedback */
+  feedbackSlot?: React.ReactNode;
 };
 
 export default function ModuleCard({
@@ -50,6 +54,8 @@ export default function ModuleCard({
   introVideoId,
   introVideoDescription,
   onSignOff,
+  reactionSlot,
+  feedbackSlot,
 }: ModuleCardProps) {
   const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
   const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
@@ -306,6 +312,14 @@ export default function ModuleCard({
           <div className="px-5 py-2 bg-green-50 text-xs text-green-700">
             Signed by <strong>{signoffData.signature}</strong> on{" "}
             {new Date(signoffData.completedAt).toLocaleDateString()}
+          </div>
+        )}
+
+        {/* Reactions + Daily Feedback */}
+        {(reactionSlot || feedbackSlot) && (
+          <div className="px-5 pb-4">
+            {reactionSlot}
+            {feedbackSlot}
           </div>
         )}
       </div>

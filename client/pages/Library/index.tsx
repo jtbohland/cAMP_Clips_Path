@@ -1287,14 +1287,14 @@ export default function LibraryPage() {
       </div>
 
       {/* Tab Bar */}
-      <div className="border-b border-green-900/20 bg-[#2D6A4F]">
-        <div className="flex max-w-4xl mx-auto w-full">
+      <div className="bg-[#2D6A4F]">
+        <div className="flex max-w-4xl mx-auto w-full gap-2 px-3 py-2">
           <button
             onClick={() => setActiveTab("approach")}
-            className={`flex-1 py-2.5 text-sm font-semibold text-center transition-colors ${
+            className={`flex-1 py-2.5 text-sm font-bold text-center rounded-lg transition-all ${
               activeTab === "approach"
-                ? "text-white border-b-2 border-white bg-white/10"
-                : "text-green-200/70 hover:text-white hover:bg-white/5"
+                ? "bg-amber-500/90 text-white shadow-md shadow-amber-900/30"
+                : "bg-white/10 text-green-200/70 hover:text-white hover:bg-white/15"
             }`}
           >
             🚡 The Approach
@@ -1304,10 +1304,10 @@ export default function LibraryPage() {
               summitInSightNavigatedRef.current = false; // Re-arm Summit in Sight if Approach still incomplete
               setActiveTab("ascent");
             }}
-            className={`flex-1 py-2.5 text-sm font-semibold text-center transition-colors ${
+            className={`flex-1 py-2.5 text-sm font-bold text-center rounded-lg transition-all ${
               activeTab === "ascent"
-                ? "text-white border-b-2 border-white bg-white/10"
-                : "text-green-200/70 hover:text-white hover:bg-white/5"
+                ? "bg-teal-500/90 text-white shadow-md shadow-teal-900/30"
+                : "bg-white/10 text-green-200/70 hover:text-white hover:bg-white/15"
             }`}
           >
             🧗 The Ascent
