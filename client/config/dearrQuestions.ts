@@ -231,6 +231,76 @@ export const LEVEL_1_BANK: DEARRQuestion[] = [
     correctIndex: 1,
     explanation: "POD 1:1s are for prep, alignment, and forecast updates. The joint review is where you align on strategy — not where you discover new information."
   },
+  {
+    id: "L1_16",
+    pillar: "E",
+    scenario: "A customer's CSA mentions they haven't had a structured meeting with the account in two quarters.",
+    question: "What DEARR pillar does this directly impact?",
+    options: [
+      "Deployment — they need to redeploy the product",
+      "Engagement — consistent touchpoints are essential to understanding account health",
+      "Discovery — consumption data will show the issue",
+      "Revenue Optimization — this only matters at renewal"
+    ],
+    correctIndex: 1,
+    explanation: "Engagement (E) requires regular, structured touchpoints — EBRs, check-ins, and POD syncs. A two-quarter gap means you're flying blind on account health."
+  },
+  {
+    id: "L1_17",
+    pillar: "A",
+    scenario: "Your TSM shares that a customer's WAU has dropped 20% over 6 weeks.",
+    question: "Which DEARR pillar should you investigate first?",
+    options: [
+      "Renewal — check when the contract ends",
+      "Discovery — review the original contract terms",
+      "Adoption — declining WAU is a direct adoption signal",
+      "Engagement — schedule an executive meeting"
+    ],
+    correctIndex: 2,
+    explanation: "WAU (Weekly Active Users) is a core Adoption metric. A 20% decline over 6 weeks is a clear adoption red flag that needs immediate investigation."
+  },
+  {
+    id: "L1_18",
+    pillar: "R-renewal",
+    scenario: "A peer asks you how renewal accounts get prioritized in the review cadence.",
+    question: "What determines which renewals get reviewed in Renewal Readiness?",
+    options: [
+      "All renewals are reviewed equally every week",
+      "ARR tier and risk signals filter which accounts get reviewed from the 360-day pipeline",
+      "Only accounts the AE flags manually",
+      "Only renewals in the current quarter"
+    ],
+    correctIndex: 1,
+    explanation: "Renewal Readiness uses ARR tier and risk signals to prioritize which accounts from the 360-day pipeline get reviewed. Not every renewal gets equal airtime."
+  },
+  {
+    id: "L1_19",
+    pillar: "D",
+    scenario: "You're reviewing a new customer's onboarding and see they're at Day 30 with no instrumentation started.",
+    question: "What deployment gate have they missed?",
+    options: [
+      "Gate 1 — Kickoff should be done by Day 15",
+      "Gate 2 — Core instrumentation should be in progress by Day 30",
+      "No gates have been missed yet — Day 30 is still early",
+      "Gate 3 — Verified Outcomes should exist by Day 30"
+    ],
+    correctIndex: 1,
+    explanation: "Gate 2 (Days 15-30) covers core instrumentation and initial deployment. At Day 30 with nothing started, this gate is missed and downstream milestones are at risk."
+  },
+  {
+    id: "L1_20",
+    pillar: "multi",
+    scenario: "A new AE asks what 'DEARR' stands for.",
+    question: "What are the five pillars of DEARR?",
+    options: [
+      "Deployment, Engagement, Adoption, Revenue, Retention",
+      "Discovery, Engagement, Alignment, Risk Mitigation, Revenue Optimization",
+      "Deployment, Engagement, Adoption, ROI (Return on Investment), Renewal",
+      "Discovery, Execution, Adoption, Retention, Revenue"
+    ],
+    correctIndex: 2,
+    explanation: "DEARR = Deployment, Engagement, Adoption, ROI (Return on Investment), Renewal. These five pillars frame every account health conversation in the operating cadence."
+  },
 ];
 
 // ══════════════════════════════════════════════════════════════
@@ -462,6 +532,62 @@ export const LEVEL_2_BANK: DEARRQuestion[] = [
     correctIndex: 1,
     explanation: "Follow-Up Discipline step 1: Review previous meeting's actions — progress vs. commitments. The pod is expected to come prepared with progress updates."
   },
+  {
+    id: "L2_17",
+    pillar: "A",
+    scenario: "A customer's AI WAU is at 5% while their overall WAU is healthy at 85%.",
+    question: "What's the correct interpretation?",
+    options: [
+      "The account is healthy — overall WAU is strong",
+      "AI is new, 5% is expected and normal",
+      "AI adoption is a gap — strong WAU means the user base exists but hasn't adopted AI features yet, creating an expansion risk",
+      "Switch their contract to remove AI entitlements"
+    ],
+    correctIndex: 2,
+    explanation: "Healthy WAU + low AI WAU = the user base is there but hasn't adopted AI. This is both a risk (they're not using what they're paying for) and an opportunity (ready user base for enablement)."
+  },
+  {
+    id: "L2_18",
+    pillar: "E",
+    scenario: "An account's last EBR was 7 months ago. The TSM says 'the customer doesn't want meetings.'",
+    question: "What's the right response?",
+    options: [
+      "Respect the customer's preference and skip EBRs",
+      "EBRs aren't optional — reframe the value proposition: business insights, roadmap alignment, and strategic planning that helps THEM, not just us",
+      "Send them a survey instead of an EBR",
+      "Only flag it if renewal is within 90 days"
+    ],
+    correctIndex: 1,
+    explanation: "EBRs are non-negotiable engagement touchpoints. A 7-month gap means you've lost strategic visibility. Reframe the EBR as a value-add for the customer, not an internal checkbox."
+  },
+  {
+    id: "L2_19",
+    pillar: "D",
+    scenario: "A customer at Day 60 has completed kickoff and instrumentation but hasn't activated any use cases.",
+    question: "What deployment gate are they at risk of missing?",
+    options: [
+      "Gate 1 — Kickoff (already completed)",
+      "Gate 2 — Instrumentation (already completed)",
+      "Gate 3 — Use case activation and initial value realization, typically by Day 60-90",
+      "No gates at risk — they're ahead of schedule"
+    ],
+    correctIndex: 2,
+    explanation: "Gate 3 covers use case activation and initial value realization. Having instrumentation without activated use cases means the product is deployed but not delivering value yet."
+  },
+  {
+    id: "L2_20",
+    pillar: "R-renewal",
+    scenario: "A $200K renewal is 180 days out. The account has no documented risk signals but also no recent engagement.",
+    question: "What's the correct Renewal Readiness posture?",
+    options: [
+      "No risk signals = healthy. Move on to higher-priority accounts.",
+      "Absence of data IS a risk signal. No recent engagement means you can't validate health. Investigate before assuming green.",
+      "Flag as high risk and escalate immediately",
+      "Wait until 90 days out when it enters the active renewal window"
+    ],
+    correctIndex: 1,
+    explanation: "No data ≠ no risk. Absence of engagement means you can't validate whether the account is healthy. The cadence exists precisely to prevent 'surprise' at-risk renewals."
+  },
 ];
 
 // ══════════════════════════════════════════════════════════════
@@ -679,6 +805,76 @@ export const LEVEL_3_BANK: DEARRQuestion[] = [
     correctIndex: 1,
     explanation: "The standard: continuous health tracking via DEARR so every renewal has a strategy, every at-risk account has a get-well plan, and nothing is a surprise. This is why the cadence runs every week, not once a quarter."
   },
+  {
+    id: "L3_16",
+    pillar: "multi",
+    scenario: "Account J ($300K): Renewal in 120 days, consumption at 110%, strong adoption, but the exec sponsor left the company 3 weeks ago and no replacement identified.",
+    question: "What's your priority action?",
+    options: [
+      "The account is healthy — consumption and adoption are strong. Monitor passively.",
+      "Identify and engage the new exec sponsor immediately. Losing exec alignment before renewal creates a power vacuum where a competitor can insert themselves.",
+      "Wait for the customer to introduce a new sponsor naturally",
+      "Focus on upsell — the numbers support expansion"
+    ],
+    correctIndex: 1,
+    explanation: "Exec sponsor departure is a critical Engagement risk — even with healthy metrics. Without exec alignment, renewal decisions happen without your champion in the room. Re-establish sponsorship before the renewal window."
+  },
+  {
+    id: "L3_17",
+    pillar: "multi",
+    scenario: "Account K ($180K Emerging): Customer has 3 active use cases, growing WAU, AI WAU at 25%, but they're asking for a 15% discount at renewal citing 'budget pressure.'",
+    question: "What's the strategic response?",
+    options: [
+      "Grant the discount to save the renewal",
+      "Reject the discount and hold firm on pricing",
+      "Counter with value: show Verified Outcomes proving ROI, frame the conversation around value delivered vs. cost, and explore multi-year for modest concession",
+      "Escalate to Deal Desk for approval"
+    ],
+    correctIndex: 2,
+    explanation: "With strong adoption and growing usage, the leverage is on your side. Lead with Verified Outcomes and ROI proof. Budget pressure is often a negotiating posture — counter with value, not capitulation."
+  },
+  {
+    id: "L3_18",
+    pillar: "multi",
+    scenario: "During a Deployment Review, you discover that 4 out of 6 new accounts from last quarter missed Gate 1 (kickoff by Day 15).",
+    question: "What does this pattern indicate?",
+    options: [
+      "Normal variability — some customers are slower to start",
+      "A systemic onboarding problem. 4/6 missed gates means the process is broken, not individual accounts. Escalate to FLM to identify root cause (handoff timing, resource gaps, process failure).",
+      "The TSMs need more training on kickoff procedures",
+      "Adjust Gate 1 to Day 30 to be more realistic"
+    ],
+    correctIndex: 1,
+    explanation: "4/6 missed is a pattern, not an anomaly. Deployment Review exists precisely to catch systemic failures. This needs root cause analysis at the FLM level — is it handoff timing, resource gaps, or process failure?"
+  },
+  {
+    id: "L3_19",
+    pillar: "multi",
+    scenario: "Account L: $400K Strategic, renewal in 60 days, all DEARR signals green, but the customer just acquired another company and is evaluating platform consolidation.",
+    question: "How should this change your renewal approach?",
+    options: [
+      "All green = proceed normally with standard renewal",
+      "M&A changes everything. The account is now an expansion opportunity AND a churn risk. Position Amplitude as the consolidation platform, engage the acquiring company's analytics team, and structure a deal that includes the merged entity.",
+      "Discount to lock in the renewal before M&A decisions are made",
+      "Pause the renewal until the acquisition settles"
+    ],
+    correctIndex: 1,
+    explanation: "M&A is a dual-signal event: expansion opportunity (larger combined entity) AND churn risk (platform consolidation could go either way). Proactively position as the consolidation platform — don't wait for them to evaluate alternatives."
+  },
+  {
+    id: "L3_20",
+    pillar: "multi",
+    scenario: "Your RVP reviews the week's Renewal Readiness output and notices that 3 accounts have 'strategy TBD' in their action plans with no owner or timeline.",
+    question: "What should the RVP do?",
+    options: [
+      "Give the team another week — they're working on it",
+      "Accept the TBD and add a reminder to check next month",
+      "Reject all three. The standard is clear: every reviewed account needs a Validated Assessment, Action Plan with owner + due date, and System Updates within 24 hours. 'TBD' is not a strategy.",
+      "Escalate only the largest account and let the others slide"
+    ],
+    correctIndex: 2,
+    explanation: "The cadence has clear output standards: Validated Assessment, Action Plan in SFDC, System Updates — all within 24 hours. 'TBD' violates the standard. The RVP's job is to hold the standard, not accommodate drift."
+  },
 ];
 
 export const LEVEL_CONFIGS = [
@@ -687,9 +883,19 @@ export const LEVEL_CONFIGS = [
   { name: "The Summit Crossing", emoji: "⛰️", bank: LEVEL_3_BANK, color: "#7C3AED" },
 ] as const;
 
+/** Fisher-Yates shuffle — unbiased random ordering */
+function fisherYatesShuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
 /** Draw `count` random questions from a bank, excluding previously seen IDs */
 export function drawQuestions(bank: DEARRQuestion[], count: number, exclude: Set<string> = new Set()): DEARRQuestion[] {
   const available = bank.filter(q => !exclude.has(q.id));
-  const shuffled = [...available].sort(() => Math.random() - 0.5);
+  const shuffled = fisherYatesShuffle(available);
   return shuffled.slice(0, count);
 }

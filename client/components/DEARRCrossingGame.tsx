@@ -20,13 +20,16 @@ const ANTE_LEVELS = [
   { level: 3, label: "🫎🫎🫎",  name: "Full Charge",       right: "+3 XP", wrong: "−2 XP" },
 ];
 
-// Shuffle answer options and return shuffled array + new correct index
+// Fisher-Yates shuffle for answer options — unbiased
 function shuffleOptions(q: DEARRQuestion): { options: string[]; correctIndex: number } {
   const indices = q.options.map((_, i) => i);
-  const shuffled = indices.sort(() => Math.random() - 0.5);
+  for (let i = indices.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [indices[i], indices[j]] = [indices[j], indices[i]];
+  }
   return {
-    options: shuffled.map(i => q.options[i]),
-    correctIndex: shuffled.indexOf(q.correctIndex),
+    options: indices.map(i => q.options[i]),
+    correctIndex: indices.indexOf(q.correctIndex),
   };
 }
 
