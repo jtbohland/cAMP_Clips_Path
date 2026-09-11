@@ -2,18 +2,18 @@ import { useState, useCallback } from "react";
 
 const RATING_OPTIONS = [
   { emoji: "😰", label: "Poor", value: "poor" },
-  { emoji: "😮‍💨", label: "Boring", value: "boring" },
-  { emoji: "😫", label: "Meh", value: "meh" },
-  { emoji: "😃", label: "Good", value: "good" },
-  { emoji: "😁", label: "Amazing", value: "amazing" },
+  { emoji: "🥱", label: "Boring", value: "boring" },
+  { emoji: "😒", label: "Meh", value: "meh" },
+  { emoji: "😀", label: "Good", value: "good" },
+  { emoji: "🤩", label: "Amazing", value: "amazing" },
 ];
 
 const USEFULNESS_OPTIONS = [
-  { label: "Not useful", value: "not_useful" },
-  { label: "Slightly", value: "slightly" },
-  { label: "Moderate", value: "moderate" },
-  { label: "Useful", value: "useful" },
-  { label: "Very useful", value: "very_useful" },
+  { label: "Not useful", value: "not_useful", color: "bg-red-50 border-red-200 hover:bg-red-100 hover:border-red-300 text-red-700", activeColor: "bg-red-100 border-2 border-red-400 text-red-800" },
+  { label: "Slightly", value: "slightly", color: "bg-orange-50 border-orange-200 hover:bg-orange-100 hover:border-orange-300 text-orange-700", activeColor: "bg-orange-100 border-2 border-orange-400 text-orange-800" },
+  { label: "Moderate", value: "moderate", color: "bg-yellow-50 border-yellow-200 hover:bg-yellow-100 hover:border-yellow-300 text-yellow-700", activeColor: "bg-yellow-100 border-2 border-yellow-400 text-yellow-800" },
+  { label: "Useful", value: "useful", color: "bg-lime-50 border-lime-200 hover:bg-lime-100 hover:border-lime-300 text-lime-700", activeColor: "bg-lime-100 border-2 border-lime-400 text-lime-800" },
+  { label: "Very useful", value: "very_useful", color: "bg-green-50 border-green-200 hover:bg-green-100 hover:border-green-300 text-green-700", activeColor: "bg-green-100 border-2 border-green-400 text-green-800" },
 ];
 
 type DailyFeedbackProps = {
@@ -99,13 +99,13 @@ export default function DailyFeedback({ dayKey, existingRating, existingUsefulne
                 key={opt.value}
                 onClick={() => handleUsefulness(opt.value)}
                 disabled={isLocked || submittingField === "usefulness"}
-                className={`flex-1 py-1.5 px-1 rounded-md text-[11px] font-medium transition-all
+                className={`flex-1 py-1.5 px-1 rounded-md text-[11px] font-semibold transition-all border
                   ${
                     isSelected
-                      ? "bg-green-100 border-2 border-green-400 text-green-800 shadow-sm"
+                      ? `${opt.activeColor} shadow-sm`
                       : isLocked
-                        ? "bg-gray-50 border border-gray-100 text-gray-400"
-                        : "bg-gray-50 border border-gray-200 text-gray-600 hover:bg-gray-100 hover:border-gray-300 cursor-pointer"
+                        ? "bg-gray-50 border-gray-100 text-gray-400"
+                        : `${opt.color} cursor-pointer`
                   }
                   ${submittingField === "usefulness" ? "opacity-60" : ""}
                 `}

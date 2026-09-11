@@ -46,8 +46,9 @@ type PairedClipCardProps = {
   onZoomClipWatch?: () => void;
   onZoomClipReview?: () => void;
   zoomClipWatched?: boolean;
-  /** Slot for emoji reactions (rendered after clip buttons, before Quiz/W&D) */
-  reactionSlot?: React.ReactNode;
+  /** Slot for emoji reactions per clip */
+  reactionSlotA?: React.ReactNode;
+  reactionSlotB?: React.ReactNode;
   /** Slot for daily feedback (rendered at very bottom of card) */
   feedbackSlot?: React.ReactNode;
 };
@@ -175,7 +176,8 @@ export default function PairedClipCard({
   onZoomClipWatch,
   onZoomClipReview,
   zoomClipWatched,
-  reactionSlot,
+  reactionSlotA,
+  reactionSlotB,
   feedbackSlot,
 }: PairedClipCardProps) {
   const buttonStateA = getButtonState(stateA.isLocked, stateA.isCompleted, stateA.pausedElapsedSeconds);
@@ -302,6 +304,7 @@ export default function PairedClipCard({
             onWatch={onWatchA}
             onReview={onReviewA}
           />
+          {reactionSlotA}
         </div>
 
         {/* Clip B section — separated by divider */}
@@ -343,6 +346,7 @@ export default function PairedClipCard({
               onReview={onReviewB}
             />
           )}
+          {reactionSlotB}
         </div>
 
         {/* Reachdesk Zoom clip — Day 4 sort 50 pair */}
@@ -381,9 +385,6 @@ export default function PairedClipCard({
             )}
           </div>
         )}
-
-        {/* Emoji reactions — below clip/resource buttons, above Quiz/W&D */}
-        {reactionSlot}
 
         {/* cAMP Quiz button — visible on qualifying tiles */}
         {showCampQuiz && onCampQuiz && (

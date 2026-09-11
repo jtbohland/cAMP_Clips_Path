@@ -1704,7 +1704,8 @@ export default function LibraryPage() {
                               onZoomClipWatch={clip.sortOrder === 50 ? handleReachdeskWatch : undefined}
                               onZoomClipReview={clip.sortOrder === 50 ? () => navigate(`/report/reachdesk`) : undefined}
                               zoomClipWatched={clip.sortOrder === 50 ? reachdeskWatched : undefined}
-                              reactionSlot={<>{buildReactionSlot(clip.id)}{buildReactionSlot(clipB.id)}</>}
+                              reactionSlotA={buildReactionSlot(clip.id)}
+                              reactionSlotB={buildReactionSlot(clipB.id)}
                               feedbackSlot={buildFeedbackSlot(`day_${clip.sortOrder}`)}
                             />
                           );

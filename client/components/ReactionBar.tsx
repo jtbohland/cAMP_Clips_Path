@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback } from "react";
 
 const REACTION_EMOJIS = ["👍", "⭐", "❤️", "🏆", "🔥", "👏", "⚡", "⛰️", "🦋", "💡", "🦅", "🙌🏻"];
 
@@ -33,37 +33,40 @@ export default function ReactionBar({ lessonKey, counts, userReactions, onToggle
   );
 
   return (
-    <div className="flex flex-wrap gap-1.5 pt-2">
-      {REACTION_EMOJIS.map((emoji) => {
-        const count = counts[emoji] ?? 0;
-        const isActive = userReactions.has(emoji);
-        const isPending = pendingEmoji === emoji;
+    <div className="pt-2">
+      <p className="text-[10px] text-gray-400 font-medium mb-1 text-center">React to the session!</p>
+      <div className="flex flex-wrap gap-1 justify-center">
+        {REACTION_EMOJIS.map((emoji) => {
+          const count = counts[emoji] ?? 0;
+          const isActive = userReactions.has(emoji);
+          const isPending = pendingEmoji === emoji;
 
-        return (
-          <button
-            key={emoji}
-            onClick={() => handleToggle(emoji)}
-            disabled={disabled || isPending}
-            className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs transition-all
-              ${
-                isActive
-                  ? "bg-green-100 border border-green-300 shadow-sm"
-                  : "bg-gray-50 border border-gray-200 hover:bg-gray-100 hover:border-gray-300"
-              }
-              ${isPending ? "opacity-60" : ""}
-              ${disabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}
-            `}
-            title={`${count} reaction${count !== 1 ? "s" : ""}`}
-          >
-            <span className="text-sm">{emoji}</span>
-            {count > 0 && (
-              <span className={`text-[10px] font-semibold ${isActive ? "text-green-700" : "text-gray-500"}`}>
-                {count}
-              </span>
-            )}
-          </button>
-        );
-      })}
+          return (
+            <button
+              key={emoji}
+              onClick={() => handleToggle(emoji)}
+              disabled={disabled || isPending}
+              className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] transition-all
+                ${
+                  isActive
+                    ? "bg-green-100 border border-green-300 shadow-sm"
+                    : "bg-gray-50 border border-gray-200 hover:bg-gray-100 hover:border-gray-300"
+                }
+                ${isPending ? "opacity-60" : ""}
+                ${disabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}
+              `}
+              title={`${count} reaction${count !== 1 ? "s" : ""}`}
+            >
+              {count > 0 && (
+                <span className={`text-[9px] font-bold ${isActive ? "text-green-700" : "text-gray-500"}`}>
+                  {count}
+                </span>
+              )}
+              <span className="text-xs leading-none">{emoji}</span>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
