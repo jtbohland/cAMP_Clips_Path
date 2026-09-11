@@ -311,12 +311,37 @@ export default api({
       const effectiveTotal = getEffectiveClipTotal(r.role, maxSortDone);
       const totalWeekdays = getTotalWeekdays(r.role);
 
-      // Completed = all clips done for this role, OR confirmed via summit email / achievement flag (legacy completers)
+      // LOCKED COMPLETER CHECK — summit email OR grand finale means done forever.
+      // Their clipsDone IS their effectiveTotal (they completed under their curriculum).
       const approachTotal = getApproachTotal(r.role);
       const confirmedCompleter = summitEmailSet.has(r.viewer_id) || r.first_achievement_shown;
-      const allComplete = confirmedCompleter
-        || (clipsDone >= effectiveTotal
-          && (approachDone >= approachTotal || approachDone === 0));
+
+      // If locked, freeze everything — no pacing recalculation, no curriculum recount
+      if (confirmedCompleter && clipsDone > 0) {
+        const currentTier = TIERS.reduce((acc, t) => (r.total_xp >= t.xpMin ? t : acc), TIERS[0]);
+        const maxXp = getMaxXp(r.role, clipsDone);
+        const xpPct = maxXp > 0 ? Math.round((r.total_xp / maxXp) * 1000) / 10 : 0;
+        return {
+          viewerId: r.viewer_id,
+          name: r.name,
+          role: r.role,
+          roleGroup: getRoleGroup(r.role),
+          timezone: r.timezone,
+          totalXp: r.total_xp,
+          xpPct,
+          maxXp,
+          clipsCompleted: clipsDone,  // frozen: their actual count at completion time
+          badgesEarned: r.badges_earned,
+          pacingStatus: "completed",
+          tierName: currentTier.name,
+          tierEmoji: currentTier.emoji,
+        };
+      }
+
+      // Active learner — compute pacing dynamically
+      const allComplete = clipsDone > 0
+        && clipsDone >= effectiveTotal
+        && (approachDone >= approachTotal || approachDone === 0);
 
       let pacingStatus = "not_started";
       if (r.ascent_day_1 || approachDone > 0 || clipsDone > 0) {
