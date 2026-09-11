@@ -150,6 +150,9 @@ import GetReactions from './v2/get-reactions.js';
 import ToggleReaction from './v2/toggle-reaction.js';
 import GetDailyFeedback from './v2/get-daily-feedback.js';
 import SubmitDailyFeedback from './v2/submit-daily-feedback.js';
+import StartDEARRGame from './v2/start-dearr-game.js';
+import SubmitDEARRResponse from './v2/submit-dearr-response.js';
+import CompleteDEARRGame from './v2/complete-dearr-game.js';
 
 
 
@@ -304,6 +307,9 @@ GetReactions,
 ToggleReaction,
 GetDailyFeedback,
 SubmitDailyFeedback,
+StartDEARRGame,
+SubmitDEARRResponse,
+CompleteDEARRGame,
 } as const;
 
 export default apis;

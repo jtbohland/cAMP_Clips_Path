@@ -389,7 +389,7 @@ export default function TopicGearPage() {
 
           {/* Ridge Game (ROE day only) — replaces reflection */}
           {isROE && viewer?.id && clipId && (
-            allClicked ? (
+            (allClicked || viewer?.isAdmin) ? (
               <RidgeGame
                 viewerId={viewer.id}
                 clipId={clipId}
@@ -410,7 +410,7 @@ export default function TopicGearPage() {
 
           {/* Price is Right game (Day 9 only) — replaces reflection */}
           {isPriceGame && viewer?.id && clipId && (
-            allClicked ? (
+            (allClicked || viewer?.isAdmin) ? (
               <PriceGame
                 viewerId={viewer.id}
                 clipId={clipId}
@@ -431,7 +431,7 @@ export default function TopicGearPage() {
 
           {/* Topic Reflection (Day 5 only) — locked until all resources clicked */}
           {hasReflection && viewer?.id && topicKey && (
-            allClicked ? (
+            (allClicked || viewer?.isAdmin) ? (
               <TopicReflectionSection
                 viewerId={viewer.id}
                 topicDay={topicKey}
@@ -452,8 +452,10 @@ export default function TopicGearPage() {
 
           {/* DEARR Crossing game (Day 5 only) — replaces reflection */}
           {isDEARRGame && viewer?.id && clipId && (
-            allClicked ? (
+            (allClicked || viewer?.isAdmin) ? (
               <DEARRCrossingGame
+                viewerId={viewer.id}
+                clipId={clipId}
                 onComplete={() => setDearrGameComplete(true)}
                 onBackToClips={() => navigate("/?tab=ascent")}
               />
