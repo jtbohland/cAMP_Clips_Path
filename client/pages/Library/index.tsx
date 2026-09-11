@@ -1460,23 +1460,78 @@ export default function LibraryPage() {
         </div>
       ) : (
       <div className="flex flex-col gap-4 p-6 max-w-4xl mx-auto w-full flex-1 overflow-auto">
-        {/* Admin test mode toggle */}
+        {/* Admin toolbar */}
         {viewer.isAdmin && (
-          <div className="rounded-xl border border-purple-200 bg-purple-50 px-4 py-3 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-sm">🔧</span>
-              <span className="text-sm font-semibold text-purple-900">Admin View</span>
-              <span className="text-xs text-purple-600">
-                {vpTestMode
-                  ? "Showing fresh Velocity Promo view"
-                  : sdrTestMode
-                  ? "Showing fresh SDR view"
-                  : ascentTestMode
-                    ? "Showing fresh learner view"
-                    : "Showing your real progress"}
-              </span>
+          <div className="rounded-xl border border-purple-200 bg-purple-50 px-4 py-3 space-y-2">
+            {/* Row 1: Path Viewer */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm">🔧</span>
+                <span className="text-xs font-semibold text-purple-900">Admin: Path Viewer</span>
+                <span className="text-[10px] text-purple-500">Preview each learner path (view-only)</span>
+              </div>
+              <div className="flex items-center gap-1.5 ml-auto">
+                {/* AE Path */}
+                <button
+                  onClick={() => {
+                    if (sdrTestMode) handleToggleSdrTest();
+                    if (vpTestMode) handleToggleVpTest();
+                    if (!ascentTestMode) setAscentTestMode(true);
+                  }}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                    ascentTestMode && !sdrTestMode && !vpTestMode
+                      ? "bg-indigo-600 text-white shadow-sm"
+                      : "bg-white text-gray-600 border border-gray-300 hover:bg-gray-100"
+                  }`}
+                >
+                  🐾 AE Path (15)
+                </button>
+                {/* SDR Path */}
+                <button
+                  onClick={() => {
+                    if (vpTestMode) handleToggleVpTest();
+                    if (ascentTestMode) setAscentTestMode(false);
+                    if (!sdrTestMode) handleToggleSdrTest();
+                  }}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                    sdrTestMode
+                      ? "bg-indigo-600 text-white shadow-sm"
+                      : "bg-white text-gray-600 border border-gray-300 hover:bg-gray-100"
+                  }`}
+                >
+                  🐍 SDR Path (11)
+                </button>
+                {/* Promo Path */}
+                <button
+                  onClick={() => {
+                    if (sdrTestMode) handleToggleSdrTest();
+                    if (ascentTestMode) setAscentTestMode(false);
+                    if (!vpTestMode) handleToggleVpTest();
+                  }}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                    vpTestMode
+                      ? "bg-indigo-600 text-white shadow-sm"
+                      : "bg-white text-gray-600 border border-gray-300 hover:bg-gray-100"
+                  }`}
+                >
+                  🚀 Promo Path (7)
+                </button>
+              </div>
             </div>
+            {/* Row 2: Utility buttons */}
             <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={() => setPreviewMode("register")}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-purple-700 border border-purple-300 hover:bg-purple-100 transition-colors"
+              >
+                📝 Registration
+              </button>
+              <button
+                onClick={() => navigate("/modal-museum")}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-purple-700 border border-purple-300 hover:bg-purple-100 transition-colors"
+              >
+                🖼️ Modal Museum
+              </button>
               <select
                 onChange={(e) => {
                   if (e.target.value) {
@@ -1496,61 +1551,14 @@ export default function LibraryPage() {
                 className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-300 cursor-pointer"
                 defaultValue=""
               >
-                <option value="" disabled>📧 Test Check-In…</option>
+                <option value="" disabled>📧 Anchor Point Emails…</option>
                 <option value="approach-complete">🚡 Approach (Complete)</option>
                 <option value="approach-incomplete">🚡 Approach (Incomplete)</option>
                 <option value="week2">🏕️ Week 2</option>
                 <option value="week3">🧗 Week 3</option>
                 <option value="summit">🏔️ Summit</option>
               </select>
-              <button
-                onClick={() => navigate("/modal-museum")}
-                className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-purple-700 border border-purple-300 hover:bg-purple-100 transition-colors"
-              >
-                🖼️ Modal Museum
-              </button>
-              <button
-                onClick={() => setPreviewMode("register")}
-                className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-purple-700 border border-purple-300 hover:bg-purple-100 transition-colors"
-              >
-                📝 Registration
-              </button>
-              {!sdrTestMode && !vpTestMode && (
-                <button
-                  onClick={() => setAscentTestMode((prev) => !prev)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                    ascentTestMode
-                      ? "bg-purple-600 text-white hover:bg-purple-700"
-                      : "bg-white text-purple-700 border border-purple-300 hover:bg-purple-100"
-                  }`}
-                >
-                  {ascentTestMode ? "👁️ Show My Progress" : "🧪 Test as New AE"}
-                </button>
-              )}
-              {(!ascentTestMode || sdrTestMode) && !vpTestMode && (
-                <button
-                  onClick={handleToggleSdrTest}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                    sdrTestMode
-                      ? "bg-teal-600 text-white hover:bg-teal-700"
-                      : "bg-white text-teal-700 border border-teal-300 hover:bg-teal-100"
-                  }`}
-                >
-                  {sdrTestMode ? "↩️ Back to Admin" : "🧪 Test as New SDR"}
-                </button>
-              )}
-              {(!ascentTestMode || vpTestMode) && !sdrTestMode && (
-                <button
-                  onClick={handleToggleVpTest}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                    vpTestMode
-                      ? "bg-orange-600 text-white hover:bg-orange-700"
-                      : "bg-white text-orange-700 border border-orange-300 hover:bg-orange-100"
-                  }`}
-                >
-                  {vpTestMode ? "↩️ Back to Admin" : "🧪 Test as Veloc. Promo"}
-                </button>
-              )}
+
             </div>
           </div>
         )}
