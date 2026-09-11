@@ -39,6 +39,8 @@ type ClipLibraryCardProps = {
   bonusClip2Watched?: boolean;
   reactionSlot?: React.ReactNode;
   feedbackSlot?: React.ReactNode;
+  /** Extra content rendered below the clip button (e.g. VP-specific gear links) */
+  extraContent?: React.ReactNode;
 };
 
 function getWeekLabel(weekNumber: number | null, sortOrder: number): string {
@@ -124,6 +126,7 @@ export default function ClipLibraryCard({
   bonusClip2Watched,
   reactionSlot,
   feedbackSlot,
+  extraContent,
 }: ClipLibraryCardProps) {
   const isTopicDay = clip.isTopicDay ?? false;
   const buttonState = getButtonState(isLocked, isCompleted, pausedElapsedSeconds);
@@ -244,6 +247,9 @@ export default function ClipLibraryCard({
             onReview={onReview}
           />
         )}
+
+        {/* Extra content (e.g. VP-specific gear links) */}
+        {extraContent}
 
         {/* Reachdesk Zoom Clip — additional button for sort order 4 only */}
         {clip.sortOrder === REACHDESK_SORT_ORDER && buttonState !== "locked" && onZoomClipWatch && (
