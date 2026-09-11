@@ -325,18 +325,6 @@ export default api({
     }
     const TOTAL_APPROACH_MODULES = 8;
 
-    // 2f-b. Summit email records — confirmed completers (legacy learners)
-    const SummitEmailRow2 = z.object({ viewer_id: z.string() });
-    const summitEmailRows = await ctx.integrations.db.query(
-      `SELECT DISTINCT viewer_id FROM cliptracker_v2_checkin_emails
-       WHERE checkin_type = 'summit'
-       LIMIT 100`,
-      SummitEmailRow2,
-      undefined,
-      { label: "Summit email recipients (confirmed completers)" }
-    );
-    const summitEmailSet = new Set(summitEmailRows.map(r => r.viewer_id));
-
     // 2f. Individual clips completed per learner (clip-level pacing).
     const ClipsDoneRow = z.object({ viewer_id: z.string(), clips_done: z.coerce.number() });
     const clipsDoneRows = await ctx.integrations.db.query(
@@ -516,11 +504,10 @@ export default api({
         const summit = getSummitDay(start, totalWeekdays, extDays);
         summitDayStr = summit.toISOString().split("T")[0];
         const pastSummit = isAfterDate(summit);
-        // Completed = all clips done for this role, OR confirmed via summit email / achievement flag (legacy completers)
-        const confirmedCompleter = summitEmailSet.has(l.viewer_id) || l.first_achievement_shown;
-        const allComplete = confirmedCompleter
-          || (clipsDone >= effectiveTotal
-            && (approachDone >= approachTotal || approachDone === 0));
+        // Completed = all clips actually done for this role (no shortcuts — must verify real progress)
+        const allComplete = clipsDone > 0
+          && clipsDone >= effectiveTotal
+          && (approachDone >= approachTotal || approachDone === 0);
 
         if (allComplete) {
           pacingStatus = "completed";

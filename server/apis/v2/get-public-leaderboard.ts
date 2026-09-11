@@ -58,7 +58,6 @@ const MaxSortRow = z.object({
 const WEEK1_EXPECTED_BY_DAY = [0, 2, 4, 5, 6, 7];
 const WEEK1_TOTAL = 7;
 
-const SummitEmailRow = z.object({ viewer_id: z.string() });
 
 function countWeekdays(start: Date, end: Date): number {
   const s = new Date(start.getFullYear(), start.getMonth(), start.getDate());
@@ -271,19 +270,6 @@ export default api({
     const approachMap = new Map<string, number>();
     for (const a of approachRows) approachMap.set(a.viewer_id, a.approach_items);
 
-    // 5. Summit email records — learners who received a summit completion email
-    //    are confirmed completers regardless of current clip count (handles legacy
-    //    learners who finished before new clips were added to the curriculum).
-    const summitEmailRows = await ctx.integrations.apps_database.query(
-      `SELECT DISTINCT viewer_id FROM cliptracker_v2_checkin_emails
-       WHERE checkin_type = 'summit'
-       LIMIT 100`,
-      SummitEmailRow,
-      undefined,
-      { label: "Summit email recipients (confirmed completers)" }
-    );
-    const summitEmailSet = new Set(summitEmailRows.map(r => r.viewer_id));
-
     const now = new Date();
 
     // Compute max XP per role group (AE/PSM/Renewals share ~963, SDR needs calculation)
@@ -311,12 +297,11 @@ export default api({
       const effectiveTotal = getEffectiveClipTotal(r.role, maxSortDone);
       const totalWeekdays = getTotalWeekdays(r.role);
 
-      // Completed = all clips done for this role, OR confirmed via summit email / achievement flag (legacy completers)
+      // Completed = all clips actually done for this role (no shortcuts — must verify real progress)
       const approachTotal = getApproachTotal(r.role);
-      const confirmedCompleter = summitEmailSet.has(r.viewer_id) || r.first_achievement_shown;
-      const allComplete = confirmedCompleter
-        || (clipsDone >= effectiveTotal
-          && (approachDone >= approachTotal || approachDone === 0));
+      const allComplete = clipsDone > 0
+        && clipsDone >= effectiveTotal
+        && (approachDone >= approachTotal || approachDone === 0);
 
       let pacingStatus = "not_started";
       if (r.ascent_day_1 || approachDone > 0 || clipsDone > 0) {
