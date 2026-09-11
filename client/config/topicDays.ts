@@ -53,6 +53,7 @@ export const TOPIC_DAYS: Record<string, TopicDayConfig> = {
       "Apply guardrails and policies (discount, term, uplift expectations) when shaping renewal strategies.",
     ],
     smes: [
+      { name: "Jenna Elliott", title: "Sr. VP, Global Customer Success" },
       { name: "Lenora Bennis", title: "Sr. Manager, Renewals Management" },
       { name: "Megha Sisaudia", title: "Head of Pricing Strategy & Operations", note: "on leave" },
       { name: "Katie Helie", title: "VP of Finance" },
@@ -62,6 +63,13 @@ export const TOPIC_DAYS: Record<string, TopicDayConfig> = {
       { name: "#gtm-pricing-packaging-help", url: "https://amplitude.slack.com/archives/C04LW12V65N" },
     ],
     resources: [
+      {
+        label: "Customer Operating Cadence",
+        url: "https://docs.google.com/document/d/1786rPB8C2VbeaPM9Lib8Qu8umYLHvS-u9-y0AODurbo/edit?tab=t.0",
+        type: "gdrive",
+        emoji: "📋",
+        note: "Sales + CS joint weekly review cadence",
+      },
       {
         label: "Sales Operating Cadence & Manager Playbook (2026)",
         url: "https://docs.google.com/presentation/d/1CQLqFWy3M6JiprYlgNh8FelgJorPT-eZ_uvpg3F0IFE/edit?slide=id.ge0112cd95c_5_4#slide=id.ge0112cd95c_5_4",
