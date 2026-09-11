@@ -1085,6 +1085,10 @@ export default function LibraryPage() {
     if (!week1Data.week1UnlockedAt || week1Data.firstAchievementShown) return;
     // Legacy learners don't get the First Achievement modal
     if (week1Data.isLegacyLearner) return;
+    // If the learner already has Ascent clip progress, they're past the transition —
+    // don't re-fire the modal (prevents re-setting first_achievement_shown after an intentional reset)
+    const hasAscentProgress = clips.some((c: any) => c.completed || c.pausedPhase);
+    if (hasAscentProgress) return;
 
     firstAchievementCatchUpRef.current = true;
     setFirstAchievementData({

@@ -311,10 +311,13 @@ export default api({
       const effectiveTotal = getEffectiveClipTotal(r.role, maxSortDone);
       const totalWeekdays = getTotalWeekdays(r.role);
 
-      // LOCKED COMPLETER CHECK — summit email OR grand finale means done forever.
-      // Their clipsDone IS their effectiveTotal (they completed under their curriculum).
+      // LOCKED COMPLETER CHECK — summit email is definitive. first_achievement_shown is also
+      // valid BUT only when combined with a real clip count (prevents early learners like Sky
+      // from being falsely locked — smallest complete path is Promo at 9 clips).
       const approachTotal = getApproachTotal(r.role);
-      const confirmedCompleter = summitEmailSet.has(r.viewer_id) || r.first_achievement_shown;
+      const MIN_COMPLETION_CLIPS = 9;
+      const confirmedCompleter = summitEmailSet.has(r.viewer_id)
+        || (r.first_achievement_shown && clipsDone >= MIN_COMPLETION_CLIPS);
 
       // If locked, freeze everything — no pacing recalculation, no curriculum recount
       if (confirmedCompleter && clipsDone > 0) {
