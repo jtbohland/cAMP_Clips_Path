@@ -13,9 +13,11 @@ type WheelDealCardProps = {
   verificationData?: { product: string; scenario: string; score: number; aiCoachScore: number | null; completedAt: string };
   isLegacy: boolean;
   onSubmit: (data: { product: string; scenario: string; score: number; aiCoachScore: number }) => Promise<void>;
+  reactionSlot?: React.ReactNode;
+  feedbackSlot?: React.ReactNode;
 };
 
-export default function WheelDealCard({ isVerified, verificationData, isLegacy, onSubmit }: WheelDealCardProps) {
+export default function WheelDealCard({ isVerified, verificationData, isLegacy, onSubmit, reactionSlot, feedbackSlot }: WheelDealCardProps) {
   const [product, setProduct] = useState("");
   const [scenario, setScenario] = useState("");
   const [score, setScore] = useState<number | "">("");
@@ -178,6 +180,13 @@ export default function WheelDealCard({ isVerified, verificationData, isLegacy, 
             >
               {submitting ? "Submitting..." : "🎡 Submit Result"}
             </button>
+          </div>
+        )}
+
+        {(reactionSlot || feedbackSlot) && (
+          <div className="px-5 pb-4">
+            {reactionSlot}
+            {feedbackSlot}
           </div>
         )}
       </div>

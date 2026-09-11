@@ -36,6 +36,8 @@ type ChallengerCardProps = {
     reflectionResponse: string;
     signature: string;
   }) => Promise<void>;
+  reactionSlot?: React.ReactNode;
+  feedbackSlot?: React.ReactNode;
 };
 
 export default function ChallengerCard({
@@ -50,6 +52,8 @@ export default function ChallengerCard({
   challengerScreenshots,
   onChallengerUpload,
   onSignOff,
+  reactionSlot,
+  feedbackSlot,
 }: ChallengerCardProps) {
   const [uploading, setUploading] = useState<string | null>(null);
   const [previews, setPreviews] = useState<Record<string, string>>({});
@@ -303,6 +307,13 @@ export default function ChallengerCard({
         {isSignedOff && signoffData && (
           <div className="px-5 py-2 bg-green-50 text-xs text-green-700">
             Signed by <strong>{signoffData.signature}</strong> on {new Date(signoffData.completedAt).toLocaleDateString()}
+          </div>
+        )}
+
+        {(reactionSlot || feedbackSlot) && (
+          <div className="px-5 pb-4">
+            {reactionSlot}
+            {feedbackSlot}
           </div>
         )}
       </div>

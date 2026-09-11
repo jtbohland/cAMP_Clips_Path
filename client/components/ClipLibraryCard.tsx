@@ -37,6 +37,8 @@ type ClipLibraryCardProps = {
   onBonusClip2Watch?: () => void;
   onBonusClip2Review?: () => void;
   bonusClip2Watched?: boolean;
+  reactionSlot?: React.ReactNode;
+  feedbackSlot?: React.ReactNode;
 };
 
 function getWeekLabel(weekNumber: number | null, sortOrder: number): string {
@@ -120,6 +122,8 @@ export default function ClipLibraryCard({
   onBonusClip2Watch,
   onBonusClip2Review,
   bonusClip2Watched,
+  reactionSlot,
+  feedbackSlot,
 }: ClipLibraryCardProps) {
   const isTopicDay = clip.isTopicDay ?? false;
   const buttonState = getButtonState(isLocked, isCompleted, pausedElapsedSeconds);
@@ -333,6 +337,9 @@ export default function ClipLibraryCard({
           </div>
         )}
 
+        {/* Emoji reactions — below clip/resource buttons, above Quiz/W&D */}
+        {reactionSlot}
+
         {/* cAMP Quiz button — always visible on qualifying tiles */}
         {CAMP_QUIZ_SORT_ORDERS.has(clip.sortOrder) && onCampQuiz && (
           <button
@@ -377,6 +384,9 @@ export default function ClipLibraryCard({
             Real Amplitude PODs break down complex wins — listen at your own pace
           </p>
         )}
+
+        {/* Daily Feedback — at the very bottom */}
+        {feedbackSlot}
       </div>
     </div>
   );

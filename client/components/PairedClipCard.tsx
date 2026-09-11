@@ -46,6 +46,11 @@ type PairedClipCardProps = {
   onZoomClipWatch?: () => void;
   onZoomClipReview?: () => void;
   zoomClipWatched?: boolean;
+  /** Slot for emoji reactions per clip */
+  reactionSlotA?: React.ReactNode;
+  reactionSlotB?: React.ReactNode;
+  /** Slot for daily feedback (rendered at very bottom of card) */
+  feedbackSlot?: React.ReactNode;
 };
 
 // Clips that show the cAMP Quiz button
@@ -171,6 +176,9 @@ export default function PairedClipCard({
   onZoomClipWatch,
   onZoomClipReview,
   zoomClipWatched,
+  reactionSlotA,
+  reactionSlotB,
+  feedbackSlot,
 }: PairedClipCardProps) {
   const buttonStateA = getButtonState(stateA.isLocked, stateA.isCompleted, stateA.pausedElapsedSeconds);
   const buttonStateB = getButtonState(stateB.isLocked, stateB.isCompleted, stateB.pausedElapsedSeconds);
@@ -296,6 +304,7 @@ export default function PairedClipCard({
             onWatch={onWatchA}
             onReview={onReviewA}
           />
+          {reactionSlotA}
         </div>
 
         {/* Clip B section — separated by divider */}
@@ -337,6 +346,7 @@ export default function PairedClipCard({
               onReview={onReviewB}
             />
           )}
+          {reactionSlotB}
         </div>
 
         {/* Reachdesk Zoom clip — Day 4 sort 50 pair */}
@@ -405,6 +415,9 @@ export default function PairedClipCard({
             REMEMBER: product-fluency practice — solo or multiplayer — as prep for cAMP 201.
           </p>
         )}
+
+        {/* Daily Feedback — at the very bottom of the card */}
+        {feedbackSlot}
       </div>
     </div>
   );

@@ -6,6 +6,9 @@ import { useApi } from "@/hooks/useApi.js";
 import { useViewer } from "@/components/ViewerContext";
 import ClipLibraryCard from "@/components/ClipLibraryCard";
 import PairedClipCard from "@/components/PairedClipCard";
+import ReactionBar from "@/components/ReactionBar";
+import DailyFeedback from "@/components/DailyFeedback";
+import type { ReactionCounts, UserReactions } from "@/components/ReactionBar";
 import RegistrationForm from "@/components/RegistrationForm";
 import MaintenancePage from "@/components/MaintenancePage";
 import XpProgressBar from "@/components/XpProgressBar";
@@ -216,6 +219,102 @@ export default function LibraryPage() {
     if (!viewer?.id) return;
     trackModal({ viewerId: viewer.id, modalType, action, metadata }).catch(() => {});
   }, [viewer?.id, trackModal]);
+
+  // --- Reaction + Daily Feedback data ---
+  const { data: reactionsData, refetch: refetchReactions } = useApiData(
+    "GetReactions",
+    { viewerId: viewer?.id ?? "" },
+    { enabled: !!viewer?.id }
+  );
+  const { data: feedbackData, refetch: refetchFeedback } = useApiData(
+    "GetDailyFeedback",
+    { viewerId: viewer?.id ?? "" },
+    { enabled: !!viewer?.id }
+  );
+  const { run: toggleReaction } = useApi("ToggleReaction");
+  const { run: submitFeedback } = useApi("SubmitDailyFeedback");
+
+  // Build lookup maps for reactions
+  const reactionCountsMap = useMemo(() => {
+    const map = new Map<string, ReactionCounts>();
+    if (!reactionsData?.counts) return map;
+    for (const row of reactionsData.counts) {
+      const existing = map.get(row.lesson_key) ?? {};
+      existing[row.emoji] = row.count;
+      map.set(row.lesson_key, existing);
+    }
+    return map;
+  }, [reactionsData?.counts]);
+
+  const userReactionsMap = useMemo(() => {
+    const map = new Map<string, UserReactions>();
+    if (!reactionsData?.userReactions) return map;
+    for (const row of reactionsData.userReactions) {
+      if (!map.has(row.lesson_key)) map.set(row.lesson_key, new Set());
+      map.get(row.lesson_key)!.add(row.emoji);
+    }
+    return map;
+  }, [reactionsData?.userReactions]);
+
+  // Build lookup map for feedback
+  const feedbackMap = useMemo(() => {
+    const map = new Map<string, { rating: string | null; usefulness: string | null }>();
+    if (!feedbackData?.feedback) return map;
+    for (const row of feedbackData.feedback) {
+      map.set(row.day_key, { rating: row.rating, usefulness: row.usefulness });
+    }
+    return map;
+  }, [feedbackData?.feedback]);
+
+  const handleToggleReaction = useCallback(
+    async (lessonKey: string, emoji: string) => {
+      if (!viewer?.id) return;
+      try {
+        await toggleReaction({ viewerId: viewer.id, lessonKey, emoji });
+        refetchReactions();
+      } catch { /* silent */ }
+    },
+    [viewer?.id, toggleReaction, refetchReactions]
+  );
+
+  const handleSubmitFeedback = useCallback(
+    async (dayKey: string, field: "rating" | "usefulness", value: string) => {
+      if (!viewer?.id) return;
+      try {
+        await submitFeedback({ viewerId: viewer.id, dayKey, field, value });
+        refetchFeedback();
+      } catch { /* silent */ }
+    },
+    [viewer?.id, submitFeedback, refetchFeedback]
+  );
+
+  // Helper: build reaction + feedback slots for a given lesson/day key
+  const buildReactionSlot = useCallback(
+    (lessonKey: string) => (
+      <ReactionBar
+        lessonKey={lessonKey}
+        counts={reactionCountsMap.get(lessonKey) ?? {}}
+        userReactions={userReactionsMap.get(lessonKey) ?? new Set()}
+        onToggle={handleToggleReaction}
+      />
+    ),
+    [reactionCountsMap, userReactionsMap, handleToggleReaction]
+  );
+
+  const buildFeedbackSlot = useCallback(
+    (dayKey: string) => {
+      const fb = feedbackMap.get(dayKey);
+      return (
+        <DailyFeedback
+          dayKey={dayKey}
+          existingRating={fb?.rating ?? null}
+          existingUsefulness={fb?.usefulness ?? null}
+          onSubmit={handleSubmitFeedback}
+        />
+      );
+    },
+    [feedbackMap, handleSubmitFeedback]
+  );
 
   // Track login — update last_login_at once per session
   useEffect(() => {
@@ -1287,14 +1386,14 @@ export default function LibraryPage() {
       </div>
 
       {/* Tab Bar */}
-      <div className="border-b border-green-900/20 bg-[#2D6A4F]">
-        <div className="flex max-w-4xl mx-auto w-full">
+      <div className="bg-[#2D6A4F]">
+        <div className="flex max-w-4xl mx-auto w-full gap-2 px-3 py-2">
           <button
             onClick={() => setActiveTab("approach")}
-            className={`flex-1 py-2.5 text-sm font-semibold text-center transition-colors ${
+            className={`flex-1 py-2.5 text-sm font-bold text-center rounded-lg transition-all ${
               activeTab === "approach"
-                ? "text-white border-b-2 border-white bg-white/10"
-                : "text-green-200/70 hover:text-white hover:bg-white/5"
+                ? "bg-amber-500/90 text-white shadow-md shadow-amber-900/30"
+                : "bg-white/10 text-green-200/70 hover:text-white hover:bg-white/15"
             }`}
           >
             🚡 The Approach
@@ -1304,10 +1403,10 @@ export default function LibraryPage() {
               summitInSightNavigatedRef.current = false; // Re-arm Summit in Sight if Approach still incomplete
               setActiveTab("ascent");
             }}
-            className={`flex-1 py-2.5 text-sm font-semibold text-center transition-colors ${
+            className={`flex-1 py-2.5 text-sm font-bold text-center rounded-lg transition-all ${
               activeTab === "ascent"
-                ? "text-white border-b-2 border-white bg-white/10"
-                : "text-green-200/70 hover:text-white hover:bg-white/5"
+                ? "bg-teal-500/90 text-white shadow-md shadow-teal-900/30"
+                : "bg-white/10 text-green-200/70 hover:text-white hover:bg-white/15"
             }`}
           >
             🧗 The Ascent
@@ -1323,6 +1422,8 @@ export default function LibraryPage() {
             viewerName={viewer.name}
             viewerRole={viewer.role}
             isAdmin={viewer.isAdmin}
+            buildReactionSlot={buildReactionSlot}
+            buildFeedbackSlot={buildFeedbackSlot}
             pacingLearners={pacingLearners}
             pacingLoading={pacingPerfLoading}
             sdrTestMode={sdrTestMode}
@@ -1603,6 +1704,9 @@ export default function LibraryPage() {
                               onZoomClipWatch={clip.sortOrder === 50 ? handleReachdeskWatch : undefined}
                               onZoomClipReview={clip.sortOrder === 50 ? () => navigate(`/report/reachdesk`) : undefined}
                               zoomClipWatched={clip.sortOrder === 50 ? reachdeskWatched : undefined}
+                              reactionSlotA={buildReactionSlot(clip.id)}
+                              reactionSlotB={buildReactionSlot(clipB.id)}
+                              feedbackSlot={buildFeedbackSlot(`day_${clip.sortOrder}`)}
                             />
                           );
                         }
@@ -1646,6 +1750,8 @@ export default function LibraryPage() {
                           onBonusClip2Watch={clip.sortOrder === 180 ? handleBonusClip2Watch : undefined}
                           onBonusClip2Review={clip.sortOrder === 180 ? handleBonusClip2Review : undefined}
                           bonusClip2Watched={clip.sortOrder === 180 ? bonus2Watched : undefined}
+                          reactionSlot={buildReactionSlot(clip.id)}
+                          feedbackSlot={buildFeedbackSlot(`day_${clip.sortOrder}`)}
                         />
                       );
                     });

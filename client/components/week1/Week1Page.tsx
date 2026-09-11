@@ -86,9 +86,12 @@ type Week1PageProps = {
   vpTestMode?: boolean;
   /** Admin: toggle VP test mode */
   onToggleVpTest?: () => void;
+  /** Slot builders from Library for reaction/feedback */
+  buildReactionSlot?: (lessonKey: string) => React.ReactNode;
+  buildFeedbackSlot?: (dayKey: string) => React.ReactNode;
 };
 
-export default function Week1Page({ viewerId, viewerName, viewerRole, isAdmin, pacingLearners, pacingLoading, onBeginAscent, onSwitchToAscent, onOpenRegistration, onTestCheckin, sdrTestMode, onToggleSdrTest, vpTestMode, onToggleVpTest }: Week1PageProps) {
+export default function Week1Page({ viewerId, viewerName, viewerRole, isAdmin, pacingLearners, pacingLoading, onBeginAscent, onSwitchToAscent, onOpenRegistration, onTestCheckin, sdrTestMode, onToggleSdrTest, vpTestMode, onToggleVpTest, buildReactionSlot, buildFeedbackSlot }: Week1PageProps) {
   const navigate = useNavigate();
   // Admin "Test as New Learner" toggle — resets view to fresh state
   const [testMode, setTestMode] = useState(false);
@@ -523,6 +526,8 @@ export default function Week1Page({ viewerId, viewerName, viewerRole, isAdmin, p
         } : undefined}
         isLegacy={isLegacy}
         onSignOff={async (d) => handleModuleSignoff("meddpicc", d, MEDDPICC_REFLECTION)}
+        reactionSlot={buildReactionSlot?.("meddpicc")}
+        feedbackSlot={buildFeedbackSlot?.("approach_meddpicc")}
       />}
 
       {/* Module 2: cAMP 101 */}
@@ -630,6 +635,8 @@ export default function Week1Page({ viewerId, viewerName, viewerRole, isAdmin, p
         }}
         onChallengerUpload={handleAcademyUpload}
         onSignOff={async (d) => handleModuleSignoff("challenger", d, challengerPrompt)}
+        reactionSlot={buildReactionSlot?.("challenger")}
+        feedbackSlot={buildFeedbackSlot?.("approach_challenger")}
       />}
 
       {/* Module 4: Wheel & Deal */}
@@ -638,6 +645,8 @@ export default function Week1Page({ viewerId, viewerName, viewerRole, isAdmin, p
         verificationData={data?.wdVerification ?? undefined}
         isLegacy={isLegacy}
         onSubmit={handleWdSubmit}
+        reactionSlot={buildReactionSlot?.("wheel_and_deal")}
+        feedbackSlot={buildFeedbackSlot?.("approach_wheel_deal")}
       />
 
       {/* Begin The Ascent button */}
