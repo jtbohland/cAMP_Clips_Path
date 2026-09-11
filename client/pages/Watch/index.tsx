@@ -1290,6 +1290,18 @@ export default function WatchPage() {
             </div>
           )}
 
+          {/* VP-only: Partner Delivered Services — sort 130 (Leveraging Partners) */}
+          {clipData?.clip?.sortOrder === 130 && viewer?.role === "SDR>Velocity Promo" && (
+            <a
+              href="https://docs.google.com/presentation/d/1RPuVNPDjNV3GpgDpMAcw4DeDuaCin9EssnUapX7NvaA/edit?slide=id.p7#slide=id.p7"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-semibold px-3 py-1.5 rounded-lg bg-purple-100 text-purple-700 hover:bg-purple-200 transition-colors"
+            >
+              🤝 Partner Delivered Services
+            </a>
+          )}
+
           {/* Transcript — blue outlined button */}
           <button
             onClick={() => setShowTranscript((v) => !v)}

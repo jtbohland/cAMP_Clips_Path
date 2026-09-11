@@ -199,6 +199,21 @@ export default function ReportPage() {
         {resources && resources.length > 0 && (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
             <CampGearSection resources={resources} onResourceClick={handleResourceClick} />
+            {/* VP-only: Partner Delivered Services for Leveraging Partners */}
+            {clipSortOrder === 130 && viewer?.role === "SDR>Velocity Promo" && (
+              <div className="mt-3 pt-3 border-t border-gray-100">
+                <p className="text-xs font-semibold text-purple-600 uppercase tracking-wider mb-1.5">🤝 Velocity Resources</p>
+                <a
+                  href="https://docs.google.com/presentation/d/1RPuVNPDjNV3GpgDpMAcw4DeDuaCin9EssnUapX7NvaA/edit?slide=id.p7#slide=id.p7"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => handleResourceClick("Partner Delivered Services (Velocity)")}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-purple-50 text-purple-800 border border-purple-200 hover:bg-purple-100 transition-colors"
+                >
+                  🤝 Partner Delivered Services ↗
+                </a>
+              </div>
+            )}
           </div>
         )}
 
