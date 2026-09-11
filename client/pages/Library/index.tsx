@@ -1100,12 +1100,13 @@ export default function LibraryPage() {
   }, [dataReady, week1Data, showFirstAchievement, showCheckin, showSummit, tierUnlock, viewer, logModal]);
 
   // ── Auto-trigger Anchor Point check-ins (persistent — re-fires on every load until sent) ──
+  // Uses dynamic week boundaries from the actual clips array so it works for all paths
+  // (AE, SDR, Promo) regardless of clip count or week distribution.
   useEffect(() => {
     if (!dataReady || !progressData || checkinTriggeredRef.current) return;
-    if (showSummit || showFirstAchievement || tierUnlock !== null || showCheckin) return;
+    if (showSummit || showFinalAchievement || showFirstAchievement || tierUnlock !== null || showCheckin) return;
     if (viewer?.isAdmin) return; // admins use the Test Check-In dropdown instead
-
-    const completed = progressData.clipsCompleted;
+    if (!clips || clips.length === 0) return;
 
     // Approach check-in: fires ONLY after Approach is complete (all 7 items) or force-unlocked.
     // This is the persistent safety net — the primary trigger is the callback from
@@ -1113,13 +1114,11 @@ export default function LibraryPage() {
     // This auto-trigger re-fires on every Library load until the learner sends it,
     // preventing access to Week 2 clips (modal has no close button).
     if (
-      completed >= 0 &&
       progressData.ascentDay1 &&
       !progressData.approachCheckinSentAt &&
-      !week1Data?.isLegacyLearner &&  // legacy learners exempt from Approach check-in
-      (approachStatus?.complete || !!week1Data?.week1UnlockedAt)  // must finish Approach first
+      !week1Data?.isLegacyLearner &&
+      (approachStatus?.complete || !!week1Data?.week1UnlockedAt)
     ) {
-      // Hard gate — fires every page load until sent (no sessionStorage bypass)
       checkinTriggeredRef.current = true;
       setCheckinType("approach");
       setShowCheckin(true);
@@ -1127,45 +1126,106 @@ export default function LibraryPage() {
       return;
     }
 
-    // Week 3 check-in: 10+ clips, week3 not sent yet.
-    // Bypasses week 2 check-in — learners already in week 2/3 when check-in
-    // feature launched skip week 2 and start sending at end of Week 3.
+    // ── Dynamic week-boundary triggers ──
+    // Group clips by weekNumber and check if ALL clips in each week are completed
+    const weekMap = new Map<number, { total: number; done: number }>();
+    for (const c of clips as any[]) {
+      const w = c.weekNumber as number;
+      if (!weekMap.has(w)) weekMap.set(w, { total: 0, done: 0 });
+      const entry = weekMap.get(w)!;
+      entry.total++;
+      if (c.completed) entry.done++;
+    }
+
+    const allClipsDone = Array.from(weekMap.values()).every(w => w.done >= w.total);
+    const weeks = Array.from(weekMap.keys()).sort((a, b) => a - b);
+    // weeks are typically [2, 3, 4] for AE/SDR, or [2, 3] for VP (after renumbering)
+
+    const weekAllDone = (wk: number) => {
+      const entry = weekMap.get(wk);
+      return entry ? entry.done >= entry.total : false;
+    };
+
+    // Summit anchor point: ALL clips done + Approach done + summit not yet sent
+    // (If Approach is NOT done, the Summit in Sight gate handles it — not here)
     if (
-      completed >= 10 &&
-      !progressData.week3CheckinSentAt
+      allClipsDone &&
+      !progressData.summitCheckinSent &&
+      approachStatus?.complete
     ) {
-      // Hard gate — fires every page load until sent (no sessionStorage bypass)
       checkinTriggeredRef.current = true;
-      setCheckinType("week3");
+      setCheckinType("summit");
       setShowCheckin(true);
-      logModal("checkin_week3", "shown");
+      logModal("checkin_summit", "shown");
       return;
     }
 
-    // Week 2 check-in: 5+ clips, week2 not sent, AND less than 10 clips
-    // (once they hit 10 clips, week 3 takes priority above)
-    // No approachCheckinSentAt dependency — for new learners the Approach gate
-    // naturally ensures it's sent before reaching 5 clips; legacy learners
-    // (who bypass Approach) get Week 2 based purely on clip count.
-    if (
-      completed >= 5 &&
-      completed < 10 &&
-      !progressData.week2CheckinSentAt
-    ) {
-      // Legacy learners already mid-week skip backlogged anchors —
-      // only fire at the exact boundary (5 clips = just finished Week 1).
-      // They'll naturally hit Week 3 at 10 clips instead.
-      if (week1Data?.isLegacyLearner && completed > 5) {
-        return; // skip backlogged Week 2, let Week 3 catch them at 10
+    // Work backwards through weeks — fire the HIGHEST unsent anchor point.
+    // This handles the case where a learner blew through multiple weeks between visits.
+    // Week 4 anchor = week3 check-in (AE/SDR only — VP has no week 4)
+    if (weeks.includes(4) && weekAllDone(4) && !progressData.week3CheckinSentAt) {
+      // Legacy learners who were already past this week skip backlogged anchors
+      if (week1Data?.isLegacyLearner && progressData.week3CheckinSentAt === null && weekAllDone(4)) {
+        // Let them through — they'll hit summit trigger instead
+      } else {
+        checkinTriggeredRef.current = true;
+        setCheckinType("week3");
+        setShowCheckin(true);
+        logModal("checkin_week3", "shown");
+        return;
       }
-      // Hard gate — fires every page load until sent (no sessionStorage bypass)
+    }
+
+    // Week 3 done = week2 check-in for paths with week 4 (AE/SDR)
+    // OR week3 check-in for VP (who only has weeks 2-3)
+    if (weeks.length >= 2) {
+      const secondWeek = weeks[1]; // Week 3 for AE/SDR/VP
+      if (weekAllDone(secondWeek)) {
+        // For VP (only 2 weeks): completing Week 3 = Week 3 anchor (last week before summit)
+        if (weeks.length === 2 && !progressData.week3CheckinSentAt) {
+          checkinTriggeredRef.current = true;
+          setCheckinType("week3");
+          setShowCheckin(true);
+          logModal("checkin_week3", "shown");
+          return;
+        }
+        // For AE/SDR (3 weeks): completing Week 3 = Week 2 anchor
+        if (weeks.length >= 3 && !progressData.week2CheckinSentAt) {
+          if (week1Data?.isLegacyLearner && weekAllDone(weeks[2])) {
+            // Legacy learner already past Week 3 — skip backlogged Week 2
+          } else {
+            checkinTriggeredRef.current = true;
+            setCheckinType("week2");
+            setShowCheckin(true);
+            logModal("checkin_week2", "shown");
+            return;
+          }
+        }
+      }
+    }
+
+    // Week 2 done = week2 check-in for VP (VP's first week of Ascent)
+    if (weeks.length === 2 && weekAllDone(weeks[0]) && !progressData.week2CheckinSentAt) {
       checkinTriggeredRef.current = true;
       setCheckinType("week2");
       setShowCheckin(true);
       logModal("checkin_week2", "shown");
       return;
     }
-  }, [dataReady, progressData, showSummit, showFirstAchievement, tierUnlock, showCheckin, viewer, approachStatus, week1Data]);
+
+    // First week done (Week 2 in AE/SDR) = week2 check-in
+    if (weeks.length >= 3 && weekAllDone(weeks[0]) && !progressData.week2CheckinSentAt) {
+      if (week1Data?.isLegacyLearner && weekAllDone(weeks[1])) {
+        // Legacy learner already past — skip
+      } else {
+        checkinTriggeredRef.current = true;
+        setCheckinType("week2");
+        setShowCheckin(true);
+        logModal("checkin_week2", "shown");
+        return;
+      }
+    }
+  }, [dataReady, progressData, showSummit, showFinalAchievement, showFirstAchievement, tierUnlock, showCheckin, viewer, approachStatus, week1Data, clips]);
 
   // ──────────────────── RENDER GATES ────────────────────
   // 1. Viewer still loading → skeleton
