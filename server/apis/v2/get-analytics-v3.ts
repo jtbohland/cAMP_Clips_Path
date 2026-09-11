@@ -325,6 +325,18 @@ export default api({
     }
     const TOTAL_APPROACH_MODULES = 8;
 
+    // 2f-b. Summit email records — confirmed completers (legacy learners)
+    const SummitEmailRow2 = z.object({ viewer_id: z.string() });
+    const summitEmailRows = await ctx.integrations.db.query(
+      `SELECT DISTINCT viewer_id FROM cliptracker_v2_checkin_emails
+       WHERE checkin_type = 'summit'
+       LIMIT 100`,
+      SummitEmailRow2,
+      undefined,
+      { label: "Summit email recipients (confirmed completers)" }
+    );
+    const summitEmailSet = new Set(summitEmailRows.map(r => r.viewer_id));
+
     // 2f. Individual clips completed per learner (clip-level pacing).
     const ClipsDoneRow = z.object({ viewer_id: z.string(), clips_done: z.coerce.number() });
     const clipsDoneRows = await ctx.integrations.db.query(
@@ -496,6 +508,57 @@ export default api({
       const totalWeekdays = getTotalWeekdays(l.role);
       const approachTotal = getApproachTotal(l.role);
 
+      // LOCKED COMPLETER CHECK — summit email OR grand finale means done forever.
+      // Their clipsDone IS their effectiveTotal (they completed under their curriculum).
+      const confirmedCompleter = summitEmailSet.has(l.viewer_id) || l.first_achievement_shown;
+
+      if (confirmedCompleter && clipsDone > 0) {
+        // Locked — always "completed", count toward on-time finishers, skip all recalculation
+        pacingStatus = "completed";
+        onTimeFinishers++;
+        if (l.ascent_day_1) {
+          const start = new Date(l.ascent_day_1);
+          const summit = getSummitDay(start, totalWeekdays, l.extension_days);
+          summitDayStr = summit.toISOString().split("T")[0];
+        }
+        const currentTier = TIERS.reduce((acc, t) => {
+          if (l.total_xp >= t.xpMin) return t;
+          return acc;
+        }, TIERS[0]);
+
+        return {
+          viewerId: l.viewer_id,
+          name: l.name,
+          email: l.email,
+          role: l.role,
+          timezone: l.timezone,
+          managerName: l.manager_name,
+          ascentDay1: l.ascent_day_1,
+          clipsCompleted: clipsDone,  // frozen: their actual count at completion time
+          effectiveTotal: clipsDone,  // frozen: they completed their curriculum
+          totalXp: l.total_xp,
+          clipScoreAvg: l.clip_score_avg ? parseFloat(l.clip_score_avg) : null,
+          firstAttemptAvg: l.first_attempt_avg ? parseFloat(l.first_attempt_avg) : null,
+          recoveryAvg: l.recovery_avg ? parseFloat(l.recovery_avg) : null,
+          wtsCount: l.wts_count,
+          srCount: l.sr_count,
+          gearClicks: gearClickMap.get(l.viewer_id) ?? 0,
+          tier: currentTier,
+          badges: (badgeMap.get(l.viewer_id) ?? []).map(id => ({ badgeId: id })),
+          pacingStatus: "completed",
+          summitDay: summitDayStr,
+          isAnchorFailure: false,
+          ascentAdjustmentDay: null,
+          lastLogin: l.last_login_at,
+          approachComplete: true,
+          approachCompletedCount: approachMap.get(l.viewer_id) ?? approachTotal,
+          approachTotal,
+          extensionDays: l.extension_days,
+          lastCompletedAt: l.last_completed_at,
+        };
+      }
+
+      // Active learner — compute pacing dynamically
       if (l.ascent_day_1) {
         const start = new Date(l.ascent_day_1);
         const extDays = l.extension_days;
@@ -504,7 +567,7 @@ export default api({
         const summit = getSummitDay(start, totalWeekdays, extDays);
         summitDayStr = summit.toISOString().split("T")[0];
         const pastSummit = isAfterDate(summit);
-        // Completed = all clips actually done for this role (no shortcuts — must verify real progress)
+        // Completed = all clips actually done for this role
         const allComplete = clipsDone > 0
           && clipsDone >= effectiveTotal
           && (approachDone >= approachTotal || approachDone === 0);
