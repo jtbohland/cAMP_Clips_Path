@@ -311,10 +311,10 @@ export default api({
       const effectiveTotal = getEffectiveClipTotal(r.role, maxSortDone);
       const totalWeekdays = getTotalWeekdays(r.role);
 
-      // LOCKED COMPLETER CHECK — summit email OR grand finale means done forever.
-      // Their clipsDone IS their effectiveTotal (they completed under their curriculum).
+      // LOCKED COMPLETER CHECK — summit email is the ONLY definitive signal for Ascent completion.
+      // first_achievement_shown only means Approach is done, NOT Ascent.
       const approachTotal = getApproachTotal(r.role);
-      const confirmedCompleter = summitEmailSet.has(r.viewer_id) || r.first_achievement_shown;
+      const confirmedCompleter = summitEmailSet.has(r.viewer_id);
 
       // If locked, freeze everything — no pacing recalculation, no curriculum recount
       if (confirmedCompleter && clipsDone > 0) {
