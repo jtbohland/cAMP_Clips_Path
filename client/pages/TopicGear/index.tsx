@@ -10,6 +10,7 @@ import TopicResourceList from "@/components/TopicResourceList";
 import TopicReflectionSection from "@/components/TopicReflectionSection";
 import RidgeGame from "@/components/RidgeGame";
 import PriceGame from "@/components/PriceGame";
+import DEARRCrossingGame from "@/components/DEARRCrossingGame";
 
 /**
  * Topic Gear page — shows summary, learning objectives, SMEs, and resources
@@ -60,7 +61,8 @@ export default function TopicGearPage() {
   const config = topicKey ? TOPIC_DAYS[topicKey] : undefined;
   const isROE = topicKey === "day13_sdr_roe";
   const isPriceGame = topicKey === "day9";
-  const hasReflection = !!(config?.reflectionQuestions && config.reflectionQuestions.length >= 2 && !isPriceGame);
+  const isDEARRGame = topicKey === "day5";
+  const hasReflection = !!(config?.reflectionQuestions && config.reflectionQuestions.length >= 2 && !isPriceGame && !isDEARRGame);
 
   const { run: trackClick, loading: tracking } = useApi("TrackResourceClick");
 
@@ -71,6 +73,7 @@ export default function TopicGearPage() {
   const [roeDocClicked, setRoeDocClicked] = useState(false);
   const [roeGameComplete, setRoeGameComplete] = useState(false);
   const [priceGameComplete, setPriceGameComplete] = useState(false);
+  const [dearrGameComplete, setDearrGameComplete] = useState(false);
 
   // Check if reflection was ALREADY submitted on a previous visit (Day 5 & Day 9)
   const { data: reflectionData } = useApiData(
@@ -121,6 +124,11 @@ export default function TopicGearPage() {
       if (!hasStartedResources) return true;
       return priceGameComplete;
     }
+    // Day 5 DEARR Crossing: can leave before first click, or after game complete
+    if (isDEARRGame) {
+      if (!hasStartedResources) return true;
+      return dearrGameComplete;
+    }
     // Day 5: can leave before clicking any resource, or after reflection
     if (hasReflection) {
       if (!hasStartedResources) return true;
@@ -128,7 +136,7 @@ export default function TopicGearPage() {
     }
     // Fallback (unknown topic day): always allow
     return true;
-  }, [viewer?.isAdmin, isROE, roeDocClicked, roeGameComplete, isPriceGame, priceGameComplete, hasReflection, hasStartedResources, reflectionAlreadyDone, reflectionJustSubmitted]);
+  }, [viewer?.isAdmin, isROE, roeDocClicked, roeGameComplete, isPriceGame, priceGameComplete, isDEARRGame, dearrGameComplete, hasReflection, hasStartedResources, reflectionAlreadyDone, reflectionJustSubmitted]);
 
   const handleResourceClick = useCallback(async (index: number, url: string) => {
     // Open resource in new tab
@@ -200,7 +208,7 @@ export default function TopicGearPage() {
           ? "bg-indigo-600 text-white hover:bg-indigo-700"
           : "bg-gray-400 text-gray-200 cursor-not-allowed"
       }`}
-      title={!canLeave ? (isROE ? "Complete the Ridge game to continue" : isPriceGame ? "Complete the Price is Right game to continue" : "Complete the reflection to continue") : undefined}
+      title={!canLeave ? (isROE ? "Complete the Ridge game to continue" : isPriceGame ? "Complete the Price is Right game to continue" : isDEARRGame ? "Complete DEARR Crossing to continue" : "Complete the reflection to continue") : undefined}
     >
       {canLeave ? "🎞️ Back to Clips" : "🔒 Back to Clips"}
     </button>
@@ -237,6 +245,8 @@ export default function TopicGearPage() {
                     ? "Complete the Ridge game to unlock \"Back to Clips\""
                     : isPriceGame
                     ? "Complete The Price is Right game to unlock \"Back to Clips\""
+                    : isDEARRGame
+                    ? "Complete DEARR Crossing to unlock \"Back to Clips\""
                     : "Complete the reflection to unlock \"Back to Clips\""}
                 </p>
                 <p className="text-xs text-amber-600 mt-0.5">
@@ -244,6 +254,8 @@ export default function TopicGearPage() {
                     ? "You've reviewed the ROE Guide — now prove your knowledge in the Ridge game below."
                     : isPriceGame
                     ? "Review all resources, then test your pricing knowledge in the game below."
+                    : isDEARRGame
+                    ? "Review all resources, then help the deer cross safely in DEARR Crossing below. 🦌"
                     : "Review all resources and submit your reflection to continue."}
                 </p>
               </div>
@@ -265,6 +277,8 @@ export default function TopicGearPage() {
                     ? "All tools. All terrain. You're ready for the Ridge."
                     : isPriceGame
                     ? "All tools. All terrain. You're ready for The Price is Right! 🎰"
+                    : isDEARRGame
+                    ? "All tools. All terrain. Time for DEARR Crossing — help the deer cross all 3 roads! 🦌"
                     : "All tools. All terrain. You're ready for anything. Submit the reflection below for +10 XP!"}
                 </p>
               </div>
@@ -375,7 +389,7 @@ export default function TopicGearPage() {
 
           {/* Ridge Game (ROE day only) — replaces reflection */}
           {isROE && viewer?.id && clipId && (
-            allClicked ? (
+            (allClicked || viewer?.isAdmin) ? (
               <RidgeGame
                 viewerId={viewer.id}
                 clipId={clipId}
@@ -396,7 +410,7 @@ export default function TopicGearPage() {
 
           {/* Price is Right game (Day 9 only) — replaces reflection */}
           {isPriceGame && viewer?.id && clipId && (
-            allClicked ? (
+            (allClicked || viewer?.isAdmin) ? (
               <PriceGame
                 viewerId={viewer.id}
                 clipId={clipId}
@@ -417,7 +431,7 @@ export default function TopicGearPage() {
 
           {/* Topic Reflection (Day 5 only) — locked until all resources clicked */}
           {hasReflection && viewer?.id && topicKey && (
-            allClicked ? (
+            (allClicked || viewer?.isAdmin) ? (
               <TopicReflectionSection
                 viewerId={viewer.id}
                 topicDay={topicKey}
@@ -434,6 +448,27 @@ export default function TopicGearPage() {
                 </p>
               </div>
             )
+          )}
+
+          {/* DEARR Crossing game (Day 5 only) — replaces reflection */}
+          {isDEARRGame && viewer?.id && clipId && (
+            (allClicked || viewer?.isAdmin) ? (
+              <DEARRCrossingGame
+                viewerId={viewer.id}
+                clipId={clipId}
+                onComplete={() => setDearrGameComplete(true)}
+                onBackToClips={() => navigate("/?tab=ascent")}
+              />
+            ) : hasStartedResources ? (
+              <div className="rounded-xl bg-gray-50 border border-gray-200 shadow-[0_1px_3px_rgba(0,0,0,0.08)] p-5 opacity-60">
+                <h2 className="text-base font-bold text-gray-400 flex items-center gap-2 mb-1">
+                  🔒 🦌 DEARR Crossing
+                </h2>
+                <p className="text-xs text-gray-400">
+                  Review all resources above to unlock the DEARR Crossing game.
+                </p>
+              </div>
+            ) : null
           )}
 
           {/* Bottom back button */}

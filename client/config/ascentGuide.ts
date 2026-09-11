@@ -158,6 +158,7 @@ const GUIDE_SESSIONS: Record<string, AscentGuideEntry> = {
       "Apply guardrails and policies (discount, term, uplift expectations) when shaping renewal strategies.",
     ],
     smes: [
+      { name: "Jenna Elliott", title: "Sr. VP, Global Customer Success" },
       { name: "Lenora Bennis", title: "Sr. Manager, Renewals Management" },
       { name: "Megha Sisaudia", title: "Head of Pricing Strategy & Operations (on leave)" },
       { name: "Katie Helie", title: "VP of Finance" },
