@@ -5,6 +5,7 @@ import LightAnchorModal from "@/components/LightAnchorModal";
 import ApproachPacingModal from "@/components/ApproachPacingModal";
 import ApproachDeadlineModal from "@/components/ApproachDeadlineModal";
 import OhDeerModal from "@/components/OhDeerModal";
+import Legal101ReminderModal from "@/components/Legal101ReminderModal";
 import SummitInSightModal from "@/components/SummitInSightModal";
 import QuizReminderModal from "@/components/QuizReminderModal";
 import type { PacingTier, MissedClip } from "@/lib/pacing";
@@ -179,6 +180,14 @@ const approachExhibits: MuseumExhibit[] = [
         incompleteModules={MOCK_APPROACH_INCOMPLETE_MODULES.slice(0, 3)}
         onDismiss={noop}
       />
+    ),
+  },
+  {
+    id: "legal-101-reminder",
+    title: "⚖️ Legal 101 Reminder",
+    trigger: "Begin Ascent click — shown before anchor point email fires",
+    render: () => (
+      <Legal101ReminderModal onContinue={noop} />
     ),
   },
   {
