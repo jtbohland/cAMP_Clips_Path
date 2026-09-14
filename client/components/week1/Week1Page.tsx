@@ -592,10 +592,10 @@ export default function Week1Page({ viewerId, viewerName, viewerRole, isAdmin, p
           </button>
           {!allComplete && (
             <p className="text-xs text-gray-400 text-center mt-2">
-              {!isVP && !signoffMap.meddpicc && "⬜ MEDDPICC · "}
-              {!signoffMap.camp101 && "⬜ cAMP 101 · "}
-              {!isVP && !signoffMap.challenger && "⬜ Challenger · "}
-              {!wdVerified && "⬜ Wheel & Deal"}
+              {!isVP && (signoffMap.meddpicc ? "✅ MEDDPICC · " : "⬜ MEDDPICC · ")}
+              {signoffMap.camp101 ? "✅ cAMP 101 · " : "⬜ cAMP 101 · "}
+              {!isVP && (signoffMap.challenger ? "✅ Challenger · " : "⬜ Challenger · ")}
+              {wdVerified ? "✅ Wheel & Deal" : "⬜ Wheel & Deal"}
             </p>
           )}
         </div>
