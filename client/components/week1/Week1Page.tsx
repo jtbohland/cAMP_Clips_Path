@@ -13,6 +13,7 @@ import ApproachPacingModal from "@/components/ApproachPacingModal";
 import type { PacingLearner } from "@/components/PacingPerformanceSection";
 import ApproachDeadlineModal from "@/components/ApproachDeadlineModal";
 import OhDeerModal from "@/components/OhDeerModal";
+import Legal101ReminderModal from "@/components/Legal101ReminderModal";
 import {
   countWeekdays,
   getApproachItemsBehind,
@@ -95,6 +96,7 @@ export default function Week1Page({ viewerId, viewerName, viewerRole, isAdmin, p
   const navigate = useNavigate();
   // Admin "Test as New Learner" toggle — resets view to fresh state
   const [testMode, setTestMode] = useState(false);
+  const [showLegal101, setShowLegal101] = useState(false);
   const isVP = viewerRole === "SDR>Velocity Promo";
 
   const { data: rawData, loading, refetch } = useApiData(
@@ -317,6 +319,12 @@ export default function Week1Page({ viewerId, viewerName, viewerRole, isAdmin, p
   }, [viewerId, submitWd, refetch]);
 
   const handleBeginAscent = useCallback(async () => {
+    // Show Legal 101 reminder BEFORE the actual unlock
+    setShowLegal101(true);
+  }, []);
+
+  const handleLegal101Continue = useCallback(async () => {
+    setShowLegal101(false);
     try {
       const result = await unlockAscent({ viewerId });
       if (result?.error) {
@@ -392,6 +400,9 @@ export default function Week1Page({ viewerId, viewerName, viewerRole, isAdmin, p
             onSwitchToAscent?.();
           }}
         />
+      )}
+      {showLegal101 && (
+        <Legal101ReminderModal onContinue={handleLegal101Continue} />
       )}
 
     <div className="flex flex-col gap-4 p-6 max-w-4xl mx-auto w-full">
@@ -581,10 +592,10 @@ export default function Week1Page({ viewerId, viewerName, viewerRole, isAdmin, p
           </button>
           {!allComplete && (
             <p className="text-xs text-gray-400 text-center mt-2">
-              {!isVP && !signoffMap.meddpicc && "⬜ MEDDPICC · "}
-              {!signoffMap.camp101 && "⬜ cAMP 101 · "}
-              {!isVP && !signoffMap.challenger && "⬜ Challenger · "}
-              {!wdVerified && "⬜ Wheel & Deal"}
+              {!isVP && (signoffMap.meddpicc ? "✅ MEDDPICC · " : "⬜ MEDDPICC · ")}
+              {signoffMap.camp101 ? "✅ cAMP 101 · " : "⬜ cAMP 101 · "}
+              {!isVP && (signoffMap.challenger ? "✅ Challenger · " : "⬜ Challenger · ")}
+              {wdVerified ? "✅ Wheel & Deal" : "⬜ Wheel & Deal"}
             </p>
           )}
         </div>
