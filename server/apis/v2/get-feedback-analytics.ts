@@ -28,8 +28,9 @@ const PathStatRow = z.object({
   path_group: z.string(),
   completed_count: z.coerce.number(),
   avg_engagement: z.coerce.number().nullable(),
+  avg_time: z.coerce.number().nullable(),
   avg_focus: z.coerce.number().nullable(),
-  avg_recovery: z.coerce.number().nullable(),
+  avg_question: z.coerce.number().nullable(),
   sr_triggered: z.coerce.number(),
   wts_count: z.coerce.number(),
 });
@@ -99,6 +100,7 @@ export default api({
            SELECT s.clip_id, s.viewer_id,
                   MIN(s.ended_at) AS first_ended,
                   (array_agg(s.engagement_score ORDER BY s.ended_at))[1] AS engagement,
+                  (array_agg(s.time_score ORDER BY s.ended_at))[1] AS time_score,
                   (array_agg(s.focus_score ORDER BY s.ended_at))[1] AS focus_score,
                   (array_agg(s.question_score ORDER BY s.ended_at))[1] AS question_score
            FROM cliptracker_v2_sessions s
@@ -106,7 +108,7 @@ export default api({
            GROUP BY s.clip_id, s.viewer_id
          ),
          with_role AS (
-           SELECT fc.clip_id, fc.viewer_id, fc.engagement, fc.focus_score, fc.question_score,
+           SELECT fc.clip_id, fc.viewer_id, fc.engagement, fc.time_score, fc.focus_score, fc.question_score,
                   CASE
                     WHEN v.role = 'SDR>Velocity Promo' THEN 'promo'
                     WHEN v.role = 'SDR' THEN 'sdr'
@@ -146,11 +148,12 @@ export default api({
            wr.path_group,
            COUNT(*)::int AS completed_count,
            ROUND(AVG(wr.engagement))::int AS avg_engagement,
+           ROUND(AVG(wr.time_score))::int AS avg_time,
            ROUND(AVG(wr.focus_score))::int AS avg_focus,
            ROUND(AVG(
              CASE WHEN wr.question_score IS NOT NULL AND wr.question_score > 0
                   THEN wr.question_score END
-           ))::int AS avg_recovery,
+           ))::int AS avg_question,
            COALESCE(MAX(sc.sr_triggered), 0)::int AS sr_triggered,
            COALESCE(MAX(wc.wts_count), 0)::int AS wts_count
          FROM with_role wr
