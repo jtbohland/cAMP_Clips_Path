@@ -478,8 +478,8 @@ export default function WatchPage() {
           navigate(`/report/${clipId}`, { replace: true });
           return;
         }
-        // 2. Paused session → show resume prompt
-        if (result?.hasPausedSession && result.session) {
+        // 2. Paused session → show resume prompt (skip if barely started)
+        if (result?.hasPausedSession && result.session && result.session.elapsedSeconds >= 5) {
           setPausedSessionData(result.session);
           setPhase("resume_prompt");
           return;
@@ -807,9 +807,22 @@ export default function WatchPage() {
       handleFinishWatchingRef.current();
       return;
     }
+    // If the player's current time is well past the answered marker, seek back
+    // to just after that marker so subsequent markers fire at their natural
+    // timestamps instead of all piling up at the scrubbed-to position.
+    const answeredMarker = trailMarkersRef.current[currentQuestionIdx];
+    if (answeredMarker && player) {
+      const markerTime = answeredMarker.triggerAtSeconds ?? 0;
+      const currentTime = player.time?.() ?? lastTimeRef.current;
+      if (currentTime > markerTime + 10) {
+        // Seek to 1 second after the marker so it doesn't re-trigger
+        player.time(markerTime + 1);
+        highWaterMarkRef.current = markerTime + 1;
+      }
+    }
     setPhase("watching");
     player?.play();
-  }, [clipData]);
+  }, [clipData, currentQuestionIdx]);
 
   const handleFinishWatching = useCallback(async () => {
     programmaticPauseRef.current = true;
@@ -1465,6 +1478,8 @@ export default function WatchPage() {
       {phase === "trail_marker" && trailMarkers[currentQuestionIdx] && (
         <QuizOverlayV2
           question={trailMarkers[currentQuestionIdx] as any}
+          questionIndex={currentQuestionIdx}
+          totalQuestions={trailMarkers.length}
           onAnswer={handleTrailMarkerAnswer}
           onContinue={handleTrailMarkerContinue}
         />
