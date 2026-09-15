@@ -18,6 +18,7 @@ export default api({
     clipDurationSeconds: z.number(),
     tabAwayCount: z.number().int().min(0).default(0),
     lowVolumeSeconds: z.number().default(0),
+    forwardScrubCount: z.number().int().min(0).default(0),
   }),
 
   output: z.object({
@@ -30,7 +31,7 @@ export default api({
     totalQuestions: z.number(),
   }),
 
-  async run(ctx, { sessionId, totalFocusSeconds, totalBlurSeconds, totalTimeSeconds, clipDurationSeconds, tabAwayCount, lowVolumeSeconds }) {
+  async run(ctx, { sessionId, totalFocusSeconds, totalBlurSeconds, totalTimeSeconds, clipDurationSeconds, tabAwayCount, lowVolumeSeconds, forwardScrubCount }) {
     // Get all responses for this session
     const ResponseCountSchema = z.object({
       total: z.coerce.number(),
@@ -72,9 +73,16 @@ export default api({
 
     // Time score: how much of the video's duration was spent watching (45% weight)
     // Cap at 100 (viewer can spend more time than video duration due to pauses)
-    const timeScore = clipDurationSeconds > 0 
+    let timeScore = clipDurationSeconds > 0 
       ? Math.min((totalTimeSeconds / clipDurationSeconds) * 100, 100) 
       : 100;
+
+    // Forward scrub penalty: each skip beyond the first costs -20% from time score
+    if (forwardScrubCount >= 2) {
+      const penalty = (forwardScrubCount - 1) * 20;
+      timeScore = Math.max(0, timeScore - penalty);
+      ctx.log.info(`Forward scrub penalty applied: ${forwardScrubCount} scrubs, -${penalty}% from time score`);
+    }
 
     // Weighted engagement score
     const engagementScore = Math.round(

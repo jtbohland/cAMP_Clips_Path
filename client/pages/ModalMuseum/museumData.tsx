@@ -6,6 +6,7 @@ import ApproachPacingModal from "@/components/ApproachPacingModal";
 import ApproachDeadlineModal from "@/components/ApproachDeadlineModal";
 import OhDeerModal from "@/components/OhDeerModal";
 import Legal101ReminderModal from "@/components/Legal101ReminderModal";
+import ForwardScrubWarningModal from "@/components/ForwardScrubWarningModal";
 import SummitInSightModal from "@/components/SummitInSightModal";
 import QuizReminderModal from "@/components/QuizReminderModal";
 import type { PacingTier, MissedClip } from "@/lib/pacing";
@@ -188,6 +189,22 @@ const approachExhibits: MuseumExhibit[] = [
     trigger: "Begin Ascent click — AE & Promo paths only (not SDR)",
     render: () => (
       <Legal101ReminderModal onContinue={noop} />
+    ),
+  },
+  {
+    id: "forward-scrub-warning-first",
+    title: "⏭️🚫 Forward Scrub Warning (1st offense)",
+    trigger: "First time learner scrubs forward past a trail marker",
+    render: () => (
+      <ForwardScrubWarningModal scrubCount={1} onDismiss={noop} />
+    ),
+  },
+  {
+    id: "forward-scrub-warning-repeat",
+    title: "⏭️🚫 Forward Scrub Warning (repeat)",
+    trigger: "2nd+ time learner scrubs forward — shows penalty",
+    render: () => (
+      <ForwardScrubWarningModal scrubCount={3} onDismiss={noop} />
     ),
   },
   {
