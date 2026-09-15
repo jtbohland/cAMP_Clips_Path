@@ -71,8 +71,8 @@ export default function ClipAnalyticsSummary({ clips }: Props) {
     {
       label: "S&R Triggered",
       value: stats.totalSR.toString(),
-      subtitle: stats.mostSR
-        ? `Most: ${stats.mostSR.title.slice(0, 25)}…`
+      subtitle: stats.totalCompleted > 0
+        ? `${Math.round((stats.totalSR / stats.totalCompleted) * 100)}% of ${stats.totalCompleted} completions`
         : undefined,
       emoji: "🔍",
       color: "bg-amber-50 border-amber-200 text-amber-800",
@@ -80,6 +80,9 @@ export default function ClipAnalyticsSummary({ clips }: Props) {
     {
       label: "WtS Triggered",
       value: stats.totalWtS.toString(),
+      subtitle: stats.totalCompleted > 0
+        ? `${Math.round((stats.totalWtS / stats.totalCompleted) * 100)}% of ${stats.totalCompleted} completions`
+        : undefined,
       emoji: "⚠️",
       color: "bg-red-50 border-red-200 text-red-800",
     },
