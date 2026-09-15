@@ -85,9 +85,17 @@ export default api({
     }
 
     // Weighted engagement score
-    const engagementScore = Math.round(
-      (questionScore * 0.25) + (focusScore * 0.3) + (timeScore * 0.45)
-    );
+    // For clips with no trail markers, redistribute question weight to focus + time
+    let engagementScore: number;
+    if (totalQuestions === 0) {
+      // No markers: focus 40%, time 60% (re-proportioned from 30%/45%)
+      engagementScore = Math.round((focusScore * 0.4) + (timeScore * 0.6));
+    } else {
+      // Standard: questions 25%, focus 30%, time 45%
+      engagementScore = Math.round(
+        (questionScore * 0.25) + (focusScore * 0.3) + (timeScore * 0.45)
+      );
+    }
 
     const passed = engagementScore >= 80;
 

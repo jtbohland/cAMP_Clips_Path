@@ -11,6 +11,10 @@ import { type LearnerTileData } from "@/components/analytics/LearnerTile";
 import ManagerFeedbackSection from "@/components/analytics/ManagerFeedbackSection";
 import PacingDeepDiveModal from "@/components/analytics/PacingDeepDiveModal";
 import AscentAuditTab from "@/components/audit/AscentAuditTab";
+import ClipAnalyticsSummary from "@/components/analytics/ClipAnalyticsSummary";
+import ClipPathGroups from "@/components/analytics/ClipPathGroups";
+import FeedbackOverview from "@/components/analytics/FeedbackOverview";
+import GamePerformance from "@/components/analytics/GamePerformance";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -107,6 +111,7 @@ function Section({ title, subtitle, emoji, defaultOpen = true, children }: {
 
 function AnalyticsContent() {
   const { data, loading, fetching, isError, error } = useApiData("GetAnalyticsV3", {});
+  const { data: feedbackData } = useApiData("GetFeedbackAnalytics", {});
   const [selectedLearnerId, setSelectedLearnerId] = useState<string | null>(null);
   const [searchParams] = useSearchParams();
   const initialTab = searchParams.get("tab");
@@ -266,13 +271,30 @@ function AnalyticsContent() {
           </>
         ) : mainTab === "clips" ? (
           <>
-            {/* Clip Analytics tab */}
-            <Section title="Clip Performance" emoji="🎬" defaultOpen>
-              <ClipBreakdownSection clips={clipBreakdown ?? []} />
+            {/* Clip Analytics tab — redesigned with summary tiles + path groups */}
+            <ClipAnalyticsSummary clips={clipBreakdown ?? []} />
+
+            <Section title="Clip Performance by Path" emoji="🎬" defaultOpen>
+              <ClipPathGroups
+                clips={clipBreakdown ?? []}
+                clipPaths={feedbackData?.clipPaths ?? []}
+                pathStats={feedbackData?.pathStats ?? []}
+              />
             </Section>
 
             <Section title="Trail Markers" emoji="🪧" defaultOpen>
               <QuestionsSection questions={questions ?? []} />
+            </Section>
+
+            <Section title="Game Performance" subtitle="ROE Ridge, Price is Right, DEARR Crossing" emoji="🎮" defaultOpen>
+              <GamePerformance gameStats={feedbackData?.gameStats ?? []} />
+            </Section>
+
+            <Section title="Learner Feedback" subtitle="Reactions, ratings, and usefulness" emoji="💬" defaultOpen>
+              <FeedbackOverview
+                reactions={feedbackData?.reactions ?? []}
+                ratings={feedbackData?.ratings ?? []}
+              />
             </Section>
           </>
         ) : (

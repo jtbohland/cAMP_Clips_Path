@@ -236,7 +236,14 @@ export default api({
         COUNT(*) FILTER (WHERE s.attempt_number >= 3)::int AS wts_count,
         COUNT(*) FILTER (WHERE s.is_recovery_attempt = true)::int AS sr_count,
         MAX(s.ended_at)::text AS last_active,
-        MAX(s.ended_at) FILTER (WHERE s.completed = true)::text AS last_completed_at,
+        -- Use first completion per clip (MIN), then take MAX across clips
+        -- to get the true "finished ascent" date without re-watch inflation
+        (SELECT MAX(first_done)::text FROM (
+          SELECT MIN(ss.ended_at) AS first_done
+          FROM cliptracker_v2_sessions ss
+          WHERE ss.viewer_id = v.id AND ss.completed = true
+          GROUP BY ss.clip_id
+        ) fc)::text AS last_completed_at,
         v.last_login_at::text AS last_login_at
        FROM cliptracker_v2_viewers v
        LEFT JOIN cliptracker_v2_sessions s ON s.viewer_id = v.id
@@ -326,16 +333,18 @@ export default api({
     const TOTAL_APPROACH_MODULES = 8;
 
     // 2f-b. Summit email records — confirmed completers (legacy learners)
-    const SummitEmailRow2 = z.object({ viewer_id: z.string() });
+    const SummitEmailRow2 = z.object({ viewer_id: z.string(), sent_at: z.string().nullable() });
     const summitEmailRows = await ctx.integrations.db.query(
-      `SELECT DISTINCT viewer_id FROM cliptracker_v2_checkin_emails
+      `SELECT viewer_id, MIN(sent_at)::text AS sent_at FROM cliptracker_v2_checkin_emails
        WHERE checkin_type = 'summit'
+       GROUP BY viewer_id
        LIMIT 100`,
       SummitEmailRow2,
       undefined,
       { label: "Summit email recipients (confirmed completers)" }
     );
     const summitEmailSet = new Set(summitEmailRows.map(r => r.viewer_id));
+    const summitEmailDateMap = new Map(summitEmailRows.map(r => [r.viewer_id, r.sent_at]));
 
     // 2f. Individual clips completed per learner (clip-level pacing).
     const ClipsDoneRow = z.object({ viewer_id: z.string(), clips_done: z.coerce.number() });
@@ -516,13 +525,32 @@ export default api({
         || (l.first_achievement_shown && clipsDone >= MIN_COMPLETION_CLIPS);
 
       if (confirmedCompleter && clipsDone > 0) {
-        // Locked — always "completed", count toward on-time finishers, skip all recalculation
+        // Locked — always "completed", skip all recalculation.
+        // But still check on-time vs late for pacing accuracy.
         pacingStatus = "completed";
-        onTimeFinishers++;
         if (l.ascent_day_1) {
           const start = new Date(l.ascent_day_1);
           const summit = getSummitDay(start, totalWeekdays, l.extension_days);
           summitDayStr = summit.toISOString().split("T")[0];
+
+          // Check if they finished before summit day
+          // For summit-email completers, use the email sent date as the true completion date
+          // For first_achievement_shown completers, use last_completed_at
+          const summitEmailDate = summitEmailDateMap.get(l.viewer_id);
+          const completionDate = summitEmailDate
+            ? new Date(summitEmailDate)
+            : (l.last_completed_at ? new Date(l.last_completed_at) : start);
+          const summitNorm = new Date(summit.getFullYear(), summit.getMonth(), summit.getDate());
+          const completionNorm = new Date(completionDate.getFullYear(), completionDate.getMonth(), completionDate.getDate());
+          if (completionNorm > summitNorm) {
+            anchorFailureCount++;
+            isAnchorFailure = true;
+          } else {
+            onTimeFinishers++;
+          }
+        } else {
+          // No ascent_day_1 — can't determine timing, count as on-time
+          onTimeFinishers++;
         }
         const currentTier = TIERS.reduce((acc, t) => {
           if (l.total_xp >= t.xpMin) return t;
@@ -550,14 +578,14 @@ export default api({
           badges: (badgeMap.get(l.viewer_id) ?? []).map(id => ({ badgeId: id })),
           pacingStatus: "completed",
           summitDay: summitDayStr,
-          isAnchorFailure: false,
+          isAnchorFailure,
           ascentAdjustmentDay: null,
           lastLogin: l.last_login_at,
           approachComplete: true,
           approachCompletedCount: approachMap.get(l.viewer_id) ?? approachTotal,
           approachTotal,
           extensionDays: l.extension_days,
-          lastCompletedAt: l.last_completed_at,
+          lastCompletedAt: summitEmailDateMap.get(l.viewer_id) ?? l.last_completed_at,
         };
       }
 
