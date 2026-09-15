@@ -233,8 +233,10 @@ export default api({
         ROUND(AVG(s.engagement_score) FILTER (WHERE s.completed = true), 1)::text AS clip_score_avg,
         ROUND(AVG(s.engagement_score) FILTER (WHERE s.completed = true AND s.is_recovery_attempt = false), 1)::text AS first_attempt_avg,
         ROUND(AVG(s.engagement_score) FILTER (WHERE s.completed = true AND s.is_recovery_attempt = true), 1)::text AS recovery_avg,
-        COUNT(*) FILTER (WHERE s.attempt_number >= 3)::int AS wts_count,
-        COUNT(*) FILTER (WHERE s.is_recovery_attempt = true)::int AS sr_count,
+        (SELECT COUNT(*)::int FROM cliptracker_v2_unlock_overrides uo
+           WHERE uo.viewer_id = v.id AND uo.reason = 'Completed via weather_storm') AS wts_count,
+        (SELECT COUNT(*)::int FROM cliptracker_v2_unlock_overrides uo
+           WHERE uo.viewer_id = v.id AND uo.reason = 'Completed via search_rescue') AS sr_count,
         MAX(s.ended_at)::text AS last_active,
         -- Use first completion per clip (MIN), then take MAX across clips
         -- to get the true "finished ascent" date without re-watch inflation
@@ -683,8 +685,16 @@ export default api({
         ROUND(AVG(s.engagement_score) FILTER (WHERE s.completed = true AND s.is_recovery_attempt = true), 1)::text AS avg_recovery,
         ROUND(AVG(s.focus_score) FILTER (WHERE s.completed = true), 1)::text AS avg_focus,
         ROUND(AVG(s.total_time_seconds) FILTER (WHERE s.completed = true), 0)::text AS avg_watch_seconds,
-        COUNT(*) FILTER (WHERE s.is_recovery_attempt = true)::int AS sr_triggered,
-        COUNT(*) FILTER (WHERE s.attempt_number >= 3)::int AS wts_count
+        (SELECT COUNT(*)::int FROM cliptracker_v2_unlock_overrides uo
+           JOIN cliptracker_v2_clips unlocked ON unlocked.id = uo.clip_id
+           WHERE unlocked.sort_order > c.sort_order
+             AND NOT EXISTS (SELECT 1 FROM cliptracker_v2_clips mid WHERE mid.sort_order > c.sort_order AND mid.sort_order < unlocked.sort_order AND mid.status = 'live')
+             AND uo.reason = 'Completed via search_rescue')::int AS sr_triggered,
+        (SELECT COUNT(*)::int FROM cliptracker_v2_unlock_overrides uo
+           JOIN cliptracker_v2_clips unlocked ON unlocked.id = uo.clip_id
+           WHERE unlocked.sort_order > c.sort_order
+             AND NOT EXISTS (SELECT 1 FROM cliptracker_v2_clips mid WHERE mid.sort_order > c.sort_order AND mid.sort_order < unlocked.sort_order AND mid.status = 'live')
+             AND uo.reason = 'Completed via weather_storm')::int AS wts_count
        FROM cliptracker_v2_clips c
        LEFT JOIN cliptracker_v2_sessions s ON s.clip_id = c.id
          AND s.viewer_id NOT IN (SELECT id FROM cliptracker_v2_viewers WHERE is_admin = true)

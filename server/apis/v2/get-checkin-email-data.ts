@@ -400,13 +400,13 @@ export default api({
 
     const srWtsRows = await ctx.integrations.db.query(
       `SELECT
-        SUM(CASE WHEN is_recovery_attempt = true THEN 1 ELSE 0 END)::int AS sr_count,
-        SUM(CASE WHEN attempt_number >= 3 THEN 1 ELSE 0 END)::int AS wts_count
-       FROM cliptracker_v2_sessions
-       WHERE viewer_id = $1`,
+        (SELECT COUNT(*)::int FROM cliptracker_v2_unlock_overrides
+         WHERE viewer_id = $1 AND reason = 'Completed via search_rescue') AS sr_count,
+        (SELECT COUNT(*)::int FROM cliptracker_v2_unlock_overrides
+         WHERE viewer_id = $1 AND reason = 'Completed via weather_storm') AS wts_count`,
       SrWtsRow,
       [viewerId],
-      { label: "Get S&R and WtS counts" }
+      { label: "Get S&R and WtS counts from unlock overrides" }
     );
 
     const srCount = srWtsRows[0]?.sr_count ?? 0;

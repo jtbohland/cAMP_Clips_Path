@@ -118,30 +118,42 @@ export default api({
            JOIN cliptracker_v2_viewers v ON v.id = fc.viewer_id
          ),
          sr_counts AS (
-           SELECT s.clip_id,
+           SELECT prev_clip.id AS clip_id,
                   CASE
                     WHEN v.role = 'SDR>Velocity Promo' THEN 'promo'
                     WHEN v.role = 'SDR' THEN 'sdr'
                     ELSE 'ae'
                   END AS path_group,
                   COUNT(*)::int AS sr_triggered
-           FROM cliptracker_v2_sessions s
-           JOIN cliptracker_v2_viewers v ON v.id = s.viewer_id
-           WHERE s.completed = true AND s.is_recovery_attempt = true
-           GROUP BY s.clip_id, path_group
+           FROM cliptracker_v2_unlock_overrides uo
+           JOIN cliptracker_v2_viewers v ON v.id = uo.viewer_id
+           JOIN cliptracker_v2_clips unlocked ON unlocked.id = uo.clip_id
+           JOIN LATERAL (
+             SELECT c2.id FROM cliptracker_v2_clips c2
+             WHERE c2.sort_order < unlocked.sort_order AND c2.status = 'live'
+             ORDER BY c2.sort_order DESC LIMIT 1
+           ) prev_clip ON true
+           WHERE uo.reason = 'Completed via search_rescue'
+           GROUP BY prev_clip.id, path_group
          ),
          wts_counts AS (
-           SELECT s.clip_id,
+           SELECT prev_clip.id AS clip_id,
                   CASE
                     WHEN v.role = 'SDR>Velocity Promo' THEN 'promo'
                     WHEN v.role = 'SDR' THEN 'sdr'
                     ELSE 'ae'
                   END AS path_group,
                   COUNT(*)::int AS wts_count
-           FROM cliptracker_v2_sessions s
-           JOIN cliptracker_v2_viewers v ON v.id = s.viewer_id
-           WHERE s.completed = true AND s.attempt_number >= 3
-           GROUP BY s.clip_id, path_group
+           FROM cliptracker_v2_unlock_overrides uo
+           JOIN cliptracker_v2_viewers v ON v.id = uo.viewer_id
+           JOIN cliptracker_v2_clips unlocked ON unlocked.id = uo.clip_id
+           JOIN LATERAL (
+             SELECT c2.id FROM cliptracker_v2_clips c2
+             WHERE c2.sort_order < unlocked.sort_order AND c2.status = 'live'
+             ORDER BY c2.sort_order DESC LIMIT 1
+           ) prev_clip ON true
+           WHERE uo.reason = 'Completed via weather_storm'
+           GROUP BY prev_clip.id, path_group
          )
          SELECT
            wr.clip_id,

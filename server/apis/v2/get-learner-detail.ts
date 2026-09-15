@@ -804,10 +804,8 @@ export default api({
           ? parseFloat(srCompletedSession.engagement_score)
           : null;
 
-        // WtS: from unlock override (primary) or session attempt_number (fallback)
-        const wtsFromOverride = completionPath === "weather_storm";
-        const wtsFromSession = c.sessions.some(s => s.attempt_number >= 3);
-        const wtsTriggered = wtsFromOverride || wtsFromSession;
+        // WtS: from unlock override reason (definitive source of truth)
+        const wtsTriggered = completionPath === "weather_storm";
 
         return {
           clipId: c.clipId,
