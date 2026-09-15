@@ -319,9 +319,30 @@ export default function Week1Page({ viewerId, viewerName, viewerRole, isAdmin, p
   }, [viewerId, submitWd, refetch]);
 
   const handleBeginAscent = useCallback(async () => {
-    // Show Legal 101 reminder BEFORE the actual unlock
-    setShowLegal101(true);
-  }, []);
+    // Show Legal 201 reminder for AE + Promo paths only (skip SDR)
+    if (viewerRole !== "SDR") {
+      setShowLegal101(true);
+      return;
+    }
+    // SDR path: proceed directly to unlock
+    try {
+      const result = await unlockAscent({ viewerId });
+      if (result?.error) {
+        toast.error(result.error);
+        return;
+      }
+      if (result?.alreadyUnlocked) {
+        toast.info("Already unlocked!");
+      }
+      onBeginAscent({
+        alreadyUnlocked: result?.alreadyUnlocked ?? false,
+        earnedBadge: result?.earnedBadge ?? false,
+        earnedXp: result?.earnedXp ?? 0,
+      });
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to unlock The Ascent");
+    }
+  }, [viewerRole, viewerId, unlockAscent, onBeginAscent]);
 
   const handleLegal101Continue = useCallback(async () => {
     setShowLegal101(false);

@@ -1,15 +1,15 @@
 import { useCallback } from "react";
 
-const LEGAL_101_URL = "https://deeplinks.mindtickle.com/MxXNN1FIq6b";
+const LEGAL_201_URL = "https://deeplinks.mindtickle.com/CRWyq9Mps6b";
 
 interface Legal101ReminderModalProps {
   onContinue: () => void;
 }
 
 /**
- * ⚖️ Legal 101 Reminder Modal — one-time nudge shown when learner clicks
- * "Begin The Ascent". Purely informational — no gating or tracking.
- * After clicking "Continue to Ascent", the normal unlock flow proceeds.
+ * ⚖️ Legal 201 Reminder Modal — one-time nudge shown when AE/Promo learner
+ * clicks "Begin The Ascent". Not shown for SDR path.
+ * Purely informational — no gating or tracking.
  */
 export default function Legal101ReminderModal({ onContinue }: Legal101ReminderModalProps) {
   const handleBackdropClick = useCallback(
@@ -36,14 +36,14 @@ export default function Legal101ReminderModal({ onContinue }: Legal101ReminderMo
             Quick Reminder Before You Go!
           </h2>
           <p className="text-sm mt-1 text-indigo-200 opacity-90">
-            Have you completed your mandatory Legal 101 training?
+            Have you completed your mandatory Legal 201 training?
           </p>
         </div>
 
         {/* Body */}
         <div className="px-6 py-5 bg-indigo-50 text-indigo-900 space-y-4">
           <p className="text-sm leading-relaxed">
-            All sellers are required to complete <strong>Legal 101</strong> in MindTickle.
+            All sellers are required to complete <strong>Legal 201</strong> in MindTickle.
             This training covers essential legal guidelines for your role.
           </p>
 
@@ -52,12 +52,12 @@ export default function Legal101ReminderModal({ onContinue }: Legal101ReminderMo
               MindTickle Course
             </p>
             <a
-              href={LEGAL_101_URL}
+              href={LEGAL_201_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 transition-colors shadow-sm"
             >
-              🦉 Open Legal 101 Training
+              🦉 Open Legal 201 Training
               <span className="text-indigo-200 text-xs">↗</span>
             </a>
           </div>
