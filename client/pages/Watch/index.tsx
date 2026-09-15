@@ -10,6 +10,7 @@ import SearchRescue from "@/components/SearchRescue";
 import WeatherStorm from "@/components/WeatherStorm";
 import SearchRescuePassPopup from "@/components/SearchRescuePassPopup";
 import ResumePrompt from "@/components/ResumePrompt";
+import ForwardScrubWarningModal from "@/components/ForwardScrubWarningModal";
 import PauseModal from "@/components/PauseModal";
 import AscentGuidePanel from "@/components/AscentGuidePanel";
 import { getGuideEntryForClip } from "@/config/ascentGuide.js";
@@ -148,6 +149,11 @@ export default function WatchPage() {
   const showSeekWarningRef = useRef(false);
   const seekSnapbackTimeRef = useRef<number | null>(null);
   const highWaterMarkRef = useRef(0);
+
+  // ─── Forward scrub detection ───────────────────────────────────────────────
+  const [showForwardScrubWarning, setShowForwardScrubWarning] = useState(false);
+  const forwardScrubCountRef = useRef(0);
+  const pendingForwardScrubRef = useRef(false);
 
   // ─── Nudge banner at ~80% watched ─────────────────────────────────────────
   const [showNudgeBanner, setShowNudgeBanner] = useState(false);
@@ -366,6 +372,13 @@ export default function WatchPage() {
         showSeekWarningRef.current = true;
         setShowSeekWarning(true);
       }
+    }
+    // ── Forward scrub detection ──
+    // If playback time jumps more than 10s ahead of the high-water mark,
+    // the learner scrubbed forward. Increment counter and flag for warning.
+    if (phaseRef.current === "watching" && highWaterMarkRef.current > 5 && t > highWaterMarkRef.current + 10 && !pendingForwardScrubRef.current) {
+      forwardScrubCountRef.current += 1;
+      pendingForwardScrubRef.current = true;
     }
     // Track high-water mark
     if (t > highWaterMarkRef.current) highWaterMarkRef.current = t;
@@ -818,11 +831,25 @@ export default function WatchPage() {
         // Seek to 1 second after the marker so it doesn't re-trigger
         player.time(markerTime + 1);
         highWaterMarkRef.current = markerTime + 1;
+
+        // Show forward scrub warning before resuming
+        if (pendingForwardScrubRef.current) {
+          pendingForwardScrubRef.current = false;
+          setShowForwardScrubWarning(true);
+          return; // Don't resume yet — modal dismiss will resume
+        }
       }
     }
     setPhase("watching");
     player?.play();
   }, [clipData, currentQuestionIdx]);
+
+  // Forward scrub warning dismissed — resume playback
+  const handleForwardScrubDismiss = useCallback(() => {
+    setShowForwardScrubWarning(false);
+    setPhase("watching");
+    playerRef.current?.play();
+  }, []);
 
   const handleFinishWatching = useCallback(async () => {
     programmaticPauseRef.current = true;
@@ -870,6 +897,7 @@ export default function WatchPage() {
           clipDurationSeconds: clipDuration,
           tabAwayCount: tabAwayCountRef.current,
           lowVolumeSeconds: lowVolumeSecondsRef.current,
+          forwardScrubCount: forwardScrubCountRef.current,
         }));
         if (res?.engagementScore !== undefined) {
           setEngagementScore(res.engagementScore);
@@ -1436,6 +1464,14 @@ export default function WatchPage() {
                 </div>
               </div>
             </div>
+          )}
+
+          {/* Forward scrub warning modal */}
+          {showForwardScrubWarning && (
+            <ForwardScrubWarningModal
+              scrubCount={forwardScrubCountRef.current}
+              onDismiss={handleForwardScrubDismiss}
+            />
           )}
 
           {/* Tab-away overlay */}
