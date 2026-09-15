@@ -14,6 +14,7 @@ import AscentAuditTab from "@/components/audit/AscentAuditTab";
 import ClipAnalyticsSummary from "@/components/analytics/ClipAnalyticsSummary";
 import ClipPathGroups from "@/components/analytics/ClipPathGroups";
 import FeedbackOverview from "@/components/analytics/FeedbackOverview";
+import GamePerformance from "@/components/analytics/GamePerformance";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -277,11 +278,16 @@ function AnalyticsContent() {
               <ClipPathGroups
                 clips={clipBreakdown ?? []}
                 clipPaths={feedbackData?.clipPaths ?? []}
+                pathStats={feedbackData?.pathStats ?? []}
               />
             </Section>
 
             <Section title="Trail Markers" emoji="🪧" defaultOpen>
               <QuestionsSection questions={questions ?? []} />
+            </Section>
+
+            <Section title="Game Performance" subtitle="ROE Ridge, Price is Right, DEARR Crossing" emoji="🎮" defaultOpen>
+              <GamePerformance gameStats={feedbackData?.gameStats ?? []} />
             </Section>
 
             <Section title="Learner Feedback" subtitle="Reactions, ratings, and usefulness" emoji="💬" defaultOpen>
