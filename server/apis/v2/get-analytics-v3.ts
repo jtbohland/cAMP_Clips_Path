@@ -236,7 +236,7 @@ export default api({
         (SELECT COUNT(*)::int FROM cliptracker_v2_unlock_overrides uo
            WHERE uo.viewer_id = v.id AND uo.reason = 'Completed via weather_storm') AS wts_count,
         (SELECT COUNT(*)::int FROM cliptracker_v2_unlock_overrides uo
-           WHERE uo.viewer_id = v.id AND uo.reason = 'Completed via search_rescue') AS sr_count,
+           WHERE uo.viewer_id = v.id AND uo.reason IN ('Completed via search_rescue', 'Completed via weather_storm')) AS sr_count,
         MAX(s.ended_at)::text AS last_active,
         -- Use first completion per clip (MIN), then take MAX across clips
         -- to get the true "finished ascent" date without re-watch inflation
@@ -689,7 +689,7 @@ export default api({
            JOIN cliptracker_v2_clips unlocked ON unlocked.id = uo.clip_id
            WHERE unlocked.sort_order > c.sort_order
              AND NOT EXISTS (SELECT 1 FROM cliptracker_v2_clips mid WHERE mid.sort_order > c.sort_order AND mid.sort_order < unlocked.sort_order AND mid.status = 'live')
-             AND uo.reason = 'Completed via search_rescue')::int AS sr_triggered,
+             AND uo.reason IN ('Completed via search_rescue', 'Completed via weather_storm'))::int AS sr_triggered,
         (SELECT COUNT(*)::int FROM cliptracker_v2_unlock_overrides uo
            JOIN cliptracker_v2_clips unlocked ON unlocked.id = uo.clip_id
            WHERE unlocked.sort_order > c.sort_order

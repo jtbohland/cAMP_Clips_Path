@@ -133,7 +133,7 @@ export default api({
              WHERE c2.sort_order < unlocked.sort_order AND c2.status = 'live'
              ORDER BY c2.sort_order DESC LIMIT 1
            ) prev_clip ON true
-           WHERE uo.reason = 'Completed via search_rescue'
+           WHERE uo.reason IN ('Completed via search_rescue', 'Completed via weather_storm')
            GROUP BY prev_clip.id, path_group
          ),
          wts_counts AS (

@@ -401,7 +401,7 @@ export default api({
     const srWtsRows = await ctx.integrations.db.query(
       `SELECT
         (SELECT COUNT(*)::int FROM cliptracker_v2_unlock_overrides
-         WHERE viewer_id = $1 AND reason = 'Completed via search_rescue') AS sr_count,
+         WHERE viewer_id = $1 AND reason IN ('Completed via search_rescue', 'Completed via weather_storm')) AS sr_count,
         (SELECT COUNT(*)::int FROM cliptracker_v2_unlock_overrides
          WHERE viewer_id = $1 AND reason = 'Completed via weather_storm') AS wts_count`,
       SrWtsRow,
