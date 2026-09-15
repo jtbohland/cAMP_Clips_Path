@@ -184,8 +184,8 @@ const approachExhibits: MuseumExhibit[] = [
   },
   {
     id: "legal-101-reminder",
-    title: "⚖️ Legal 101 Reminder",
-    trigger: "Begin Ascent click — shown before anchor point email fires",
+    title: "⚖️ Legal 201 Reminder",
+    trigger: "Begin Ascent click — AE & Promo paths only (not SDR)",
     render: () => (
       <Legal101ReminderModal onContinue={noop} />
     ),
