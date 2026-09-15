@@ -12,12 +12,16 @@ type Question = {
 
 type QuizOverlayV2Props = {
   question: Question;
+  questionIndex?: number;
+  totalQuestions?: number;
   onAnswer: (selectedOption: number) => void;
   onContinue: () => void;
 };
 
 export default function QuizOverlayV2({
   question,
+  questionIndex,
+  totalQuestions,
   onAnswer,
   onContinue,
 }: QuizOverlayV2Props) {
@@ -70,7 +74,9 @@ export default function QuizOverlayV2({
           <span className="text-2xl">🪧</span>
           <h2 className="text-lg font-bold text-indigo-700">Trail Marker</h2>
           <span className="text-xs text-gray-500 ml-auto">
-            Question {question.sortOrder}
+            {questionIndex != null && totalQuestions != null
+              ? `Question ${questionIndex + 1} of ${totalQuestions}`
+              : `Question ${question.sortOrder}`}
           </span>
         </div>
 
