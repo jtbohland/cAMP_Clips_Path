@@ -154,6 +154,8 @@ import StartDEARRGame from './v2/start-dearr-game.js';
 import SubmitDEARRResponse from './v2/submit-dearr-response.js';
 import CompleteDEARRGame from './v2/complete-dearr-game.js';
 import SetupDEARRSchema from './v2/setup-dearr-schema.js';
+import SetupReactionsFeedbackSchema from './v2/setup-reactions-feedback-schema.js';
+import GetFeedbackAnalytics from './v2/get-feedback-analytics.js';
 
 
 
@@ -312,6 +314,8 @@ StartDEARRGame,
 SubmitDEARRResponse,
 CompleteDEARRGame,
 SetupDEARRSchema,
+SetupReactionsFeedbackSchema,
+GetFeedbackAnalytics,
 } as const;
 
 export default apis;
