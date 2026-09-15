@@ -177,7 +177,7 @@ export default function ClipPathGroups({ clips, clipPaths, pathStats }: Props) {
                     <th className="py-1.5 text-center font-medium opacity-60">Done</th>
                     <th className="py-1.5 text-center font-medium opacity-60">Eng%</th>
                     <th className="py-1.5 text-center font-medium opacity-60">Focus%</th>
-                    <th className="py-1.5 text-center font-medium opacity-60">Recovery%</th>
+                    <th className="py-1.5 text-center font-medium opacity-60">Question%</th>
                     <th className="py-1.5 text-center font-medium opacity-60">S&R</th>
                     <th className="py-1.5 text-center font-medium opacity-60">WtS</th>
                   </tr>
