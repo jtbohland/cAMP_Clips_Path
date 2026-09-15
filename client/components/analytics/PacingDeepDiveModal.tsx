@@ -64,9 +64,10 @@ function getLearningPath(l: Learner): { type: LearningPathType; label: string } 
   const didApproach = l.approachCompletedCount > 0;
 
   if (isSDR) {
-    // Kate case: SDR role but completed AE-level clips (20+)
-    if (l.clipsCompleted > 17) {
-      return { type: "ae_as_sdr", label: "AE Path (as SDR)" };
+    // SDR path = 18 clips total. Only flag as cross-path if they completed
+    // MORE than the full SDR curriculum (i.e. they also did AE-only clips).
+    if (l.clipsCompleted > 18) {
+      return { type: "ae_as_sdr", label: "SDR + extra clips" };
     }
     if (didApproach) {
       return { type: "approach_sdr", label: `Approach + ${l.effectiveTotal} clips` };
@@ -139,7 +140,7 @@ function getNote(l: Learner, path: { type: LearningPathType }): string {
   const notes: string[] = [];
 
   if (path.type === "ae_as_sdr") {
-    notes.push("Moved to SDR mid-path; completed AE clips");
+    notes.push("Completed clips beyond SDR path");
   }
   if (path.type === "legacy_ae" || path.type === "legacy_sdr") {
     notes.push("Pre-Approach learner");
