@@ -193,7 +193,7 @@ const approachExhibits: MuseumExhibit[] = [
   },
   {
     id: "forward-scrub-warning-first",
-    title: "⏭️🚫 Forward Scrub Warning (1st offense)",
+    title: "🪵 Kindling Warning (1st skip)",
     trigger: "First time learner scrubs forward past a trail marker",
     render: () => (
       <ForwardScrubWarningModal scrubCount={1} onDismiss={noop} />
@@ -201,8 +201,8 @@ const approachExhibits: MuseumExhibit[] = [
   },
   {
     id: "forward-scrub-warning-repeat",
-    title: "⏭️🚫 Forward Scrub Warning (repeat)",
-    trigger: "2nd+ time learner scrubs forward — shows penalty",
+    title: "🔥 Forest Fire Warning (repeat skip)",
+    trigger: "2nd+ time learner scrubs forward — campfire out of control",
     render: () => (
       <ForwardScrubWarningModal scrubCount={3} onDismiss={noop} />
     ),
