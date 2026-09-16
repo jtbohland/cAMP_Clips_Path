@@ -28,8 +28,9 @@ const PathStatRow = z.object({
   path_group: z.string(),
   completed_count: z.coerce.number(),
   avg_engagement: z.coerce.number().nullable(),
+  avg_time: z.coerce.number().nullable(),
   avg_focus: z.coerce.number().nullable(),
-  avg_recovery: z.coerce.number().nullable(),
+  avg_question: z.coerce.number().nullable(),
   sr_triggered: z.coerce.number(),
   wts_count: z.coerce.number(),
 });
@@ -99,6 +100,7 @@ export default api({
            SELECT s.clip_id, s.viewer_id,
                   MIN(s.ended_at) AS first_ended,
                   (array_agg(s.engagement_score ORDER BY s.ended_at))[1] AS engagement,
+                  (array_agg(s.time_score ORDER BY s.ended_at))[1] AS time_score,
                   (array_agg(s.focus_score ORDER BY s.ended_at))[1] AS focus_score,
                   (array_agg(s.question_score ORDER BY s.ended_at))[1] AS question_score
            FROM cliptracker_v2_sessions s
@@ -106,7 +108,7 @@ export default api({
            GROUP BY s.clip_id, s.viewer_id
          ),
          with_role AS (
-           SELECT fc.clip_id, fc.viewer_id, fc.engagement, fc.focus_score, fc.question_score,
+           SELECT fc.clip_id, fc.viewer_id, fc.engagement, fc.time_score, fc.focus_score, fc.question_score,
                   CASE
                     WHEN v.role = 'SDR>Velocity Promo' THEN 'promo'
                     WHEN v.role = 'SDR' THEN 'sdr'
@@ -116,41 +118,54 @@ export default api({
            JOIN cliptracker_v2_viewers v ON v.id = fc.viewer_id
          ),
          sr_counts AS (
-           SELECT s.clip_id,
+           SELECT prev_clip.id AS clip_id,
                   CASE
                     WHEN v.role = 'SDR>Velocity Promo' THEN 'promo'
                     WHEN v.role = 'SDR' THEN 'sdr'
                     ELSE 'ae'
                   END AS path_group,
                   COUNT(*)::int AS sr_triggered
-           FROM cliptracker_v2_sessions s
-           JOIN cliptracker_v2_viewers v ON v.id = s.viewer_id
-           WHERE s.completed = true AND s.is_recovery_attempt = true
-           GROUP BY s.clip_id, path_group
+           FROM cliptracker_v2_unlock_overrides uo
+           JOIN cliptracker_v2_viewers v ON v.id = uo.viewer_id
+           JOIN cliptracker_v2_clips unlocked ON unlocked.id = uo.clip_id
+           JOIN LATERAL (
+             SELECT c2.id FROM cliptracker_v2_clips c2
+             WHERE c2.sort_order < unlocked.sort_order AND c2.status = 'live'
+             ORDER BY c2.sort_order DESC LIMIT 1
+           ) prev_clip ON true
+           WHERE uo.reason IN ('Completed via search_rescue', 'Completed via weather_storm')
+           GROUP BY prev_clip.id, path_group
          ),
          wts_counts AS (
-           SELECT s.clip_id,
+           SELECT prev_clip.id AS clip_id,
                   CASE
                     WHEN v.role = 'SDR>Velocity Promo' THEN 'promo'
                     WHEN v.role = 'SDR' THEN 'sdr'
                     ELSE 'ae'
                   END AS path_group,
                   COUNT(*)::int AS wts_count
-           FROM cliptracker_v2_sessions s
-           JOIN cliptracker_v2_viewers v ON v.id = s.viewer_id
-           WHERE s.completed = true AND s.attempt_number >= 3
-           GROUP BY s.clip_id, path_group
+           FROM cliptracker_v2_unlock_overrides uo
+           JOIN cliptracker_v2_viewers v ON v.id = uo.viewer_id
+           JOIN cliptracker_v2_clips unlocked ON unlocked.id = uo.clip_id
+           JOIN LATERAL (
+             SELECT c2.id FROM cliptracker_v2_clips c2
+             WHERE c2.sort_order < unlocked.sort_order AND c2.status = 'live'
+             ORDER BY c2.sort_order DESC LIMIT 1
+           ) prev_clip ON true
+           WHERE uo.reason = 'Completed via weather_storm'
+           GROUP BY prev_clip.id, path_group
          )
          SELECT
            wr.clip_id,
            wr.path_group,
            COUNT(*)::int AS completed_count,
            ROUND(AVG(wr.engagement))::int AS avg_engagement,
+           ROUND(AVG(wr.time_score))::int AS avg_time,
            ROUND(AVG(wr.focus_score))::int AS avg_focus,
            ROUND(AVG(
              CASE WHEN wr.question_score IS NOT NULL AND wr.question_score > 0
                   THEN wr.question_score END
-           ))::int AS avg_recovery,
+           ))::int AS avg_question,
            COALESCE(MAX(sc.sr_triggered), 0)::int AS sr_triggered,
            COALESCE(MAX(wc.wts_count), 0)::int AS wts_count
          FROM with_role wr

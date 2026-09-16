@@ -28,8 +28,9 @@ type PathStat = {
   path_group: string;
   completed_count: number;
   avg_engagement: number | null;
+  avg_time: number | null;
   avg_focus: number | null;
-  avg_recovery: number | null;
+  avg_question: number | null;
   sr_triggered: number;
   wts_count: number;
 };
@@ -83,13 +84,14 @@ export default function ClipPathGroups({ clips, clipPaths, pathStats }: Props) {
 
   // Aggregate stats across ALL path groups for shared clips
   const sharedAggLookup = useMemo(() => {
-    const map = new Map<string, { count: number; eng: number[]; focus: number[]; recovery: number[]; sr: number; wts: number }>();
+    const map = new Map<string, { count: number; eng: number[]; time: number[]; focus: number[]; question: number[]; sr: number; wts: number }>();
     for (const ps of pathStats) {
-      const existing = map.get(ps.clip_id) ?? { count: 0, eng: [], focus: [], recovery: [], sr: 0, wts: 0 };
+      const existing = map.get(ps.clip_id) ?? { count: 0, eng: [], time: [], focus: [], question: [], sr: 0, wts: 0 };
       existing.count += ps.completed_count;
       if (ps.avg_engagement != null) existing.eng.push(ps.avg_engagement * ps.completed_count);
+      if (ps.avg_time != null) existing.time.push(ps.avg_time * ps.completed_count);
       if (ps.avg_focus != null) existing.focus.push(ps.avg_focus * ps.completed_count);
-      if (ps.avg_recovery != null) existing.recovery.push(ps.avg_recovery * ps.completed_count);
+      if (ps.avg_question != null) existing.question.push(ps.avg_question * ps.completed_count);
       existing.sr += ps.sr_triggered;
       existing.wts += ps.wts_count;
       map.set(ps.clip_id, existing);
@@ -111,7 +113,7 @@ export default function ClipPathGroups({ clips, clipPaths, pathStats }: Props) {
         .map((cp) => {
           // For shared clips, aggregate all path groups
           // For path-specific, use the specific path_group
-          let stat: { completed: number; eng: number | null; focus: number | null; recovery: number | null; sr: number; wts: number };
+          let stat: { completed: number; eng: number | null; time: number | null; focus: number | null; question: number | null; sr: number; wts: number };
 
           if (path.key === "shared") {
             const agg = sharedAggLookup.get(cp.id);
@@ -120,11 +122,14 @@ export default function ClipPathGroups({ clips, clipPaths, pathStats }: Props) {
               eng: agg && agg.eng.length > 0 && agg.count > 0
                 ? Math.round(agg.eng.reduce((s, v) => s + v, 0) / agg.count)
                 : null,
+              time: agg && agg.time.length > 0 && agg.count > 0
+                ? Math.round(agg.time.reduce((s, v) => s + v, 0) / agg.count)
+                : null,
               focus: agg && agg.focus.length > 0 && agg.count > 0
                 ? Math.round(agg.focus.reduce((s, v) => s + v, 0) / agg.count)
                 : null,
-              recovery: agg && agg.recovery.length > 0 && agg.count > 0
-                ? Math.round(agg.recovery.reduce((s, v) => s + v, 0) / agg.count)
+              question: agg && agg.question.length > 0 && agg.count > 0
+                ? Math.round(agg.question.reduce((s, v) => s + v, 0) / agg.count)
                 : null,
               sr: agg?.sr ?? 0,
               wts: agg?.wts ?? 0,
@@ -134,8 +139,9 @@ export default function ClipPathGroups({ clips, clipPaths, pathStats }: Props) {
             stat = {
               completed: ps?.completed_count ?? 0,
               eng: ps?.avg_engagement ?? null,
+              time: ps?.avg_time ?? null,
               focus: ps?.avg_focus ?? null,
-              recovery: ps?.avg_recovery ?? null,
+              question: ps?.avg_question ?? null,
               sr: ps?.sr_triggered ?? 0,
               wts: ps?.wts_count ?? 0,
             };
@@ -175,9 +181,10 @@ export default function ClipPathGroups({ clips, clipPaths, pathStats }: Props) {
                     <th className="py-1.5 pr-2 font-medium opacity-60 w-8">#</th>
                     <th className="py-1.5 font-medium opacity-60">Clip</th>
                     <th className="py-1.5 text-center font-medium opacity-60">Done</th>
-                    <th className="py-1.5 text-center font-medium opacity-60">Eng%</th>
-                    <th className="py-1.5 text-center font-medium opacity-60">Focus%</th>
-                    <th className="py-1.5 text-center font-medium opacity-60">Recovery%</th>
+                    <th className="py-1.5 text-center font-medium opacity-60 text-[9px]" title="% of clip duration watched (45% weight)">Time%</th>
+                    <th className="py-1.5 text-center font-medium opacity-60 text-[9px]" title="Tab-away + volume score (30% weight)">Focus%</th>
+                    <th className="py-1.5 text-center font-medium opacity-60 text-[9px]" title="Trail marker accuracy (25% weight)">Question%</th>
+                    <th className="py-1.5 text-center font-medium opacity-60 text-[9px]" title="Weighted composite: Q 25% + F 30% + T 45%">Eng%</th>
                     <th className="py-1.5 text-center font-medium opacity-60">S&R</th>
                     <th className="py-1.5 text-center font-medium opacity-60">WtS</th>
                   </tr>
@@ -188,14 +195,17 @@ export default function ClipPathGroups({ clips, clipPaths, pathStats }: Props) {
                       <td className="py-1.5 pr-2 opacity-40">{c.sort_order}</td>
                       <td className="py-1.5 font-medium truncate max-w-[220px]">{c.title}</td>
                       <td className="py-1.5 text-center">{c.stat.completed}</td>
-                      <td className={`py-1.5 text-center ${engColor(c.stat.eng)}`}>
-                        {c.stat.eng != null ? `${c.stat.eng}%` : "—"}
+                      <td className={`py-1.5 text-center ${engColor(c.stat.time)}`}>
+                        {c.stat.time != null ? `${c.stat.time}%` : "—"}
                       </td>
                       <td className={`py-1.5 text-center ${engColor(c.stat.focus)}`}>
                         {c.stat.focus != null ? `${c.stat.focus}%` : "—"}
                       </td>
-                      <td className={`py-1.5 text-center ${engColor(c.stat.recovery)}`}>
-                        {c.stat.recovery != null ? `${c.stat.recovery}%` : "—"}
+                      <td className={`py-1.5 text-center ${engColor(c.stat.question)}`}>
+                        {c.stat.question != null ? `${c.stat.question}%` : "—"}
+                      </td>
+                      <td className={`py-1.5 text-center font-semibold ${engColor(c.stat.eng)}`}>
+                        {c.stat.eng != null ? `${c.stat.eng}%` : "—"}
                       </td>
                       <td className="py-1.5 text-center">
                         {c.stat.sr > 0 ? (

@@ -24,7 +24,9 @@ export default function ClipAnalyticsSummary({ clips }: Props) {
     const totalSR = clips.reduce((s, c) => s + c.srTriggered, 0);
     const totalWtS = clips.reduce((s, c) => s + c.wtsCount, 0);
 
+    // Exclude resource-day / no-marker clips from avg (no real engagement score)
     const engScores = completed
+      .filter((c) => c.avgFocus !== null)
       .map((c) => c.avgFirstPass)
       .filter((v): v is number => v !== null);
     const avgEng = engScores.length
@@ -35,12 +37,15 @@ export default function ClipAnalyticsSummary({ clips }: Props) {
       (best, c) => (c.srTriggered > (best?.srTriggered ?? 0) ? c : best),
       null as ClipStat | null
     );
-    const bestClip = completed.reduce(
+    // Exclude clips with no real engagement score (resource days / no markers)
+    // — only consider clips that have focus data (means EndSession scored them)
+    const scoredClips = completed.filter((c) => c.avgFocus !== null);
+    const bestClip = scoredClips.reduce(
       (best, c) =>
         (c.avgFirstPass ?? 0) > (best?.avgFirstPass ?? 0) ? c : best,
       null as ClipStat | null
     );
-    const worstClip = completed.reduce(
+    const worstClip = scoredClips.reduce(
       (worst, c) =>
         (c.avgFirstPass ?? 999) < (worst?.avgFirstPass ?? 999) ? c : worst,
       null as ClipStat | null
@@ -59,14 +64,15 @@ export default function ClipAnalyticsSummary({ clips }: Props) {
     {
       label: "Avg Engagement",
       value: stats.avgEng !== null ? `${stats.avgEng}%` : "—",
+      subtitle: "First-pass only (excl. S&R/WtS)",
       emoji: "📊",
       color: "bg-blue-50 border-blue-200 text-blue-800",
     },
     {
       label: "S&R Triggered",
       value: stats.totalSR.toString(),
-      subtitle: stats.mostSR
-        ? `Most: ${stats.mostSR.title.slice(0, 25)}…`
+      subtitle: stats.totalCompleted > 0
+        ? `${Math.round((stats.totalSR / stats.totalCompleted) * 100)}% of ${stats.totalCompleted} completions`
         : undefined,
       emoji: "🔍",
       color: "bg-amber-50 border-amber-200 text-amber-800",
@@ -74,6 +80,9 @@ export default function ClipAnalyticsSummary({ clips }: Props) {
     {
       label: "WtS Triggered",
       value: stats.totalWtS.toString(),
+      subtitle: stats.totalCompleted > 0
+        ? `${Math.round((stats.totalWtS / stats.totalCompleted) * 100)}% of ${stats.totalCompleted} completions`
+        : undefined,
       emoji: "⚠️",
       color: "bg-red-50 border-red-200 text-red-800",
     },

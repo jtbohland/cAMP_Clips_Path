@@ -335,7 +335,7 @@ function OverviewSection({ overview, onPacingDeepDive }: { overview: any; onPaci
     { label: "Live Clips", desc: "Clips published in Ascent", value: overview.totalClips, icon: "🎬" },
     { label: "Total Sessions", desc: "All sessions started (incl. in-progress)", value: overview.totalSessions, icon: "▶️" },
     { label: "Unique Learners", desc: "Learners who've started Ascent", value: overview.uniqueViewers, icon: "🧑‍🎓" },
-    { label: "Avg Engagement", desc: "Mean engagement across completed clips", value: overview.avgEngagement != null ? `${overview.avgEngagement}%` : "—", icon: "📊" },
+    { label: "Avg Engagement", desc: "All attempts (first-pass + S&R + WtS)", value: overview.avgEngagement != null ? `${overview.avgEngagement}%` : "—", icon: "📊" },
   ];
   const bottomRow = [
     { label: "Completion Rate", desc: "% of started sessions that are completed", value: overview.completionRate != null ? `${overview.completionRate}%` : "—", icon: "✅" },

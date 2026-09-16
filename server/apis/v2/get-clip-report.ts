@@ -196,8 +196,25 @@ export default api({
       }));
     }
 
-    // Weather the Storm is triggered at attempt_number >= 3
-    const weatherStormTriggered = (session?.attempt_number ?? 0) >= 3;
+    // Weather the Storm: check unlock_overrides for the NEXT clip
+    const WtsSchema = z.object({ cnt: z.coerce.number() });
+    const wtsRows = await ctx.integrations.db.query(
+      `SELECT COUNT(*)::int AS cnt
+       FROM cliptracker_v2_unlock_overrides uo
+       JOIN cliptracker_v2_clips unlocked ON unlocked.id = uo.clip_id
+       JOIN cliptracker_v2_clips source ON source.id = $1
+       WHERE uo.viewer_id = $2
+         AND unlocked.sort_order > source.sort_order
+         AND NOT EXISTS (
+           SELECT 1 FROM cliptracker_v2_clips mid
+           WHERE mid.sort_order > source.sort_order AND mid.sort_order < unlocked.sort_order AND mid.status = 'live'
+         )
+         AND uo.reason = 'Completed via weather_storm'`,
+      WtsSchema,
+      [clipId, viewerId],
+      { label: "Check WtS via unlock overrides" }
+    );
+    const weatherStormTriggered = (wtsRows[0]?.cnt ?? 0) > 0;
 
     // Get XP events for this clip
     const xpEvents = await ctx.integrations.db.query(
