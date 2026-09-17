@@ -86,23 +86,23 @@ function approachText(pathLabel: string): string {
 }
 
 function week2Text(): string {
-  return `Week 1 of cAMP Ascent ✅ — Built my revenue engine foundations with @Amplitude's Global Sales Enablement team. From verticals and personas to GTM strategy, the base camp is set. The trail ahead is calling. 🥾\n\nEarned in cAMP Ascent — Amplitude's AI-powered enablement app.\n\n${LINKEDIN_HASHTAGS}`;
+  return `Week 2 of cAMP Ascent ✅ — Built my revenue engine foundations with @Amplitude's Global Sales Enablement team. From verticals and personas to GTM strategy, the base camp is set. The trail ahead is calling. 🥾\n\nEarned in cAMP Ascent — Amplitude's AI-powered enablement app.\n\n${LINKEDIN_HASHTAGS}`;
 }
 
 function week2TextSDR(): string {
-  return `Week 1 of cAMP Ascent ✅ — Built my revenue engine foundations with @Amplitude's Global Sales Enablement team. Prospecting, cold calling, and pipeline generation are dialed in. The trail ahead is calling. 🥾\n\nEarned in cAMP Ascent — Amplitude's AI-powered enablement app.\n\n${LINKEDIN_HASHTAGS}`;
+  return `Week 2 of cAMP Ascent ✅ — Built my revenue engine foundations with @Amplitude's Global Sales Enablement team. Prospecting, cold calling, and pipeline generation are dialed in. The trail ahead is calling. 🥾\n\nEarned in cAMP Ascent — Amplitude's AI-powered enablement app.\n\n${LINKEDIN_HASHTAGS}`;
 }
 
 function week3Text(): string {
-  return `Halfway up the mountain! Week 2 of cAMP Ascent complete — sharpening my skills in deal design, competitive positioning, and account planning with @Amplitude. The summit is in sight. ⛰️\n\nEarned in cAMP Ascent — Amplitude's AI-powered enablement app.\n\n${LINKEDIN_HASHTAGS}`;
+  return `Halfway up the mountain! Week 3 of cAMP Ascent complete — sharpening my skills in deal design, competitive positioning, and account planning with @Amplitude. The summit is in sight. ⛰️\n\nEarned in cAMP Ascent — Amplitude's AI-powered enablement app.\n\n${LINKEDIN_HASHTAGS}`;
 }
 
 function week3TextPromo(): string {
-  return `Halfway up the mountain! Week 2 of cAMP Ascent complete — diving deep into deals, forecasting, and closing the loop with @Amplitude. The summit is in sight. ⛰️\n\nEarned in cAMP Ascent — Amplitude's AI-powered enablement app.\n\n${LINKEDIN_HASHTAGS}`;
+  return `Halfway up the mountain! Week 3 of cAMP Ascent complete — diving deep into deals, forecasting, and closing the loop with @Amplitude. The summit is in sight. ⛰️\n\nEarned in cAMP Ascent — Amplitude's AI-powered enablement app.\n\n${LINKEDIN_HASHTAGS}`;
 }
 
 function week4Text(): string {
-  return `The final push before the summit! Week 3 of cAMP Ascent done — mastering deal execution, forecasting, and partner strategy with @Amplitude. One more step to go. 🦅\n\nEarned in cAMP Ascent — Amplitude's AI-powered enablement app.\n\n${LINKEDIN_HASHTAGS}`;
+  return `The final push before the summit! Week 4 of cAMP Ascent done — mastering deal execution, forecasting, and partner strategy with @Amplitude. One more step to go. 🦅\n\nEarned in cAMP Ascent — Amplitude's AI-powered enablement app.\n\n${LINKEDIN_HASHTAGS}`;
 }
 
 function summitText(tierName: string, weeksCount: number): string {
@@ -139,7 +139,7 @@ export function getCertificatesForPath(
     },
     {
       key: "week2",
-      title: "Week 1 Complete",
+      title: "Week 2 Complete",
       subtitle: themes.week2,
       emoji: "🥾",
       topics: week2Topics,
@@ -149,7 +149,7 @@ export function getCertificatesForPath(
     },
     {
       key: "week3",
-      title: "Week 2 Complete",
+      title: "Week 3 Complete",
       subtitle: themes.week3,
       emoji: "🏞️",
       topics: week3Topics,
@@ -163,7 +163,7 @@ export function getCertificatesForPath(
   if (!isPromo) {
     certs.push({
       key: "week4",
-      title: "Week 3 Complete",
+      title: "Week 4 Complete",
       subtitle: themes.week4,
       emoji: "🧗🏻‍♂️",
       topics: WEEK4_TOPICS_AE,
