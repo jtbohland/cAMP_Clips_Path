@@ -228,14 +228,27 @@ export default function PacingModal({
                 className="rounded-lg px-4 py-3 space-y-1.5 max-h-48 overflow-y-auto"
                 style={{ backgroundColor: `${config.headerBg}10` }}
               >
-                {missedClips.map((clip, i) => (
-                  <p key={i} className="text-sm">
-                    <span className="font-semibold">
-                      Week {clip.weekNumber} {clip.dayLabel}:
-                    </span>{" "}
-                    {clip.title}
-                  </p>
-                ))}
+                {missedClips.map((clip, i) => {
+                  // Tag resource days that include games
+                  const gameTag = clip.sortOrder === 60
+                    ? " 🦌 includes DEARR Crossing"
+                    : clip.sortOrder === 120
+                    ? " 💰 includes The Price is Right"
+                    : clip.sortOrder === 165
+                    ? " ⛰️ includes Rules of the Ridge"
+                    : null;
+                  return (
+                    <div key={i} className="text-sm">
+                      <span className="font-semibold">
+                        Week {clip.weekNumber} {clip.dayLabel}:
+                      </span>{" "}
+                      {clip.title}
+                      {gameTag && (
+                        <span className="block text-xs opacity-70 ml-4 mt-0.5 italic">{gameTag}</span>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
