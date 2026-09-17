@@ -3,12 +3,16 @@
  *
  * Each certificate maps to a milestone:
  *   approach  — Approach completed (modules signed off)
- *   week2     — Week 2 anchor point sent
- *   week3     — Week 3 anchor point sent
- *   week4     — Week 4 anchor point sent  (AE only — SDR/Promo have fewer weeks)
+ *   week2     — Week 1 of Ascent complete (anchor point sent)
+ *   week3     — Week 2 of Ascent complete (anchor point sent)
+ *   week4     — Week 3 of Ascent complete (AE/SDR only)
  *   summit    — Summit reached (all clips done + approach complete)
  *
+ * Emojis match the in-app week icons:
+ *   Approach = 🚡  |  Week 2 = 🥾  |  Week 3 = 🏞️  |  Week 4 = 🧗🏻‍♂️  |  Summit = 🏆
+ *
  * LinkedIn share text follows a progressive mountain-journey narrative.
+ * Background watermark key tells the CertificateCard which illustration to render.
  */
 
 // ── Hashtags (shared across all posts) ─────────────────────────────
@@ -18,41 +22,36 @@ export const LINKEDIN_HASHTAGS =
 // ── Types ──────────────────────────────────────────────────────────
 export type CertificateKey = "approach" | "week2" | "week3" | "week4" | "summit";
 
+export type WatermarkKey = "tent" | "trees" | "carabiner" | "mountain" | "flag";
+
 export interface CertificateDef {
   key: CertificateKey;
-  /** Display title on the certificate card */
   title: string;
-  /** Subtitle / week theme */
   subtitle: string;
-  /** Emoji shown on card */
   emoji: string;
-  /** Path-specific modules / topics listed on the certificate */
-  modules: string[];
-  /** Pre-filled LinkedIn post body (progressive narrative per week) */
+  /** Topics trained on — shown as pills */
+  topics: string[];
   linkedInText: string;
-  /** Card color theme */
   color: "amber" | "emerald" | "sky" | "indigo" | "purple";
+  /** Which background watermark illustration to render */
+  watermark: WatermarkKey;
 }
 
-// ── Approach modules per path ──────────────────────────────────────
-const APPROACH_MODULES_AE = [
-  "MEDDPICC Framework",
-  "Amplitude Academy (Analytics, Experiment & Statsig, Session Replay, Guides & Surveys)",
-  "Challenger Sales Methodology",
-  "Wheel & Deal Simulation",
-];
+// ── Topics per week per path ───────────────────────────────────────
+const APPROACH_TOPICS_AE = ["MEDDPICC", "Challenger", "Amplitude Academy", "Wheel & Deal"];
+const APPROACH_TOPICS_SDR = ["MEDDPICC", "Challenger", "Amplitude Academy", "Wheel & Deal"];
+const APPROACH_TOPICS_PROMO = ["Amplitude Academy", "Wheel & Deal"];
 
-const APPROACH_MODULES_SDR = [
-  "MEDDPICC Framework",
-  "Amplitude Academy (Analytics, Experiment & Statsig, Session Replay, Guides & Surveys)",
-  "Challenger Sales Methodology",
-  "Wheel & Deal Simulation",
-];
+const WEEK2_TOPICS_AE = ["Verticals & Personas", "Lead Generation", "GTM Strategy", "Prospecting", "Cold Calling", "Renewal Operations"];
+const WEEK2_TOPICS_SDR = ["Verticals & Personas", "Lead Generation", "GTM Strategy", "Prospecting", "Cold Calling", "Renewal Operations"];
+const WEEK2_TOPICS_PROMO = ["Renewal Operations", "Core Revenue Operations"];
 
-const APPROACH_MODULES_PROMO = [
-  "Amplitude Academy (Analytics, Experiment & Statsig, Session Replay, Guides & Surveys)",
-  "Wheel & Deal Simulation",
-];
+const WEEK3_TOPICS_AE = ["Competitive Landscape", "Account Planning", "Discovery", "Pricing & Packaging", "Partners"];
+const WEEK3_TOPICS_SDR = ["Competitive Landscape", "Account Planning", "Discovery", "Pricing & Packaging", "Partners"];
+const WEEK3_TOPICS_PROMO = ["Deals", "Forecasting", "Closing the Loop"];
+
+const WEEK4_TOPICS_AE = ["Forecasting", "CLM", "Deal Desk & CPQ", "Solution Engineers", "Professional Services"];
+const WEEK4_TOPICS_SDR = ["Forecasting", "CLM", "Deal Desk & CPQ", "Solution Engineers", "Professional Services"];
 
 // ── Week themes per path ───────────────────────────────────────────
 export const WEEK_THEMES: Record<string, Record<string, string>> = {
@@ -76,11 +75,11 @@ export const WEEK_THEMES: Record<string, Record<string, string>> = {
 export function roleToPathKey(role: string): string {
   if (role === "SDR>Velocity Promo" || role === "Velocity Promo") return "SDR>Velocity Promo";
   if (role === "SDR") return "SDR";
-  return "AE"; // Velocity AE, Emerging AE, Majors AE, Strategic AE, PSM, Renewals
+  return "AE";
 }
 
 // ── LinkedIn post text builders ────────────────────────────────────
-// These are public-facing professional posts — grammar and tone matter.
+// Public-facing professional posts — grammar and tone matter.
 
 function approachText(pathLabel: string): string {
   return `Just started my cAMP Ascent journey with @Amplitude's Global Sales Enablement team! Completed the Approach — mastering ${pathLabel}. Now it's time to climb. 🏔️\n\nEarned in cAMP Ascent — Amplitude's AI-powered enablement app.\n\n${LINKEDIN_HASHTAGS}`;
@@ -90,20 +89,20 @@ function week2Text(): string {
   return `Week 1 of cAMP Ascent ✅ — Built my revenue engine foundations with @Amplitude's Global Sales Enablement team. From verticals and personas to GTM strategy, the base camp is set. The trail ahead is calling. 🥾\n\nEarned in cAMP Ascent — Amplitude's AI-powered enablement app.\n\n${LINKEDIN_HASHTAGS}`;
 }
 
-function week3Text(): string {
-  return `Halfway up the mountain! Week 2 of cAMP Ascent complete — sharpening my skills in deal design, competitive positioning, and account planning with @Amplitude. The summit is in sight. ⛰️\n\nEarned in cAMP Ascent — Amplitude's AI-powered enablement app.\n\n${LINKEDIN_HASHTAGS}`;
+function week2TextSDR(): string {
+  return `Week 1 of cAMP Ascent ✅ — Built my revenue engine foundations with @Amplitude's Global Sales Enablement team. Prospecting, cold calling, and pipeline generation are dialed in. The trail ahead is calling. 🥾\n\nEarned in cAMP Ascent — Amplitude's AI-powered enablement app.\n\n${LINKEDIN_HASHTAGS}`;
 }
 
-function week4Text(): string {
-  return `The final push before the summit! Week 3 of cAMP Ascent done — mastering deal execution, forecasting, and partner strategy with @Amplitude. One more step to go. 🦅\n\nEarned in cAMP Ascent — Amplitude's AI-powered enablement app.\n\n${LINKEDIN_HASHTAGS}`;
+function week3Text(): string {
+  return `Halfway up the mountain! Week 2 of cAMP Ascent complete — sharpening my skills in deal design, competitive positioning, and account planning with @Amplitude. The summit is in sight. ⛰️\n\nEarned in cAMP Ascent — Amplitude's AI-powered enablement app.\n\n${LINKEDIN_HASHTAGS}`;
 }
 
 function week3TextPromo(): string {
   return `Halfway up the mountain! Week 2 of cAMP Ascent complete — diving deep into deals, forecasting, and closing the loop with @Amplitude. The summit is in sight. ⛰️\n\nEarned in cAMP Ascent — Amplitude's AI-powered enablement app.\n\n${LINKEDIN_HASHTAGS}`;
 }
 
-function week2TextSDR(): string {
-  return `Week 1 of cAMP Ascent ✅ — Built my revenue engine foundations with @Amplitude's Global Sales Enablement team. Prospecting, cold calling, and pipeline generation are dialed in. The trail ahead is calling. 🥾\n\nEarned in cAMP Ascent — Amplitude's AI-powered enablement app.\n\n${LINKEDIN_HASHTAGS}`;
+function week4Text(): string {
+  return `The final push before the summit! Week 3 of cAMP Ascent done — mastering deal execution, forecasting, and partner strategy with @Amplitude. One more step to go. 🦅\n\nEarned in cAMP Ascent — Amplitude's AI-powered enablement app.\n\n${LINKEDIN_HASHTAGS}`;
 }
 
 function summitText(tierName: string, weeksCount: number): string {
@@ -117,12 +116,11 @@ export function getCertificatesForPath(
 ): CertificateDef[] {
   const themes = WEEK_THEMES[pathKey] ?? WEEK_THEMES.AE;
   const isPromo = pathKey === "SDR>Velocity Promo";
+  const isSDR = pathKey === "SDR";
 
-  const approachModules = isPromo
-    ? APPROACH_MODULES_PROMO
-    : pathKey === "SDR"
-    ? APPROACH_MODULES_SDR
-    : APPROACH_MODULES_AE;
+  const approachTopics = isPromo ? APPROACH_TOPICS_PROMO : isSDR ? APPROACH_TOPICS_SDR : APPROACH_TOPICS_AE;
+  const week2Topics = isPromo ? WEEK2_TOPICS_PROMO : isSDR ? WEEK2_TOPICS_SDR : WEEK2_TOPICS_AE;
+  const week3Topics = isPromo ? WEEK3_TOPICS_PROMO : isSDR ? WEEK3_TOPICS_SDR : WEEK3_TOPICS_AE;
 
   const approachPathLabel = isPromo
     ? "Amplitude Academy & Wheel & Deal"
@@ -133,28 +131,31 @@ export function getCertificatesForPath(
       key: "approach",
       title: "The Approach",
       subtitle: "Frameworks, Product Knowledge & Practice Reps",
-      emoji: "🏕️",
-      modules: approachModules,
+      emoji: "🚡",
+      topics: approachTopics,
       linkedInText: approachText(approachPathLabel),
       color: "amber",
+      watermark: "tent",
     },
     {
       key: "week2",
       title: "Week 1 Complete",
       subtitle: themes.week2,
-      emoji: "⛺",
-      modules: [],
-      linkedInText: pathKey === "SDR" ? week2TextSDR() : week2Text(),
+      emoji: "🥾",
+      topics: week2Topics,
+      linkedInText: isSDR ? week2TextSDR() : week2Text(),
       color: "emerald",
+      watermark: "trees",
     },
     {
       key: "week3",
       title: "Week 2 Complete",
       subtitle: themes.week3,
-      emoji: "🧗",
-      modules: [],
+      emoji: "🏞️",
+      topics: week3Topics,
       linkedInText: isPromo ? week3TextPromo() : week3Text(),
       color: "sky",
+      watermark: "carabiner",
     },
   ];
 
@@ -164,10 +165,11 @@ export function getCertificatesForPath(
       key: "week4",
       title: "Week 3 Complete",
       subtitle: themes.week4,
-      emoji: "🏔️",
-      modules: [],
+      emoji: "🧗🏻‍♂️",
+      topics: WEEK4_TOPICS_AE,
       linkedInText: week4Text(),
       color: "indigo",
+      watermark: "mountain",
     });
   }
 
@@ -177,9 +179,10 @@ export function getCertificatesForPath(
     title: "Summit Reached",
     subtitle: "cAMP Ascent Complete",
     emoji: "🏆",
-    modules: [],
+    topics: [],
     linkedInText: summitText(tierName, totalWeeks),
     color: "purple",
+    watermark: "flag",
   });
 
   return certs;

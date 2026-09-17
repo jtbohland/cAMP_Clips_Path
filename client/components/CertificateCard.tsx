@@ -1,21 +1,30 @@
 import { useCallback, useRef } from "react";
 import { toPng } from "html-to-image";
 import { openLinkedInShare } from "@/lib/linkedInShare";
-import type { CertificateDef } from "@/config/certificateConfig";
+import type { CertificateDef, WatermarkKey } from "@/config/certificateConfig";
 
-// ── Color themes per cert ──────────────────────────────────────────
+// ── Color themes ───────────────────────────────────────────────────
 const THEMES: Record<string, {
-  gradient: string; // header band gradient
-  accent: string;   // text accent
-  border: string;   // outer border
-  badgeBg: string;  // module/tier pill bg
-  badgeText: string; // module/tier pill text
+  gradient: string;
+  accent: string;
+  border: string;
+  pillBg: string;
+  pillText: string;
 }> = {
-  amber:   { gradient: "linear-gradient(135deg, #92400e 0%, #b45309 50%, #d97706 100%)", accent: "#92400e", border: "#b45309", badgeBg: "#fef3c7", badgeText: "#78350f" },
-  emerald: { gradient: "linear-gradient(135deg, #065f46 0%, #047857 50%, #059669 100%)", accent: "#065f46", border: "#047857", badgeBg: "#d1fae5", badgeText: "#064e3b" },
-  sky:     { gradient: "linear-gradient(135deg, #0c4a6e 0%, #0369a1 50%, #0284c7 100%)", accent: "#0c4a6e", border: "#0369a1", badgeBg: "#e0f2fe", badgeText: "#0c4a6e" },
-  indigo:  { gradient: "linear-gradient(135deg, #312e81 0%, #4338ca 50%, #4f46e5 100%)", accent: "#312e81", border: "#4338ca", badgeBg: "#e0e7ff", badgeText: "#312e81" },
-  purple:  { gradient: "linear-gradient(135deg, #581c87 0%, #7c3aed 50%, #8b5cf6 100%)", accent: "#581c87", border: "#7c3aed", badgeBg: "#f3e8ff", badgeText: "#581c87" },
+  amber:   { gradient: "linear-gradient(135deg, #92400e 0%, #b45309 50%, #d97706 100%)", accent: "#92400e", border: "#b45309", pillBg: "#fef3c7", pillText: "#78350f" },
+  emerald: { gradient: "linear-gradient(135deg, #065f46 0%, #047857 50%, #059669 100%)", accent: "#065f46", border: "#047857", pillBg: "#d1fae5", pillText: "#064e3b" },
+  sky:     { gradient: "linear-gradient(135deg, #0c4a6e 0%, #0369a1 50%, #0284c7 100%)", accent: "#0c4a6e", border: "#0369a1", pillBg: "#e0f2fe", pillText: "#0c4a6e" },
+  indigo:  { gradient: "linear-gradient(135deg, #312e81 0%, #4338ca 50%, #4f46e5 100%)", accent: "#312e81", border: "#4338ca", pillBg: "#e0e7ff", pillText: "#312e81" },
+  purple:  { gradient: "linear-gradient(135deg, #581c87 0%, #7c3aed 50%, #8b5cf6 100%)", accent: "#581c87", border: "#7c3aed", pillBg: "#f3e8ff", pillText: "#581c87" },
+};
+
+// ── Watermark SVGs (inline, light, thematic) ───────────────────────
+const WATERMARKS: Record<WatermarkKey, string> = {
+  tent: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M100 30 L40 170 H160 Z"/><path d="M100 30 V170"/><path d="M80 170 L100 120 L120 170"/></svg>`,
+  trees: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M70 180V120"/><path d="M70 140 L40 170 H100 L70 140Z"/><path d="M70 120 L50 150 H90 L70 120Z"/><path d="M70 100 L55 130 H85 L70 100Z"/><path d="M130 180V110"/><path d="M130 130 L100 165 H160 L130 130Z"/><path d="M130 110 L110 140 H150 L130 110Z"/><path d="M130 90 L115 120 H145 L130 90Z"/></svg>`,
+  carabiner: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M80 40 Q40 40 40 80 V140 Q40 180 80 180 H100"/><path d="M100 180 Q140 180 140 140 V80 Q140 55 120 45"/><path d="M80 40 H120"/><line x1="100" y1="40" x2="100" y2="180"/></svg>`,
+  mountain: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 170 L70 50 L100 100 L130 60 L190 170 Z"/><path d="M70 50 L85 75"/></svg>`,
+  flag: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M30 180 L80 60 L130 120 L180 50"/><path d="M100 90 V180"/><path d="M100 90 L140 80 L140 55 L100 65"/><path d="M60 180 H140"/></svg>`,
 };
 
 interface CertificateCardProps {
@@ -66,12 +75,13 @@ export default function CertificateCard({
   }, [cert.linkedInText]);
 
   const formattedDate = earnedAt
-    ? new Date(earnedAt).toLocaleDateString("en-US", {
-        month: "long",
-        day: "numeric",
-        year: "numeric",
-      })
+    ? new Date(earnedAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
     : null;
+
+  const watermarkSvg = WATERMARKS[cert.watermark] ?? "";
+  const watermarkDataUrl = watermarkSvg
+    ? `data:image/svg+xml,${encodeURIComponent(watermarkSvg.replace('stroke="currentColor"', `stroke="${theme.accent}"`))}`
+    : "";
 
   // ── Locked state ──────────────────────────────────────────────────
   if (!earned) {
@@ -88,7 +98,7 @@ export default function CertificateCard({
             alignItems: "center",
             justifyContent: "center",
             gap: "8px",
-            opacity: 0.5,
+            opacity: 0.45,
           }}
         >
           <div style={{ fontSize: "40px", filter: "grayscale(100%)" }}>🔒</div>
@@ -102,7 +112,7 @@ export default function CertificateCard({
     );
   }
 
-  // ── Earned certificate — landscape, eye-catching ──────────────────
+  // ── Earned certificate ────────────────────────────────────────────
   return (
     <div className="w-full" style={{ maxWidth: "640px" }}>
       <div
@@ -119,11 +129,30 @@ export default function CertificateCard({
           position: "relative",
         }}
       >
+        {/* Background watermark */}
+        {watermarkDataUrl && (
+          <div
+            style={{
+              position: "absolute",
+              right: "-10px",
+              bottom: "-10px",
+              width: "200px",
+              height: "200px",
+              opacity: 0.06,
+              backgroundImage: `url("${watermarkDataUrl}")`,
+              backgroundSize: "contain",
+              backgroundRepeat: "no-repeat",
+              backgroundPosition: "center",
+              pointerEvents: "none",
+            }}
+          />
+        )}
+
         {/* ── Colored header band ── */}
         <div
           style={{
             background: theme.gradient,
-            padding: "20px 32px 16px",
+            padding: "18px 28px 14px",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
@@ -131,121 +160,82 @@ export default function CertificateCard({
           }}
         >
           <div>
-            <p style={{ fontSize: "9px", letterSpacing: "0.3em", textTransform: "uppercase", color: "rgba(255,255,255,0.7)", fontWeight: 600, marginBottom: "2px" }}>
+            <p style={{ fontSize: "9px", letterSpacing: "0.3em", textTransform: "uppercase", color: "rgba(255,255,255,0.65)", fontWeight: 600, marginBottom: "2px" }}>
               Amplitude Global Sales Enablement
             </p>
-            <p style={{ fontSize: "10px", letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(255,255,255,0.9)", fontWeight: 700 }}>
+            <p style={{ fontSize: "10px", letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(255,255,255,0.95)", fontWeight: 700 }}>
               Certificate of Completion
             </p>
           </div>
-          <div style={{ fontSize: "36px", lineHeight: 1 }}>{cert.emoji}</div>
+          <div style={{ fontSize: "32px", lineHeight: 1 }}>{cert.emoji}</div>
         </div>
 
         {/* ── Certificate body ── */}
         <div
           style={{
             flex: 1,
-            padding: "20px 32px 16px",
+            padding: "16px 28px 14px",
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-between",
             background: "linear-gradient(180deg, #fffdf7 0%, #ffffff 100%)",
+            position: "relative",
           }}
         >
-          {/* Top section: achievement + name */}
+          {/* Top: achievement + name */}
           <div>
-            {/* Achievement title */}
-            <h2
-              style={{
-                fontSize: "22px",
-                fontWeight: 800,
-                color: "#1a1a1a",
-                lineHeight: 1.2,
-                marginBottom: "2px",
-              }}
-            >
+            <h2 style={{ fontSize: "20px", fontWeight: 800, color: "#1a1a1a", lineHeight: 1.2, marginBottom: "2px" }}>
               {cert.title}
             </h2>
-            <p
-              style={{
-                fontSize: "13px",
-                color: theme.accent,
-                fontWeight: 600,
-                fontStyle: "italic",
-                marginBottom: "16px",
-              }}
-            >
+            <p style={{ fontSize: "12px", color: theme.accent, fontWeight: 600, fontStyle: "italic", marginBottom: "12px" }}>
               {cert.subtitle}
             </p>
 
-            {/* Divider */}
-            <div
-              style={{
-                width: "48px",
-                height: "2px",
-                background: theme.border,
-                marginBottom: "12px",
-              }}
-            />
+            <div style={{ width: "40px", height: "2px", background: theme.border, marginBottom: "10px" }} />
 
-            {/* Presented to + name */}
-            <p style={{ fontSize: "9px", letterSpacing: "0.2em", textTransform: "uppercase", color: "#a8a29e", marginBottom: "4px", fontWeight: 500 }}>
+            <p style={{ fontSize: "9px", letterSpacing: "0.2em", textTransform: "uppercase", color: "#a8a29e", marginBottom: "3px", fontWeight: 500 }}>
               Presented to
             </p>
-            <h3
-              style={{
-                fontSize: "28px",
-                fontWeight: 800,
-                color: theme.accent,
-                lineHeight: 1.2,
-                marginBottom: "4px",
-              }}
-            >
+            <h3 style={{ fontSize: "26px", fontWeight: 800, color: theme.accent, lineHeight: 1.15, marginBottom: "2px" }}>
               {learnerName}
             </h3>
-            <p style={{ fontSize: "12px", color: "#78716c" }}>{pathLabel}</p>
+            <p style={{ fontSize: "11px", color: "#78716c" }}>{pathLabel}</p>
           </div>
 
-          {/* Middle: modules or tier */}
-          {cert.modules.length > 0 && (
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", margin: "12px 0" }}>
-              {cert.modules.map((mod) => (
-                <span
-                  key={mod}
-                  style={{
-                    display: "inline-block",
-                    padding: "3px 10px",
-                    borderRadius: "12px",
-                    background: theme.badgeBg,
-                    color: theme.badgeText,
-                    fontSize: "10px",
-                    fontWeight: 600,
-                  }}
-                >
-                  ✓ {mod}
-                </span>
-              ))}
-            </div>
-          )}
-
-          {cert.key === "summit" && (
-            <div style={{ margin: "10px 0" }}>
+          {/* Middle: topic pills + tier */}
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "5px", margin: "10px 0 6px" }}>
+            {cert.topics.map((topic) => (
               <span
+                key={topic}
                 style={{
                   display: "inline-block",
-                  padding: "5px 16px",
-                  borderRadius: "16px",
-                  background: theme.badgeBg,
-                  border: `1px solid ${theme.border}30`,
-                  color: theme.badgeText,
-                  fontSize: "13px",
-                  fontWeight: 700,
+                  padding: "2px 9px",
+                  borderRadius: "10px",
+                  background: theme.pillBg,
+                  color: theme.pillText,
+                  fontSize: "9px",
+                  fontWeight: 600,
                 }}
               >
-                {tierEmoji} {tierName}
+                {topic}
               </span>
-            </div>
-          )}
+            ))}
+            {/* Tier pill on every cert */}
+            <span
+              style={{
+                display: "inline-block",
+                padding: "2px 9px",
+                borderRadius: "10px",
+                background: theme.pillBg,
+                color: theme.pillText,
+                fontSize: "9px",
+                fontWeight: 700,
+                border: `1px solid ${theme.border}30`,
+              }}
+            >
+              {tierEmoji} {tierName}
+            </span>
+          </div>
 
           {/* Bottom bar: date + branding */}
           <div
@@ -254,30 +244,24 @@ export default function CertificateCard({
               alignItems: "flex-end",
               justifyContent: "space-between",
               borderTop: "1px solid #e7e5e4",
-              paddingTop: "10px",
+              paddingTop: "8px",
               marginTop: "auto",
             }}
           >
             <div>
               {formattedDate && (
-                <p style={{ fontSize: "11px", color: "#78716c", fontWeight: 500 }}>
-                  {formattedDate}
-                </p>
+                <p style={{ fontSize: "11px", color: "#78716c", fontWeight: 500 }}>{formattedDate}</p>
               )}
             </div>
             <div style={{ textAlign: "right" }}>
-              <p style={{ fontSize: "12px", fontWeight: 700, color: "#44403c" }}>
-                🏔️ cAMP Ascent
-              </p>
-              <p style={{ fontSize: "8px", color: "#a8a29e", letterSpacing: "0.05em" }}>
-                Amplitude's AI-powered enablement app
-              </p>
+              <p style={{ fontSize: "12px", fontWeight: 700, color: "#44403c" }}>🏔️ cAMP Ascent</p>
+              <p style={{ fontSize: "8px", color: "#a8a29e", letterSpacing: "0.05em" }}>Amplitude's AI-powered enablement app</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ── Action buttons (outside export area) ── */}
+      {/* ── Action buttons ── */}
       <div className="flex gap-2 mt-3">
         <button
           onClick={handleDownloadPng}
