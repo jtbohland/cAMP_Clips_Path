@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useApi } from "@/hooks/useApi.js";
 import { PACING_TIERS, type MissedClip } from "@/lib/pacing";
 import type { ApproachCatchUpItem } from "@/components/PacingModal";
@@ -73,6 +73,23 @@ export default function AnchorFailureModal({
   const [sendError, setSendError] = useState<string | null>(null);
 
   const { run: sendSlackMessage, loading: sending } = useApi("SendAnchorSlackMessage");
+
+  // Scroll indicator — detect if body is overflowing
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const [canScrollDown, setCanScrollDown] = useState(false);
+
+  useEffect(() => {
+    const el = bodyRef.current;
+    if (!el) return;
+    const check = () => {
+      setCanScrollDown(el.scrollHeight - el.scrollTop - el.clientHeight > 20);
+    };
+    check();
+    el.addEventListener("scroll", check, { passive: true });
+    const ro = new ResizeObserver(check);
+    ro.observe(el);
+    return () => { el.removeEventListener("scroll", check); ro.disconnect(); };
+  }, [selectedReason, sent]); // re-check when content changes
 
   const reasonObj = ANCHOR_REASONS.find(r => r.value === selectedReason);
 
@@ -159,6 +176,7 @@ export default function AnchorFailureModal({
 
         {/* Body */}
         <div
+          ref={bodyRef}
           className="px-6 py-5 max-h-[70vh] overflow-y-auto"
           style={{ backgroundColor: config.bodyBg, color: config.bodyText }}
         >
@@ -311,6 +329,13 @@ export default function AnchorFailureModal({
             <p className="text-[11px] text-center mt-2 opacity-60">
               Select a reason and send the Slack message to continue
             </p>
+          )}
+
+          {/* Scroll-down indicator — fades out when user scrolls to bottom */}
+          {canScrollDown && (
+            <div className="flex justify-center mt-3 animate-bounce opacity-40 transition-opacity">
+              <span className="text-xs font-medium">↓ Scroll for more ↓</span>
+            </div>
           )}
         </div>
       </div>
