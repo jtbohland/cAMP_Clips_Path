@@ -1,8 +1,11 @@
 import { useState, useCallback, useEffect, useMemo, memo } from "react";
+import { useNavigate } from "react-router";
 import { useApiData } from "@/hooks/useApiData.js";
 import { useApi } from "@/hooks/useApi.js";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
+import { openLinkedInShare } from "@/lib/linkedInShare";
+import { getCertificatesForPath, roleToPathKey } from "@/config/certificateConfig";
 import { countWeekdays, getPacingTier, getApproachPacingTier, getSummitDay, PACING_TIERS, type PacingTier, computeUnifiedPacingPercent, getPacingStatusFromPercent } from "@/lib/pacing.js";
 
 type CheckinType = "approach" | "week2" | "week3" | "summit";
@@ -121,6 +124,7 @@ const MANAGER_KEY = `
    MAIN COMPONENT
    ════════════════════════════════════════════════════════════════════════ */
 function LearnerCheckinModalInner({ viewerId, checkinType, onClose, onSent, allowClose, approachCompleteOverride }: LearnerCheckinModalProps) {
+  const navigate = useNavigate();
   const label = CHECKIN_LABELS[checkinType];
   const isSummit = checkinType === "summit";
 
@@ -475,16 +479,36 @@ function LearnerCheckinModalInner({ viewerId, checkinType, onClose, onSent, allo
             )}
           </div>
 
-          {/* Grand Finale footer — single CTA to continue into check-in */}
+          {/* Grand Finale footer — CTA + Certificate Cabin */}
           {data && !loading && (
-            <div className="px-8 pb-8 pt-2 shrink-0">
+            <div className="px-8 pb-8 pt-2 shrink-0 space-y-2">
               <button
                 onClick={() => setStep("stats")}
                 className="w-full py-3.5 rounded-xl text-sm font-bold bg-gradient-to-r from-amber-500 to-yellow-500 text-white hover:from-amber-600 hover:to-yellow-600 transition-all shadow-lg"
               >
                 📧 Continue to Summit Check-In →
               </button>
-              <p className="text-xs text-center text-gray-400 mt-2">
+              <div className="flex gap-2">
+                <button
+                  onClick={() => { onClose(); navigate("/certificate-cabin"); }}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-purple-50 border border-purple-200 text-purple-700 hover:bg-purple-100 transition-colors"
+                >
+                  🏡 Certificate Cabin
+                </button>
+                <button
+                  onClick={() => {
+                    const role = data?.viewer?.role ?? "AE";
+                    const pathKey = roleToPathKey(role);
+                    const certs = getCertificatesForPath(pathKey);
+                    const summitCert = certs.find(c => c.key === "summit");
+                    if (summitCert) openLinkedInShare(summitCert.linkedInText);
+                  }}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 transition-colors"
+                >
+                  📝 Share on LinkedIn
+                </button>
+              </div>
+              <p className="text-xs text-center text-gray-400">
                 Review your stats, write a reflection, and send your Summit email
               </p>
             </div>
@@ -607,14 +631,38 @@ function LearnerCheckinModalInner({ viewerId, checkinType, onClose, onSent, allo
         )}
 
         {sent && (
-          <div className="px-6 py-4 border-t border-gray-200 bg-emerald-50 shrink-0 text-center">
+          <div className="px-6 py-4 border-t border-gray-200 bg-emerald-50 shrink-0 text-center space-y-2">
             <p className="text-sm font-semibold text-emerald-700">✅ Check-in sent! You're all set.</p>
-            <button
-              onClick={onClose}
-              className="mt-2 px-5 py-2 rounded-lg text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
-            >
-              Continue
-            </button>
+            <div className="flex gap-2 justify-center">
+              <button
+                onClick={onClose}
+                className="flex-1 max-w-[160px] py-2 rounded-lg text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
+              >
+                Continue
+              </button>
+              <button
+                onClick={() => { onClose(); navigate("/certificate-cabin"); }}
+                className="flex-1 max-w-[200px] py-2 rounded-lg text-sm font-semibold bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 transition-colors"
+              >
+                🏡 Certificate Cabin
+              </button>
+            </div>
+            {checkinType !== "approach" && (
+              <button
+                onClick={() => {
+                  const role = data?.viewer?.role ?? "AE";
+                  const pathKey = roleToPathKey(role);
+                  const certs = getCertificatesForPath(pathKey);
+                  // Map checkinType to cert key
+                  const certKey = checkinType === "summit" ? "summit" : checkinType;
+                  const cert = certs.find(c => c.key === certKey);
+                  if (cert) openLinkedInShare(cert.linkedInText);
+                }}
+                className="text-xs text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+              >
+                📝 Share this milestone on LinkedIn
+              </button>
+            )}
           </div>
         )}
       </div>

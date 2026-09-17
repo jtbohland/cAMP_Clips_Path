@@ -1,5 +1,6 @@
 import { useApiData } from "@/hooks/useApiData";
 import { useViewer } from "@/components/ViewerContext";
+import { useNavigate } from "react-router";
 
 const BADGE_META: Record<string, { name: string; emoji: string }> = {
   // Per-clip performance
@@ -40,6 +41,7 @@ const BADGE_META: Record<string, { name: string; emoji: string }> = {
 
 export default function XpProgressBar() {
   const { viewer } = useViewer();
+  const navigate = useNavigate();
   const { data, loading } = useApiData(
     "GetLearnerProgress",
     { viewerId: viewer?.id ?? "" },
@@ -125,7 +127,7 @@ export default function XpProgressBar() {
         </span>
       </div>
 
-      {/* Earned Bonuses — yellow pill badges */}
+      {/* Action row: XPlanation + Certificate Cabin */}
       {badges.length > 0 && (
         <div className="border-t border-gray-200/70 pt-3">
           <p className="text-xs font-medium text-gray-500 mb-2">Earned Bonuses</p>
@@ -146,6 +148,40 @@ export default function XpProgressBar() {
           </div>
         </div>
       )}
+
+      {/* Certificate Cabin button */}
+      <div className="border-t border-gray-200/70 pt-3 mt-1">
+        <button
+          onClick={() => navigate("/certificate-cabin")}
+          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-bold transition-all duration-200 relative overflow-hidden"
+          style={{
+            background: `
+              repeating-linear-gradient(
+                90deg,
+                #8B6F47 0px, #8B6F47 2px,
+                #9C7E56 2px, #9C7E56 8px,
+                #7A6340 8px, #7A6340 10px,
+                #A8895E 10px, #A8895E 18px,
+                #8B6F47 18px, #8B6F47 22px,
+                #96764D 22px, #96764D 30px
+              )`,
+            border: "2px solid #5C4A2A",
+            color: "#FFF5E0",
+            textShadow: "0 1px 2px rgba(0,0,0,0.4)",
+            boxShadow: "inset 0 1px 0 rgba(255,255,255,0.15), 0 2px 4px rgba(0,0,0,0.15)",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.filter = "brightness(1.1)";
+            e.currentTarget.style.boxShadow = "inset 0 1px 0 rgba(255,255,255,0.2), 0 3px 6px rgba(0,0,0,0.2)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.filter = "brightness(1)";
+            e.currentTarget.style.boxShadow = "inset 0 1px 0 rgba(255,255,255,0.15), 0 2px 4px rgba(0,0,0,0.15)";
+          }}
+        >
+          🏡 Certificate Cabin
+        </button>
+      </div>
 
 
     </div>

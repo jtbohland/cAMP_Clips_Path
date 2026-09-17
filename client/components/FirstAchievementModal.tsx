@@ -1,4 +1,5 @@
 import { useEffect, useCallback } from "react";
+import { useNavigate } from "react-router";
 import confetti from "canvas-confetti";
 import { useApi } from "@/hooks/useApi.js";
 
@@ -20,6 +21,7 @@ export default function FirstAchievementModal({
   earnedBadge,
   onDismiss,
 }: FirstAchievementModalProps) {
+  const navigate = useNavigate();
   const { run: markShown } = useApi("MarkFirstAchievement");
 
   useEffect(() => {
@@ -115,12 +117,18 @@ export default function FirstAchievementModal({
         </div>
 
         {/* Footer */}
-        <div className="px-8 pb-6 flex justify-center">
+        <div className="px-8 pb-6 flex flex-col items-center gap-2">
           <button
             onClick={handleDismiss}
-            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-indigo-600 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors shadow-sm"
+            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-indigo-600 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors shadow-sm w-full justify-center"
           >
             Continue climbing! 🧗
+          </button>
+          <button
+            onClick={() => { onDismiss(); navigate("/certificate-cabin"); }}
+            className="inline-flex items-center gap-2 px-6 py-2 rounded-lg bg-amber-50 border border-amber-200 text-sm font-semibold text-amber-700 hover:bg-amber-100 transition-colors w-full justify-center"
+          >
+            🏡 Visit Certificate Cabin
           </button>
         </div>
       </div>
