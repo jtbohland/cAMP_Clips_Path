@@ -15,9 +15,9 @@ import type { PacingLearner } from "@/components/PacingPerformanceSection";
 // ─── Shared mock data ───────────────────────────────────────────────
 
 const MOCK_MISSED_CLIPS: MissedClip[] = [
-  { weekNumber: 2, dayLabel: "Day 1", title: "ICP Deep Dive" },
-  { weekNumber: 2, dayLabel: "Day 2", title: "Discovery Framework" },
-  { weekNumber: 2, dayLabel: "Day 3", title: "Champion Building" },
+  { weekNumber: 2, dayLabel: "Day 1", title: "ICP Deep Dive", sortOrder: 10 },
+  { weekNumber: 2, dayLabel: "Day 5", title: "🐦‍🔥 Renewal Operations", sortOrder: 60 },
+  { weekNumber: 3, dayLabel: "Day 9", title: "💰 Pricing & Packaging 101", sortOrder: 120 },
 ];
 
 const MOCK_SUMMIT_DAY = new Date("2026-07-18");

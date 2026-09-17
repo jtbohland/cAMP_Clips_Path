@@ -323,6 +323,7 @@ export interface MissedClip {
   weekNumber: number;
   dayLabel: string;
   title: string;
+  sortOrder: number;
 }
 
 /**
@@ -344,6 +345,7 @@ export function getMissedClips(
         weekNumber: clip.weekNumber ?? 0,
         dayLabel: clip.dayLabel ?? `Sort ${clip.sortOrder}`,
         title: clip.title,
+        sortOrder: clip.sortOrder,
       });
     }
   }
