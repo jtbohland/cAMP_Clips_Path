@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import {
   type PacingTier,
   type MissedClip,
@@ -76,6 +76,23 @@ export default function PacingModal({
 
   const timerActive = secondsLeft > 0;
 
+  // Scroll indicator — detect if body is overflowing
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const [canScrollDown, setCanScrollDown] = useState(false);
+
+  useEffect(() => {
+    const el = bodyRef.current;
+    if (!el) return;
+    const check = () => {
+      setCanScrollDown(el.scrollHeight - el.scrollTop - el.clientHeight > 20);
+    };
+    check();
+    el.addEventListener("scroll", check, { passive: true });
+    const ro = new ResizeObserver(check);
+    ro.observe(el);
+    return () => { el.removeEventListener("scroll", check); ro.disconnect(); };
+  }, []);
+
   const handleBackdropClick = useCallback(
     (e: React.MouseEvent) => {
       // No backdrop dismiss — learner must use the CTA button
@@ -107,6 +124,7 @@ export default function PacingModal({
 
         {/* Body — scrollable when content overflows */}
         <div
+          ref={bodyRef}
           className="px-6 py-5 overflow-y-auto flex-1 min-h-0"
           style={{ backgroundColor: config.bodyBg, color: config.bodyText }}
         >
@@ -292,9 +310,14 @@ export default function PacingModal({
             </div>
           )}
 
-        </div>
+          {/* Scroll-down indicator — fades out when user scrolls to bottom */}
+          {canScrollDown && (
+            <div className="flex justify-center mt-3 animate-bounce opacity-40">
+              <span className="text-xs font-medium">↓ Scroll for more ↓</span>
+            </div>
+          )}
 
-        {/* CTA Button — pinned at bottom, always visible */}
+        </div>
         <div
           className="px-6 py-4 shrink-0"
           style={{ backgroundColor: config.bodyBg }}
