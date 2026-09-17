@@ -126,27 +126,6 @@ export default function CertificateCard({
           position: "relative",
         }}
       >
-        {/* Background watermark — CSS background-image data URI for PNG export compatibility */}
-        {watermarkSvg && (
-          <div
-            style={{
-              position: "absolute",
-              right: "10px",
-              bottom: "20px",
-              width: "180px",
-              height: "180px",
-              opacity: 0.12,
-              pointerEvents: "none",
-              backgroundImage: `url("data:image/svg+xml,${encodeURIComponent(
-                watermarkSvg.replace('stroke="currentColor"', `stroke="${theme.accent}"`)
-              )}")`,
-              backgroundSize: "contain",
-              backgroundRepeat: "no-repeat",
-              backgroundPosition: "center",
-            }}
-          />
-        )}
-
         {/* ── Colored header band ── */}
         <div
           style={{
@@ -181,6 +160,28 @@ export default function CertificateCard({
             position: "relative",
           }}
         >
+          {/* Background watermark — inside body, color-matched, CSS data URI for PNG export */}
+          {watermarkSvg && (
+            <div
+              style={{
+                position: "absolute",
+                right: "12px",
+                bottom: "40px",
+                width: "220px",
+                height: "220px",
+                opacity: 0.15,
+                pointerEvents: "none",
+                zIndex: 0,
+                backgroundImage: `url("data:image/svg+xml,${encodeURIComponent(
+                  watermarkSvg.replace('stroke="currentColor"', `stroke="${theme.border}"`)
+                )}")`,
+                backgroundSize: "contain",
+                backgroundRepeat: "no-repeat",
+                backgroundPosition: "center",
+              }}
+            />
+          )}
+
           {/* Top: achievement + name */}
           <div>
             <h2 style={{ fontSize: "20px", fontWeight: 800, color: "#1a1a1a", lineHeight: 1.2, marginBottom: "2px" }}>
@@ -203,7 +204,7 @@ export default function CertificateCard({
 
           {/* Middle: topic pills */}
           {cert.topics.length > 0 && (
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "5px", marginBottom: "6px" }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "5px", marginTop: "10px", marginBottom: "6px", position: "relative", zIndex: 1 }}>
               {cert.topics.map((topic) => (
                 <span
                   key={topic}
@@ -223,8 +224,11 @@ export default function CertificateCard({
             </div>
           )}
 
-          {/* Tier badge — celebrated, distinct from topic pills */}
-          <div style={{ margin: "4px 0 8px" }}>
+          {/* Tier badge — with label, celebrated */}
+          <div style={{ margin: "4px 0 8px", position: "relative", zIndex: 1 }}>
+            <p style={{ fontSize: "8px", letterSpacing: "0.2em", textTransform: "uppercase", color: "#a8a29e", marginBottom: "3px", fontWeight: 500 }}>
+              Tier
+            </p>
             <span
               style={{
                 display: "inline-flex",
