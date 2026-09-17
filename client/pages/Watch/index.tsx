@@ -835,6 +835,7 @@ export default function WatchPage() {
         // Show forward scrub warning before resuming
         if (pendingForwardScrubRef.current) {
           pendingForwardScrubRef.current = false;
+          setPhase("watching"); // Dismiss quiz overlay so warning is visible
           setShowForwardScrubWarning(true);
           return; // Don't resume yet — modal dismiss will resume
         }
