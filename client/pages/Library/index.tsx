@@ -1448,6 +1448,7 @@ export default function LibraryPage() {
       <AnchorFailureModal
         learnerName={viewer.name}
         managerName={progressData!.managerName ?? null}
+        viewerId={viewer.id}
         startDate={pacingInfo.startDate}
         summitDay={pacingInfo.summitDay}
         adjustmentDay={pacingInfo.adjustmentDay}
@@ -1463,7 +1464,7 @@ export default function LibraryPage() {
           if (!localStorage.getItem(`anchor_adjustment_deadline_${viewer.id}`)) {
             localStorage.setItem(`anchor_adjustment_deadline_${viewer.id}`, pacingInfo.adjustmentDay.toISOString());
           }
-          logModal("anchor_failure", "dismissed", { reason: "slack_copied" });
+          logModal("anchor_failure", "dismissed", { reason: "slack_sent" });
           setShowAnchorFailure(false);
         }}
       />
@@ -1473,6 +1474,7 @@ export default function LibraryPage() {
       <AnchorFailureModal
         learnerName={viewer.name}
         managerName={progressData!.managerName ?? null}
+        viewerId={viewer.id}
         startDate={pacingInfo.startDate}
         summitDay={pacingInfo.summitDay}
         adjustmentDay={(() => {

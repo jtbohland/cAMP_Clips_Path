@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import {
   type PacingTier,
   type MissedClip,
@@ -76,6 +76,39 @@ export default function PacingModal({
 
   const timerActive = secondsLeft > 0;
 
+  // Scroll indicator + gate — detect if body is overflowing and if user has reached bottom
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const [canScrollDown, setCanScrollDown] = useState(false);
+  const [hasScrolledToBottom, setHasScrolledToBottom] = useState(true); // default true (no overflow = already at bottom)
+
+  useEffect(() => {
+    const el = bodyRef.current;
+    if (!el) return;
+    const check = () => {
+      const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+      setCanScrollDown(distanceFromBottom > 20);
+      // Once they've scrolled within 20px of the bottom, unlock permanently
+      if (distanceFromBottom <= 20) setHasScrolledToBottom(true);
+    };
+    // Initial check: if content doesn't overflow, they're already "at bottom"
+    const initialOverflow = el.scrollHeight > el.clientHeight + 20;
+    if (!initialOverflow) {
+      setHasScrolledToBottom(true);
+      setCanScrollDown(false);
+    } else {
+      setHasScrolledToBottom(false);
+      setCanScrollDown(true);
+    }
+    el.addEventListener("scroll", check, { passive: true });
+    const ro = new ResizeObserver(() => {
+      const overflow = el.scrollHeight > el.clientHeight + 20;
+      if (!overflow) { setHasScrolledToBottom(true); setCanScrollDown(false); }
+      else { check(); }
+    });
+    ro.observe(el);
+    return () => { el.removeEventListener("scroll", check); ro.disconnect(); };
+  }, []);
+
   const handleBackdropClick = useCallback(
     (e: React.MouseEvent) => {
       // No backdrop dismiss — learner must use the CTA button
@@ -107,6 +140,7 @@ export default function PacingModal({
 
         {/* Body — scrollable when content overflows */}
         <div
+          ref={bodyRef}
           className="px-6 py-5 overflow-y-auto flex-1 min-h-0"
           style={{ backgroundColor: config.bodyBg, color: config.bodyText }}
         >
@@ -292,26 +326,40 @@ export default function PacingModal({
             </div>
           )}
 
-        </div>
+          {/* Scroll-down indicator — fades out when user scrolls to bottom */}
+          {canScrollDown && (
+            <div className="flex justify-center mt-3 animate-bounce opacity-40">
+              <span className="text-xs font-medium">↓ Scroll for more ↓</span>
+            </div>
+          )}
 
-        {/* CTA Button — pinned at bottom, always visible */}
+        </div>
         <div
           className="px-6 py-4 shrink-0"
           style={{ backgroundColor: config.bodyBg }}
         >
-          <button
-            onClick={onDismiss}
-            disabled={timerActive}
-            className="w-full py-3 rounded-lg text-sm font-bold transition-all"
-            style={{
-              backgroundColor: timerActive ? `${config.headerBg}60` : config.headerBg,
-              color: config.headerText,
-              cursor: timerActive ? "not-allowed" : "pointer",
-              opacity: timerActive ? 0.6 : 1,
-            }}
-          >
-            {timerActive ? `⏳ ${secondsLeft}s` : "🎞️ Continue to Clips"}
-          </button>
+          {(() => {
+            const locked = timerActive || !hasScrolledToBottom;
+            return (
+              <button
+                onClick={onDismiss}
+                disabled={locked}
+                className="w-full py-3 rounded-lg text-sm font-bold transition-all"
+                style={{
+                  backgroundColor: locked ? `${config.headerBg}60` : config.headerBg,
+                  color: config.headerText,
+                  cursor: locked ? "not-allowed" : "pointer",
+                  opacity: locked ? 0.6 : 1,
+                }}
+              >
+                {timerActive
+                  ? `⏳ ${secondsLeft}s`
+                  : !hasScrolledToBottom
+                  ? "↓ Scroll down to continue"
+                  : "🎞️ Continue to Clips"}
+              </button>
+            );
+          })()}
         </div>
       </div>
     </div>

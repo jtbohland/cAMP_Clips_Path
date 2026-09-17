@@ -414,10 +414,13 @@ const anchorExhibits: MuseumExhibit[] = [
       <AnchorFailureModal
         learnerName="Alex Rivera"
         managerName="Jordan Chen"
+        belayBuddyName="Sam Taylor"
         startDate={MOCK_START_DATE}
         summitDay={MOCK_SUMMIT_DAY}
         adjustmentDay={MOCK_ADJUSTMENT_DAY}
         sessionsBehind={5}
+        approachSessionsBehind={1}
+        ascentSessionsBehind={4}
         missedClips={MOCK_MISSED_CLIPS}
         isEscalated={false}
         approachComplete={false}
@@ -437,10 +440,13 @@ const anchorExhibits: MuseumExhibit[] = [
       <AnchorFailureModal
         learnerName="Alex Rivera"
         managerName="Jordan Chen"
+        belayBuddyName="Sam Taylor"
         startDate={MOCK_START_DATE}
         summitDay={MOCK_SUMMIT_DAY}
         adjustmentDay={MOCK_ADJUSTMENT_DAY}
         sessionsBehind={5}
+        approachSessionsBehind={1}
+        ascentSessionsBehind={4}
         missedClips={MOCK_MISSED_CLIPS}
         isEscalated={true}
         approachComplete={false}

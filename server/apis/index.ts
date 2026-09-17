@@ -137,6 +137,7 @@ import GetPriceGameHistory from './v2/get-price-game-history.js';
 import GetRidgeGameHistory from './v2/get-ridge-game-history.js';
 import SetupAuditSchema from './v2/setup-audit-schema.js';
 import SeedAuditTopics from './v2/seed-audit-topics.js';
+import SendAnchorSlackMessage from './v2/send-anchor-slack-message.js';
 import GetAuditLanding from './v2/get-audit-landing.js';
 import GetAuditDayContent from './v2/get-audit-day-content.js';
 import GetAuditPendingChanges from './v2/get-audit-pending-changes.js';
@@ -296,7 +297,8 @@ ResetJTSessions,
   GetPriceGameHistory,
   GetRidgeGameHistory,
   SetupAuditSchema,
-SeedAuditTopics,
+  SeedAuditTopics,
+  SendAnchorSlackMessage,
 GetAuditLanding,
 GetAuditDayContent,
 GetAuditPendingChanges,
