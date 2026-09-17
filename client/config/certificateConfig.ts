@@ -35,6 +35,8 @@ export interface CertificateDef {
   color: "amber" | "emerald" | "sky" | "indigo" | "purple";
   /** Which background watermark illustration to render */
   watermark: WatermarkKey;
+  /** Optional journey trail for Summit cert — array of { emoji, label } milestones */
+  journeyTrail?: { emoji: string; label: string }[];
 }
 
 // ── Topics per week per path ───────────────────────────────────────
@@ -174,6 +176,21 @@ export function getCertificatesForPath(
   }
 
   const totalWeeks = isPromo ? 3 : 4;
+  const summitTrail = isPromo
+    ? [
+        { emoji: "🚡", label: "Approach" },
+        { emoji: "🥾", label: "Week 2" },
+        { emoji: "🏞️", label: "Week 3" },
+        { emoji: "🏆", label: "Summit" },
+      ]
+    : [
+        { emoji: "🚡", label: "Approach" },
+        { emoji: "🥾", label: "Week 2" },
+        { emoji: "🏞️", label: "Week 3" },
+        { emoji: "🧗🏻‍♂️", label: "Week 4" },
+        { emoji: "🏆", label: "Summit" },
+      ];
+
   certs.push({
     key: "summit",
     title: "Summit Reached",
@@ -183,6 +200,7 @@ export function getCertificatesForPath(
     linkedInText: summitText(tierName, totalWeeks),
     color: "purple",
     watermark: "flag",
+    journeyTrail: summitTrail,
   });
 
   return certs;

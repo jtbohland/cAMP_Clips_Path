@@ -171,6 +171,34 @@ export default function CertificateCard({
             <p style={{ fontSize: "11px", color: "#78716c" }}>{pathLabel}</p>
           </div>
 
+          {/* Journey trail — Summit cert only */}
+          {cert.journeyTrail && cert.journeyTrail.length > 0 && (
+            <div style={{ display: "flex", alignItems: "center", gap: "0", marginTop: "10px", marginBottom: "4px", position: "relative", zIndex: 1 }}>
+              {cert.journeyTrail.map((milestone, i) => (
+                <div key={milestone.label} style={{ display: "flex", alignItems: "center" }}>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2px" }}>
+                    <span style={{ fontSize: i === cert.journeyTrail!.length - 1 ? "20px" : "14px", lineHeight: 1 }}>
+                      {milestone.emoji}
+                    </span>
+                    <span style={{ fontSize: "7px", fontWeight: 600, color: theme.accent, letterSpacing: "0.02em", whiteSpace: "nowrap" }}>
+                      {milestone.label}
+                    </span>
+                  </div>
+                  {i < cert.journeyTrail!.length - 1 && (
+                    <div style={{
+                      width: "28px",
+                      height: "2px",
+                      background: `linear-gradient(90deg, ${theme.border}60, ${theme.border})`,
+                      margin: "0 4px",
+                      marginBottom: "10px",
+                      borderRadius: "1px",
+                    }} />
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* Middle: topic pills */}
           {cert.topics.length > 0 && (
             <div style={{ display: "flex", flexWrap: "wrap", gap: "5px", marginTop: "10px", marginBottom: "6px", position: "relative", zIndex: 1 }}>
