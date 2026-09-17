@@ -18,13 +18,13 @@ const THEMES: Record<string, {
   purple:  { gradient: "linear-gradient(135deg, #581c87 0%, #7c3aed 50%, #8b5cf6 100%)", accent: "#581c87", border: "#7c3aed", pillBg: "#f3e8ff", pillText: "#581c87" },
 };
 
-// ── Watermark SVGs (inline, light, thematic) ───────────────────────
+// ── Watermark SVGs (solid filled silhouettes) ──────────────────────
 const WATERMARKS: Record<WatermarkKey, string> = {
-  tent: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M100 30 L40 170 H160 Z"/><path d="M100 30 V170"/><path d="M80 170 L100 120 L120 170"/></svg>`,
-  trees: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M70 180V120"/><path d="M70 140 L40 170 H100 L70 140Z"/><path d="M70 120 L50 150 H90 L70 120Z"/><path d="M70 100 L55 130 H85 L70 100Z"/><path d="M130 180V110"/><path d="M130 130 L100 165 H160 L130 130Z"/><path d="M130 110 L110 140 H150 L130 110Z"/><path d="M130 90 L115 120 H145 L130 90Z"/></svg>`,
-  carabiner: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M80 40 Q40 40 40 80 V140 Q40 180 80 180 H100"/><path d="M100 180 Q140 180 140 140 V80 Q140 55 120 45"/><path d="M80 40 H120"/><line x1="100" y1="40" x2="100" y2="180"/></svg>`,
-  mountain: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 170 L70 50 L100 100 L130 60 L190 170 Z"/><path d="M70 50 L85 75"/></svg>`,
-  flag: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M30 180 L80 60 L130 120 L180 50"/><path d="M100 90 V180"/><path d="M100 90 L140 80 L140 55 L100 65"/><path d="M60 180 H140"/></svg>`,
+  tent: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><path d="M100 20 L30 180 H170 Z" fill="currentColor"/><path d="M100 20 L100 180" stroke="white" stroke-width="3"/><path d="M82 180 L100 130 L118 180 Z" fill="white" opacity="0.4"/><rect x="20" y="178" width="160" height="4" rx="2" fill="currentColor"/></svg>`,
+  trees: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect x="60" y="140" width="12" height="50" rx="3" fill="currentColor"/><path d="M66 30 L30 140 H102 Z" fill="currentColor"/><path d="M66 60 L42 120 H90 Z" fill="currentColor" opacity="0.85"/><rect x="130" y="150" width="10" height="40" rx="3" fill="currentColor"/><path d="M135 55 L108 150 H162 Z" fill="currentColor"/><path d="M135 80 L115 135 H155 Z" fill="currentColor" opacity="0.85"/><rect x="15" y="186" width="170" height="4" rx="2" fill="currentColor"/></svg>`,
+  carabiner: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><path d="M70 30 C30 30, 20 60, 20 90 L20 140 C20 175, 50 190, 80 190 L110 190 C140 190, 160 175, 160 145 L160 85 C160 55, 145 35, 120 30 L70 30 Z" fill="currentColor"/><path d="M70 50 C45 50, 40 70, 40 90 L40 135 C40 160, 55 170, 80 170 L110 170 C130 170, 140 160, 140 140 L140 85 C140 65, 130 55, 115 50 L70 50 Z" fill="white"/><rect x="85" y="25" width="30" height="16" rx="4" fill="currentColor"/><rect x="88" y="29" width="24" height="8" rx="3" fill="white"/></svg>`,
+  mountain: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><path d="M0 185 L65 40 L95 95 L130 50 L200 185 Z" fill="currentColor"/><path d="M65 40 L80 68 L55 68 Z" fill="white" opacity="0.5"/><path d="M130 50 L142 72 L120 72 Z" fill="white" opacity="0.4"/><path d="M0 185 L40 120 L60 145 L90 100 H110 L140 140 L165 115 L200 185 Z" fill="currentColor" opacity="0.6"/><rect x="0" y="183" width="200" height="4" rx="2" fill="currentColor"/></svg>`,
+  flag: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><path d="M60 185 L75 45 L180 45 L155 80 L180 115 L75 115 Z" fill="currentColor"/><rect x="70" y="35" width="8" height="155" rx="3" fill="currentColor"/><circle cx="74" cy="32" r="6" fill="currentColor"/><rect x="40" y="183" width="80" height="6" rx="3" fill="currentColor"/></svg>`,
 };
 
 interface CertificateCardProps {
@@ -172,9 +172,9 @@ export default function CertificateCard({
                 opacity: 0.15,
                 pointerEvents: "none",
                 zIndex: 0,
-                backgroundImage: `url("data:image/svg+xml,${encodeURIComponent(
-                  watermarkSvg.replace('stroke="currentColor"', `stroke="${theme.border}"`)
-                )}")`,
+              backgroundImage: `url("data:image/svg+xml,${encodeURIComponent(
+                watermarkSvg.replace(/currentColor/g, theme.border)
+              )}")`,
                 backgroundSize: "contain",
                 backgroundRepeat: "no-repeat",
                 backgroundPosition: "center",
