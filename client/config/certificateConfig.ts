@@ -61,9 +61,9 @@ export const WEEK_THEMES: Record<string, Record<string, string>> = {
     week4: "Executing, Governing & Scaling Deals",
   },
   SDR: {
-    week2: "Building Your Revenue Engine Foundations",
-    week3: "Designing & Winning Strategic Deals",
-    week4: "Executing, Governing & Scaling Deals",
+    week2: "Building Your Pipeline Foundations",
+    week3: "Sharpening Your Competitive & Discovery Skills",
+    week4: "Closing the Loop",
   },
   "SDR>Velocity Promo": {
     week2: "Core Revenue Operations & Renewals",
