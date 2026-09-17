@@ -815,9 +815,12 @@ function FirstAchievementMockup({ earnedXp, earnedBadge }: { earnedXp: number; e
             Your cAMP Clips journey is just beginning. Each clip earns XP, unlocks badges, and moves you toward the summit.
           </p>
         </div>
-        <div className="px-8 pb-6 flex justify-center">
-          <span className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-indigo-600 text-sm font-semibold text-white">
+        <div className="px-8 pb-6 flex flex-col items-center gap-2">
+          <span className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-indigo-600 text-sm font-semibold text-white w-full justify-center">
             Continue climbing! 🧗
+          </span>
+          <span className="inline-flex items-center gap-2 px-6 py-2 rounded-lg bg-amber-50 border border-amber-200 text-sm font-semibold text-amber-700 w-full justify-center">
+            🏡 Visit Certificate Cabin
           </span>
         </div>
       </div>
@@ -1474,6 +1477,20 @@ function CheckinMockup({ type }: { type: "approach" | "week2" | "week3" | "summi
               )}
               {!gmailOpened && (
                 <p className="text-xs text-center text-gray-400">This opens Gmail with your email pre-filled. After sending, come back to unlock the next week.</p>
+              )}
+              {gmailOpened && (
+                <div className="mt-3 flex flex-col items-center gap-2">
+                  <div className="flex gap-2 w-full">
+                    <span className="flex-1 py-2 rounded-lg text-xs font-semibold bg-amber-50 border border-amber-200 text-amber-700 text-center">
+                      🏡 Certificate Cabin
+                    </span>
+                    {type !== "approach" && (
+                      <span className="flex-1 py-2 rounded-lg text-xs font-semibold bg-blue-50 border border-blue-200 text-blue-700 text-center">
+                        📝 Share on LinkedIn
+                      </span>
+                    )}
+                  </div>
+                </div>
               )}
             </>
           )}
