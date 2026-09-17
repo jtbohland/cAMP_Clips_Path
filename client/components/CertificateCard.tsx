@@ -3,14 +3,6 @@ import { toPng } from "html-to-image";
 import { openLinkedInShare } from "@/lib/linkedInShare";
 import type { CertificateDef } from "@/config/certificateConfig";
 
-const COLOR_MAP: Record<string, { bg: string; border: string; headerBg: string; headerText: string; accent: string }> = {
-  amber:   { bg: "bg-amber-50",   border: "border-amber-300",   headerBg: "from-amber-700 to-amber-600",     headerText: "text-amber-50",   accent: "text-amber-700" },
-  emerald: { bg: "bg-emerald-50", border: "border-emerald-300", headerBg: "from-emerald-700 to-emerald-600",   headerText: "text-emerald-50", accent: "text-emerald-700" },
-  sky:     { bg: "bg-sky-50",     border: "border-sky-300",     headerBg: "from-sky-700 to-sky-600",           headerText: "text-sky-50",     accent: "text-sky-700" },
-  indigo:  { bg: "bg-indigo-50",  border: "border-indigo-300",  headerBg: "from-indigo-700 to-indigo-600",     headerText: "text-indigo-50",  accent: "text-indigo-700" },
-  purple:  { bg: "bg-purple-50",  border: "border-purple-300",  headerBg: "from-purple-700 to-purple-600",     headerText: "text-purple-50",  accent: "text-purple-700" },
-};
-
 interface CertificateCardProps {
   cert: CertificateDef;
   earned: boolean;
@@ -31,7 +23,6 @@ export default function CertificateCard({
   pathLabel,
 }: CertificateCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
-  const colors = COLOR_MAP[cert.color] ?? COLOR_MAP.amber;
 
   const handleDownloadPng = useCallback(async () => {
     if (!cardRef.current) return;
@@ -41,7 +32,6 @@ export default function CertificateCard({
         pixelRatio: 2,
         backgroundColor: "#ffffff",
       });
-      // Convert data URL to blob to avoid 414 URI Too Large
       const res = await fetch(dataUrl);
       const blob = await res.blob();
       const blobUrl = URL.createObjectURL(blob);
@@ -60,100 +50,321 @@ export default function CertificateCard({
   }, [cert.linkedInText]);
 
   const formattedDate = earnedAt
-    ? new Date(earnedAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
+    ? new Date(earnedAt).toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      })
     : null;
 
-  // Locked state
+  // ── Locked state ──────────────────────────────────────────────────
   if (!earned) {
     return (
-      <div className="w-full max-w-md rounded-2xl border-2 border-gray-200 bg-gray-50 p-6 opacity-50 select-none">
-        <div className="text-center">
-          <div className="text-4xl mb-2 grayscale">🔒</div>
-          <h3 className="text-lg font-bold text-gray-400">{cert.title}</h3>
-          <p className="text-sm text-gray-400 mt-1">{cert.subtitle}</p>
-          <p className="text-xs text-gray-300 mt-3 italic">Complete this milestone to unlock</p>
+      <div className="w-full max-w-lg opacity-40 select-none">
+        <div
+          className="p-8 text-center"
+          style={{
+            border: "3px solid #d1d5db",
+            borderRadius: "4px",
+            background: "linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%)",
+          }}
+        >
+          <div className="text-5xl mb-3 grayscale">🔒</div>
+          <p
+            className="text-sm tracking-[0.2em] uppercase font-semibold mb-2"
+            style={{ color: "#9ca3af" }}
+          >
+            Certificate Locked
+          </p>
+          <p className="text-lg font-bold" style={{ color: "#9ca3af" }}>
+            {cert.title}
+          </p>
+          <p className="text-sm mt-1" style={{ color: "#b0b8c4" }}>
+            {cert.subtitle}
+          </p>
         </div>
       </div>
     );
   }
 
+  // ── Accent color per cert ─────────────────────────────────────────
+  const ACCENT: Record<string, string> = {
+    amber: "#92400e",
+    emerald: "#065f46",
+    sky: "#0c4a6e",
+    indigo: "#312e81",
+    purple: "#581c87",
+  };
+  const accent = ACCENT[cert.color] ?? ACCENT.amber;
+  const accentLight = cert.color === "purple" ? "#f3e8ff" : cert.color === "indigo" ? "#e0e7ff" : cert.color === "sky" ? "#e0f2fe" : cert.color === "emerald" ? "#d1fae5" : "#fef3c7";
+
+  // ── Earned certificate ────────────────────────────────────────────
   return (
-    <div className="w-full max-w-md">
-      {/* Exportable card (ref for html-to-image) */}
+    <div className="w-full max-w-lg">
+      {/* Exportable certificate (ref for html-to-image) */}
       <div
         ref={cardRef}
-        className={`rounded-2xl border-2 ${colors.border} ${colors.bg} overflow-hidden`}
-        style={{ width: "100%", maxWidth: "448px" }}
+        style={{
+          width: "100%",
+          maxWidth: "512px",
+          padding: "32px",
+          background: "#fffdf7",
+          border: `2px solid ${accent}`,
+          borderRadius: "4px",
+          position: "relative",
+        }}
       >
-        {/* Header */}
-        <div className={`px-6 py-5 text-center bg-gradient-to-r ${colors.headerBg}`}>
-          <p className="text-xs font-semibold uppercase tracking-widest text-white/70 mb-1">
+        {/* Inner border frame */}
+        <div
+          style={{
+            position: "absolute",
+            top: "8px",
+            left: "8px",
+            right: "8px",
+            bottom: "8px",
+            border: `1px solid ${accent}40`,
+            borderRadius: "2px",
+            pointerEvents: "none",
+          }}
+        />
+
+        {/* Corner accents */}
+        {[
+          { top: "4px", left: "4px" },
+          { top: "4px", right: "4px" },
+          { bottom: "4px", left: "4px" },
+          { bottom: "4px", right: "4px" },
+        ].map((pos, i) => (
+          <div
+            key={i}
+            style={{
+              position: "absolute",
+              width: "16px",
+              height: "16px",
+              borderColor: accent,
+              borderStyle: "solid",
+              borderWidth: "0",
+              ...pos,
+              ...(i < 2 ? { borderTopWidth: "2px" } : { borderBottomWidth: "2px" }),
+              ...(i % 2 === 0 ? { borderLeftWidth: "2px" } : { borderRightWidth: "2px" }),
+            }}
+          />
+        ))}
+
+        <div style={{ position: "relative", textAlign: "center" }}>
+          {/* Organization */}
+          <p
+            style={{
+              fontSize: "10px",
+              letterSpacing: "0.25em",
+              textTransform: "uppercase",
+              color: "#78716c",
+              marginBottom: "4px",
+              fontWeight: 600,
+            }}
+          >
             Amplitude Global Sales Enablement
           </p>
-          <div className="text-4xl mb-1">{cert.emoji}</div>
-          <h3 className={`text-xl font-bold ${colors.headerText}`}>{cert.title}</h3>
-          <p className={`text-sm ${colors.headerText} opacity-80 mt-0.5`}>{cert.subtitle}</p>
-        </div>
 
-        {/* Body */}
-        <div className="px-6 py-5 space-y-4">
-          {/* Learner info */}
-          <div className="text-center">
-            <p className="text-lg font-bold text-gray-900">{learnerName}</p>
-            <p className="text-sm text-gray-500">{pathLabel}</p>
-          </div>
+          {/* Divider */}
+          <div
+            style={{
+              width: "60px",
+              height: "1px",
+              background: accent,
+              margin: "8px auto",
+              opacity: 0.4,
+            }}
+          />
 
-          {/* Tier badge (summit only shows tier prominently) */}
-          {cert.key === "summit" && (
-            <div className="text-center py-2">
-              <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-100 text-purple-800 text-sm font-bold">
-                {tierEmoji} {tierName}
-              </span>
-            </div>
-          )}
+          {/* Certificate of Completion */}
+          <p
+            style={{
+              fontSize: "11px",
+              letterSpacing: "0.35em",
+              textTransform: "uppercase",
+              color: accent,
+              fontWeight: 600,
+              marginBottom: "4px",
+            }}
+          >
+            Certificate of Completion
+          </p>
 
-          {/* Modules list (approach cert) */}
+          {/* Achievement title */}
+          <h2
+            style={{
+              fontSize: "22px",
+              fontWeight: 800,
+              color: "#1c1917",
+              lineHeight: 1.3,
+              margin: "12px 0 4px",
+            }}
+          >
+            {cert.title}
+          </h2>
+          <p
+            style={{
+              fontSize: "13px",
+              color: "#57534e",
+              fontStyle: "italic",
+              marginBottom: "16px",
+            }}
+          >
+            {cert.subtitle}
+          </p>
+
+          {/* Divider */}
+          <div
+            style={{
+              width: "200px",
+              height: "1px",
+              background: `linear-gradient(to right, transparent, ${accent}60, transparent)`,
+              margin: "0 auto 16px",
+            }}
+          />
+
+          {/* Presented to */}
+          <p
+            style={{
+              fontSize: "10px",
+              letterSpacing: "0.2em",
+              textTransform: "uppercase",
+              color: "#a8a29e",
+              marginBottom: "6px",
+            }}
+          >
+            Presented to
+          </p>
+
+          {/* Learner name */}
+          <h3
+            style={{
+              fontSize: "28px",
+              fontWeight: 700,
+              color: accent,
+              marginBottom: "4px",
+            }}
+          >
+            {learnerName}
+          </h3>
+
+          {/* Path */}
+          <p
+            style={{
+              fontSize: "12px",
+              color: "#78716c",
+              marginBottom: "16px",
+            }}
+          >
+            {pathLabel}
+          </p>
+
+          {/* Modules (for approach cert) */}
           {cert.modules.length > 0 && (
-            <div className="space-y-1.5">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Modules Completed</p>
+            <div
+              style={{
+                display: "inline-block",
+                textAlign: "left",
+                background: accentLight,
+                borderRadius: "6px",
+                padding: "10px 20px",
+                marginBottom: "16px",
+              }}
+            >
               {cert.modules.map((mod) => (
-                <p key={mod} className="text-sm text-gray-700 flex items-center gap-2">
-                  <span className="text-green-600">✓</span> {mod}
+                <p
+                  key={mod}
+                  style={{
+                    fontSize: "12px",
+                    color: "#44403c",
+                    lineHeight: 1.8,
+                  }}
+                >
+                  ✓ {mod}
                 </p>
               ))}
             </div>
           )}
 
-          {/* Date + tagline */}
-          <div className="text-center pt-2 border-t border-gray-200">
-            {formattedDate && (
-              <p className="text-xs text-gray-500 mb-1">Earned {formattedDate}</p>
-            )}
-            <p className="text-xs text-gray-400 italic">
-              Earned in cAMP Ascent — Amplitude's AI-powered enablement app
-            </p>
-          </div>
-
-          {/* Logo placeholder — swap with actual logo when uploaded */}
-          <div className="flex justify-center pt-1">
-            <div className="px-4 py-1.5 rounded-lg bg-gray-100 text-gray-400 text-xs font-medium">
-              🏔️ cAMP Ascent
+          {/* Tier badge (summit) */}
+          {cert.key === "summit" && (
+            <div style={{ marginBottom: "16px" }}>
+              <span
+                style={{
+                  display: "inline-block",
+                  padding: "6px 20px",
+                  borderRadius: "20px",
+                  background: accentLight,
+                  border: `1px solid ${accent}30`,
+                  fontSize: "14px",
+                  fontWeight: 700,
+                  color: accent,
+                }}
+              >
+                {tierEmoji} {tierName}
+              </span>
             </div>
-          </div>
+          )}
+
+          {/* Date */}
+          {formattedDate && (
+            <p
+              style={{
+                fontSize: "12px",
+                color: "#78716c",
+                marginBottom: "12px",
+              }}
+            >
+              {formattedDate}
+            </p>
+          )}
+
+          {/* Bottom divider */}
+          <div
+            style={{
+              width: "60px",
+              height: "1px",
+              background: accent,
+              margin: "0 auto 12px",
+              opacity: 0.4,
+            }}
+          />
+
+          {/* Logo placeholder + tagline */}
+          <p
+            style={{
+              fontSize: "14px",
+              fontWeight: 700,
+              color: "#44403c",
+              marginBottom: "2px",
+            }}
+          >
+            🏔️ cAMP Ascent
+          </p>
+          <p
+            style={{
+              fontSize: "9px",
+              color: "#a8a29e",
+              letterSpacing: "0.1em",
+            }}
+          >
+            Amplitude's AI-powered enablement app
+          </p>
         </div>
       </div>
 
-      {/* Action buttons (outside the exportable area) */}
-      <div className="flex gap-2 mt-3">
+      {/* Action buttons (outside exportable area) */}
+      <div className="flex gap-2 mt-4">
         <button
           onClick={handleDownloadPng}
-          className="flex-1 py-2.5 rounded-xl bg-gray-100 text-gray-700 text-sm font-medium hover:bg-gray-200 transition-colors"
+          className="flex-1 py-2.5 rounded-lg bg-gray-100 text-gray-700 text-sm font-medium hover:bg-gray-200 transition-colors border border-gray-200"
         >
-          📥 Download PNG
+          📥 Download Certificate
         </button>
         <button
           onClick={handleShare}
-          className="flex-1 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 transition-colors"
+          className="flex-1 py-2.5 rounded-lg bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 transition-colors"
         >
           📝 Share on LinkedIn
         </button>
