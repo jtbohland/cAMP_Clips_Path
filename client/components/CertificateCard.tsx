@@ -79,7 +79,6 @@ export default function CertificateCard({
     : null;
 
   const watermarkSvg = WATERMARKS[cert.watermark] ?? "";
-  const watermarkSvgColored = watermarkSvg;
 
   // ── Locked state ──────────────────────────────────────────────────
   if (!earned) {
@@ -127,7 +126,7 @@ export default function CertificateCard({
           position: "relative",
         }}
       >
-        {/* Background watermark — rendered as inline SVG for PNG export compatibility */}
+        {/* Background watermark — CSS background-image data URI for PNG export compatibility */}
         {watermarkSvg && (
           <div
             style={{
@@ -136,14 +135,14 @@ export default function CertificateCard({
               bottom: "20px",
               width: "180px",
               height: "180px",
-              opacity: 0.08,
+              opacity: 0.12,
               pointerEvents: "none",
-            }}
-            dangerouslySetInnerHTML={{
-              __html: watermarkSvg.replace(
-                'stroke="currentColor"',
-                `stroke="${theme.accent}"`
-              ),
+              backgroundImage: `url("data:image/svg+xml,${encodeURIComponent(
+                watermarkSvg.replace('stroke="currentColor"', `stroke="${theme.accent}"`)
+              )}")`,
+              backgroundSize: "contain",
+              backgroundRepeat: "no-repeat",
+              backgroundPosition: "center",
             }}
           />
         )}

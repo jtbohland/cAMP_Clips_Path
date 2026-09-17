@@ -5,16 +5,12 @@ import { useViewer } from "@/components/ViewerContext";
 import CertificateCard from "@/components/CertificateCard";
 import { getCertificatesForPath, roleToPathKey } from "@/config/certificateConfig";
 
-/** Role → human-readable path label for the certificate */
+/** Role → human-readable path label for the certificate (external-friendly) */
 function pathDisplayLabel(role: string): string {
-  if (role === "SDR>Velocity Promo" || role === "Velocity Promo") return "Velocity Promo Path";
+  if (role === "SDR>Velocity Promo" || role === "Velocity Promo") return "Internal Promotion Path";
   if (role === "SDR") return "SDR Path";
-  if (role.includes("PSM")) return "PSM Path";
-  if (role.includes("Emerging")) return "Emerging AE Path";
-  if (role.includes("Majors")) return "Majors AE Path";
-  if (role.includes("Velocity")) return "Velocity AE Path";
-  if (role.includes("Strategic")) return "Strategic AE Path";
-  return "AE Path";
+  // All AE variants (Emerging, Majors, Velocity, Strategic, PSM, etc.) → "Account Executive Path"
+  return "Account Executive Path";
 }
 
 export default function CertificateCabin() {
