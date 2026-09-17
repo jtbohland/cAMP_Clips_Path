@@ -79,9 +79,7 @@ export default function CertificateCard({
     : null;
 
   const watermarkSvg = WATERMARKS[cert.watermark] ?? "";
-  const watermarkDataUrl = watermarkSvg
-    ? `data:image/svg+xml,${encodeURIComponent(watermarkSvg.replace('stroke="currentColor"', `stroke="${theme.accent}"`))}`
-    : "";
+  const watermarkSvgColored = watermarkSvg;
 
   // ── Locked state ──────────────────────────────────────────────────
   if (!earned) {
@@ -129,21 +127,23 @@ export default function CertificateCard({
           position: "relative",
         }}
       >
-        {/* Background watermark */}
-        {watermarkDataUrl && (
+        {/* Background watermark — rendered as inline SVG for PNG export compatibility */}
+        {watermarkSvg && (
           <div
             style={{
               position: "absolute",
-              right: "-10px",
-              bottom: "-10px",
-              width: "200px",
-              height: "200px",
-              opacity: 0.06,
-              backgroundImage: `url("${watermarkDataUrl}")`,
-              backgroundSize: "contain",
-              backgroundRepeat: "no-repeat",
-              backgroundPosition: "center",
+              right: "10px",
+              bottom: "20px",
+              width: "180px",
+              height: "180px",
+              opacity: 0.08,
               pointerEvents: "none",
+            }}
+            dangerouslySetInnerHTML={{
+              __html: watermarkSvg.replace(
+                'stroke="currentColor"',
+                `stroke="${theme.accent}"`
+              ),
             }}
           />
         )}
@@ -202,35 +202,43 @@ export default function CertificateCard({
             <p style={{ fontSize: "11px", color: "#78716c" }}>{pathLabel}</p>
           </div>
 
-          {/* Middle: topic pills + tier */}
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "5px", margin: "10px 0 6px" }}>
-            {cert.topics.map((topic) => (
-              <span
-                key={topic}
-                style={{
-                  display: "inline-block",
-                  padding: "2px 9px",
-                  borderRadius: "10px",
-                  background: theme.pillBg,
-                  color: theme.pillText,
-                  fontSize: "9px",
-                  fontWeight: 600,
-                }}
-              >
-                {topic}
-              </span>
-            ))}
-            {/* Tier pill on every cert */}
+          {/* Middle: topic pills */}
+          {cert.topics.length > 0 && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "5px", marginBottom: "6px" }}>
+              {cert.topics.map((topic) => (
+                <span
+                  key={topic}
+                  style={{
+                    display: "inline-block",
+                    padding: "2px 9px",
+                    borderRadius: "10px",
+                    background: theme.pillBg,
+                    color: theme.pillText,
+                    fontSize: "9px",
+                    fontWeight: 600,
+                  }}
+                >
+                  {topic}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Tier badge — celebrated, distinct from topic pills */}
+          <div style={{ margin: "4px 0 8px" }}>
             <span
               style={{
-                display: "inline-block",
-                padding: "2px 9px",
-                borderRadius: "10px",
-                background: theme.pillBg,
-                color: theme.pillText,
-                fontSize: "9px",
-                fontWeight: 700,
-                border: `1px solid ${theme.border}30`,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "4px",
+                padding: "4px 14px",
+                borderRadius: "14px",
+                background: `linear-gradient(135deg, ${theme.pillBg} 0%, #ffffff 100%)`,
+                border: `1.5px solid ${theme.border}50`,
+                color: theme.accent,
+                fontSize: "12px",
+                fontWeight: 800,
+                letterSpacing: "0.02em",
               }}
             >
               {tierEmoji} {tierName}
