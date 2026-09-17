@@ -781,14 +781,23 @@ export default function LibraryPage() {
     const nextClip = clips.find((c: any) => !c.completed && c.unlocked);
     const nextClipSortOrder = nextClip ? (nextClip as any).sortOrder : null;
     const earnedBadgeIds = new Set((progressData.badges ?? []).map((b: any) => b.badgeId));
+    // Determine path key from viewer role
+    const role = viewer?.role ?? "";
+    const pathKey = role === "SDR"
+      ? "SDR" as const
+      : role.includes("Promo")
+      ? "Promo" as const
+      : "AE" as const;
     return calculatePatchProgress({
       nextClipSortOrder,
       earnedBadgeIds,
       isLegacyLearner: !!week1Data?.isLegacyLearner,
       pacingTier: pacingInfo.tier,
       weekdaysElapsed: pacingInfo.weekdaysElapsed,
+      pathKey,
+      totalClips: clips.length,
     });
-  }, [clips, progressData, pacingInfo, week1Data]);
+  }, [clips, progressData, pacingInfo, week1Data, viewer?.role]);
 
   // Summit Reached requires ALL Ascent clips AND ALL Approach items complete
   const allCompleted = ascentComplete && approachStatus?.complete === true;

@@ -2,9 +2,7 @@
  * Today's Patch Progress — calculates which badges a learner could potentially earn
  * on their next clip session, shown in the pacing modal as motivational pills.
  *
- * This is a CLIENT-SIDE heuristic based on available data. Some badges (Storm Chaser,
- * Double Summit) require runtime data we don't have, so they're shown as "possible"
- * when their window is still open.
+ * PATH-AWARE: thresholds and game XP adjust per path (AE, SDR, Promo).
  */
 
 export interface PatchPill {
@@ -13,8 +11,10 @@ export interface PatchPill {
   xp: number;
 }
 
+export type PathKey = "AE" | "SDR" | "Promo";
+
 interface PatchProgressInput {
-  /** Sort order of the next uncompleted clip (1–20). null if all done. */
+  /** Sort order of the next uncompleted clip (10–200). null if all done. */
   nextClipSortOrder: number | null;
   /** Set of already-earned badge IDs (from GetLearnerProgress) */
   earnedBadgeIds: Set<string>;
@@ -26,6 +26,10 @@ interface PatchProgressInput {
   weekdaysElapsed: number;
   /** Whether Weather the Storm has ever been triggered (for Ranger's Secret). Defaults to false if unknown. */
   hasTriggeredWeatherStorm?: boolean;
+  /** Learner's path key — determines thresholds + game XP */
+  pathKey?: PathKey;
+  /** Total clip count for this learner's path */
+  totalClips?: number;
 }
 
 export interface PatchProgressResult {
@@ -33,16 +37,68 @@ export interface PatchProgressResult {
   bestCaseXp: number;
 }
 
-// ─── Per-clip bonuses (available to everyone) ──────────────────────
+// ─── Path-specific config ──────────────────────────────────────────
 
-const PER_CLIP_BONUSES: PatchPill[] = [
-  { emoji: "🌲", name: "Perfect Hiker", xp: 8 },
-  { emoji: "🥾", name: "Speed Hiker", xp: 5 },
-];
+interface PathConfig {
+  totalClips: number;
+  /** Sort orders where "No Detours" (5-clip streak) could trigger */
+  noDetoursSortOrders: number[];
+  /** Sort orders where "Leave No Trace" (3-clip streak) could trigger */
+  leaveNoTraceSortOrders: number[];
+  /** Sort order of the final clip (for Ranger's Secret / Free Solo) */
+  finalSortOrder: number;
+  /** Sort order that triggers "Into the Summit Push" (week 4 entry) */
+  summitPushSortOrder: number | null;
+  /** Resource day sort orders → game info (for game XP pills) */
+  gameDays: { sortOrder: number; gameName: string; gameEmoji: string; xpRange: string }[];
+}
 
-// Badges that can be earned multiple times (keyed by badgeId pattern)
-// These are always shown as possible since we can't easily check client-side
-const MULTI_AWARD_BADGES = new Set(["no_detours", "leave_no_trace", "double_summit"]);
+// AE path: 20 clips (sort 10–200), resource days at 60 (DEARR) and 120 (Price is Right)
+const AE_CONFIG: PathConfig = {
+  totalClips: 20,
+  noDetoursSortOrders: [50, 100, 150],    // 5th, 10th, 15th clip
+  leaveNoTraceSortOrders: [30, 60, 90, 120, 150], // every 3rd clip
+  finalSortOrder: 200,
+  summitPushSortOrder: 130, // clip that starts week 4 push (Leveraging Partners)
+  gameDays: [
+    { sortOrder: 60, gameName: "DEARR Crossing", gameEmoji: "🦌", xpRange: "+15 to +45" },
+    { sortOrder: 120, gameName: "The Price is Right", gameEmoji: "💰", xpRange: "+10 to +30" },
+  ],
+};
+
+// SDR path: 18 clips (sort 10–165), resource days at 60 (DEARR), 120 (Price), 165 (Ridge/ROE)
+const SDR_CONFIG: PathConfig = {
+  totalClips: 18,
+  noDetoursSortOrders: [50, 90, 130],      // 5th, 10th, 15th clip
+  leaveNoTraceSortOrders: [30, 56, 80, 110, 130], // every 3rd clip
+  finalSortOrder: 165,
+  summitPushSortOrder: 160, // Customer Stories = week 4 entry for SDR
+  gameDays: [
+    { sortOrder: 60, gameName: "DEARR Crossing", gameEmoji: "🦌", xpRange: "+15 to +45" },
+    { sortOrder: 120, gameName: "The Price is Right", gameEmoji: "💰", xpRange: "+10 to +30" },
+    { sortOrder: 165, gameName: "Rules of the Ridge", gameEmoji: "⛰️", xpRange: "+10 to +30" },
+  ],
+};
+
+// Promo path: 7 clips (sort 60–200), resource day at 60 (DEARR)
+const PROMO_CONFIG: PathConfig = {
+  totalClips: 7,
+  noDetoursSortOrders: [180],              // 5th clip
+  leaveNoTraceSortOrders: [150, 200],      // 3rd and 6th clip
+  finalSortOrder: 200,
+  summitPushSortOrder: null, // Promo has no week 4 milestone split
+  gameDays: [
+    { sortOrder: 60, gameName: "DEARR Crossing", gameEmoji: "🦌", xpRange: "+15 to +45" },
+  ],
+};
+
+function getPathConfig(pathKey?: PathKey): PathConfig {
+  switch (pathKey) {
+    case "SDR": return SDR_CONFIG;
+    case "Promo": return PROMO_CONFIG;
+    default: return AE_CONFIG;
+  }
+}
 
 // ─── Pacing streak thresholds ──────────────────────────────────────
 
@@ -56,17 +112,24 @@ const PACING_STREAKS = [
 // ─── Main calculator ───────────────────────────────────────────────
 
 export function calculatePatchProgress(input: PatchProgressInput): PatchProgressResult {
-  const { nextClipSortOrder, earnedBadgeIds, isLegacyLearner, pacingTier, weekdaysElapsed, hasTriggeredWeatherStorm = false } = input;
+  const {
+    nextClipSortOrder,
+    earnedBadgeIds,
+    isLegacyLearner,
+    pacingTier,
+    weekdaysElapsed,
+    hasTriggeredWeatherStorm = false,
+    pathKey,
+  } = input;
   const pills: PatchPill[] = [];
+  const config = getPathConfig(pathKey);
 
   // If all clips are done, no patch progress to show
   if (nextClipSortOrder === null) return { pills, bestCaseXp: 0 };
 
   // ─── Always-available per-clip bonuses ───────────────────────────
-  // Perfect Hiker + Speed Hiker: possible on any clip
-  for (const bonus of PER_CLIP_BONUSES) {
-    pills.push(bonus);
-  }
+  pills.push({ emoji: "🌲", name: "Perfect Hiker", xp: 8 });
+  pills.push({ emoji: "🥾", name: "Speed Hiker", xp: 5 });
 
   // S&R Hero: always possible (if they fail trail markers)
   pills.push({ emoji: "🚁", name: "Search & Rescue Hero", xp: 8 });
@@ -76,54 +139,65 @@ export function calculatePatchProgress(input: PatchProgressInput): PatchProgress
     pills.push({ emoji: "⛈️", name: "Storm Chaser", xp: 3 });
   }
 
-  // Double Summit: possible if they've done another clip today (or could do another)
+  // Double Summit: possible if they do another clip today
   pills.push({ emoji: "⛰️", name: "Double Summit", xp: 5 });
 
-  // ─── Streak bonuses (position-dependent) ────────────────────────
-  // No Detours: awarded at sort orders 5, 10, 15
-  if ([5, 10, 15].includes(nextClipSortOrder)) {
+  // ─── Game XP (resource day pills) ───────────────────────────────
+  for (const game of config.gameDays) {
+    if (nextClipSortOrder === game.sortOrder) {
+      pills.push({
+        emoji: game.gameEmoji,
+        name: `${game.gameName} (${game.xpRange} XP)`,
+        xp: 0, // Variable — don't count toward bestCaseXp to avoid inflating
+      });
+    }
+  }
+
+  // ─── Streak bonuses (path-specific sort orders) ─────────────────
+  // No Detours: awarded at path-specific milestones
+  if (config.noDetoursSortOrders.includes(nextClipSortOrder)) {
     pills.push({ emoji: "🧭", name: "No Detours", xp: 10 });
   }
 
-  // Leave No Trace: awarded at sort orders 3, 6, 9, 12, 15
-  if ([3, 6, 9, 12, 15].includes(nextClipSortOrder)) {
+  // Leave No Trace: awarded at path-specific milestones
+  if (config.leaveNoTraceSortOrders.includes(nextClipSortOrder)) {
     pills.push({ emoji: "🌱", name: "Leave No Trace", xp: 15 });
   }
 
   // ─── Milestone bonuses ──────────────────────────────────────────
-  // First Step: clip 1
-  if (nextClipSortOrder === 1 && !earnedBadgeIds.has("first_step")) {
+  // First Step: first clip in path (always sort 10 for AE/SDR, sort 60 for Promo)
+  const firstClipSort = pathKey === "Promo" ? 60 : 10;
+  if (nextClipSortOrder === firstClipSort && !earnedBadgeIds.has("first_step")) {
     pills.push({ emoji: "🎬", name: "First Step", xp: 5 });
   }
 
-  // Into the Summit Push: clip 10 triggers Week 4 unlock
-  if (nextClipSortOrder === 10 && !earnedBadgeIds.has("week_4_entry")) {
+  // Into the Summit Push: path-specific week 4 entry
+  if (config.summitPushSortOrder && nextClipSortOrder === config.summitPushSortOrder && !earnedBadgeIds.has("week_4_entry")) {
     pills.push({ emoji: "🪢", name: "Into the Summit Push", xp: 10 });
   }
 
-  // Ranger's Secret: only possible on clip 20, and only if WtS never triggered
-  if (nextClipSortOrder === 20 && !hasTriggeredWeatherStorm && !earnedBadgeIds.has("mystery")) {
+  // Ranger's Secret: only possible on final clip, and only if WtS never triggered
+  if (nextClipSortOrder === config.finalSortOrder && !hasTriggeredWeatherStorm && !earnedBadgeIds.has("mystery")) {
     pills.push({ emoji: "🌲", name: "The Ranger's Secret", xp: 20 });
   }
 
   // ─── Pacing Streak bonuses (new learners only) ──────────────────
   if (!isLegacyLearner && (pacingTier === "summit_bound" || pacingTier === "completed")) {
-    // Estimate how many consecutive summit-bound days after today
-    // Ascent starts at weekday 6, so ascent days = weekdaysElapsed - 5
     const ascentDays = Math.max(0, weekdaysElapsed - 5);
-    // Today could push the streak to ascentDays + 1
     const potentialStreak = ascentDays + 1;
 
     for (const streak of PACING_STREAKS) {
-      if (!earnedBadgeIds.has(streak.badgeId) && potentialStreak >= streak.daysNeeded) {
+      // Scale streak thresholds for shorter paths
+      const scaledDays = pathKey === "Promo"
+        ? Math.max(3, Math.round(streak.daysNeeded * 0.4)) // Promo: ~40% of AE thresholds
+        : streak.daysNeeded;
+      if (!earnedBadgeIds.has(streak.badgeId) && potentialStreak >= scaledDays) {
         pills.push({ emoji: streak.emoji, name: streak.name, xp: streak.xp });
       }
     }
 
-    // Free Solo: if no rockslide/avalanche/anchor_failure across all Ascent days
-    // We can't easily check this client-side, but if they're summit_bound they're doing well
-    // Only show this on the last clip (sort 20+) when it would be awarded
-    if (nextClipSortOrder >= 20 && !earnedBadgeIds.has("free_solo")) {
+    // Free Solo: never missed pacing, only on final clip
+    if (nextClipSortOrder >= config.finalSortOrder && !earnedBadgeIds.has("free_solo")) {
       pills.push({ emoji: "🧗", name: "Free Solo", xp: 40 });
     }
   }
