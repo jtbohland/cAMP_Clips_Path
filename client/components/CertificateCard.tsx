@@ -41,10 +41,15 @@ export default function CertificateCard({
         pixelRatio: 2,
         backgroundColor: "#ffffff",
       });
+      // Convert data URL to blob to avoid 414 URI Too Large
+      const res = await fetch(dataUrl);
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.download = `cAMP-Ascent-${cert.key}-${learnerName.replace(/\s/g, "_")}.png`;
-      link.href = dataUrl;
+      link.href = blobUrl;
       link.click();
+      URL.revokeObjectURL(blobUrl);
     } catch (err) {
       console.error("Failed to generate PNG:", err);
     }
@@ -150,9 +155,12 @@ export default function CertificateCard({
           onClick={handleShare}
           className="flex-1 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 transition-colors"
         >
-          🔗 Share on LinkedIn
+          📝 Share on LinkedIn
         </button>
       </div>
+      <p className="text-xs text-gray-400 text-center mt-1.5">
+        💡 Download your certificate first, then attach it to your LinkedIn post
+      </p>
     </div>
   );
 }

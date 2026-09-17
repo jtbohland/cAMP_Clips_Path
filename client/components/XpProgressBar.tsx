@@ -153,9 +153,20 @@ export default function XpProgressBar() {
       <div className="border-t border-gray-200/70 pt-3 mt-1">
         <button
           onClick={() => navigate("/certificate-cabin")}
-          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-r from-amber-50 to-purple-50 border border-gray-200 text-sm font-medium text-gray-700 hover:from-amber-100 hover:to-purple-100 transition-colors"
+          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+          style={{
+            background: "linear-gradient(135deg, #f5f0e8 0%, #ece4d4 100%)",
+            border: "1.5px solid #c9b896",
+            color: "#6b5a3e",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "linear-gradient(135deg, #ece4d4 0%, #ddd3be 100%)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "linear-gradient(135deg, #f5f0e8 0%, #ece4d4 100%)";
+          }}
         >
-          🏆 Certificate Cabin
+          🏡 Certificate Cabin
         </button>
       </div>
 
