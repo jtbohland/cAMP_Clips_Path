@@ -87,12 +87,13 @@ export default function CertificateCabin() {
         <div className="flex flex-col items-center gap-8">
           {certDefs.map((cert) => {
             const status = earnedMap.get(cert.key);
+            const isAdmin = viewer?.isAdmin ?? false;
             return (
               <CertificateCard
                 key={cert.key}
                 cert={cert}
-                earned={status?.earned ?? false}
-                earnedAt={status?.earnedAt ?? null}
+                earned={isAdmin || (status?.earned ?? false)}
+                earnedAt={status?.earnedAt ?? (isAdmin ? new Date().toISOString() : null)}
                 learnerName={data.viewerName}
                 tierName={data.tierName}
                 tierEmoji={data.tierEmoji}
