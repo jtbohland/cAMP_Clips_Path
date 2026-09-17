@@ -76,19 +76,35 @@ export default function PacingModal({
 
   const timerActive = secondsLeft > 0;
 
-  // Scroll indicator — detect if body is overflowing
+  // Scroll indicator + gate — detect if body is overflowing and if user has reached bottom
   const bodyRef = useRef<HTMLDivElement>(null);
   const [canScrollDown, setCanScrollDown] = useState(false);
+  const [hasScrolledToBottom, setHasScrolledToBottom] = useState(true); // default true (no overflow = already at bottom)
 
   useEffect(() => {
     const el = bodyRef.current;
     if (!el) return;
     const check = () => {
-      setCanScrollDown(el.scrollHeight - el.scrollTop - el.clientHeight > 20);
+      const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+      setCanScrollDown(distanceFromBottom > 20);
+      // Once they've scrolled within 20px of the bottom, unlock permanently
+      if (distanceFromBottom <= 20) setHasScrolledToBottom(true);
     };
-    check();
+    // Initial check: if content doesn't overflow, they're already "at bottom"
+    const initialOverflow = el.scrollHeight > el.clientHeight + 20;
+    if (!initialOverflow) {
+      setHasScrolledToBottom(true);
+      setCanScrollDown(false);
+    } else {
+      setHasScrolledToBottom(false);
+      setCanScrollDown(true);
+    }
     el.addEventListener("scroll", check, { passive: true });
-    const ro = new ResizeObserver(check);
+    const ro = new ResizeObserver(() => {
+      const overflow = el.scrollHeight > el.clientHeight + 20;
+      if (!overflow) { setHasScrolledToBottom(true); setCanScrollDown(false); }
+      else { check(); }
+    });
     ro.observe(el);
     return () => { el.removeEventListener("scroll", check); ro.disconnect(); };
   }, []);
@@ -322,19 +338,28 @@ export default function PacingModal({
           className="px-6 py-4 shrink-0"
           style={{ backgroundColor: config.bodyBg }}
         >
-          <button
-            onClick={onDismiss}
-            disabled={timerActive}
-            className="w-full py-3 rounded-lg text-sm font-bold transition-all"
-            style={{
-              backgroundColor: timerActive ? `${config.headerBg}60` : config.headerBg,
-              color: config.headerText,
-              cursor: timerActive ? "not-allowed" : "pointer",
-              opacity: timerActive ? 0.6 : 1,
-            }}
-          >
-            {timerActive ? `⏳ ${secondsLeft}s` : "🎞️ Continue to Clips"}
-          </button>
+          {(() => {
+            const locked = timerActive || !hasScrolledToBottom;
+            return (
+              <button
+                onClick={onDismiss}
+                disabled={locked}
+                className="w-full py-3 rounded-lg text-sm font-bold transition-all"
+                style={{
+                  backgroundColor: locked ? `${config.headerBg}60` : config.headerBg,
+                  color: config.headerText,
+                  cursor: locked ? "not-allowed" : "pointer",
+                  opacity: locked ? 0.6 : 1,
+                }}
+              >
+                {timerActive
+                  ? `⏳ ${secondsLeft}s`
+                  : !hasScrolledToBottom
+                  ? "↓ Scroll down to continue"
+                  : "🎞️ Continue to Clips"}
+              </button>
+            );
+          })()}
         </div>
       </div>
     </div>
