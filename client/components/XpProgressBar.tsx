@@ -1,5 +1,6 @@
 import { useApiData } from "@/hooks/useApiData";
 import { useViewer } from "@/components/ViewerContext";
+import { useNavigate } from "react-router";
 
 const BADGE_META: Record<string, { name: string; emoji: string }> = {
   // Per-clip performance
@@ -40,6 +41,7 @@ const BADGE_META: Record<string, { name: string; emoji: string }> = {
 
 export default function XpProgressBar() {
   const { viewer } = useViewer();
+  const navigate = useNavigate();
   const { data, loading } = useApiData(
     "GetLearnerProgress",
     { viewerId: viewer?.id ?? "" },
@@ -125,7 +127,7 @@ export default function XpProgressBar() {
         </span>
       </div>
 
-      {/* Earned Bonuses — yellow pill badges */}
+      {/* Action row: XPlanation + Certificate Cabin */}
       {badges.length > 0 && (
         <div className="border-t border-gray-200/70 pt-3">
           <p className="text-xs font-medium text-gray-500 mb-2">Earned Bonuses</p>
@@ -146,6 +148,16 @@ export default function XpProgressBar() {
           </div>
         </div>
       )}
+
+      {/* Certificate Cabin button */}
+      <div className="border-t border-gray-200/70 pt-3 mt-1">
+        <button
+          onClick={() => navigate("/certificate-cabin")}
+          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-r from-amber-50 to-purple-50 border border-gray-200 text-sm font-medium text-gray-700 hover:from-amber-100 hover:to-purple-100 transition-colors"
+        >
+          🏆 Certificate Cabin
+        </button>
+      </div>
 
 
     </div>

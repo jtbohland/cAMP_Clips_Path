@@ -74,6 +74,13 @@ export const router = createBrowserRouter([
           })),
       },
       {
+        path: "/certificate-cabin",
+        lazy: () =>
+          import("./pages/CertificateCabin/index.js").then((mod) => ({
+            Component: mod.default,
+          })),
+      },
+      {
         path: "/leaderboard",
         lazy: () =>
           import("./pages/Leaderboard/index.js").then((mod) => ({
