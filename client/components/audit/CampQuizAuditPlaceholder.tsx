@@ -8,7 +8,7 @@ interface CampQuizAuditPlaceholderProps {
   isApproved: boolean;
 }
 
-const QUIZ_AUDIT_URL = "https://9u0iis6j99jqe2cnzdgmkdpu1.edit.superblocks.com/audit";
+const QUIZ_AUDIT_URL = "https://9u0iis6j99jqe2cnzdgmkdpu1.superblocks.com/audit";
 
 export default function CampQuizAuditPlaceholder({ topicTitle, isApproved }: CampQuizAuditPlaceholderProps) {
   return (
