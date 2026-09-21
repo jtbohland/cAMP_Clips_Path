@@ -14,7 +14,7 @@ interface CampQuizAuditPlaceholderProps {
   onApproved: () => void;
 }
 
-const QUIZ_AUDIT_URL = "https://9u0iis6j99jqe2cnzdgmkdpu1.superblocks.com/audit";
+const QUIZ_AUDIT_URL = "https://11b66d3d-da48-45dd-b8fa-9f686d4ec72a.deployed-apps.superblocks.com/audit";
 
 export default function CampQuizAuditPlaceholder({ topicTitle, topicKey, isApproved, onApproved }: CampQuizAuditPlaceholderProps) {
   const { viewer } = useViewer();
