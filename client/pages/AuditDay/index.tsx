@@ -394,7 +394,9 @@ export default function AuditDayPage() {
         {clips.length > 0 && (
           <CampQuizAuditPlaceholder
             topicTitle={topic.title}
+            topicKey={topicKey!}
             isApproved={approvedSections.has("camp_quiz_audit")}
+            onApproved={refetch}
           />
         )}
 

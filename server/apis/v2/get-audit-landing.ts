@@ -207,7 +207,10 @@ export default api({
       const smes = Array.isArray(row.smes) ? row.smes : [];
       const objectives = Array.isArray(row.learning_objectives) ? row.learning_objectives : [];
       const approvedCount = approvalCountMap.get(row.topic_key) ?? 0;
-      const totalSections = row.sort_orders.reduce((sum, so) => sum + (sectionCountBySort.get(so) ?? 0), 0);
+      const totalSections = row.sort_orders.reduce((sum, so) => sum + (sectionCountBySort.get(so) ?? 0), 0)
+        + (row.sort_orders.length > 0 ? 1 : 0)                        // +1 for camp_quiz_audit
+        + (row.topic_key === "day13_sdr_roe" ? 1 : 0)                 // +1 for ridge_game
+        + (row.topic_key === "day9_pricing" ? 1 : 0);                 // +1 for price_game
 
       // Status logic: complete if at least one sign-off exists for this topic
       // in_progress if someone has approved at least one section but hasn't signed off
