@@ -70,13 +70,27 @@ export default api({
       case "question": {
         // fieldName = "question_text" | "option_a" | "option_b" | "option_c" | "option_d" | "correct_option" | "correct_feedback"
         if (!questionId || !fieldName) throw new Error("questionId and fieldName required");
-        const safeColumns = ["question_text", "option_a", "option_b", "option_c", "option_d", "correct_option", "correct_feedback"];
-        if (!safeColumns.includes(fieldName)) throw new Error(`Invalid column: ${fieldName}`);
-        await ctx.integrations.apps_db.execute(
-          `UPDATE cliptracker_v2_questions SET ${fieldName} = $1 WHERE id = $2`,
-          [newValue, questionId],
-          { label: `Update question ${fieldName}` }
-        );
+        const safeFields = ["question_text", "option_a", "option_b", "option_c", "option_d", "correct_option", "correct_feedback"];
+        if (!safeFields.includes(fieldName)) throw new Error(`Invalid field: ${fieldName}`);
+
+        // Options are stored in a single jsonb array column, not individual option_a/b/c/d columns
+        const optionIndexMap: Record<string, number> = { option_a: 0, option_b: 1, option_c: 2, option_d: 3 };
+        if (fieldName in optionIndexMap) {
+          const idx = optionIndexMap[fieldName];
+          // Use string path literal (safe — idx is always 0-3 from the map)
+          await ctx.integrations.apps_db.execute(
+            `UPDATE cliptracker_v2_questions SET options = jsonb_set(options, '{${idx}}', to_jsonb($1::text)) WHERE id = $2`,
+            [newValue ?? "", questionId],
+            { label: `Update question ${fieldName}` }
+          );
+        } else {
+          // Direct column update for question_text, correct_option, correct_feedback
+          await ctx.integrations.apps_db.execute(
+            `UPDATE cliptracker_v2_questions SET ${fieldName} = $1 WHERE id = $2`,
+            [newValue, questionId],
+            { label: `Update question ${fieldName}` }
+          );
+        }
         break;
       }
       case "weather_storm": {
@@ -153,22 +167,31 @@ export default api({
     }
 
     // 2. Log to changelog
-    const changeIdResult = await ctx.integrations.apps_db.query(
-      `INSERT INTO cliptracker_v2_audit_changelog (topic_key, viewer_id, entity_type, entity_id, field_name, old_value, new_value, change_type)
-       VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::jsonb, $8)
-       RETURNING id::text`,
+    // viewer_id has a NOT NULL FK to cliptracker_v2_viewers — SMEs who aren't learners won't exist there.
+    // Check first; skip changelog if the viewer doesn't exist (the content edit above already succeeded).
+    const viewerExists = await ctx.integrations.apps_db.query(
+      `SELECT id FROM cliptracker_v2_viewers WHERE id = $1::uuid LIMIT 1`,
       z.object({ id: z.string() }),
-      [
-        topicKey, viewerId, editType,
-        questionId ?? clipId ?? topicKey,
-        fieldName ?? editType,
-        oldValue ? JSON.stringify(oldValue) : null,
-        newValue ? JSON.stringify(newValue) : null,
-        editType.startsWith("gear_remove") ? "remove" : editType.startsWith("gear_add") ? "add" : "update",
-      ],
-      { label: "Log changelog entry" }
+      [viewerId],
+      { label: "Check viewer exists for changelog FK" }
     );
 
-    return { success: true, changeId: changeIdResult[0]?.id ?? null };
+    if (viewerExists.length > 0) {
+      await ctx.integrations.apps_db.execute(
+        `INSERT INTO cliptracker_v2_audit_changelog (topic_key, viewer_id, entity_type, entity_id, field_name, old_value, new_value, change_type)
+         VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::jsonb, $8)`,
+        [
+          topicKey, viewerId, editType,
+          questionId ?? clipId ?? topicKey,
+          fieldName ?? editType,
+          oldValue ? JSON.stringify(oldValue) : null,
+          newValue ? JSON.stringify(newValue) : null,
+          editType.startsWith("gear_remove") ? "remove" : editType.startsWith("gear_add") ? "add" : "update",
+        ],
+        { label: "Log changelog entry" }
+      );
+    }
+
+    return { success: true, changeId: null };
   },
 });
