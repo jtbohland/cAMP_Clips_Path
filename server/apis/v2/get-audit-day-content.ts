@@ -314,7 +314,10 @@ export default api({
       if (c.weatherStorm) count++;
       if (Array.isArray(c.resources) && (c.resources as any[]).length > 0) count++;
       return sum + count;
-    }, 0);
+    }, 0)
+      + (enrichedClips.length > 0 ? 1 : 0)                // +1 for camp_quiz_audit section
+      + (topicKey === "day13_sdr_roe" ? 1 : 0)             // +1 for ridge_game section
+      + (topicKey === "day9_pricing" ? 1 : 0);             // +1 for price_game section
 
     // Topic-level resources for topics without clips (e.g. product_101 / Approach)
     const TOPIC_RESOURCES: Record<string, Array<{ label: string; url: string; type: string }>> = {

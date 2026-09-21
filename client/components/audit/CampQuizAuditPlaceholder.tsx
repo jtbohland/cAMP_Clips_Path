@@ -1,16 +1,35 @@
 /**
  * CampQuizAuditPlaceholder — tile linking SMEs to the cAMP Quiz audit app.
- * Required section for sign-off.
+ * Required section for sign-off. Includes an approve button.
  */
+import { useCallback } from "react";
+import { useApi } from "@/hooks/useApi.js";
+import { useViewer } from "@/components/ViewerContext";
+import { toast } from "sonner";
 
 interface CampQuizAuditPlaceholderProps {
   topicTitle: string;
+  topicKey: string;
   isApproved: boolean;
+  onApproved: () => void;
 }
 
-const QUIZ_AUDIT_URL = "https://9u0iis6j99jqe2cnzdgmkdpu1.superblocks.com/audit";
+const QUIZ_AUDIT_URL = "https://11b66d3d-da48-45dd-b8fa-9f686d4ec72a.deployed-apps.superblocks.com/audit";
 
-export default function CampQuizAuditPlaceholder({ topicTitle, isApproved }: CampQuizAuditPlaceholderProps) {
+export default function CampQuizAuditPlaceholder({ topicTitle, topicKey, isApproved, onApproved }: CampQuizAuditPlaceholderProps) {
+  const { viewer } = useViewer();
+  const { run: saveApproval, loading: approving } = useApi("SaveAuditApproval");
+
+  const handleApprove = useCallback(async () => {
+    try {
+      await saveApproval({ viewerId: viewer?.id ?? "", topicKey, sectionKey: "camp_quiz_audit", approved: !isApproved });
+      onApproved();
+      toast.success(isApproved ? "Quiz approval removed" : "Quiz section approved ✅");
+    } catch (err) {
+      toast.error("Failed to save approval");
+    }
+  }, [saveApproval, viewer, topicKey, isApproved, onApproved]);
+
   return (
     <div className={`rounded-xl border-2 overflow-hidden ${isApproved ? "border-emerald-300 bg-emerald-50/20" : "border-orange-300 bg-white"}`}>
       {/* Header */}
@@ -21,9 +40,22 @@ export default function CampQuizAuditPlaceholder({ topicTitle, isApproved }: Cam
           </h3>
           <p className="text-[11px] text-orange-200">{topicTitle}</p>
         </div>
-        {isApproved && (
-          <span className="text-xs font-bold bg-emerald-500 text-white px-2.5 py-1 rounded-lg">✅ Approved</span>
-        )}
+        <div className="flex items-center gap-2">
+          {isApproved && (
+            <span className="text-xs font-bold bg-emerald-500 text-white px-2.5 py-1 rounded-lg">✅ Approved</span>
+          )}
+          <button
+            onClick={handleApprove}
+            disabled={approving}
+            className={`text-xs font-semibold px-2.5 py-1 rounded-lg border transition-colors ${
+              isApproved
+                ? "text-white/70 bg-white/10 border-white/30 hover:bg-white/20"
+                : "text-white bg-emerald-500 border-emerald-400 hover:bg-emerald-600"
+            }`}
+          >
+            {approving ? "…" : isApproved ? "Undo" : "✅ Approve"}
+          </button>
+        </div>
       </div>
 
       {/* Body */}
@@ -59,15 +91,20 @@ export default function CampQuizAuditPlaceholder({ topicTitle, isApproved }: Cam
           </p>
         </div>
 
-        <a
-          href={QUIZ_AUDIT_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 text-sm font-semibold text-white px-5 py-2.5 rounded-lg hover:brightness-110 transition-all"
-          style={{ backgroundColor: "#C2590A" }}
-        >
-          🦉 Open cAMP Quiz Audit
-        </a>
+        <div className="flex items-center gap-3">
+          <a
+            href={QUIZ_AUDIT_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-white px-5 py-2.5 rounded-lg hover:brightness-110 transition-all"
+            style={{ backgroundColor: "#C2590A" }}
+          >
+            🦉 Open cAMP Quiz Audit
+          </a>
+          {!isApproved && (
+            <span className="text-xs text-gray-500 italic">Review quiz questions, then approve this section</span>
+          )}
+        </div>
       </div>
     </div>
   );

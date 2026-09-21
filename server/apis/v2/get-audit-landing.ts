@@ -207,7 +207,10 @@ export default api({
       const smes = Array.isArray(row.smes) ? row.smes : [];
       const objectives = Array.isArray(row.learning_objectives) ? row.learning_objectives : [];
       const approvedCount = approvalCountMap.get(row.topic_key) ?? 0;
-      const totalSections = row.sort_orders.reduce((sum, so) => sum + (sectionCountBySort.get(so) ?? 0), 0);
+      const totalSections = row.sort_orders.reduce((sum, so) => sum + (sectionCountBySort.get(so) ?? 0), 0)
+        + (row.sort_orders.length > 0 ? 1 : 0)                        // +1 for camp_quiz_audit
+        + (row.topic_key === "day13_sdr_roe" ? 1 : 0)                 // +1 for ridge_game
+        + (row.topic_key === "day9_pricing" ? 1 : 0);                 // +1 for price_game
 
       // Status logic: complete if at least one sign-off exists for this topic
       // in_progress if someone has approved at least one section but hasn't signed off
@@ -303,17 +306,13 @@ export default api({
       const editsMade = editCountMap.get(name) ?? 0;
       const sectionsApproved = approvalBySmeMap.get(name) ?? 0;
 
-      // Progress: total approved / total sections across assigned topics
+      // Progress: this SME's personal approvals / total sections across their assigned topics
       let totalSects = 0;
-      let totalApproved = 0;
       for (const tk of topicKeys) {
         const t = topics.find(t => t.topicKey === tk);
-        if (t) {
-          totalSects += t.totalSections;
-          totalApproved += Math.min(t.approvedCount, t.totalSections);
-        }
+        if (t) totalSects += t.totalSections;
       }
-      const progressPct = totalSects > 0 ? Math.round((totalApproved / totalSects) * 100) : 0;
+      const progressPct = totalSects > 0 ? Math.round((sectionsApproved / totalSects) * 100) : 0;
 
       return {
         name,
