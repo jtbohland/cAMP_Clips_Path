@@ -303,17 +303,13 @@ export default api({
       const editsMade = editCountMap.get(name) ?? 0;
       const sectionsApproved = approvalBySmeMap.get(name) ?? 0;
 
-      // Progress: total approved / total sections across assigned topics
+      // Progress: this SME's personal approvals / total sections across their assigned topics
       let totalSects = 0;
-      let totalApproved = 0;
       for (const tk of topicKeys) {
         const t = topics.find(t => t.topicKey === tk);
-        if (t) {
-          totalSects += t.totalSections;
-          totalApproved += Math.min(t.approvedCount, t.totalSections);
-        }
+        if (t) totalSects += t.totalSections;
       }
-      const progressPct = totalSects > 0 ? Math.round((totalApproved / totalSects) * 100) : 0;
+      const progressPct = totalSects > 0 ? Math.round((sectionsApproved / totalSects) * 100) : 0;
 
       return {
         name,
