@@ -519,12 +519,11 @@ export default api({
       const totalWeekdays = getTotalWeekdays(l.role);
       const approachTotal = getApproachTotal(l.role);
 
-      // LOCKED COMPLETER CHECK — summit email is definitive. first_achievement_shown is also
-      // valid BUT only when combined with a real clip count (prevents early learners like Sky
-      // from being falsely locked — smallest complete path is Promo at 9 clips).
-      const MIN_COMPLETION_CLIPS = 9;
-      const confirmedCompleter = summitEmailSet.has(l.viewer_id)
-        || (l.first_achievement_shown && clipsDone >= MIN_COMPLETION_CLIPS);
+      // LOCKED COMPLETER CHECK — summit email is the ONLY completion signal.
+      // first_achievement_shown is a post-Approach modal flag and must NEVER be used here.
+      // The summit email can only be sent after all role-specific gates are passed
+      // (Approach + all clips + all resource days), so it implicitly confirms everything.
+      const confirmedCompleter = summitEmailSet.has(l.viewer_id);
 
       if (confirmedCompleter && clipsDone > 0) {
         // Locked — always "completed", skip all recalculation.
@@ -536,8 +535,7 @@ export default api({
           summitDayStr = summit.toISOString().split("T")[0];
 
           // Check if they finished before summit day
-          // For summit-email completers, use the email sent date as the true completion date
-          // For first_achievement_shown completers, use last_completed_at
+          // Use the summit email sent date as the true completion date
           const summitEmailDate = summitEmailDateMap.get(l.viewer_id);
           const completionDate = summitEmailDate
             ? new Date(summitEmailDate)
