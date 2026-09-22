@@ -826,21 +826,23 @@ export default function WatchPage() {
     const answeredMarker = trailMarkersRef.current[currentQuestionIdx];
     if (answeredMarker && player) {
       const markerTime = answeredMarker.triggerAtSeconds ?? 0;
-      const currentTime = player.time?.() ?? lastTimeRef.current;
+      const currentTime = player.currentTime ?? lastTimeRef.current;
       if (currentTime > markerTime + 10) {
         // Seek to 1 second after the marker so it doesn't re-trigger
-        player.time(markerTime + 1);
+        player.currentTime = markerTime + 1;
         highWaterMarkRef.current = markerTime + 1;
 
         // Show forward scrub warning before resuming
         if (pendingForwardScrubRef.current) {
           pendingForwardScrubRef.current = false;
+          phaseRef.current = "watching"; // Sync ref immediately to prevent re-trigger
           setPhase("watching"); // Dismiss quiz overlay so warning is visible
           setShowForwardScrubWarning(true);
           return; // Don't resume yet — modal dismiss will resume
         }
       }
     }
+    phaseRef.current = "watching"; // Sync ref immediately to prevent re-trigger
     setPhase("watching");
     player?.play();
   }, [clipData, currentQuestionIdx]);
