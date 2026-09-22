@@ -154,6 +154,7 @@ export default function WatchPage() {
   const [showForwardScrubWarning, setShowForwardScrubWarning] = useState(false);
   const forwardScrubCountRef = useRef(0);
   const pendingForwardScrubRef = useRef(false);
+  const preScrubPositionRef = useRef(0);
 
   // ─── Nudge banner at ~80% watched ─────────────────────────────────────────
   const [showNudgeBanner, setShowNudgeBanner] = useState(false);
@@ -378,6 +379,7 @@ export default function WatchPage() {
     // the learner scrubbed forward. Increment counter and flag for warning.
     if (phaseRef.current === "watching" && highWaterMarkRef.current > 5 && t > highWaterMarkRef.current + 10 && !pendingForwardScrubRef.current) {
       forwardScrubCountRef.current += 1;
+      preScrubPositionRef.current = highWaterMarkRef.current; // Save where they were before scrubbing
       pendingForwardScrubRef.current = true;
     }
     // Track high-water mark
@@ -826,21 +828,26 @@ export default function WatchPage() {
     const answeredMarker = trailMarkersRef.current[currentQuestionIdx];
     if (answeredMarker && player) {
       const markerTime = answeredMarker.triggerAtSeconds ?? 0;
-      const currentTime = player.time?.() ?? lastTimeRef.current;
+      const currentTime = player.currentTime ?? lastTimeRef.current;
       if (currentTime > markerTime + 10) {
-        // Seek to 1 second after the marker so it doesn't re-trigger
-        player.time(markerTime + 1);
-        highWaterMarkRef.current = markerTime + 1;
+        // Seek back to where they were before scrubbing (or marker+1 if no scrub)
+        const rewindTarget = pendingForwardScrubRef.current && preScrubPositionRef.current > 0
+          ? preScrubPositionRef.current
+          : markerTime + 1;
+        player.currentTime = rewindTarget;
+        highWaterMarkRef.current = rewindTarget;
 
         // Show forward scrub warning before resuming
         if (pendingForwardScrubRef.current) {
           pendingForwardScrubRef.current = false;
+          phaseRef.current = "watching"; // Sync ref immediately to prevent re-trigger
           setPhase("watching"); // Dismiss quiz overlay so warning is visible
           setShowForwardScrubWarning(true);
           return; // Don't resume yet — modal dismiss will resume
         }
       }
     }
+    phaseRef.current = "watching"; // Sync ref immediately to prevent re-trigger
     setPhase("watching");
     player?.play();
   }, [clipData, currentQuestionIdx]);
