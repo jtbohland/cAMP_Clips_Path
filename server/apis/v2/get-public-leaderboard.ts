@@ -311,10 +311,15 @@ export default api({
       const effectiveTotal = getEffectiveClipTotal(r.role, maxSortDone);
       const totalWeekdays = getTotalWeekdays(r.role);
 
-      // LOCKED COMPLETER CHECK — summit email is the ONLY completion signal.
-      // first_achievement_shown is a post-Approach modal flag and must NEVER be used here.
+      // LOCKED COMPLETER CHECK — two paths to confirmed completion:
+      // 1. Summit email sent (canonical gate), OR
+      // 2. first_achievement_shown AND within 2 clips of effectiveTotal
+      //    (covers legacy learners who completed before summit-email bug was fixed
+      //     and before new clips were added to the curriculum).
+      //    The clip threshold prevents false locks (e.g. Taylor at 13/18).
       const approachTotal = getApproachTotal(r.role);
-      const confirmedCompleter = summitEmailSet.has(r.viewer_id);
+      const confirmedCompleter = summitEmailSet.has(r.viewer_id)
+        || (r.first_achievement_shown && clipsDone >= effectiveTotal - 1);
 
       // If locked, freeze everything — no pacing recalculation, no curriculum recount
       if (confirmedCompleter && clipsDone > 0) {
