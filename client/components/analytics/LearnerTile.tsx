@@ -53,7 +53,7 @@ const TZ_EMOJI: Record<string, { emoji: string; label: string }> = {
 
 function formatDate(dateStr: string | null) {
   if (!dateStr) return null;
-  return new Date(dateStr).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return new Date(dateStr).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
 }
 
 function getInitials(name: string) {
