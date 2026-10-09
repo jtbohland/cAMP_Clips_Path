@@ -1,4 +1,5 @@
 import { api, z, postgres } from "@superblocksteam/sdk-api";
+import { assertAuditOpen, classifyAuditChange } from "./audit-lock.js";
 
 const APPS_DB = "c6e32cf4-ca66-42ae-aeb3-58c84ffae574";
 
@@ -21,7 +22,7 @@ export default api({
       "summary", "objectives", "question", "weather_storm",
       "gear_update", "gear_remove", "gear_add", "clip_notes",
       "academy_notes", "wheel_notes", "smes", "clip_summary", "clip_objectives", "video_link",
-      "game_scenario_edit",
+      "video_replace", "game_scenario_edit",
     ]),
     // For summary/objectives edits
     fieldName: z.string().nullable(),
@@ -38,7 +39,12 @@ export default api({
     gearType: z.string().nullable(),
   }),
 
-  output: z.object({ success: z.boolean(), changeId: z.string().nullable() }),
+  output: z.object({
+    success: z.boolean(),
+    changeId: z.string().nullable(),
+    /** live = applied now; held = waits for JT; note = feedback only */
+    kind: z.enum(["live", "held", "note"]),
+  }),
 
   async run(ctx, input) {
     const {
@@ -48,8 +54,21 @@ export default api({
       gearLabel, gearUrl, gearType,
     } = input;
 
-    // 1. Perform the actual edit
-    switch (editType) {
+    // 0. Audit must be open (active cycle, deadline not passed). Admins bypass.
+    const lock = await assertAuditOpen(ctx.integrations.apps_db, viewerId);
+
+    // Approach topics, video submissions, and changelog-only edits are NOT applied —
+    // they wait for JT. Only "live" edits change the training immediately.
+    const entityIdForLog = questionId ?? clipId ?? topicKey;
+    const kind = classifyAuditChange(topicKey, editType, entityIdForLog);
+
+    // gear_add logs the added item so it can be reviewed / reverted later
+    const loggedNewValue = editType === "gear_add" && !newValue
+      ? JSON.stringify({ label: gearLabel, type: gearType ?? "link", url: gearUrl })
+      : newValue;
+
+    // 1. Perform the actual edit (live edits only)
+    if (kind === "live") switch (editType) {
       case "summary": {
         await ctx.integrations.apps_db.execute(
           `UPDATE cliptracker_v2_day_metadata SET summary = $1 WHERE topic_key = $2`,
@@ -160,6 +179,7 @@ export default api({
       case "clip_summary":
       case "clip_objectives":
       case "video_link":
+      case "video_replace":
       case "game_scenario_edit": {
         // Store in the changelog only (no table column needed)
         break;
@@ -178,20 +198,25 @@ export default api({
 
     if (viewerExists.length > 0) {
       await ctx.integrations.apps_db.execute(
-        `INSERT INTO cliptracker_v2_audit_changelog (topic_key, viewer_id, entity_type, entity_id, field_name, old_value, new_value, change_type)
-         VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::jsonb, $8)`,
+        `INSERT INTO cliptracker_v2_audit_changelog
+           (topic_key, viewer_id, entity_type, entity_id, field_name, old_value, new_value, change_type, cycle_id, review_status)
+         VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::jsonb, $8, $9::uuid, 'pending')`,
         [
           topicKey, viewerId, editType,
-          questionId ?? clipId ?? topicKey,
+          entityIdForLog,
           fieldName ?? editType,
           oldValue ? JSON.stringify(oldValue) : null,
-          newValue ? JSON.stringify(newValue) : null,
+          loggedNewValue ? JSON.stringify(loggedNewValue) : null,
           editType.startsWith("gear_remove") ? "remove" : editType.startsWith("gear_add") ? "add" : "update",
+          lock.cycleId,
         ],
         { label: "Log changelog entry" }
       );
+    } else if (kind !== "live") {
+      // A held edit with no changelog row would be lost entirely — refuse instead.
+      throw new Error("We couldn't record this submission for review (viewer profile not found). Please contact JT.");
     }
 
-    return { success: true, changeId: null };
+    return { success: true, changeId: null, kind };
   },
 });

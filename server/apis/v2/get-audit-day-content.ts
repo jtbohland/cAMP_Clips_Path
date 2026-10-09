@@ -1,4 +1,5 @@
 import { api, z, postgres } from "@superblocksteam/sdk-api";
+import { getAuditLock } from "./audit-lock.js";
 
 const APPS_DB = "c6e32cf4-ca66-42ae-aeb3-58c84ffae574";
 
@@ -16,6 +17,9 @@ export default api({
   }),
 
   output: z.object({
+    /** True when the audit is closed (no active cycle or deadline passed). */
+    auditLocked: z.boolean(),
+    auditLockReason: z.string().nullable(),
     topic: z.object({
       topicKey: z.string(),
       dayLabel: z.string(),
@@ -413,6 +417,8 @@ export default api({
       createdAt: r.created_at,
     }));
 
+    const auditLock = await getAuditLock(ctx.integrations.apps_db);
+
     return {
       topic: {
         topicKey: meta.topic_key,
@@ -442,6 +448,8 @@ export default api({
       hasPriceGame: topicKey === "day9_pricing",
       smeNotes,
       viewerSignedOff,
+      auditLocked: auditLock.locked,
+      auditLockReason: auditLock.reason,
     };
   },
 });

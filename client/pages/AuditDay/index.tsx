@@ -21,6 +21,7 @@ import RidgeGameAuditTile from "@/components/audit/RidgeGameAuditTile";
 import CampQuizAuditPlaceholder from "@/components/audit/CampQuizAuditPlaceholder";
 import ReRecordModal from "@/components/audit/ReRecordModal";
 import PriceGameAuditTile from "@/components/audit/PriceGameAuditTile";
+import AuditClosedBanner from "@/components/audit/AuditClosedBanner";
 
 // ─── Audit Badge System ───────────────────────────────────────────
 const AUDIT_BADGES = [
@@ -75,6 +76,11 @@ export default function AuditDayPage() {
     topicKey: topicKey ?? "",
     viewerId: viewer?.id ?? null,
   }, { enabled: !!topicKey });
+
+  // Audit closed (deadline passed / no open cycle) → SMEs are read-only; admins can still edit
+  const isAdmin = viewer?.isAdmin === true || viewer?.role === "Admin";
+  const auditLocked = data?.auditLocked === true;
+  const readOnly = signedOff || (auditLocked && !isAdmin);
 
   // Sync approvals from API
   const approvedSections = useMemo(() => new Set(data?.approvedSections ?? []), [data?.approvedSections]);
@@ -303,17 +309,33 @@ export default function AuditDayPage() {
           </div>
         )}
 
+        {/* 🔒 Audit closed banner */}
+        {auditLocked && <AuditClosedBanner reason={data.auditLockReason} isAdmin={isAdmin} />}
+
         {/* ⚠️ Production warning banner */}
+        {!readOnly && (
         <div className="rounded-lg bg-orange-50 border border-orange-300 px-4 py-3 text-sm text-orange-800 flex items-start gap-3">
           <span className="text-lg flex-shrink-0">⚠️</span>
           <div>
-            <p className="font-bold">Changes go live immediately</p>
-            <p className="text-orange-700 text-xs mt-0.5">
-              Any edits you make here will be pushed directly into the production training experience.
-              If a mistake is made, your admin can revert individual changes.
-            </p>
+            {topicKey === "product_101" ? (
+              <>
+                <p className="font-bold">Edits here are sent to JT for review</p>
+                <p className="text-orange-700 text-xs mt-0.5">
+                  This topic is part of the Approach (Week 1), so your changes won't go live automatically — JT applies them by hand.
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="font-bold">Most changes go live immediately</p>
+                <p className="text-orange-700 text-xs mt-0.5">
+                  Edits to trail markers, S&amp;R, Weather the Storm, summaries, and gear are pushed directly into the training.
+                  New or replacement videos are sent to JT for approval first. Your admin can revert individual changes.
+                </p>
+              </>
+            )}
           </div>
         </div>
+        )}
 
         {/* Path label */}
         {topic.pathLabel && (
@@ -354,7 +376,7 @@ export default function AuditDayPage() {
         )}
 
         {/* Clip-level content */}
-        <div className={signedOff ? "pointer-events-none opacity-80" : ""}>
+        <div className={readOnly ? "pointer-events-none opacity-80" : ""}>
         {clips.map((clip: any) => (
           <div key={clip.clipId} className="space-y-4">
             {/* Clip (summary + objectives + SMEs + notes) */}
@@ -478,7 +500,7 @@ export default function AuditDayPage() {
 
         {/* ─── Audit Badge Preview / Placeholder (only when not signed off) ─── */}
         </div>{/* end locked wrapper */}
-        {!signedOff && (
+        {!readOnly && (
           <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-5 text-center">
             <p className="text-3xl mb-2">🏕️</p>
             <p className="text-sm font-semibold text-amber-800">Complete your Ascent Audit to earn your trail crew badge + impact summary.</p>
@@ -533,8 +555,8 @@ export default function AuditDayPage() {
           </div>
         )}
 
-        {/* ─── Sign Off Section (hidden when already signed off) ─── */}
-        {!signedOff && (
+        {/* ─── Sign Off Section (hidden when signed off or audit closed) ─── */}
+        {!readOnly && (
         <div className="rounded-xl border-2 border-emerald-300 bg-emerald-50/50 p-6 mt-6">
           <h3 className="text-base font-bold text-gray-900 mb-2 flex items-center gap-2">
             <span>✍️</span> Sign & Complete Audit

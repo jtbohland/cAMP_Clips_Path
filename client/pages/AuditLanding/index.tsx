@@ -9,6 +9,7 @@ import AuditCountdown from "@/components/audit/AuditCountdown";
 import AuditLeaderboard from "@/components/audit/AuditLeaderboard";
 import GlossarySection from "@/components/audit/GlossarySection";
 import PageHeader from "@/components/PageHeader";
+import AuditClosedBanner from "@/components/audit/AuditClosedBanner";
 
 export default function AuditLandingPage() {
   const { viewer } = useViewer();
@@ -71,6 +72,9 @@ export default function AuditLandingPage() {
             </button>
           </div>
         )}
+
+        {/* 🔒 Audit closed banner */}
+        {data?.auditLocked && <AuditClosedBanner reason={data.auditLockReason} isAdmin={isAdmin} />}
 
         {/* ─── Intro Section ─── */}
         <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">

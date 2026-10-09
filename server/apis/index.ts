@@ -148,6 +148,7 @@ import ManageAuditCycle from './v2/manage-audit-cycle.js';
 import UpdateAuditSmes from './v2/update-audit-smes.js';
 import SaveAuditContent from './v2/save-audit-content.js';
 import SaveAuditApproval from './v2/save-audit-approval.js';
+import ReviewAuditChange from './v2/review-audit-change.js';
 import GetReactions from './v2/get-reactions.js';
 import ToggleReaction from './v2/toggle-reaction.js';
 import GetDailyFeedback from './v2/get-daily-feedback.js';
@@ -310,6 +311,7 @@ ManageAuditCycle,
 UpdateAuditSmes,
 SaveAuditContent,
 SaveAuditApproval,
+ReviewAuditChange,
 GetReactions,
 ToggleReaction,
 GetDailyFeedback,

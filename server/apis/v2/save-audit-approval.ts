@@ -1,4 +1,5 @@
 import { api, z, postgres } from "@superblocksteam/sdk-api";
+import { assertAuditOpen } from "./audit-lock.js";
 
 const APPS_DB = "c6e32cf4-ca66-42ae-aeb3-58c84ffae574";
 
@@ -14,6 +15,8 @@ export default api({
   }),
   output: z.object({ success: z.boolean() }),
   async run(ctx, { viewerId, topicKey, sectionKey, approved }) {
+    // No approvals once the audit closes (admins bypass)
+    await assertAuditOpen(ctx.integrations.apps_db, viewerId);
     if (approved) {
       await ctx.integrations.apps_db.execute(
         `INSERT INTO cliptracker_v2_audit_approvals (viewer_id, topic_key, section_key)
