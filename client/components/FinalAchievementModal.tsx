@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import confetti from "canvas-confetti";
 import { useApi } from "@/hooks/useApi.js";
+import CampLogo from "@/components/CampLogo";
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -142,10 +143,8 @@ export default function FinalAchievementModal({ viewerId, onDismiss }: FinalAchi
       <div className="w-full max-w-lg mx-4 max-h-[90vh] rounded-2xl bg-white shadow-2xl overflow-hidden flex flex-col">
         {/* Gradient header */}
         <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 px-8 pt-8 pb-6 text-center shrink-0">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm mb-4 text-4xl">
-            🏆
-          </div>
-          <h2 className="text-2xl font-bold text-white">Final Achievement Unlocked!</h2>
+          <CampLogo size={104} className="mx-auto mb-3 drop-shadow-[0_4px_10px_rgba(0,0,0,0.35)]" />
+          <h2 className="text-2xl font-bold text-white">🏆 Final Achievement Unlocked!</h2>
           <p className="mt-2 text-sm text-white/80 leading-relaxed max-w-md mx-auto">
             Your journey defined your rewards. Here's what you earned on the way to the summit.
           </p>

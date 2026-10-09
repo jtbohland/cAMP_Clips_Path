@@ -1,5 +1,6 @@
 import { useNavigate, useLocation } from "react-router";
 import { useViewer } from "./ViewerContext";
+import CampLogo from "./CampLogo";
 
 const NAV_TABS = [
   { path: "/library", label: "Clips", emoji: "🎬" },
@@ -33,7 +34,7 @@ export default function TopNav() {
           className="flex items-center gap-2 cursor-pointer select-none"
           onClick={() => navigate("/library")}
         >
-          <span className="text-2xl">🏕️</span>
+          <CampLogo size={40} className="shrink-0" />
           <div>
             <h1 className="text-lg font-bold text-gray-900 tracking-tight leading-tight">
               cAMP Ascent: Sales

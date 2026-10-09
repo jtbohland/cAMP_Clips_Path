@@ -1,4 +1,5 @@
 import { useCallback } from "react";
+import CampLogo from "@/components/CampLogo";
 
 interface ApproachCatchUpItem {
   emoji: string;
@@ -48,8 +49,8 @@ export default function SummitInSightModal({
       >
         {/* Header — warm sunrise gradient for "almost there" feel */}
         <div className="px-6 py-5 text-center bg-gradient-to-r from-amber-500 to-orange-400">
-          <div className="text-5xl mb-2">🌤️</div>
-          <h2 className="text-xl font-bold text-white">Summit in Sight!</h2>
+          <CampLogo size={88} className="mx-auto mb-2 drop-shadow-[0_4px_10px_rgba(0,0,0,0.3)]" />
+          <h2 className="text-xl font-bold text-white">🌤️ Summit in Sight!</h2>
           <p className="text-sm mt-1 text-white/90">
             You've completed every Ascent clip — the summit is right there.
           </p>

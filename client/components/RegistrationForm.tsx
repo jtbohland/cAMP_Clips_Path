@@ -4,6 +4,7 @@ import { useApi } from "@/hooks/useApi";
 import { useViewer } from "@/components/ViewerContext";
 import { toast } from "sonner";
 import WelcomeModal from "@/components/WelcomeModal";
+import CampLogo from "@/components/CampLogo";
 
 const TIMEZONES = [
   { value: "NAMER", label: "NAMER (Americas)" },
@@ -227,9 +228,7 @@ export default function RegistrationForm() {
         <div className="rounded-2xl bg-white p-6 shadow-2xl">
           {/* Header */}
           <div className="mb-5 text-center">
-            <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-full bg-amber-100">
-              <span className="text-3xl">🏕️</span>
-            </div>
+            <CampLogo size={120} className="mx-auto mb-2 drop-shadow-md" />
             <h2 className="text-xl font-bold text-gray-900">Welcome to cAMP Ascent</h2>
             <p className="mt-1 text-xs text-gray-500">
               Enter your info to begin your training journey.

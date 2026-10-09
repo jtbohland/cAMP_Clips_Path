@@ -2,6 +2,7 @@ import { useEffect, useCallback } from "react";
 import { useNavigate } from "react-router";
 import confetti from "canvas-confetti";
 import { useApi } from "@/hooks/useApi.js";
+import CampLogo from "@/components/CampLogo";
 
 type FirstAchievementModalProps = {
   viewerId: string;
@@ -84,7 +85,7 @@ export default function FirstAchievementModal({
 
         {/* Body */}
         <div className="px-8 py-6 text-center space-y-4">
-          <div className="text-5xl">🏕️</div>
+          <CampLogo size={96} className="mx-auto drop-shadow-md" />
 
           <div>
             <h3 className="text-lg font-bold text-gray-900">Welcome to The Ascent!</h3>

@@ -39,7 +39,12 @@ const BADGE_META: Record<string, { name: string; emoji: string }> = {
   summit: { name: "Summit Reached", emoji: "🏔️✨" },
 };
 
-export default function XpProgressBar() {
+type XpProgressBarProps = {
+  /** When rendered inside the hero banner, drop the standalone card chrome. */
+  embedded?: boolean;
+};
+
+export default function XpProgressBar({ embedded = false }: XpProgressBarProps = {}) {
   const { viewer } = useViewer();
   const navigate = useNavigate();
   const { data, loading } = useApiData(
@@ -50,7 +55,7 @@ export default function XpProgressBar() {
 
   if (loading || !data) {
     return (
-      <div className="w-full rounded-xl bg-white p-4 animate-pulse shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
+      <div className={`w-full bg-white p-4 animate-pulse ${embedded ? "" : "rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.08)]"}`}>
         <div className="h-6 bg-gray-200 rounded w-1/3 mb-3" />
         <div className="h-4 bg-gray-200 rounded-full w-full mb-2" />
         <div className="h-4 bg-gray-200 rounded w-1/4" />
@@ -61,7 +66,7 @@ export default function XpProgressBar() {
   const { totalXp, xpBreakdown, tier, nextTier, progressPercent, badges, clipsCompleted } = data;
 
   return (
-    <div className="w-full rounded-xl bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
+    <div className={`w-full bg-white p-5 ${embedded ? "" : "rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.08)]"}`}>
       {/* Header row */}
       <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-2">
