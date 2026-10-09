@@ -11,7 +11,8 @@ import DailyFeedback from "@/components/DailyFeedback";
 import type { ReactionCounts, UserReactions } from "@/components/ReactionBar";
 import RegistrationForm from "@/components/RegistrationForm";
 import MaintenancePage from "@/components/MaintenancePage";
-import XpProgressBar from "@/components/XpProgressBar";
+import CampHeroBanner from "@/components/CampHeroBanner";
+import CampLogo from "@/components/CampLogo";
 import WelcomeModal from "@/components/WelcomeModal";
 
 import TierUnlockModal from "@/components/TierUnlockModal";
@@ -1533,7 +1534,7 @@ export default function LibraryPage() {
       <div className="border-b border-green-900/20 px-6 py-4" style={{ backgroundColor: "#1B4332" }}>
         <div className="flex items-center justify-between max-w-4xl mx-auto w-full">
           <div className="flex items-center gap-2.5">
-            <span className="text-2xl">🏕️</span>
+            <CampLogo size={44} className="shrink-0" />
             <div>
               <h1 className="text-xl font-bold text-white leading-tight">cAMP Ascent: Sales</h1>
               <p className="text-sm text-green-200 mt-0.5">🎞️ Watch. Engage. Ascend.</p>
@@ -1598,6 +1599,10 @@ export default function LibraryPage() {
               {adminToolbar}
             </div>
           )}
+          {/* Hero banner — welcome only (no XP during Approach) */}
+          <div className="max-w-4xl mx-auto w-full px-6 pt-6">
+            <CampHeroBanner showXp={false} />
+          </div>
           <Week1Page
             viewerId={viewer.id}
             viewerName={viewer.name}
@@ -1644,8 +1649,8 @@ export default function LibraryPage() {
         {/* Admin toolbar — Ascent */}
         {viewer.isAdmin && adminToolbar}
 
-        {/* XP Progress Bar */}
-        {!ascentTestMode && <XpProgressBar />}
+        {/* Hero banner — daily welcome + XP Progress Bar */}
+        <CampHeroBanner showXp={!ascentTestMode} />
 
         {/* Welcome to the Trail — Weeks 2-4 manifesto */}
         <TrailManifesto viewerId={viewer.id} />

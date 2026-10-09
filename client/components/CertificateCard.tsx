@@ -2,6 +2,7 @@ import { useCallback, useRef } from "react";
 import { toPng } from "html-to-image";
 import { openLinkedInShare } from "@/lib/linkedInShare";
 import type { CertificateDef } from "@/config/certificateConfig";
+import CampLogo from "@/components/CampLogo";
 
 // ── Color themes ───────────────────────────────────────────────────
 const THEMES: Record<string, {
@@ -261,9 +262,13 @@ export default function CertificateCard({
                 <p style={{ fontSize: "11px", color: "#78716c", fontWeight: 500 }}>{formattedDate}</p>
               )}
             </div>
-            <div style={{ textAlign: "right" }}>
-              <p style={{ fontSize: "12px", fontWeight: 700, color: "#44403c" }}>🏔️ cAMP Ascent</p>
-              <p style={{ fontSize: "8px", color: "#a8a29e", letterSpacing: "0.05em" }}>Amplitude's AI-powered enablement app</p>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", textAlign: "right" }}>
+              <div>
+                <p style={{ fontSize: "12px", fontWeight: 700, color: "#44403c" }}>cAMP Ascent</p>
+                <p style={{ fontSize: "8px", color: "#a8a29e", letterSpacing: "0.05em" }}>Amplitude's AI-powered enablement app</p>
+              </div>
+              {/* Seal */}
+              <CampLogo size={46} style={{ flexShrink: 0 }} />
             </div>
           </div>
         </div>

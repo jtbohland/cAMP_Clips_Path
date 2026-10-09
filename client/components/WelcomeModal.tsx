@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { WistiaPlayer } from "@wistia/wistia-player-react";
 import { useApi } from "@/hooks/useApi";
+import CampLogo from "@/components/CampLogo";
 
 /**
  * Elevator pitch data — Wistia media IDs + metadata.
@@ -60,9 +61,7 @@ export default function WelcomeModal({ viewerId, onDismiss }: WelcomeModalProps)
       <div className="w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-2xl">
         {/* Header — colored banner */}
         <div className="rounded-t-2xl bg-gradient-to-r from-indigo-600 to-indigo-500 px-8 pt-7 pb-5 text-center">
-          <div className="mx-auto mb-2 flex h-16 w-16 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
-            <span className="text-4xl">🧗🏼</span>
-          </div>
+          <CampLogo size={110} className="mx-auto mb-2 drop-shadow-[0_4px_10px_rgba(0,0,0,0.35)]" />
           <h2 className="text-2xl font-bold text-white">Welcome Climber!</h2>
           <p className="text-sm text-indigo-100 mt-1">Let's unpack your cAMP Gear</p>
         </div>

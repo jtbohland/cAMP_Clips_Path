@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { useNavigate } from "react-router";
 import { useApiData } from "@/hooks/useApiData.js";
 import { useViewer } from "@/components/ViewerContext";
+import CampLogo from "@/components/CampLogo";
 
 // ─── Pacing row highlight colors (light tinted backgrounds for "you" row) ────
 
@@ -18,10 +19,11 @@ const PACING_ROW_BG: Record<string, string> = {
 
 // ─── Top-3 green spectrum (darkest #1 → lightest #3, fades into white) ───────
 
+// D9 alpha (~85%) so the background logo watermark shows faintly through
 const TOP3_BG: Record<number, string> = {
-  1: "#BBF7D0", // richest green (stands out most)
-  2: "#DCFCE7", // medium green
-  3: "#F0FDF4", // lightest mint (fades toward white/grey)
+  1: "#BBF7D0D9", // richest green (stands out most)
+  2: "#DCFCE7D9", // medium green
+  3: "#F0FDF4D9", // lightest mint (fades toward white/grey)
 };
 
 const TOP3_BORDER: Record<number, string> = {
@@ -252,7 +254,7 @@ function MainLeaderboardRow({ entry, isCurrentUser }: { entry: LeaderboardEntry;
     rowBg = TOP3_BG[entry.rank] ?? "#F0FDF4";
     rowBorder = `1px solid ${TOP3_BORDER[entry.rank] ?? "#86EFAC"}`;
   } else {
-    rowBg = "#ffffff";
+    rowBg = "#ffffffD9";
     rowBorder = "1px solid #E5E7EB";
   }
 
@@ -302,7 +304,7 @@ function RoleBoardRow({ entry, rank, isCurrentUser }: { entry: LeaderboardEntry;
     rowBg = TOP3_BG[rank] ?? "#F0FDF4";
     rowBorder = `1px solid ${TOP3_BORDER[rank] ?? "#86EFAC"}`;
   } else {
-    rowBg = "#ffffff";
+    rowBg = "#ffffffD9";
     rowBorder = "1px solid #E5E7EB";
   }
 
@@ -368,7 +370,7 @@ function RoleBoardSection({
         <span className="text-sm">{open ? "▾" : "▸"}</span>
       </button>
       {open && (
-        <div className="bg-white p-3 space-y-1">
+        <div className="bg-white/60 p-3 space-y-1">
           {/* Header row */}
           <div className="grid grid-cols-[36px_1fr_80px_60px_50px_50px_100px] gap-2 text-[10px] font-semibold text-gray-500 uppercase tracking-wider px-3 pb-1">
             <span className="text-center">#</span>
@@ -418,9 +420,14 @@ export default function LeaderboardPage() {
   const ROLE_GROUP_ORDER = ["AE", "SDR", "VelocityPromo", "PSM", "Renewals"];
 
   return (
-    <div className="flex flex-col w-full" style={{ backgroundColor: "#ECFDF5", minHeight: "100vh" }}>
+    <div className="relative flex flex-col w-full" style={{ backgroundColor: "#ECFDF5", minHeight: "100vh" }}>
+      {/* Background logo watermark — fixed so it stays in view while scrolling every board */}
+      <div className="pointer-events-none select-none fixed inset-0 z-0 flex items-center justify-center" aria-hidden="true">
+        <CampLogo size={640} style={{ opacity: 0.08, maxWidth: "85vw", maxHeight: "85vh" }} />
+      </div>
+
       {/* Header */}
-      <div className="border-b border-green-900/20 px-6 py-4" style={{ backgroundColor: "#1B4332" }}>
+      <div className="relative z-10 border-b border-green-900/20 px-6 py-4" style={{ backgroundColor: "#1B4332" }}>
         <div className="flex items-center justify-between max-w-4xl mx-auto w-full">
           <div className="flex items-center gap-2.5">
             <span className="text-2xl">🏆</span>
@@ -440,7 +447,7 @@ export default function LeaderboardPage() {
       </div>
 
       {/* Content */}
-      <div className="flex-1">
+      <div className="relative z-10 flex-1">
         <div className="max-w-4xl mx-auto w-full px-6 py-6">
           <StatusKeySection />
 

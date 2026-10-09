@@ -5,6 +5,7 @@ import { useApi } from "@/hooks/useApi.js";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
 import { openLinkedInShare } from "@/lib/linkedInShare";
+import CampLogo from "@/components/CampLogo";
 import { getCertificatesForPath, roleToPathKey } from "@/config/certificateConfig";
 import { countWeekdays, getPacingTier, getApproachPacingTier, getSummitDay, PACING_TIERS, type PacingTier, computeUnifiedPacingPercent, getPacingStatusFromPercent } from "@/lib/pacing.js";
 
@@ -680,11 +681,9 @@ function SummitCelebrateView({ data, jtQuote }: { data: any; jtQuote: string }) 
     <div className="space-y-0">
       {/* Gradient header — matches summit check-in (amber-500 → yellow-500) */}
       <div className="bg-gradient-to-r from-amber-500 to-yellow-500 px-8 pt-8 pb-6 text-center">
-        {/* Frosted circle with emoji */}
-        <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm mb-4 text-4xl">
-          🚩
-        </div>
-        <h2 className="text-2xl font-bold text-white">Summit Reached — Ascent Complete!</h2>
+        {/* cAMP Ascent logo */}
+        <CampLogo size={104} className="mx-auto mb-3 drop-shadow-[0_4px_10px_rgba(0,0,0,0.35)]" />
+        <h2 className="text-2xl font-bold text-white">🚩 Summit Reached — Ascent Complete!</h2>
         <p className="mt-2 text-sm text-white/80 leading-relaxed max-w-lg mx-auto">
           You've completed all 19 cAMP Clips and conquered your Ascent. The trail behind you is proof — you showed up, engaged, and earned it.
         </p>
