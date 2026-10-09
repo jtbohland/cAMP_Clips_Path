@@ -5,6 +5,16 @@ const APPS_DB = "c6e32cf4-ca66-42ae-aeb3-58c84ffae574";
 /** Lite clips: watchable but excluded from pacing/totals/engagement scoring */
 const LITE_CLIP_SORTS = new Set([51]);
 
+/**
+ * TEMPORARY: clips under renovation (outdated content awaiting a full rebuild).
+ * When a learner reaches one of these clips (it unlocks for them), it is
+ * auto-completed with a real completed session (no score) + a 0-XP "watch"
+ * marker + an unlock override for the next clip. To turn this off, empty the set.
+ * Learners who already completed the clip (incl. every completed learner) are
+ * never touched: the auto-complete only runs when no completed session exists.
+ */
+const RENOVATION_CLIP_SORTS = new Set([50]);
+
 /** VP curated clip set — only these sort_orders appear for SDR>Velocity Promo viewers */
 const VP_CLIP_SORTS = [60, 120, 130, 140, 150, 170, 180, 190, 200];
 
@@ -64,6 +74,7 @@ export default api({
         resourceCount: z.number(),
         resourcesClicked: z.number(),
         isLite: z.boolean(),
+        underRenovation: z.boolean(),
       })
     ),
     quizClickedDays: z.array(z.string()),
@@ -206,6 +217,63 @@ export default api({
       return isTopicDay ? topicCompletedSet.has(clip.id) : clip.completed > 0;
     });
 
+    // ── TEMPORARY: auto-complete clips under renovation ──
+    // Runs only for non-admin learners, only once the clip is unlocked for them
+    // (the clip/resource day before it is complete, or an unlock override exists),
+    // and only when they have no completed session for it yet.
+    if (!isAdmin && RENOVATION_CLIP_SORTS.size > 0) {
+      for (let i = 0; i < clips.length; i++) {
+        const clip = clips[i];
+        if (!RENOVATION_CLIP_SORTS.has(clip.sort_order) || completionStatus[i]) continue;
+        const isUnlocked = i === 0 || overrideSet.has(clip.id) || completionStatus[i - 1];
+        if (!isUnlocked) continue;
+
+        // 1. Completed session with no score: counts toward clips completed,
+        //    pacing, anchor points and Summit Reached exactly like a passed clip,
+        //    while engagement averages ignore the null score.
+        //    The NOT EXISTS guard makes repeat calls safe.
+        await ctx.integrations.db.execute(
+          `INSERT INTO cliptracker_v2_sessions (clip_id, viewer_id, completed, ended_at)
+           SELECT $1, $2, true, now()
+           WHERE NOT EXISTS (
+             SELECT 1 FROM cliptracker_v2_sessions
+             WHERE clip_id = $1 AND viewer_id = $2 AND completed = true
+           )`,
+          [clip.id, viewerId],
+          { label: "Auto-complete renovation clip (session)" }
+        );
+
+        // 2. 0-XP "watch" marker so streak badges (No Detours) still see this
+        //    clip as watched. Awards no XP.
+        await ctx.integrations.db.execute(
+          `INSERT INTO cliptracker_v2_xp_events (viewer_id, clip_id, event_type, source_id, xp_amount, metadata)
+           VALUES ($1, $2, 'base', 'watch', 0, '{"reason": "under_renovation"}'::jsonb)
+           ON CONFLICT (viewer_id, source_id, clip_id) DO NOTHING`,
+          [viewerId, clip.id],
+          { label: "Auto-complete renovation clip (0 XP watch marker)" }
+        );
+
+        // 3. Unlock the first clip of the NEXT day in this learner's own path,
+        //    so the following day is never blocked by optional same-day clips
+        //    (e.g. SDR "Prospecting for Marketing Events", sort 51).
+        const nextDayClip = clips.slice(i + 1).find((c) => c.day_label !== clip.day_label);
+        if (nextDayClip) {
+          await ctx.integrations.db.execute(
+            `INSERT INTO cliptracker_v2_unlock_overrides (viewer_id, clip_id, unlocked_by, reason)
+             VALUES ($1, $2, 'system', 'Auto-completed: clip under renovation')
+             ON CONFLICT (viewer_id, clip_id) DO NOTHING`,
+            [viewerId, nextDayClip.id],
+            { label: "Auto-complete renovation clip (unlock next day)" }
+          );
+          overrideSet.add(nextDayClip.id);
+        }
+
+        completionStatus[i] = true;
+        clip.completed = 1;
+        ctx.log.info("Auto-completed clip under renovation", { viewerId, sortOrder: clip.sort_order });
+      }
+    }
+
     const result = clips.map((clip, index) => {
       const bestScore = clip.best_score ? parseFloat(clip.best_score) : null;
       const isTopicDay = clip.video_url === null && clip.duration_seconds === null;
@@ -248,6 +316,7 @@ export default api({
         resourceCount,
         resourcesClicked: clickCountMap.get(clip.id) ?? 0,
         isLite: LITE_CLIP_SORTS.has(clip.sort_order),
+        underRenovation: RENOVATION_CLIP_SORTS.has(clip.sort_order),
       };
     });
 

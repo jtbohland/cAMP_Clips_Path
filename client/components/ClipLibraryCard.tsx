@@ -1,5 +1,6 @@
 import { toast } from "sonner";
 import { useCallback } from "react";
+import RenovationNotice from "@/components/RenovationNotice";
 
 type ClipLibraryCardProps = {
   clip: {
@@ -41,6 +42,8 @@ type ClipLibraryCardProps = {
   feedbackSlot?: React.ReactNode;
   /** Extra content rendered below the clip button (e.g. VP-specific gear links) */
   extraContent?: React.ReactNode;
+  /** TEMPORARY: clip is auto-completed while its content is rebuilt */
+  underRenovation?: boolean;
 };
 
 function getWeekLabel(weekNumber: number | null, sortOrder: number): string {
@@ -127,9 +130,12 @@ export default function ClipLibraryCard({
   reactionSlot,
   feedbackSlot,
   extraContent,
+  underRenovation = false,
 }: ClipLibraryCardProps) {
   const isTopicDay = clip.isTopicDay ?? false;
   const buttonState = getButtonState(isLocked, isCompleted, pausedElapsedSeconds);
+  // Renovation applies once the clip is reached; before that it stays locked as normal
+  const showRenovation = underRenovation && buttonState !== "locked";
   const wdSet = wheelAndDealSortOrders ?? DEFAULT_WD_SORT_ORDERS;
 
   const handleShare = useCallback(
@@ -151,7 +157,7 @@ export default function ClipLibraryCard({
           ? "opacity-55 cursor-default"
           : "hover:shadow-md cursor-pointer"
       }`}
-      onClick={buttonState !== "locked" ? (isTopicDay ? onViewGear : (buttonState === "report" ? onReview : onWatch)) : undefined}
+      onClick={buttonState !== "locked" && !showRenovation ? (isTopicDay ? onViewGear : (buttonState === "report" ? onReview : onWatch)) : undefined}
     >
       <div className="flex flex-col gap-3">
         {/* Row 1: Week/Day label + status badge + share */}
@@ -217,7 +223,7 @@ export default function ClipLibraryCard({
             )}
           </>
         ) : (
-          <p className="text-xs text-gray-500 flex items-center gap-1.5 flex-wrap">
+          <p className={`text-xs text-gray-500 flex items-center gap-1.5 flex-wrap ${showRenovation ? "opacity-50 line-through" : ""}`}>
             {clip.durationSeconds ? (
               <>
                 <span>⏱️ {formatDuration(clip.durationSeconds)}</span>
@@ -233,7 +239,9 @@ export default function ClipLibraryCard({
         )}
 
         {/* Row 4: Action button */}
-        {isTopicDay ? (
+        {showRenovation ? (
+          <RenovationNotice />
+        ) : isTopicDay ? (
           <TopicDayActionButton
             buttonState={buttonState}
             previousClipTitle={previousClipTitle}
@@ -346,8 +354,13 @@ export default function ClipLibraryCard({
         {/* Emoji reactions — below clip/resource buttons, above Quiz/W&D */}
         {reactionSlot}
 
+        {/* cAMP Quiz — auto-completed for clips under renovation */}
+        {showRenovation && CAMP_QUIZ_SORT_ORDERS.has(clip.sortOrder) && (
+          <RenovationNotice label="🦉 cAMP Quiz — auto-completed" />
+        )}
+
         {/* cAMP Quiz button — always visible on qualifying tiles */}
-        {CAMP_QUIZ_SORT_ORDERS.has(clip.sortOrder) && onCampQuiz && (
+        {!showRenovation && CAMP_QUIZ_SORT_ORDERS.has(clip.sortOrder) && onCampQuiz && (
           <button
             onClick={(e) => { e.stopPropagation(); onCampQuiz(clip.dayLabel); }}
             className="w-full py-2.5 rounded-lg text-sm font-semibold bg-[#EA580C] hover:bg-[#C2410C] text-white transition-colors"
@@ -355,7 +368,7 @@ export default function ClipLibraryCard({
             🦉 Take cAMP Quiz
           </button>
         )}
-        {CAMP_QUIZ_SORT_ORDERS.has(clip.sortOrder) && onCampQuiz && (
+        {!showRenovation && CAMP_QUIZ_SORT_ORDERS.has(clip.sortOrder) && onCampQuiz && (
           <p className="text-[11px] text-gray-400 text-center -mt-1">
             Content Knowledge Checks — validate your learning after each session
           </p>
