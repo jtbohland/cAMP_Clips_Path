@@ -1,4 +1,5 @@
 import { api, z, postgres } from "@superblocksteam/sdk-api";
+import { assertAuditOpen } from "./audit-lock.js";
 
 const APPS_DB = "c6e32cf4-ca66-42ae-aeb3-58c84ffae574";
 
@@ -22,6 +23,8 @@ export default api({
   }),
 
   async run(ctx, { viewerId, topicKey, notes }) {
+    // No sign-offs once the audit closes (admins bypass)
+    await assertAuditOpen(ctx.integrations.apps_db, viewerId);
     // Get active cycle
     const CycleRow = z.object({ id: z.string() });
     const cycles = await ctx.integrations.apps_db.query(
