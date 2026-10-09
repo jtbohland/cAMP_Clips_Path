@@ -1,5 +1,6 @@
 import { api, z, postgres } from "@superblocksteam/sdk-api";
 import { getEffectiveClipTotal, isVelocityPromo } from "./pacing-helpers.js";
+import { ACADEMY_COURSE_KEYS_SQL, isAcademyTileDone } from "./academy-tiles.js";
 
 const APPS_DB = "c6e32cf4-ca66-42ae-aeb3-58c84ffae574";
 
@@ -209,7 +210,7 @@ export default api({
 
     const AcademyScreenshotRow = z.object({ course_key: z.string() });
     const academyRows = await ctx.integrations.db.query(
-      `SELECT DISTINCT course_key FROM cliptracker_v2_academy_screenshots WHERE viewer_id = $1 AND course_key IN ('analytics', 'experiment', 'session_replay', 'guides_surveys')`,
+      `SELECT DISTINCT course_key FROM cliptracker_v2_academy_screenshots WHERE viewer_id = $1 AND course_key IN (${ACADEMY_COURSE_KEYS_SQL})`,
       AcademyScreenshotRow,
       [viewerId],
       { label: "Get academy screenshots for approach status" }
@@ -232,7 +233,7 @@ export default api({
     const isVP = isVelocityPromo(viewer.role);
     const APPROACH_MODULES = isVP
       ? [
-          { key: "analytics", label: "Academy: Analytics", type: "screenshot" },
+          { key: "analytics", label: "Academy: Analytics & Agent Analytics", type: "screenshot" },
           { key: "experiment", label: "Academy: Experiment & Statsig", type: "screenshot" },
           { key: "session_replay", label: "Academy: Session Replay", type: "screenshot" },
           { key: "guides_surveys", label: "Academy: Guides & Surveys", type: "screenshot" },
@@ -240,7 +241,7 @@ export default api({
         ] as const
       : [
           { key: "meddpicc", label: "MEDDPICC", type: "signoff" },
-          { key: "analytics", label: "Academy: Analytics", type: "screenshot" },
+          { key: "analytics", label: "Academy: Analytics & Agent Analytics", type: "screenshot" },
           { key: "experiment", label: "Academy: Experiment & Statsig", type: "screenshot" },
           { key: "session_replay", label: "Academy: Session Replay", type: "screenshot" },
           { key: "guides_surveys", label: "Academy: Guides & Surveys", type: "screenshot" },
@@ -254,7 +255,7 @@ export default api({
       const done = mod.type === "signoff"
         ? signoffKeys.has(mod.key)
         : mod.type === "screenshot"
-          ? screenshotKeys.has(mod.key)
+          ? isAcademyTileDone(mod.key, screenshotKeys, signoffKeys.has("camp101"))
           : wdDone;
       if (done) {
         approachCompletedCount++;

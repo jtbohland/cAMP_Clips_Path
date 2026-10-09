@@ -88,7 +88,7 @@ export default function ApproachManifesto({ viewerId, isVP = false }: ApproachMa
           <div>
             <p className="font-semibold text-gray-900">cAMP 101 — Amplitude Academy</p>
             <p className="text-xs text-gray-600 mt-0.5">
-              Four Academy courses covering Analytics, Experiment, Session Replay, and Guides & Surveys. Complete each course on academy.amplitude.com, then come back here and upload a screenshot of each completion. Once all four are uploaded, your cAMP 101 reflection and sign-off unlock.
+              Four Academy tiles: Analytics & Agent Analytics, Experiment & Statsig, Session Replay, and Guides & Surveys. Complete each course on academy.amplitude.com, then come back here and upload a screenshot of each completion (some tiles have more than one course). Once all four tiles are complete, your cAMP 101 reflection and sign-off unlock.
             </p>
           </div>
         </div>

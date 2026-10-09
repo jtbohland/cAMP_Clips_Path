@@ -28,12 +28,13 @@ export default api({
     await ctx.integrations.db.execute(
       `ALTER TABLE cliptracker_v2_academy_screenshots
        ADD CONSTRAINT cliptracker_v2_academy_screenshots_course_key_check
-       CHECK (course_key IN ('analytics', 'experiment', 'session_replay', 'guides_surveys', 'challenger_why', 'challenger_intro', 'statsig'))`,
+       CHECK (course_key IN ('analytics', 'experiment', 'session_replay', 'guides_surveys', 'challenger_why', 'challenger_intro', 'statsig',
+                             'agent_analytics', 'feature_gates', 'assignments_exposures'))`,
       undefined,
       { label: "Add updated course_key CHECK with challenger keys" }
     );
 
-    ctx.log.info("Updated academy_screenshots CHECK constraint with challenger + statsig course keys");
+    ctx.log.info("Updated academy_screenshots CHECK constraint with all course keys");
 
     // Update W&D score constraint from max 12 → 15
     await ctx.integrations.db.execute(

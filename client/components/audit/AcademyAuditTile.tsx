@@ -8,6 +8,7 @@ import { useViewer } from "@/components/ViewerContext";
 import { toast } from "sonner";
 
 interface AcademyCourse {
+  key: string;
   label: string;
   url: string;
   screenshotUploaded: boolean;
@@ -15,6 +16,16 @@ interface AcademyCourse {
 }
 
 type SmeNote = { fieldName: string; value: string; viewerName: string; changeType: string; createdAt: string };
+
+// Notes used to be saved by list position. This was the course order back then,
+// so old `academy_course_<index>` notes still show on the right course.
+const LEGACY_COURSE_ORDER = ["analytics", "experiment", "statsig", "session_replay", "guides_surveys"];
+const noteFieldsFor = (courseKey: string): string[] => {
+  const fields = [`academy_course_${courseKey}`];
+  const legacyIdx = LEGACY_COURSE_ORDER.indexOf(courseKey);
+  if (legacyIdx >= 0) fields.push(`academy_course_${legacyIdx}`);
+  return fields;
+};
 
 interface AcademyAuditTileProps {
   courses: AcademyCourse[];
@@ -39,8 +50,8 @@ export default function AcademyAuditTile({
   const { run: saveApproval, loading: approving } = useApi("SaveAuditApproval");
   const { run: saveContent, loading: saving } = useApi("SaveAuditContent");
 
-  // Per-course notes (local state — persisted on save)
-  const [courseNotes, setCourseNotes] = useState<Record<number, string>>({});
+  // Per-course notes (local state — persisted on save), keyed by course key
+  const [courseNotes, setCourseNotes] = useState<Record<string, string>>({});
 
   // Add new academy course
   const [adding, setAdding] = useState(false);
@@ -64,19 +75,21 @@ export default function AcademyAuditTile({
   }, [saveApproval, viewer, topicKey, sectionKey, isApproved, onApproved]);
 
   const handleSaveNotes = useCallback(async (index: number, notes: string) => {
+    const course = courses[index];
+    if (!course) return;
     try {
       await saveContent({
         viewerId: viewer?.id ?? "",
         viewerName: viewer?.name ?? "",
         topicKey,
         editType: "academy_notes",
-        fieldName: `academy_course_${index}`,
+        fieldName: `academy_course_${course.key}`,
         oldValue: null,
         newValue: notes,
         questionId: null,
         clipId: null,
         gearIndex: index,
-        gearLabel: courses[index]?.label ?? null,
+        gearLabel: course.label,
         gearUrl: null,
         gearType: null,
       });
@@ -154,18 +167,21 @@ export default function AcademyAuditTile({
       {/* Course grid */}
       <div className="p-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {courses.map((course, idx) => (
-            <CourseCard
-              key={idx}
-              course={course}
-              index={idx}
-              notes={courseNotes[idx] ?? ""}
-              onNotesChange={(val) => setCourseNotes(prev => ({ ...prev, [idx]: val }))}
-              onSaveNotes={() => handleSaveNotes(idx, courseNotes[idx] ?? "")}
-              saving={saving}
-              savedNotes={smeNotes.filter(n => n.fieldName === `academy_course_${idx}`)}
-            />
-          ))}
+          {courses.map((course, idx) => {
+            const fields = noteFieldsFor(course.key);
+            return (
+              <CourseCard
+                key={course.key}
+                course={course}
+                index={idx}
+                notes={courseNotes[course.key] ?? ""}
+                onNotesChange={(val) => setCourseNotes(prev => ({ ...prev, [course.key]: val }))}
+                onSaveNotes={() => handleSaveNotes(idx, courseNotes[course.key] ?? "")}
+                saving={saving}
+                savedNotes={smeNotes.filter(n => fields.includes(n.fieldName))}
+              />
+            );
+          })}
         </div>
 
         {/* Add new course form */}

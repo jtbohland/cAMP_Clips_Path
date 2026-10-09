@@ -1,4 +1,5 @@
 import { api, z, postgres } from "@superblocksteam/sdk-api";
+import { academyTilesDoneSql } from "./academy-tiles.js";
 import {
   getEffectiveClipTotal,
   getClipsExpectedByWeekday,
@@ -252,8 +253,7 @@ export default api({
           (SELECT COUNT(*)::int FROM cliptracker_v2_module_signoffs ms
            WHERE ms.viewer_id = v.id AND ms.module_key IN ('meddpicc', 'challenger', 'camp101'))
           +
-          (SELECT COUNT(*)::int FROM cliptracker_v2_academy_screenshots acs
-           WHERE acs.viewer_id = v.id AND acs.course_key IN ('analytics', 'experiment', 'session_replay', 'guides_surveys'))
+          ${academyTilesDoneSql("v.id")}
           +
           (SELECT CASE WHEN EXISTS (SELECT 1 FROM cliptracker_v2_wd_verifications wd WHERE wd.viewer_id = v.id) THEN 1 ELSE 0 END)
         )::int AS approach_items

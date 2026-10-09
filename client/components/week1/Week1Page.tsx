@@ -23,6 +23,8 @@ import {
   WEEK1_WEEKDAYS_VP,
   getRoleTotalWeekdays,
 } from "@/lib/pacing";
+import { ACADEMY_TILES, isAcademyTileDone, countAcademyTilesDone, allAcademyTilesDone } from "@/lib/academyTiles";
+import type { AcademyTile } from "@/lib/academyTiles";
 
 // Reflection prompts
 const MEDDPICC_REFLECTION = "Which letter of MEDDPICC is the biggest gap in how you've sold before, and what will you do differently here?";
@@ -43,19 +45,11 @@ function getShuffledCamp101Prompt(viewerId: string): string {
 
 const CHALLENGER_REFLECTION_INTRO = "Describe one commercial insight you could bring to your contact that reframes how they see their business — not just their analytics.";
 
-// Academy courses
-const ACADEMY_COURSES = [
-  { key: "analytics", label: "Analytics", url: "https://academy.amplitude.com/amplitude-getting-started-with-analytics" },
-  {
-    key: "experiment",
-    label: "Experiment & Statsig",
-    url: "https://academy.amplitude.com/getting-started-with-amplitude-experiment-learning-path",
-    subCourses: [
-      { key: "statsig", label: "Statsig Overview", url: "https://academy.amplitude.com/statsig-overview" },
-    ],
-  },
-  { key: "session_replay", label: "Session Replay", url: "https://academy.amplitude.com/contextualize-user-experience-with-session-replay" },
-  { key: "guides_surveys", label: "Guides & Surveys", url: "https://academy.amplitude.com/engage-your-users-with-guides-and-surveys" },
+// cAMP Gear buttons (cAMP 101)
+const CAMP101_GEAR = [
+  { emoji: "🐙", label: "What We Sell", url: "https://app.spekit.co/app/wiki/?topic=1d04d90d-e516-408c-bab2-837788fed772&tag=What%20We%20Sell%20%7C%20Products" },
+  { emoji: "🐙", label: "How We Sell", url: "https://app.spekit.co/app/wiki/?topic=edac80d9-e110-490d-9208-59ecc33fd805&tag=How%20We%20Sell%20%7C%20Sales%20Proccess" },
+  { emoji: "🎮", label: "Amplidemo: Amplitude Demo Environments", url: "https://app.amplitude.com/analytics/amplidemo/home" },
 ];
 
 type UnlockResult = {
@@ -145,6 +139,14 @@ export default function Week1Page({ viewerId, viewerName, viewerRole, isAdmin, p
     }
     return map;
   }, [data?.academyScreenshots]);
+  const uploadedKeys = useMemo(() => new Set(Object.keys(screenshotMap)), [screenshotMap]);
+
+  // Grandfathered: already signed off cAMP 101 under the old (single-course) tiles
+  const academyGrandfathered = !!signoffMap.camp101;
+  const tileDone = useCallback(
+    (tile: AcademyTile, uploaded: Set<string> = uploadedKeys) => isAcademyTileDone(tile, uploaded, academyGrandfathered),
+    [uploadedKeys, academyGrandfathered],
+  );
 
   // Completion checks
   // VP only requires cAMP 101 (no MEDDPICC or Challenger)
@@ -168,25 +170,23 @@ export default function Week1Page({ viewerId, viewerName, viewerRole, isAdmin, p
     let count = 0;
     if (!isVP && signoffMap.meddpicc) count++;
     if (!isVP && signoffMap.challenger) count++;
-    // Academy tiles: experiment tile requires BOTH experiment + statsig to count as 1
-    const expDone = screenshotMap.experiment && screenshotMap.statsig;
-    count += ['analytics','session_replay','guides_surveys'].filter(k => screenshotMap[k]).length + (expDone ? 1 : 0);
+    // Academy: each tile counts as 1, no matter how many courses it holds
+    count += countAcademyTilesDone(uploadedKeys, academyGrandfathered);
     if (wdVerified) count++;
     return count;
-  }, [signoffMap, screenshotMap, wdVerified, isVP]);
+  }, [signoffMap, uploadedKeys, academyGrandfathered, wdVerified, isVP]);
 
   // Set of completed trackable keys for ApproachPacingModal
   const completedKeys = useMemo(() => {
     const keys = new Set<string>();
     if (!isVP && signoffMap.meddpicc) keys.add("module:meddpicc");
     if (!isVP && signoffMap.challenger) keys.add("module:challenger");
-    if (screenshotMap.analytics) keys.add("academy:analytics");
-    if (screenshotMap.experiment && screenshotMap.statsig) keys.add("academy:experiment");
-    if (screenshotMap.session_replay) keys.add("academy:session_replay");
-    if (screenshotMap.guides_surveys) keys.add("academy:guides_surveys");
+    for (const tile of ACADEMY_TILES) {
+      if (tileDone(tile)) keys.add(`academy:${tile.key}`);
+    }
     if (wdVerified) keys.add("wd");
     return keys;
-  }, [signoffMap, screenshotMap, wdVerified, isVP]);
+  }, [signoffMap, tileDone, wdVerified, isVP]);
 
   // Approach pacing calculation
   const approachPacing = useMemo(() => {
@@ -212,14 +212,13 @@ export default function Week1Page({ viewerId, viewerName, viewerRole, isAdmin, p
   const incompleteModules = useMemo(() => {
     const items: Array<{ emoji: string; label: string; done: boolean }> = [];
     if (!isVP) items.push({ emoji: "✍🏽", label: "MEDDPICC sign-off", done: !!signoffMap.meddpicc });
-    items.push({ emoji: "🎓", label: "Academy: Analytics", done: !!screenshotMap.analytics });
-    items.push({ emoji: "🎓", label: "Academy: Experiment & Statsig", done: !!(screenshotMap.experiment && screenshotMap.statsig) });
-    items.push({ emoji: "🎓", label: "Academy: Session Replay", done: !!screenshotMap.session_replay });
-    items.push({ emoji: "🎓", label: "Academy: Guides & Surveys", done: !!screenshotMap.guides_surveys });
+    for (const tile of ACADEMY_TILES) {
+      items.push({ emoji: "🎓", label: `Academy: ${tile.label}`, done: tileDone(tile) });
+    }
     if (!isVP) items.push({ emoji: "✍🏽", label: "Challenger sign-off", done: !!signoffMap.challenger });
     items.push({ emoji: "🎡", label: "Wheel & Deal", done: wdVerified });
     return items.filter((m) => !m.done);
-  }, [signoffMap, screenshotMap, wdVerified, isVP]);
+  }, [signoffMap, tileDone, wdVerified, isVP]);
 
   // Auto-trigger Approach pacing modal — once per calendar day, skip legacy/unlocked
   useEffect(() => {
@@ -486,14 +485,17 @@ export default function Week1Page({ viewerId, viewerName, viewerRole, isAdmin, p
           <div className="px-5 py-3">
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">🎒 cAMP Gear</p>
             <div className="flex flex-wrap gap-2">
-              <a
-                href="https://app.spekit.co/app/wiki/?&topic=1d04d90d-e516-408c-bab2-837788fed772&tag=Platform%20and%20Products"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-colors"
-              >
-                <span>🐙</span> Spekit ↗
-              </a>
+              {CAMP101_GEAR.map((g) => (
+                <a
+                  key={g.label}
+                  href={g.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-colors"
+                >
+                  <span>{g.emoji}</span> {g.label} ↗
+                </a>
+              ))}
             </div>
             {/* Statsig-specific resources */}
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mt-3 mb-2">🧪 Statsig Resources</p>
@@ -521,20 +523,9 @@ export default function Week1Page({ viewerId, viewerName, viewerRole, isAdmin, p
 
           {/* Academy screenshot slots */}
           <AcademyScreenshotSlots
-            slots={ACADEMY_COURSES.map((c) => ({
-              key: c.key,
-              label: c.label,
-              url: c.url,
-              uploaded: !!screenshotMap[c.key],
-              ...("subCourses" in c && c.subCourses ? {
-                subCourses: c.subCourses.map((sc) => ({
-                  key: sc.key,
-                  label: sc.label,
-                  url: sc.url,
-                  uploaded: !!screenshotMap[sc.key],
-                })),
-              } : {}),
-            }))}
+            tiles={ACADEMY_TILES}
+            uploadedKeys={uploadedKeys}
+            isTileDone={tileDone}
             isLegacy={isLegacy}
             onUpload={handleAcademyUpload}
           />
@@ -548,7 +539,7 @@ export default function Week1Page({ viewerId, viewerName, viewerRole, isAdmin, p
               completedAt: signoffMap.camp101.completedAt,
             } : undefined}
             isLegacy={isLegacy}
-            allScreenshotsUploaded={['analytics','session_replay','guides_surveys'].every(k => screenshotMap[k]) && !!(screenshotMap.experiment && screenshotMap.statsig)}
+            allScreenshotsUploaded={allAcademyTilesDone(uploadedKeys, academyGrandfathered)}
             reflectionPrompt={camp101Prompt}
             onSignOff={async (d) => handleModuleSignoff("camp101", d, camp101Prompt)}
           />

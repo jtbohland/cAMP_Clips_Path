@@ -1,24 +1,14 @@
 import { useState, useCallback, useRef } from "react";
 import { toast } from "sonner";
-
-type SubCourse = {
-  key: string;
-  label: string;
-  url: string;
-  uploaded: boolean;
-};
-
-type CourseSlot = {
-  key: string;
-  label: string;
-  url: string;
-  uploaded: boolean;
-  /** Optional additional courses within the same tile (e.g. Statsig alongside Experiment) */
-  subCourses?: SubCourse[];
-};
+import type { AcademyTile } from "@/lib/academyTiles";
 
 type AcademyScreenshotSlotsProps = {
-  slots: CourseSlot[];
+  /** Tiles in display order; each holds 1+ courses (see client/lib/academyTiles.ts) */
+  tiles: AcademyTile[];
+  /** Course keys that already have a screenshot */
+  uploadedKeys: Set<string>;
+  /** Is the tile complete (handles grandfathering for already-signed-off learners) */
+  isTileDone: (tile: AcademyTile, uploaded: Set<string>) => boolean;
   isLegacy: boolean;
   onUpload: (courseKey: string, data: {
     screenshotData: string;
@@ -27,7 +17,7 @@ type AcademyScreenshotSlotsProps = {
   }) => Promise<void>;
 };
 
-export default function AcademyScreenshotSlots({ slots, isLegacy, onUpload }: AcademyScreenshotSlotsProps) {
+export default function AcademyScreenshotSlots({ tiles, uploadedKeys, isTileDone, isLegacy, onUpload }: AcademyScreenshotSlotsProps) {
   const [uploading, setUploading] = useState<string | null>(null);
   const [previews, setPreviews] = useState<Record<string, string>>({});
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
@@ -52,7 +42,6 @@ export default function AcademyScreenshotSlots({ slots, isLegacy, onUpload }: Ac
       // (reading twice can throw NotFoundError on some browsers)
       const buffer = await file.arrayBuffer();
 
-      // Generate preview from buffer
       const blob = new Blob([buffer], { type: file.type });
       const dataUrl = await new Promise<string>((resolve) => {
         const reader = new FileReader();
@@ -60,7 +49,6 @@ export default function AcademyScreenshotSlots({ slots, isLegacy, onUpload }: Ac
         reader.readAsDataURL(blob);
       });
 
-      // Generate hash from same buffer
       const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
       const hashHex = Array.from(new Uint8Array(hashBuffer))
         .map((b) => b.toString(16).padStart(2, "0"))
@@ -82,60 +70,50 @@ export default function AcademyScreenshotSlots({ slots, isLegacy, onUpload }: Ac
       });
     } finally {
       setUploading(null);
+      // Allow re-selecting the same file after an error
+      e.target.value = "";
     }
   }, [onUpload]);
 
-  /** Count completed tiles (a tile with subCourses requires ALL to be uploaded) */
-  const completedCount = slots.filter((s) => {
-    const primaryDone = s.uploaded || !!previews[s.key];
-    if (!s.subCourses || s.subCourses.length === 0) return primaryDone;
-    const allSubsDone = s.subCourses.every((sc) => sc.uploaded || !!previews[sc.key]);
-    return primaryDone && allSubsDone;
-  }).length;
+  // Uploaded = saved on server OR just uploaded in this session
+  const effectiveUploaded = new Set<string>([...uploadedKeys, ...Object.keys(previews)]);
+  const completedCount = tiles.filter((t) => isTileDone(t, effectiveUploaded)).length;
 
   return (
     <div className="px-5 py-3">
       <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-        📸 Academy Course Screenshots ({completedCount}/{slots.length})
+        📸 Academy Course Screenshots ({completedCount}/{tiles.length})
       </p>
       <div className="grid grid-cols-2 gap-3">
-        {slots.map((slot) => {
-          // For multi-course tiles, collect all course items to render
-          const allCourses: SubCourse[] = [
-            { key: slot.key, label: slot.label, url: slot.url, uploaded: slot.uploaded },
-            ...(slot.subCourses ?? []),
-          ];
-          const isMultiCourse = allCourses.length > 1;
-          const allDone = allCourses.every((c) => c.uploaded || !!previews[c.key]);
+        {tiles.map((tile) => {
+          const isMultiCourse = tile.courses.length > 1;
+          const tileDone = isTileDone(tile, effectiveUploaded);
 
           return (
             <div
-              key={slot.key}
+              key={tile.key}
               className={`rounded-lg border p-3 ${
-                allDone
-                  ? "border-green-300 bg-green-50"
-                  : "border-gray-200 bg-white"
+                tileDone ? "border-green-300 bg-green-50" : "border-gray-200 bg-white"
               }`}
             >
               {/* Tile header */}
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs font-semibold text-gray-900">{slot.label}</span>
-                {allDone && <span className="text-green-600 text-xs">✅</span>}
+                <span className="text-xs font-semibold text-gray-900">{tile.label}</span>
+                {tileDone && <span className="text-green-600 text-xs">✅</span>}
               </div>
 
-              {/* Render each course's button + upload */}
-              {allCourses.map((course, idx) => {
-                const isDone = course.uploaded || !!previews[course.key];
+              {tile.courses.map((course, idx) => {
+                const isDone = effectiveUploaded.has(course.key);
                 const isUploading = uploading === course.key;
+                // Tile already complete (e.g. grandfathered) — extra courses are optional
+                const optional = !isDone && tileDone;
 
                 return (
                   <div key={course.key} className={idx > 0 ? "mt-2.5 pt-2.5 border-t border-gray-100" : ""}>
-                    {/* Course label (only shown for multi-course tiles) */}
                     {isMultiCourse && (
                       <p className="text-[10px] font-medium text-gray-500 mb-1">{course.label}</p>
                     )}
 
-                    {/* Course link button */}
                     <a
                       href={course.url}
                       target="_blank"
@@ -145,10 +123,9 @@ export default function AcademyScreenshotSlots({ slots, isLegacy, onUpload }: Ac
                       🎓 Go to Academy Course ↗
                     </a>
 
-                    {/* Upload / status */}
                     {isDone ? (
                       <p className="text-[10px] text-green-700">Screenshot uploaded</p>
-                    ) : isLegacy ? (
+                    ) : isLegacy || optional ? (
                       <p className="text-[10px] text-gray-400 italic">Not required</p>
                     ) : (
                       <>

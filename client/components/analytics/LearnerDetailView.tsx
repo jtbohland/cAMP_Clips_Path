@@ -63,7 +63,11 @@ const MODULE_LABELS: Record<string, string> = {
 
 const ACADEMY_LABELS: Record<string, string> = {
   analytics: "Analytics Academy",
+  agent_analytics: "Agent Analytics Academy",
+  statsig: "Statsig Overview Academy",
+  feature_gates: "Feature Gates Academy",
   experiment: "Experiment Academy",
+  assignments_exposures: "Assignments & Exposures Academy",
   session_replay: "Session Replay Academy",
   guides_surveys: "Guides & Surveys Academy",
   challenger_why: "Challenger: Why Challenger",

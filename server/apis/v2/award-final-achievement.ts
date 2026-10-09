@@ -8,6 +8,7 @@ import {
   WEEK1_TOTAL_ITEMS_VP,
   WEEK1_WEEKDAYS_VP,
 } from "./pacing-helpers.js";
+import { ACADEMY_COURSE_KEYS_SQL, allAcademyTilesDone } from "./academy-tiles.js";
 
 const APPS_DB = "c6e32cf4-ca66-42ae-aeb3-58c84ffae574";
 
@@ -195,7 +196,7 @@ export default api({
 
       const ScreenshotSchema = z.object({ course_key: z.string() });
       const screenshots = await ctx.integrations.db.query(
-        `SELECT course_key FROM cliptracker_v2_academy_screenshots WHERE viewer_id = $1 AND course_key IN ('analytics', 'experiment', 'session_replay', 'guides_surveys')`,
+        `SELECT course_key FROM cliptracker_v2_academy_screenshots WHERE viewer_id = $1 AND course_key IN (${ACADEMY_COURSE_KEYS_SQL})`,
         ScreenshotSchema, [viewerId], { label: "Fetch academy screenshots" }
       );
       const screenshotKeys = new Set(screenshots.map(s => s.course_key));
@@ -207,8 +208,8 @@ export default api({
       );
       const wdDone = wdCheck[0].count > 0;
 
-      const allAcademies = screenshotKeys.has("analytics") && screenshotKeys.has("experiment")
-        && screenshotKeys.has("session_replay") && screenshotKeys.has("guides_surveys");
+      // Each tile complete (grandfathered to original rule once cAMP 101 is signed)
+      const allAcademies = allAcademyTilesDone(screenshotKeys, signoffKeys.has("camp101"));
 
       if (vpPath) {
         // VP: camp101 + 4 academies + W&D
@@ -227,7 +228,7 @@ export default api({
       );
       const ScreenshotSchema = z.object({ course_key: z.string() });
       const screenshots = await ctx.integrations.db.query(
-        `SELECT course_key FROM cliptracker_v2_academy_screenshots WHERE viewer_id = $1 AND course_key IN ('analytics', 'experiment', 'session_replay', 'guides_surveys')`,
+        `SELECT course_key FROM cliptracker_v2_academy_screenshots WHERE viewer_id = $1 AND course_key IN (${ACADEMY_COURSE_KEYS_SQL})`,
         ScreenshotSchema, [viewerId], { label: "Check legacy academy screenshots" }
       );
       const WdSchema = z.object({ count: z.coerce.number() });
@@ -243,8 +244,7 @@ export default api({
         const signoffKeys = new Set(signoffs.map(s => s.module_key));
         const screenshotKeys = new Set(screenshots.map(s => s.course_key));
         const wdDone = wdCheck[0].count > 0;
-        const allAcademies = screenshotKeys.has("analytics") && screenshotKeys.has("experiment")
-          && screenshotKeys.has("session_replay") && screenshotKeys.has("guides_surveys");
+        const allAcademies = allAcademyTilesDone(screenshotKeys, signoffKeys.has("camp101"));
         if (vpPath) {
           approachComplete = signoffKeys.has("camp101") && allAcademies && wdDone;
         } else {
