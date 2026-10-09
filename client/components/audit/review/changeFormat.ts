@@ -49,8 +49,32 @@ const TYPE_LABELS: Record<string, string> = {
   game_scenario_edit: "Game scenario edit",
 };
 
+// Academy note targets: new notes use the course key; old notes used list position
+const ACADEMY_COURSE_NAMES: Record<string, string> = {
+  analytics: "Analytics",
+  agent_analytics: "Agent Analytics",
+  statsig: "Statsig Overview",
+  feature_gates: "Feature Gates",
+  experiment: "Getting Started with Experiments",
+  assignments_exposures: "Assignments & Exposures",
+  session_replay: "Session Replay",
+  guides_surveys: "Guides & Surveys",
+};
+const LEGACY_ACADEMY_ORDER = ["analytics", "experiment", "statsig", "session_replay", "guides_surveys"];
+
+function academyCourseName(fieldName: string | null): string | null {
+  const suffix = fieldName?.startsWith("academy_course_") ? fieldName.slice("academy_course_".length) : null;
+  if (!suffix) return null;
+  const key = /^\d+$/.test(suffix) ? LEGACY_ACADEMY_ORDER[Number(suffix)] : suffix;
+  return key ? ACADEMY_COURSE_NAMES[key] ?? key : null;
+}
+
 /** e.g. "Trail Marker — answer B" or "Weather the Storm — takeaways" */
 export function changeTitle(c: ReviewChange): string {
+  if (c.entityType === "academy_notes") {
+    const course = academyCourseName(c.fieldName);
+    return course ? `Academy note — ${course}` : "Academy note";
+  }
   if (c.entityType === "question") {
     const field = QUESTION_FIELDS[c.fieldName ?? ""] ?? c.fieldName ?? "question";
     return `${c.questionKind ?? "Question"} — ${field}`;

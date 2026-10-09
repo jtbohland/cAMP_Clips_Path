@@ -21,7 +21,7 @@ interface TodoItem {
 
 const DAY_TODOS: Record<number, TodoItem[]> = {
   2: [
-    { emoji: "🎓", label: "Academy: Getting Started with Experiment", time: "40m + assessment", trackKey: "academy:experiment" },
+    { emoji: "🎓", label: "Academy: Experiment & Statsig (4 courses)", time: "~1.5h + assessments", trackKey: "academy:experiment" },
     { emoji: "🎓", label: "Academy: Session Replay", time: "15m + assessment", trackKey: "academy:session_replay" },
     { emoji: "📖", label: "Start Challenger reading", time: "6 modules, 4h 30m total" },
   ],
@@ -42,25 +42,25 @@ const DAY_TODOS: Record<number, TodoItem[]> = {
 const CUMULATIVE_TODOS: Record<number, TodoItem[]> = {
   1: [
     { emoji: "✍🏽", label: "MEDDPICC sign-off", trackKey: "module:meddpicc" },
-    { emoji: "🎓", label: "Academy: Getting Started with Analytics", time: "40m + assessment", trackKey: "academy:analytics" },
+    { emoji: "🎓", label: "Academy: Analytics & Agent Analytics", time: "~1h + assessments", trackKey: "academy:analytics" },
   ],
   2: [
     { emoji: "✍🏽", label: "MEDDPICC sign-off", trackKey: "module:meddpicc" },
-    { emoji: "🎓", label: "Academy: Analytics", time: "40m + assessment", trackKey: "academy:analytics" },
-    { emoji: "🎓", label: "Academy: Experiment", time: "40m + assessment", trackKey: "academy:experiment" },
+    { emoji: "🎓", label: "Academy: Analytics & Agent Analytics", time: "~1h + assessments", trackKey: "academy:analytics" },
+    { emoji: "🎓", label: "Academy: Experiment & Statsig", time: "~1.5h + assessments", trackKey: "academy:experiment" },
     { emoji: "🎓", label: "Academy: Session Replay", time: "15m + assessment", trackKey: "academy:session_replay" },
   ],
   3: [
     { emoji: "✍🏽", label: "MEDDPICC sign-off", trackKey: "module:meddpicc" },
-    { emoji: "🎓", label: "Academy: Analytics", time: "40m + assessment", trackKey: "academy:analytics" },
-    { emoji: "🎓", label: "Academy: Experiment", time: "40m + assessment", trackKey: "academy:experiment" },
+    { emoji: "🎓", label: "Academy: Analytics & Agent Analytics", time: "~1h + assessments", trackKey: "academy:analytics" },
+    { emoji: "🎓", label: "Academy: Experiment & Statsig", time: "~1.5h + assessments", trackKey: "academy:experiment" },
     { emoji: "🎓", label: "Academy: Session Replay", time: "15m + assessment", trackKey: "academy:session_replay" },
     { emoji: "🎓", label: "Academy: Guides & Surveys", time: "30m + assessment", trackKey: "academy:guides_surveys" },
   ],
   4: [
     { emoji: "✍🏽", label: "MEDDPICC sign-off", trackKey: "module:meddpicc" },
-    { emoji: "🎓", label: "Academy: Analytics", time: "40m + assessment", trackKey: "academy:analytics" },
-    { emoji: "🎓", label: "Academy: Experiment", time: "40m + assessment", trackKey: "academy:experiment" },
+    { emoji: "🎓", label: "Academy: Analytics & Agent Analytics", time: "~1h + assessments", trackKey: "academy:analytics" },
+    { emoji: "🎓", label: "Academy: Experiment & Statsig", time: "~1.5h + assessments", trackKey: "academy:experiment" },
     { emoji: "🎓", label: "Academy: Session Replay", time: "15m + assessment", trackKey: "academy:session_replay" },
     { emoji: "🎓", label: "Academy: Guides & Surveys", time: "30m + assessment", trackKey: "academy:guides_surveys" },
     { emoji: "✍🏽", label: "Challenger sign-off", trackKey: "module:challenger" },

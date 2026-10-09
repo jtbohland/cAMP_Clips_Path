@@ -4,6 +4,7 @@ import {
   getClipsExpectedByWeekday,
   getTotalWeekdays,
 } from "./pacing-helpers.js";
+import { countAcademyTilesDone } from "./academy-tiles.js";
 
 const APPS_DB = "c6e32cf4-ca66-42ae-aeb3-58c84ffae574";
 
@@ -673,10 +674,13 @@ export default api({
     // Filter to only the 3 valid module keys
     const validKeys = new Set(["meddpicc", "challenger", "camp101"]);
     const uniqueModuleKeys = new Set([...approachModuleKeys].filter(k => validKeys.has(k)));
-    const validAcademyCourses = new Set(["analytics", "experiment", "session_replay", "guides_surveys"]);
-    const uniqueAcademyKeys = new Set(academyRows.map(a => a.course_key).filter(k => validAcademyCourses.has(k)));
+    // Each Academy tile = 1 item (grandfathered to original rule once cAMP 101 is signed)
+    const academyTilesDone = countAcademyTilesDone(
+      new Set(academyRows.map(a => a.course_key)),
+      uniqueModuleKeys.has("camp101"),
+    );
     const hasWd = wdRows.length > 0;
-    const approachCompletedCount = uniqueModuleKeys.size + uniqueAcademyKeys.size + (hasWd ? 1 : 0);
+    const approachCompletedCount = uniqueModuleKeys.size + academyTilesDone + (hasWd ? 1 : 0);
 
     // ─── Pacing (clip-level % brackets) ─────────────────────────────────────
     const clipsDone = topicsRows[0]?.clips_done ?? 0;

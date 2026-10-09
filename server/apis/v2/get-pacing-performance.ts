@@ -4,6 +4,7 @@ import {
   getClipsExpectedByWeekday,
   getTotalWeekdays,
 } from "./pacing-helpers.js";
+import { academyTilesDoneSql } from "./academy-tiles.js";
 
 const APPS_DB = "c6e32cf4-ca66-42ae-aeb3-58c84ffae574";
 
@@ -223,8 +224,7 @@ export default api({
           (SELECT COUNT(*)::int FROM cliptracker_v2_module_signoffs ms
            WHERE ms.viewer_id = v.id AND ms.module_key IN ('meddpicc', 'challenger'))
           +
-          (SELECT COUNT(*)::int FROM cliptracker_v2_academy_screenshots acs
-           WHERE acs.viewer_id = v.id AND acs.course_key IN ('analytics', 'experiment', 'session_replay', 'guides_surveys'))
+          ${academyTilesDoneSql("v.id")}
           +
           (SELECT CASE WHEN EXISTS (SELECT 1 FROM cliptracker_v2_wd_verifications wd WHERE wd.viewer_id = v.id) THEN 1 ELSE 0 END)
         )::int AS approach_items

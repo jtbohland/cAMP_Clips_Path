@@ -5,8 +5,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 const ITEM_LABELS: Record<string, { emoji: string; name: string }> = {
   analytics: { emoji: "📊", name: "Academy: Analytics" },
-  experiment: { emoji: "🧪", name: "Academy: Experiment" },
+  agent_analytics: { emoji: "🤖", name: "Academy: Agent Analytics" },
   statsig: { emoji: "📈", name: "Academy: Statsig Overview" },
+  feature_gates: { emoji: "🚦", name: "Academy: Feature Gates" },
+  experiment: { emoji: "🧪", name: "Academy: Getting Started with Experiments" },
+  assignments_exposures: { emoji: "🎯", name: "Academy: Assignments & Exposures" },
   session_replay: { emoji: "🔁", name: "Academy: Session Replay" },
   guides_surveys: { emoji: "📋", name: "Academy: Guides & Surveys" },
   challenger_why: { emoji: "🚀", name: "Challenger: Why Challenger" },

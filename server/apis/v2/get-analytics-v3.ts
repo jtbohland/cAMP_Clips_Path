@@ -8,6 +8,7 @@ import {
   WEEK1_TOTAL_ITEMS_VP,
   WEEK1_EXPECTED_BY_DAY_VP,
 } from "./pacing-helpers.js";
+import { academyTilesDoneSql } from "./academy-tiles.js";
 
 const APPS_DB = "c6e32cf4-ca66-42ae-aeb3-58c84ffae574";
 
@@ -313,10 +314,9 @@ export default api({
         WHERE module_key IN ('meddpicc','challenger','camp101')
         GROUP BY viewer_id
       UNION ALL
-        SELECT viewer_id, COUNT(DISTINCT course_key)::int AS cnt
-        FROM cliptracker_v2_academy_screenshots
-        WHERE course_key IN ('analytics','experiment','session_replay','guides_surveys')
-        GROUP BY viewer_id
+        SELECT v.id AS viewer_id, ${academyTilesDoneSql("v.id")}::int AS cnt
+        FROM cliptracker_v2_viewers v
+        WHERE EXISTS (SELECT 1 FROM cliptracker_v2_academy_screenshots a WHERE a.viewer_id = v.id)
       UNION ALL
         SELECT viewer_id, 1::int AS cnt
         FROM cliptracker_v2_wd_verifications

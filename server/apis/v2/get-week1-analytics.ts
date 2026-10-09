@@ -1,4 +1,5 @@
 import { api, z, postgres } from "@superblocksteam/sdk-api";
+import { academyTilesDoneSql } from "./academy-tiles.js";
 
 const APPS_DB = "c6e32cf4-ca66-42ae-aeb3-58c84ffae574";
 
@@ -61,7 +62,7 @@ export default api({
         EXISTS(SELECT 1 FROM cliptracker_v2_module_signoffs ms WHERE ms.viewer_id = v.id AND ms.module_key = 'meddpicc') AS meddpicc_signed,
         EXISTS(SELECT 1 FROM cliptracker_v2_module_signoffs ms WHERE ms.viewer_id = v.id AND ms.module_key = 'camp101') AS camp101_signed,
         EXISTS(SELECT 1 FROM cliptracker_v2_module_signoffs ms WHERE ms.viewer_id = v.id AND ms.module_key = 'challenger') AS challenger_signed,
-        COALESCE((SELECT COUNT(*) FROM cliptracker_v2_academy_screenshots acs WHERE acs.viewer_id = v.id AND acs.course_key IN ('analytics', 'experiment', 'session_replay', 'guides_surveys')), 0)::int AS academy_count,
+        ${academyTilesDoneSql("v.id")}::int AS academy_count,
         wd.product AS wd_product,
         wd.scenario AS wd_scenario,
         wd.score AS wd_score

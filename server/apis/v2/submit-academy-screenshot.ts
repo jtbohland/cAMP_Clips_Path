@@ -2,7 +2,10 @@ import { api, z, postgres } from "@superblocksteam/sdk-api";
 
 const APPS_DB = "c6e32cf4-ca66-42ae-aeb3-58c84ffae574";
 
-const COURSE_KEYS = ['analytics', 'experiment', 'session_replay', 'guides_surveys', 'challenger_why', 'challenger_intro', 'statsig'] as const;
+const COURSE_KEYS = [
+  'analytics', 'experiment', 'session_replay', 'guides_surveys', 'challenger_why', 'challenger_intro', 'statsig',
+  'agent_analytics', 'feature_gates', 'assignments_exposures',
+] as const;
 
 export default api({
   name: "SubmitAcademyScreenshot",

@@ -79,6 +79,7 @@ export default api({
     })),
     /** Structured product_101 data — only populated for product_101 */
     academyCourses: z.array(z.object({
+      key: z.string(),
       label: z.string(),
       url: z.string(),
       screenshotUploaded: z.boolean(),
@@ -327,12 +328,17 @@ export default api({
     const TOPIC_RESOURCES: Record<string, Array<{ label: string; url: string; type: string }>> = {
       product_101: [
         { label: "🎓 Academy: Getting Started with Analytics", url: "https://academy.amplitude.com/amplitude-getting-started-with-analytics", type: "academy" },
-        { label: "🎓 Academy: Experiment & Statsig", url: "https://academy.amplitude.com/getting-started-with-amplitude-experiment-learning-path", type: "academy" },
+        { label: "🎓 Academy: Agent Analytics", url: "https://academy.amplitude.com/know-if-your-agent-is-helping-with-agent-analytics", type: "academy" },
         { label: "🎓 Academy: Statsig Overview", url: "https://academy.amplitude.com/statsig-overview", type: "academy" },
+        { label: "🎓 Academy: Getting Started with Feature Gates", url: "https://academy.amplitude.com/getting-started-with-feature-gates", type: "academy" },
+        { label: "🎓 Academy: Getting Started with Experiments", url: "https://academy.amplitude.com/getting-started-with-amplitude-experiment-learning-path", type: "academy" },
+        { label: "🎓 Academy: Assignments & Exposures", url: "https://academy.amplitude.com/assignments-exposures", type: "academy" },
         { label: "🎓 Academy: Session Replay", url: "https://academy.amplitude.com/contextualize-user-experience-with-session-replay", type: "academy" },
         { label: "🎓 Academy: Guides & Surveys", url: "https://academy.amplitude.com/engage-your-users-with-guides-and-surveys", type: "academy" },
         { label: "🡠 Wheel & Deal Simulation", url: "https://app.superblocks.com/code-mode/applications/fef97ebe-4fb9-401f-b97c-c52c1693b31b/", type: "app" },
-        { label: "🐙 Spekit: Platform & Products", url: "https://app.spekit.co/app/wiki/?&topic=1d04d90d-e516-408c-bab2-837788fed772&tag=Platform%20and%20Products", type: "spekit" },
+        { label: "🐙 What We Sell", url: "https://app.spekit.co/app/wiki/?topic=1d04d90d-e516-408c-bab2-837788fed772&tag=What%20We%20Sell%20%7C%20Products", type: "spekit" },
+        { label: "🐙 How We Sell", url: "https://app.spekit.co/app/wiki/?topic=edac80d9-e110-490d-9208-59ecc33fd805&tag=How%20We%20Sell%20%7C%20Sales%20Proccess", type: "spekit" },
+        { label: "🎮 Amplidemo: Amplitude Demo Environments", url: "https://app.amplitude.com/analytics/amplidemo/home", type: "app" },
         { label: "🔍 Statsig: Discovery & Prospecting Guide", url: "https://app.spekit.co/app/wiki/asset/8a45c361-c2a2-4f57-95ec-6c09a93e8d0d?type=asset&expanded=true", type: "spekit" },
         { label: "📘 Statsig: Discovery + Sales Playbook", url: "https://app.spekit.co/app/wiki/asset/a36c9b70-dfb7-440d-be25-b2b7060b1728?type=asset&expanded=true", type: "spekit" },
         { label: "🔄 Statsig Migration Field Guide", url: "https://docs.google.com/document/d/1ty44HjkNk3Wxc4UqO9yfmuErq-aaZcwwcN22qAf7A5o/edit?tab=t.0", type: "gdrive" },
@@ -344,13 +350,17 @@ export default api({
     const topicResources = TOPIC_RESOURCES[topicKey] ?? [];
 
     // Structured data for product_101 tile layout
-    const ACADEMY_COURSES: Record<string, Array<{ label: string; url: string }>> = {
+    // `key` is stable (SME notes are saved against it, not list position)
+    const ACADEMY_COURSES: Record<string, Array<{ key: string; label: string; url: string }>> = {
       product_101: [
-        { label: "Analytics", url: "https://academy.amplitude.com/amplitude-getting-started-with-analytics" },
-        { label: "Experiment & Statsig", url: "https://academy.amplitude.com/getting-started-with-amplitude-experiment-learning-path" },
-        { label: "Statsig Overview", url: "https://academy.amplitude.com/statsig-overview" },
-        { label: "Session Replay", url: "https://academy.amplitude.com/contextualize-user-experience-with-session-replay" },
-        { label: "Guides & Surveys", url: "https://academy.amplitude.com/engage-your-users-with-guides-and-surveys" },
+        { key: "analytics", label: "Analytics", url: "https://academy.amplitude.com/amplitude-getting-started-with-analytics" },
+        { key: "agent_analytics", label: "Agent Analytics", url: "https://academy.amplitude.com/know-if-your-agent-is-helping-with-agent-analytics" },
+        { key: "statsig", label: "Statsig Overview", url: "https://academy.amplitude.com/statsig-overview" },
+        { key: "feature_gates", label: "Getting Started with Feature Gates", url: "https://academy.amplitude.com/getting-started-with-feature-gates" },
+        { key: "experiment", label: "Getting Started with Experiments", url: "https://academy.amplitude.com/getting-started-with-amplitude-experiment-learning-path" },
+        { key: "assignments_exposures", label: "Assignments & Exposures", url: "https://academy.amplitude.com/assignments-exposures" },
+        { key: "session_replay", label: "Session Replay", url: "https://academy.amplitude.com/contextualize-user-experience-with-session-replay" },
+        { key: "guides_surveys", label: "Guides & Surveys", url: "https://academy.amplitude.com/engage-your-users-with-guides-and-surveys" },
       ],
     };
 
@@ -369,7 +379,9 @@ export default api({
 
     const CAMP_GEAR: Record<string, Array<{ label: string; url: string; type: string }>> = {
       product_101: [
-        { label: "Spekit: Platform & Products", url: "https://app.spekit.co/app/wiki/?&topic=1d04d90d-e516-408c-bab2-837788fed772&tag=Platform%20and%20Products", type: "spekit" },
+        { label: "What We Sell", url: "https://app.spekit.co/app/wiki/?topic=1d04d90d-e516-408c-bab2-837788fed772&tag=What%20We%20Sell%20%7C%20Products", type: "spekit" },
+        { label: "How We Sell", url: "https://app.spekit.co/app/wiki/?topic=edac80d9-e110-490d-9208-59ecc33fd805&tag=How%20We%20Sell%20%7C%20Sales%20Proccess", type: "spekit" },
+        { label: "Amplidemo: Amplitude Demo Environments", url: "https://app.amplitude.com/analytics/amplidemo/home", type: "app" },
         { label: "Statsig: Discovery & Prospecting Guide", url: "https://app.spekit.co/app/wiki/asset/8a45c361-c2a2-4f57-95ec-6c09a93e8d0d?type=asset&expanded=true", type: "spekit" },
         { label: "Statsig: Discovery + Sales Playbook", url: "https://app.spekit.co/app/wiki/asset/a36c9b70-dfb7-440d-be25-b2b7060b1728?type=asset&expanded=true", type: "spekit" },
         { label: "Statsig Migration Field Guide", url: "https://docs.google.com/document/d/1ty44HjkNk3Wxc4UqO9yfmuErq-aaZcwwcN22qAf7A5o/edit?tab=t.0", type: "gdrive" },

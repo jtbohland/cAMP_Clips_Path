@@ -48,6 +48,7 @@ import {
   getRoleTotalClips,
   isVelocityPromo,
 } from "@/lib/pacing";
+import { ACADEMY_TILES, isAcademyTileDone, countAcademyTilesDone, allAcademyTilesDone } from "@/lib/academyTiles";
 import type { ApproachCatchUpItem } from "@/components/PacingModal";
 import { calculatePatchProgress } from "@/lib/patchProgress";
 
@@ -702,7 +703,8 @@ export default function LibraryPage() {
       const signoffs = new Set(week1Data.moduleSignoffs.map((s) => s.moduleKey));
       const screenshots = new Set(week1Data.academyScreenshots.map((s) => s.courseKey));
       const validSignoffs = isVP ? 0 : ['meddpicc', 'challenger'].filter(k => signoffs.has(k)).length;
-      const validAcademies = ['analytics', 'experiment', 'session_replay', 'guides_surveys'].filter(k => screenshots.has(k)).length;
+      // Each Academy tile = 1 item; grandfathered if cAMP 101 already signed
+      const validAcademies = countAcademyTilesDone(screenshots, signoffs.has('camp101'));
       const wdDone = week1Data.wdVerification ? 1 : 0;
       return validSignoffs + validAcademies + wdDone;
     })();
@@ -764,11 +766,15 @@ export default function LibraryPage() {
     const role = viewer?.role ?? "AE";
     const vpPath = isVelocityPromo(role);
 
+    // Academy tiles — grandfathered (original single-course rule) once cAMP 101 is signed
+    const grandfathered = signoffs.has("camp101");
+    const academiesDone = allAcademyTilesDone(screenshots, grandfathered);
+
     // VP Approach: 4 academies + W&D = 5 items (no MEDDPICC/Challenger/cAMP101)
     const allDone = vpPath
-      ? (screenshots.has("analytics") && screenshots.has("experiment") && screenshots.has("session_replay") && screenshots.has("guides_surveys") && wdDone)
+      ? (academiesDone && wdDone)
       : (signoffs.has("meddpicc") && signoffs.has("camp101") && signoffs.has("challenger")
-        && screenshots.has("analytics") && screenshots.has("experiment") && screenshots.has("session_replay") && screenshots.has("guides_surveys")
+        && academiesDone
         && wdDone);
 
     if (allDone) return { complete: true, catchUpItems: [] as ApproachCatchUpItem[] };
@@ -776,10 +782,9 @@ export default function LibraryPage() {
     // Build incomplete items list
     const items: ApproachCatchUpItem[] = [];
     if (!vpPath && !signoffs.has("meddpicc")) items.push({ emoji: "✍🏽", label: "MEDDPICC sign-off" });
-    if (!screenshots.has("analytics")) items.push({ emoji: "🎓", label: "Academy: Analytics" });
-    if (!screenshots.has("experiment")) items.push({ emoji: "🎓", label: "Academy: Experiment" });
-    if (!screenshots.has("session_replay")) items.push({ emoji: "🎓", label: "Academy: Session Replay" });
-    if (!screenshots.has("guides_surveys")) items.push({ emoji: "🎓", label: "Academy: Guides & Surveys" });
+    for (const tile of ACADEMY_TILES) {
+      if (!isAcademyTileDone(tile, screenshots, grandfathered)) items.push({ emoji: "🎓", label: `Academy: ${tile.label}` });
+    }
     if (!vpPath && !signoffs.has("camp101")) items.push({ emoji: "✍🏽", label: "cAMP 101 sign-off" });
     if (!vpPath && !signoffs.has("challenger")) items.push({ emoji: "✍🏽", label: "Challenger sign-off" });
     if (!wdDone) items.push({ emoji: "🎡", label: "Wheel & Deal" });
