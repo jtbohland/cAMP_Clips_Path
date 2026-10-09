@@ -228,49 +228,61 @@ export default api({
         const isUnlocked = i === 0 || overrideSet.has(clip.id) || completionStatus[i - 1];
         if (!isUnlocked) continue;
 
-        // 1. Completed session with no score: counts toward clips completed,
-        //    pacing, anchor points and Summit Reached exactly like a passed clip,
-        //    while engagement averages ignore the null score.
-        //    The NOT EXISTS guard makes repeat calls safe.
-        await ctx.integrations.db.execute(
-          `INSERT INTO cliptracker_v2_sessions (clip_id, viewer_id, completed, ended_at)
-           SELECT $1, $2, true, now()
-           WHERE NOT EXISTS (
-             SELECT 1 FROM cliptracker_v2_sessions
-             WHERE clip_id = $1 AND viewer_id = $2 AND completed = true
-           )`,
-          [clip.id, viewerId],
-          { label: "Auto-complete renovation clip (session)" }
-        );
-
-        // 2. 0-XP "watch" marker so streak badges (No Detours) still see this
-        //    clip as watched. Awards no XP.
-        await ctx.integrations.db.execute(
-          `INSERT INTO cliptracker_v2_xp_events (viewer_id, clip_id, event_type, source_id, xp_amount, metadata)
-           VALUES ($1, $2, 'base', 'watch', 0, '{"reason": "under_renovation"}'::jsonb)
-           ON CONFLICT (viewer_id, source_id, clip_id) DO NOTHING`,
-          [viewerId, clip.id],
-          { label: "Auto-complete renovation clip (0 XP watch marker)" }
-        );
-
-        // 3. Unlock the first clip of the NEXT day in this learner's own path,
-        //    so the following day is never blocked by optional same-day clips
-        //    (e.g. SDR "Prospecting for Marketing Events", sort 51).
-        const nextDayClip = clips.slice(i + 1).find((c) => c.day_label !== clip.day_label);
-        if (nextDayClip) {
+        // Never let the auto-complete break the library load: on failure the
+        // clip is left as-is and retried on the next library load.
+        try {
+          // 1. Completed session with no score: counts toward clips completed,
+          //    pacing, anchor points and Summit Reached exactly like a passed clip,
+          //    while engagement averages ignore the null score.
+          //    Sessions are UNIQUE (clip_id, viewer_id), so if the learner already
+          //    opened the clip (in-progress / paused row), mark that row complete.
           await ctx.integrations.db.execute(
-            `INSERT INTO cliptracker_v2_unlock_overrides (viewer_id, clip_id, unlocked_by, reason)
-             VALUES ($1, $2, 'system', 'Auto-completed: clip under renovation')
-             ON CONFLICT (viewer_id, clip_id) DO NOTHING`,
-            [viewerId, nextDayClip.id],
-            { label: "Auto-complete renovation clip (unlock next day)" }
+            `INSERT INTO cliptracker_v2_sessions (clip_id, viewer_id, completed, ended_at)
+             VALUES ($1, $2, true, now())
+             ON CONFLICT (clip_id, viewer_id) DO UPDATE
+               SET completed = true,
+                   ended_at = COALESCE(cliptracker_v2_sessions.ended_at, now()),
+                   paused_at = NULL,
+                   paused_phase = NULL`,
+            [clip.id, viewerId],
+            { label: "Auto-complete renovation clip (session)" }
           );
-          overrideSet.add(nextDayClip.id);
-        }
 
-        completionStatus[i] = true;
-        clip.completed = 1;
-        ctx.log.info("Auto-completed clip under renovation", { viewerId, sortOrder: clip.sort_order });
+          // 2. 0-XP "watch" marker so streak badges (No Detours) still see this
+          //    clip as watched. Awards no XP.
+          await ctx.integrations.db.execute(
+            `INSERT INTO cliptracker_v2_xp_events (viewer_id, clip_id, event_type, source_id, xp_amount, metadata)
+             VALUES ($1, $2, 'base', 'watch', 0, '{"reason": "under_renovation"}'::jsonb)
+             ON CONFLICT (viewer_id, source_id, clip_id) DO NOTHING`,
+            [viewerId, clip.id],
+            { label: "Auto-complete renovation clip (0 XP watch marker)" }
+          );
+
+          // 3. Unlock the first clip of the NEXT day in this learner's own path,
+          //    so the following day is never blocked by optional same-day clips
+          //    (e.g. SDR "Prospecting for Marketing Events", sort 51).
+          const nextDayClip = clips.slice(i + 1).find((c) => c.day_label !== clip.day_label);
+          if (nextDayClip) {
+            await ctx.integrations.db.execute(
+              `INSERT INTO cliptracker_v2_unlock_overrides (viewer_id, clip_id, unlocked_by, reason)
+               VALUES ($1, $2, 'system', 'Auto-completed: clip under renovation')
+               ON CONFLICT (viewer_id, clip_id) DO NOTHING`,
+              [viewerId, nextDayClip.id],
+              { label: "Auto-complete renovation clip (unlock next day)" }
+            );
+            overrideSet.add(nextDayClip.id);
+          }
+
+          completionStatus[i] = true;
+          clip.completed = 1;
+          ctx.log.info("Auto-completed clip under renovation", { viewerId, sortOrder: clip.sort_order });
+        } catch (err) {
+          ctx.log.error("Renovation auto-complete failed; will retry on next load", {
+            viewerId,
+            sortOrder: clip.sort_order,
+            error: String(err),
+          });
+        }
       }
     }
 
