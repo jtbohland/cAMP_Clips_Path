@@ -1,5 +1,6 @@
 import { toast } from "sonner";
 import { useState, useCallback, useRef, useEffect } from "react";
+import RenovationNotice from "@/components/RenovationNotice";
 
 /**
  * Merged A/B clip card — renders two clips in one tile for dual-session days.
@@ -51,6 +52,8 @@ type PairedClipCardProps = {
   reactionSlotB?: React.ReactNode;
   /** Slot for daily feedback (rendered at very bottom of card) */
   feedbackSlot?: React.ReactNode;
+  /** TEMPORARY: clip A is auto-completed while its content is rebuilt */
+  underRenovationA?: boolean;
 };
 
 // Clips that show the cAMP Quiz button
@@ -179,8 +182,11 @@ export default function PairedClipCard({
   reactionSlotA,
   reactionSlotB,
   feedbackSlot,
+  underRenovationA = false,
 }: PairedClipCardProps) {
   const buttonStateA = getButtonState(stateA.isLocked, stateA.isCompleted, stateA.pausedElapsedSeconds);
+  // Renovation applies once clip A is reached; before that it stays locked as normal
+  const showRenovationA = underRenovationA && buttonStateA !== "locked";
   const buttonStateB = getButtonState(stateB.isLocked, stateB.isCompleted, stateB.pausedElapsedSeconds);
   const overallStatus = getOverallStatus(stateA, stateB);
   const totalXp = stateA.xpEarned + stateB.xpEarned;
@@ -282,7 +288,7 @@ export default function PairedClipCard({
         {/* Clip A section */}
         <div className="flex flex-col gap-2">
           {/* Clip A metadata */}
-          <p className="text-xs text-gray-500 flex items-center gap-1.5 flex-wrap">
+          <p className={`text-xs text-gray-500 flex items-center gap-1.5 flex-wrap ${showRenovationA ? "opacity-50 line-through" : ""}`}>
             {clipA.durationSeconds ? (
               <>
                 <span>⏱️ {formatDuration(clipA.durationSeconds)}</span>
@@ -297,13 +303,17 @@ export default function PairedClipCard({
           </p>
 
           {/* Clip A button */}
-          <ClipButton
-            label="Clip 1"
-            buttonState={buttonStateA}
-            previousClipTitle={previousClipTitle}
-            onWatch={onWatchA}
-            onReview={onReviewA}
-          />
+          {showRenovationA ? (
+            <RenovationNotice />
+          ) : (
+            <ClipButton
+              label="Clip 1"
+              buttonState={buttonStateA}
+              previousClipTitle={previousClipTitle}
+              onWatch={onWatchA}
+              onReview={onReviewA}
+            />
+          )}
           {reactionSlotA}
         </div>
 
@@ -386,8 +396,13 @@ export default function PairedClipCard({
           </div>
         )}
 
+        {/* cAMP Quiz — auto-completed when clip A is under renovation */}
+        {showRenovationA && showCampQuiz && (
+          <RenovationNotice label="🦉 cAMP Quiz — auto-completed" />
+        )}
+
         {/* cAMP Quiz button — visible on qualifying tiles */}
-        {showCampQuiz && onCampQuiz && (
+        {!showRenovationA && showCampQuiz && onCampQuiz && (
           <button
             onClick={(e) => { e.stopPropagation(); onCampQuiz(clipA.dayLabel); }}
             className="w-full py-2.5 rounded-lg text-sm font-semibold bg-[#EA580C] hover:bg-[#C2410C] text-white transition-colors"
@@ -395,7 +410,7 @@ export default function PairedClipCard({
             🦉 Take cAMP Quiz
           </button>
         )}
-        {showCampQuiz && onCampQuiz && (
+        {!showRenovationA && showCampQuiz && onCampQuiz && (
           <p className="text-[11px] text-gray-400 text-center -mt-1">
             Content Knowledge Checks — validate your learning after each session
           </p>

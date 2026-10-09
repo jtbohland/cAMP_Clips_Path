@@ -23,6 +23,10 @@ import { toast } from "sonner";
 /** Sort orders for lite clips — no engagement scoring, no trail markers, no Ranger Report */
 const LITE_CLIP_SORTS = new Set([51]);
 
+/** TEMPORARY: clips under renovation — auto-completed from the Library, never watched.
+ *  Keep in sync with RENOVATION_CLIP_SORTS in server/apis/v2/get-clip-library.ts */
+const RENOVATION_CLIP_SORTS = new Set([50]);
+
 
 type WatchPhase =
   | "loading_resume"
@@ -166,6 +170,15 @@ export default function WatchPage() {
     const sortOrder = clipData?.clip?.sortOrder;
     return sortOrder ? LITE_CLIP_SORTS.has(sortOrder) : false;
   }, [clipData?.clip?.sortOrder]);
+
+  // Under-renovation clip: send learners back to the Library, which auto-completes it
+  useEffect(() => {
+    const sortOrder = clipData?.clip?.sortOrder;
+    if (!sortOrder || viewer?.isAdmin) return;
+    if (RENOVATION_CLIP_SORTS.has(sortOrder)) {
+      navigate(getLibraryPath(), { replace: true });
+    }
+  }, [clipData?.clip?.sortOrder, viewer?.isAdmin, navigate]);
 
   const guideEntry = useMemo(
     () => {
@@ -1219,6 +1232,11 @@ export default function WatchPage() {
   const nextIsResourceDay = !!nextClip && nextClip.videoUrl === null;
   const goToNextClip = nextClip
     ? () => {
+        if (RENOVATION_CLIP_SORTS.has(nextClip.sortOrder) && !viewer?.isAdmin) {
+          // Library load auto-completes the renovation clip and unlocks the next day
+          navigate(getLibraryPath());
+          return;
+        }
         if (nextIsResourceDay) {
           const topicKey = nextClip.sortOrder === 60 ? "day5" : nextClip.sortOrder === 165 ? "day13_sdr_roe" : "day9";
           navigate(`/topic-gear/${topicKey}/${nextClip.id}`);

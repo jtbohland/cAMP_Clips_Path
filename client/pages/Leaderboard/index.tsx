@@ -423,7 +423,7 @@ export default function LeaderboardPage() {
     <div className="relative flex flex-col w-full" style={{ backgroundColor: "#ECFDF5", minHeight: "100vh" }}>
       {/* Background logo watermark — fixed so it stays in view while scrolling every board */}
       <div className="pointer-events-none select-none fixed inset-0 z-0 flex items-center justify-center" aria-hidden="true">
-        <CampLogo size={640} style={{ opacity: 0.08, maxWidth: "85vw", maxHeight: "85vh" }} />
+        <CampLogo size={640} style={{ opacity: 0.13, maxWidth: "85vw", maxHeight: "85vh" }} />
       </div>
 
       {/* Header */}

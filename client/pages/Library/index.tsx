@@ -633,6 +633,17 @@ export default function LibraryPage() {
    *
    * Day 1 is always free (no previous day). From Day 2+ we check.
    */
+  // Days containing an under-renovation clip (auto-completed) never gate the next day
+  const renovationDayLabels = useMemo(
+    () =>
+      new Set<string>(
+        clips
+          .filter((c: any) => c.underRenovation === true && c.dayLabel)
+          .map((c: any) => c.dayLabel as string)
+      ),
+    [clips]
+  );
+
   const checkQuizAndNavigate = useCallback(
     (clipDayLabel: string | null | undefined, action: () => void) => {
       // Admins bypass quiz check entirely
@@ -651,14 +662,14 @@ export default function LibraryPage() {
         return;
       }
       const prevDay = orderedDays[dayIdx - 1];
-      if (quizClickedDays.has(prevDay)) {
+      if (quizClickedDays.has(prevDay) || renovationDayLabels.has(prevDay)) {
         action();
         return;
       }
       // Previous day's quiz not clicked — show hard-gate modal
       setQuizReminder({ missingDay: prevDay, pendingAction: action });
     },
-    [orderedDays, quizClickedDays, viewer?.isAdmin]
+    [orderedDays, quizClickedDays, renovationDayLabels, viewer?.isAdmin]
   );
 
   // ── Pacing calculation ──
@@ -1795,6 +1806,7 @@ export default function LibraryPage() {
                               onCampQuiz={handleCampQuiz}
                               wheelAndDealSortOrders={wheelAndDealSortOrders}
                               isLiteB={clipB.isLite === true}
+                              underRenovationA={clip.underRenovation === true}
                               onZoomClipWatch={clip.sortOrder === 50 ? handleReachdeskWatch : undefined}
                               onZoomClipReview={clip.sortOrder === 50 ? () => navigate(`/report/reachdesk`) : undefined}
                               zoomClipWatched={clip.sortOrder === 50 ? reachdeskWatched : undefined}
@@ -1823,6 +1835,7 @@ export default function LibraryPage() {
                           isCompleted={clip.completed}
                           pausedElapsedSeconds={clip.pausedElapsedSeconds ?? 0}
                           xpEarned={clip.xpEarned ?? 0}
+                          underRenovation={clip.underRenovation === true}
                           previousClipTitle={prevClip ? prevClip.title : undefined}
                           onWatch={() => checkQuizAndNavigate(clip.dayLabel, () => navigate(`/watch/${clip.id}?source=library`))}
                           onReview={() => navigate(`/report/${clip.id}`)}
