@@ -2,16 +2,34 @@ import { api, z, postgres } from "@superblocksteam/sdk-api";
 
 const APPS_DB = "c6e32cf4-ca66-42ae-aeb3-58c84ffae574";
 
+// Standard product names (what gets saved). Learners can type them loosely —
+// see normalizeProduct below.
 const VALID_PRODUCTS = [
+  'AI Feedback',
   'Analytics',
+  'Session Replay + Heatmaps',
   'Experimentation',
   'Guides & Surveys',
-  'Activation',
-  'AI Feedback',
-  'AI Assistant',
-  'Session Replay & Heat Maps',
   'Statsig',
+  'Activation',
 ] as const;
+
+/** Loose form: lowercase, "+"/"&"/"and" all become "&", "heat maps" → "heatmaps", single spaces */
+function looseKey(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/\s*(\+|&|\band\b)\s*/g, " & ")
+    .replace(/heat\s+maps/g, "heatmaps")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+const PRODUCT_BY_KEY = new Map<string, string>(VALID_PRODUCTS.map((p) => [looseKey(p), p]));
+
+/** Returns the standard product name, or null if it isn't a Wheel & Deal product */
+function normalizeProduct(input: string): string | null {
+  return PRODUCT_BY_KEY.get(looseKey(input)) ?? null;
+}
 
 const VALID_SCENARIOS = [
   'Tell Me About It',
@@ -42,13 +60,14 @@ export default api({
     validationError: z.string().nullable(),
   }),
 
-  async run(ctx, { viewerId, product, scenario, score, aiCoachScore }) {
-    // Validate product against allowed list
-    if (!VALID_PRODUCTS.includes(product as any)) {
+  async run(ctx, { viewerId, product: rawProduct, scenario, score, aiCoachScore }) {
+    // Validate product against allowed list (forgiving on +/&/and, spacing, capitalization)
+    const product = normalizeProduct(rawProduct);
+    if (!product) {
       return {
         success: false,
         alreadySubmitted: false,
-        validationError: `"${product}" is not a valid Wheel & Deal product. Double-check the product from your spin and try again.`,
+        validationError: `"${rawProduct}" is not a valid Wheel & Deal product. Double-check the product from your spin and try again.`,
       };
     }
 
