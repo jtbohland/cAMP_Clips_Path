@@ -102,8 +102,12 @@ const PieChart = ({ className, ...props }: ComponentProps) => {
           )}
           {props.showLegend && (
             <ChartLegend
-              content={<ChartLegendContent nameKey={props.nameKey} />}
-              className="-translate-y-2 flex-wrap gap-2 [&>*]:basis-1/4 [&>*]:justify-center"
+              content={
+                <ChartLegendContent
+                  nameKey={props.nameKey}
+                  className="-translate-y-2 flex-wrap gap-2 [&>*]:basis-1/4 [&>*]:justify-center"
+                />
+              }
             />
           )}
           <Pie
