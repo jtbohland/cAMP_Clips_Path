@@ -219,6 +219,9 @@ export default function WatchPage() {
   const autoEndedRef = useRef(false);
   const videoEndedWhileQuizRef = useRef(false);
   const resumeFromSecondsRef = useRef<number | null>(null);
+  // True only right after "Resume Where I Left Off" — lets the auto-end effect
+  // send a near-complete resume straight to the Ranger Report
+  const resumedNearCompleteRef = useRef(false);
 
   // Use refs for stale-closure-safe access — these are updated on every render cycle
   const phaseRef = useRef<WatchPhase>("loading_resume");
@@ -486,6 +489,7 @@ export default function WatchPage() {
     autoEndedRef.current = false;
     videoEndedWhileQuizRef.current = false;
     resumeFromSecondsRef.current = null;
+    resumedNearCompleteRef.current = false;
     lastTimeRef.current = 0;
     lastWatchedTimeRef.current = 0;
     tabAwayCountRef.current = 0;
@@ -547,16 +551,26 @@ export default function WatchPage() {
     setAnsweredQuestions(new Set(pausedSessionData.answeredQuestionIds));
     setCorrectCount(pausedSessionData.correctCount);
     resumeFromSecondsRef.current = pausedSessionData.elapsedSeconds;
+    // Only flag resumes that were already near complete when paused, so
+    // anyone resuming earlier still finishes at the end as usual
+    {
+      const dur = clipData?.clip?.durationSeconds ?? 0;
+      const watched = pausedSessionData.watchedSeconds ?? pausedSessionData.elapsedSeconds;
+      const answered = new Set<string>(pausedSessionData.answeredQuestionIds ?? []);
+      const allAnswered = trailMarkersRef.current.every((q: any) => answered.has(q.id));
+      resumedNearCompleteRef.current = dur > 0 && watched / dur >= 0.85 && allAnswered;
+    }
     // Suppress the pause modal that fires when Wistia seeks to the resume point
     // (Wistia briefly plays then pauses when currentTime is set — this is not a manual pause)
     programmaticPauseRef.current = true;
     setPhase("watching");
-  }, [pausedSessionData]);
+  }, [pausedSessionData, clipData]);
 
   const handleStartFresh = useCallback(() => {
     if (!clipId || !viewer?.id) return;
     // Reset all progress state for a truly fresh start
     resumeFromSecondsRef.current = 0;
+    resumedNearCompleteRef.current = false;
     setElapsedSeconds(0);
     setFocusSeconds(0);
     setBlurSeconds(0);
@@ -759,18 +773,34 @@ export default function WatchPage() {
   }, []);
 
   // Auto-trigger Ranger Report at end of video
+  // Also covers resuming a paused session that was already near complete
+  // (≥85% watched + all markers answered, or within the last 30s). On resume
+  // this fires in the same render that restores sessionId, before
+  // handleFinishWatchingRef is synced (that effect is declared later), so
+  // defer one tick to call the current callback with the real sessionId.
   useEffect(() => {
-    if (phase !== "watching" || autoEndedRef.current) return;
+    if (phase !== "watching" || autoEndedRef.current || !sessionId) return;
     const clipDuration = clipData?.clip?.durationSeconds;
     if (!clipDuration || clipDuration <= 0) return;
-    if (elapsedSeconds >= clipDuration - 30) {
-      const allAnswered = trailMarkers.every((q: any) => answeredQuestions.has(q.id));
-      if (allAnswered || trailMarkers.length === 0) {
-        autoEndedRef.current = true;
-        handleFinishWatchingRef.current();
-      }
-    }
-  }, [elapsedSeconds, phase, clipData, trailMarkers, answeredQuestions]);
+    const atEnd = elapsedSeconds >= clipDuration - 30;
+    const resumedNearComplete =
+      resumedNearCompleteRef.current && watchedSeconds / clipDuration >= 0.85;
+    if (!atEnd && !resumedNearComplete) return;
+    const allAnswered = trailMarkers.every((q: any) => answeredQuestions.has(q.id));
+    if (!allAnswered && trailMarkers.length > 0) return;
+    autoEndedRef.current = true;
+    let fired = false;
+    const t = setTimeout(() => {
+      fired = true;
+      resumedNearCompleteRef.current = false;
+      handleFinishWatchingRef.current();
+    }, 0);
+    return () => {
+      clearTimeout(t);
+      // Re-arm if this run was superseded before it fired
+      if (!fired) autoEndedRef.current = false;
+    };
+  }, [elapsedSeconds, watchedSeconds, phase, sessionId, clipData, trailMarkers, answeredQuestions]);
 
   // ── Layer 2: Nudge banner at ~80% watched ──
   // Shows a subtle, camp-themed reminder when the learner is near the end.
