@@ -49,7 +49,7 @@ const ROLE_PILL: Record<string, { bg: string; text: string; border: string }> = 
   "Velocity AE": { bg: "bg-blue-50",    text: "text-blue-700",    border: "border-blue-200" },
   "Emerging AE": { bg: "bg-cyan-50",    text: "text-cyan-700",    border: "border-cyan-200" },
   "Majors AE":   { bg: "bg-purple-50",  text: "text-purple-700",  border: "border-purple-200" },
-  "Strat AE":    { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200" },
+  "Strategic AE": { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200" },
   "SDR":         { bg: "bg-indigo-50",  text: "text-indigo-700",  border: "border-indigo-200" },
   "SDR>Velocity Promo": { bg: "bg-pink-50", text: "text-pink-700", border: "border-pink-200" },
   "PSM":         { bg: "bg-orange-50",  text: "text-orange-700",  border: "border-orange-200" },
