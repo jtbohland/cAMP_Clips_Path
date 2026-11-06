@@ -2,7 +2,10 @@ import { api, z, postgres } from "@superblocksteam/sdk-api";
 
 const APPS_DB = "c6e32cf4-ca66-42ae-aeb3-58c84ffae574";
 
-const ROLES = ['SDR', 'Velocity AE', 'Emerging AE', 'Majors AE', 'Strat AE', 'PSM', 'Renewals', 'SDR>Velocity Promo', 'Admin', 'SME'] as const;
+// Must match the dropdown in client/components/RegistrationForm.tsx and the
+// role names used by pacing-helpers.ts and clip visibility rules.
+// "Strat AE" is a legacy alias, saved as "Strategic AE".
+const ROLES = ['SDR', 'Velocity AE', 'Emerging AE', 'Majors AE', 'Strategic AE', 'Strat AE', 'PSM', 'Renewals', 'SDR>Velocity Promo', 'Admin', 'SME'] as const;
 
 const ViewerSchema = z.object({
   id: z.string(),
@@ -37,7 +40,9 @@ export default api({
     isNew: z.boolean(),
   }),
 
-  async run(ctx, { email, name, role, ascentDay1, managerName, managerEmail, belayBuddy, timezone }) {
+  async run(ctx, { email, name, role: rawRole, ascentDay1, managerName, managerEmail, belayBuddy, timezone }) {
+    const role = rawRole === 'Strat AE' ? 'Strategic AE' : rawRole;
+
     // Check if viewer already exists
     const existing = await ctx.integrations.db.query(
       "SELECT id, email, name, role, ascent_day_1::text as \"ascentDay1\", COALESCE(is_admin, false) as \"isAdmin\" FROM cliptracker_v2_viewers WHERE email = $1",
