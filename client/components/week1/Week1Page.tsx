@@ -25,6 +25,7 @@ import {
 } from "@/lib/pacing";
 import { ACADEMY_TILES, isAcademyTileDone, countAcademyTilesDone, allAcademyTilesDone } from "@/lib/academyTiles";
 import type { AcademyTile } from "@/lib/academyTiles";
+import { runUploadWithRetry } from "@/lib/uploadRetry";
 
 // Reflection prompts
 const MEDDPICC_REFLECTION = "Which letter of MEDDPICC is the biggest gap in how you've sold before, and what will you do differently here?";
@@ -291,13 +292,16 @@ export default function Week1Page({ viewerId, viewerName, viewerRole, isAdmin, p
     screenshotFilename: string;
     screenshotHash: string;
   }) => {
-    await submitScreenshot({
-      viewerId,
-      courseKey: courseKey as any,
-      screenshotData: uploadData.screenshotData,
-      screenshotFilename: uploadData.screenshotFilename,
-      screenshotHash: uploadData.screenshotHash,
-    });
+    await runUploadWithRetry(
+      () => submitScreenshot({
+        viewerId,
+        courseKey: courseKey as any,
+        screenshotData: uploadData.screenshotData,
+        screenshotFilename: uploadData.screenshotFilename,
+        screenshotHash: uploadData.screenshotHash,
+      }),
+      { viewerId, uploadType: "academy_screenshot", itemKey: courseKey },
+    );
     toast.success("Screenshot uploaded!");
     await refetch();
   }, [viewerId, submitScreenshot, refetch]);

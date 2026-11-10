@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef } from "react";
 import { toast } from "sonner";
 import type { AcademyTile } from "@/lib/academyTiles";
+import { getErrorMessage } from "@/lib/uploadRetry";
 
 type AcademyScreenshotSlotsProps = {
   /** Tiles in display order; each holds 1+ courses (see client/lib/academyTiles.ts) */
@@ -62,7 +63,8 @@ export default function AcademyScreenshotSlots({ tiles, uploadedKeys, isTileDone
         screenshotHash: hashHex,
       });
     } catch (err: any) {
-      toast.error(err?.message || "Failed to upload screenshot");
+      // Session errors already showed a Refresh toast — don't double up
+      if (!err?.handled) toast.error(getErrorMessage(err) || "Failed to upload screenshot");
       setPreviews((prev) => {
         const next = { ...prev };
         delete next[courseKey];
