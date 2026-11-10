@@ -77,6 +77,7 @@ import SetupWeek1Schema from './v2/setup-week1-schema.js';
 import GetWeek1Progress from './v2/get-week1-progress.js';
 import SubmitModuleSignoff from './v2/submit-module-signoff.js';
 import SubmitAcademyScreenshot from './v2/submit-academy-screenshot.js';
+import LogUploadFailure from './v2/log-upload-failure.js';
 import SubmitWdVerification from './v2/submit-wd-verification.js';
 import UnlockAscent from './v2/unlock-ascent.js';
 import SetupCheckinSchema from './v2/setup-checkin-schema.js';
@@ -239,6 +240,7 @@ ResetJTSessions,
   GetWeek1Progress,
   SubmitModuleSignoff,
   SubmitAcademyScreenshot,
+  LogUploadFailure,
   SubmitWdVerification,
   UnlockAscent,
   GetWeek1Analytics,

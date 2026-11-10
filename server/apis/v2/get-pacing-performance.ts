@@ -19,6 +19,11 @@ const LearnerRow = z.object({
   created_at: z.string(),
   ascent_day_1: z.string().nullable(),
   extension_days: z.coerce.number(),
+  first_achievement_shown: z.boolean(),
+});
+
+const SummitEmailRow = z.object({
+  viewer_id: z.string(),
 });
 
 const ClipsDoneRow = z.object({
@@ -161,7 +166,8 @@ export default api({
         v.manager_name,
         v.created_at::text,
         v.ascent_day_1::text AS ascent_day_1,
-        COALESCE(v.extension_days, 0)::int AS extension_days
+        COALESCE(v.extension_days, 0)::int AS extension_days,
+        COALESCE(v.first_achievement_shown, false) AS first_achievement_shown
        FROM cliptracker_v2_viewers v
        WHERE v.is_admin = false AND v.role != 'SME'
        ORDER BY v.created_at ASC
@@ -243,9 +249,21 @@ export default api({
     const approachMap = new Map<string, number>();
     for (const a of approachRows) approachMap.set(a.viewer_id, a.approach_items);
 
+    // Summit email recipients = confirmed completers (same rule as the public leaderboard)
+    const summitEmailRows = await ctx.integrations.apps_database.query(
+      `SELECT DISTINCT viewer_id FROM cliptracker_v2_checkin_emails
+       WHERE checkin_type = 'summit'
+       LIMIT 500`,
+      SummitEmailRow,
+      undefined,
+      { label: "Summit email recipients (confirmed completers)" }
+    );
+    const summitEmailSet = new Set(summitEmailRows.map((r) => r.viewer_id));
+
     const now = new Date();
 
-    // 5. Calculate pacing for each learner, filter out completed
+    // 5. Calculate pacing for ACTIVE learners only.
+    //    Active = has a start date, Summit Day is today or later, and not complete.
     const results: Array<{
       viewerId: string;
       name: string;
@@ -272,15 +290,23 @@ export default api({
       // Skip completed learners
       if (allComplete) continue;
 
+      // Skip confirmed completers — same locked-completer rule as the public leaderboard
+      const confirmedCompleter = summitEmailSet.has(l.viewer_id)
+        || (l.first_achievement_shown && clipsDone >= effectiveTotal - 1);
+      if (confirmedCompleter && clipsDone > 0) continue;
+
+      // Active learners only: must have a Summit Day that is today or upcoming
+      if (!l.ascent_day_1) continue;
+      const summitDay = getSummitDay(new Date(l.ascent_day_1), totalWeekdays, l.extension_days);
+      if (isAfterDate(summitDay, now)) continue;
+
       // Weekdays elapsed from their ascent start date (ascent_day_1, falling back to created_at) to now
       const startDate = l.ascent_day_1 ? new Date(l.ascent_day_1) : new Date(l.created_at);
       const weekdaysElapsed = countWeekdays(startDate, now);
       const effectiveWeekdays = Math.max(0, weekdaysElapsed - l.extension_days);
 
-      // Check Summit Day deadline gate
-      const pastSummitDay = l.ascent_day_1
-        ? isAfterDate(getSummitDay(new Date(l.ascent_day_1), totalWeekdays, l.extension_days), now)
-        : false;
+      // Past-Summit learners were skipped above, so the deadline gate is never tripped here
+      const pastSummitDay = false;
 
       // Unified pacing % (clip-level)
       const pacingPercent = computeClipPacingPercent(effectiveWeekdays, approachDone, clipsDone, l.role, effectiveTotal);
