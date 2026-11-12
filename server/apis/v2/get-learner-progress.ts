@@ -1,5 +1,5 @@
 import { api, z, postgres } from "@superblocksteam/sdk-api";
-import { isVelocityPromo } from "./pacing-helpers.js";
+import { isVelocityPromo, getEffectiveClipTotal } from "./pacing-helpers.js";
 
 const APPS_DB = "c6e32cf4-ca66-42ae-aeb3-58c84ffae574";
 
@@ -61,6 +61,7 @@ export default api({
     progressPercent: z.number(),
     badges: z.array(BadgeSchema),
     clipsCompleted: z.number(),
+    totalClips: z.number(),
     ascentDay1: z.string().nullable(),
     managerName: z.string().nullable(),
     leaderboardRank: z.number(),
@@ -113,15 +114,35 @@ export default api({
       { label: "Get earned badges" }
     );
 
-    // Get clips completed count
+    // Clips completed — same counting rule as the public leaderboard:
+    // watched clips + resource days, live clips in this learner's role path only
     const CompletedSchema = z.object({ count: z.coerce.number() });
     const completedResult = await ctx.integrations.db.query(
-      `SELECT COUNT(DISTINCT clip_id)::int as count
-       FROM cliptracker_v2_sessions
-       WHERE viewer_id = $1 AND completed = true`,
+      `WITH me AS (SELECT id, role FROM cliptracker_v2_viewers WHERE id = $1),
+      session_completions AS (
+        SELECT DISTINCT s.clip_id
+        FROM cliptracker_v2_sessions s
+        JOIN cliptracker_v2_clips c ON c.id = s.clip_id
+        JOIN me ON me.id = s.viewer_id
+        WHERE s.completed = true AND c.status = 'live'
+          AND (c.roles IS NULL OR c.roles @> to_jsonb(me.role))
+      ),
+      resource_completions AS (
+        SELECT DISTINCT x.clip_id
+        FROM cliptracker_v2_xp_events x
+        JOIN cliptracker_v2_clips c ON c.id = x.clip_id
+        JOIN me ON me.id = x.viewer_id
+        WHERE x.event_type = 'swiss_army_knife' AND c.status = 'live'
+          AND (c.roles IS NULL OR c.roles @> to_jsonb(me.role))
+      )
+      SELECT COUNT(*)::int AS count FROM (
+        SELECT clip_id FROM session_completions
+        UNION
+        SELECT clip_id FROM resource_completions
+      ) all_clips`,
       CompletedSchema,
       [viewerId],
-      { label: "Count completed clips" }
+      { label: "Count completed clips (role path, incl. resource days)" }
     );
     const clipsCompleted = completedResult[0]?.count ?? 0;
 
@@ -134,11 +155,13 @@ export default api({
       week2_checkin_sent_at: z.string().nullable(),
       week3_checkin_sent_at: z.string().nullable(),
       extension_days: z.coerce.number(),
+      first_achievement_shown: z.boolean(),
     });
     const viewerDate = await ctx.integrations.db.query(
       `SELECT ascent_day_1::text, manager_name, role,
               approach_checkin_sent_at::text, week2_checkin_sent_at::text, week3_checkin_sent_at::text,
-              COALESCE(extension_days, 0)::int as extension_days
+              COALESCE(extension_days, 0)::int as extension_days,
+              COALESCE(first_achievement_shown, false) AS first_achievement_shown
        FROM cliptracker_v2_viewers WHERE id = $1`,
       ViewerDateSchema,
       [viewerId],
@@ -157,6 +180,13 @@ export default api({
       { label: "Check summit checkin sent" }
     );
     const summitCheckinSent = summitSentResult[0]?.sent ?? false;
+
+    // Total clips in this learner's path. Confirmed completers are locked:
+    // their total is frozen at what they completed (same rule as the leaderboard).
+    const pathTotal = getEffectiveClipTotal(viewerDate[0]?.role ?? "AE", 0);
+    const confirmedCompleter = summitCheckinSent
+      || ((viewerDate[0]?.first_achievement_shown ?? false) && clipsCompleted >= pathTotal - 1);
+    const totalClips = confirmedCompleter && clipsCompleted > 0 ? clipsCompleted : pathTotal;
 
     // Leaderboard rank — count non-admin viewers with higher XP + 1
     const RankSchema = z.object({ rank: z.coerce.number() });
@@ -202,6 +232,7 @@ export default api({
         earnedAt: b.earned_at,
       })),
       clipsCompleted,
+      totalClips,
       ascentDay1: viewerDate[0]?.ascent_day_1 ?? null,
       managerName: viewerDate[0]?.manager_name ?? null,
       leaderboardRank,

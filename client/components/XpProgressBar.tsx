@@ -63,7 +63,7 @@ export default function XpProgressBar({ embedded = false }: XpProgressBarProps =
     );
   }
 
-  const { totalXp, xpBreakdown, tier, nextTier, progressPercent, badges, clipsCompleted } = data;
+  const { totalXp, xpBreakdown, tier, nextTier, progressPercent, badges, clipsCompleted, totalClips } = data;
 
   return (
     <div className={`w-full bg-white p-5 ${embedded ? "" : "rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.08)]"}`}>
@@ -79,7 +79,7 @@ export default function XpProgressBar({ embedded = false }: XpProgressBarProps =
       {/* Subtext row */}
       <div className="flex items-center justify-between mb-3">
         <p className="text-xs text-gray-500">
-          {clipsCompleted}/19 clips completed
+          {clipsCompleted}/{totalClips} clips completed
         </p>
         {nextTier ? (
           <p className="text-xs text-gray-500">
