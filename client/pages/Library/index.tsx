@@ -713,7 +713,14 @@ export default function LibraryPage() {
     let tier: ReturnType<typeof getPacingTier>;
     const approachTotal = isVP ? WEEK1_TOTAL_ITEMS_VP : WEEK1_TOTAL_ITEMS;
     const allClipsDone = clipsDone >= effectiveTotal && approachDone >= approachTotal;
-    if (allClipsDone) {
+    // Confirmed completers are locked forever (Summit email sent, or grand finale
+    // shown with their path done). Never recalculate them into a failing tier.
+    const serverClipsDone = progressData.clipsCompleted ?? 0;
+    const confirmedCompleter = serverClipsDone > 0 && (
+      progressData.summitCheckinSent === true ||
+      (week1Data.firstAchievementShown === true && serverClipsDone >= effectiveTotal - 1)
+    );
+    if (allClipsDone || confirmedCompleter) {
       tier = "completed";
     } else if (afterSummitDay) {
       tier = "anchor_failure";
@@ -728,6 +735,9 @@ export default function LibraryPage() {
     } else {
       // Ascent (Day 6+): full unified % brackets
       tier = getPacingStatusFromPercent(unifiedPercent);
+      // "Anchor Failure" means Summit Day was missed — it must never fire before
+      // Summit Day. Below 50% pace before then = strongest regular warning.
+      if (tier === "anchor_failure") tier = "avalanche_warning";
     }
     const daysBehind = getTopicDaysBehind(sessionsCompleted, effectiveWeekdaysElapsed, role);
     const missedClips = getMissedClips(
