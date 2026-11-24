@@ -278,7 +278,7 @@ export default function AnchorFailureModal({
           {selectedReason && (
             <div className="mb-4">
               <p className="text-sm font-bold mb-2">
-                This message will be sent to your manager{belayFirst ? `, ${belayFirst},` : ""} & JT on Slack:
+                This message will be sent on Slack to a group chat with you, your manager{belayFirst ? `, ${belayFirst},` : ""} & JT:
               </p>
               <div className="rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-800 leading-relaxed whitespace-pre-line">
                 {slackMessage}

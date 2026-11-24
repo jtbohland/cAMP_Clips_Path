@@ -1,4 +1,19 @@
 import { api, z, slack, postgres } from "@superblocksteam/sdk-api";
+import { getTotalWeekdays, getEffectiveClipTotal } from "./pacing-helpers.js";
+
+/** Summit Day = start + role weekdays + extension days (weekends skipped). */
+function computeSummitDay(ascentDay1: string, role: string, extensionDays: number): Date {
+  const [y, m, d] = ascentDay1.split("-").map(Number);
+  const cursor = new Date(Date.UTC(y, m - 1, d));
+  const total = getTotalWeekdays(role) + extensionDays;
+  let counted = 0;
+  while (counted < total) {
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+    const dow = cursor.getUTCDay();
+    if (dow !== 0 && dow !== 6) counted++;
+  }
+  return cursor;
+}
 
 const APPS_DB = "c6e32cf4-ca66-42ae-aeb3-58c84ffae574";
 const SLACK_GRID = "a0ceb4b5-aa7d-4f85-b9c6-a54690421997";
@@ -86,7 +101,7 @@ async function findByName(
 
 export default api({
   name: "SendAnchorSlackMessage",
-  description: "Sends anchor failure Slack message to group DM with JT, manager, and belay buddy.",
+  description: "Sends a missed-Summit Slack to the camper, JT, manager and belay buddy, with eligibility checks.",
   integrations: {
     slack_grid: slack(SLACK_GRID),
     apps_db: postgres(APPS_DB),
@@ -103,26 +118,92 @@ export default api({
   }),
 
   async run(ctx, { viewerId, message }) {
+    const blocked = (error: string) => {
+      ctx.log.warn("Anchor Slack blocked", { viewerId, reason: error });
+      return { success: false, channelId: null, recipientNames: [] as string[], error };
+    };
+
     // 1. Fetch viewer info from DB
     const ViewerRow = z.object({
       email: z.string(),
+      role: z.string(),
+      ascent_day_1: z.string().nullable(),
+      extension_days: z.coerce.number(),
+      first_achievement_shown: z.boolean(),
       manager_email: z.string().nullable(),
       belay_buddy: z.string().nullable(),
     });
     const viewers = await ctx.integrations.apps_db.query(
-      "SELECT email, manager_email, belay_buddy FROM cliptracker_v2_viewers WHERE id = $1",
+      `SELECT email, role, ascent_day_1::text,
+              COALESCE(extension_days, 0)::int AS extension_days,
+              COALESCE(first_achievement_shown, false) AS first_achievement_shown,
+              manager_email, belay_buddy
+       FROM cliptracker_v2_viewers WHERE id = $1`,
       ViewerRow,
       [viewerId],
-      { label: "Get viewer email/manager/belay buddy" }
+      { label: "Get viewer details" }
     );
-    if (viewers.length === 0) {
-      return { success: false, channelId: null, recipientNames: [], error: "Viewer not found" };
-    }
+    if (viewers.length === 0) return blocked("Viewer not found");
     const viewer = viewers[0];
 
-    // 2. Look up Slack user IDs
+    // 2. Guard: only the camper themselves can send their own message
+    const callerEmail = (ctx.user.email ?? "").toLowerCase();
+    if (!callerEmail || callerEmail !== viewer.email.toLowerCase()) {
+      return blocked("Only the camper can send this message.");
+    }
+
+    // 3. Guard: confirmed completers are locked — never send
+    const CompletionRow = z.object({
+      summit_sent: z.boolean(),
+      clips_done: z.coerce.number(),
+    });
+    const completion = await ctx.integrations.apps_db.query(
+      `WITH me AS (SELECT id, role FROM cliptracker_v2_viewers WHERE id = $1)
+       SELECT
+         EXISTS(SELECT 1 FROM cliptracker_v2_checkin_emails WHERE viewer_id = $1 AND checkin_type = 'summit') AS summit_sent,
+         (SELECT COUNT(*) FROM (
+            SELECT s.clip_id FROM cliptracker_v2_sessions s
+              JOIN cliptracker_v2_clips c ON c.id = s.clip_id JOIN me ON me.id = s.viewer_id
+             WHERE s.completed AND c.status = 'live' AND (c.roles IS NULL OR c.roles @> to_jsonb(me.role))
+            UNION
+            SELECT x.clip_id FROM cliptracker_v2_xp_events x
+              JOIN cliptracker_v2_clips c ON c.id = x.clip_id JOIN me ON me.id = x.viewer_id
+             WHERE x.event_type = 'swiss_army_knife' AND c.status = 'live' AND (c.roles IS NULL OR c.roles @> to_jsonb(me.role))
+         ) done) AS clips_done`,
+      CompletionRow,
+      [viewerId],
+      { label: "Check completion status" }
+    );
+    const summitSent = completion[0]?.summit_sent ?? false;
+    const clipsDone = completion[0]?.clips_done ?? 0;
+    const pathTotal = getEffectiveClipTotal(viewer.role, 0);
+    const confirmedCompleter = summitSent
+      || (viewer.first_achievement_shown && clipsDone >= pathTotal - 1)
+      || clipsDone >= pathTotal;
+    if (confirmedCompleter) {
+      return blocked("Camper has already completed Ascent.");
+    }
+
+    // 4. Guard: Summit Day must actually have passed
+    if (!viewer.ascent_day_1) return blocked("Camper has no Ascent start date.");
+    const summitDay = computeSummitDay(viewer.ascent_day_1, viewer.role, viewer.extension_days);
+    const nowUtc = new Date();
+    const today = new Date(Date.UTC(nowUtc.getUTCFullYear(), nowUtc.getUTCMonth(), nowUtc.getUTCDate()));
+    if (today <= summitDay) {
+      return blocked("Summit Day has not passed yet.");
+    }
+
+    // 5. Look up Slack user IDs
     const recipientIds: string[] = [];
     const recipientNames: string[] = [];
+
+    // Camper (always — so they are on the thread)
+    const camperId = await lookupByEmail(ctx.integrations.slack_grid, viewer.email, "Lookup camper");
+    if (!camperId) {
+      return blocked("Could not find the camper in Slack.");
+    }
+    recipientIds.push(camperId);
+    recipientNames.push(viewer.email);
 
     // JT (always)
     const jtId = await lookupByEmail(ctx.integrations.slack_grid, JT_EMAIL, "Lookup JT");
@@ -164,7 +245,7 @@ export default api({
       };
     }
 
-    // 3. Open group DM
+    // 6. Open group DM
     const convRes = await ctx.integrations.slack_grid.apiRequest(
       {
         method: "POST",
@@ -184,7 +265,7 @@ export default api({
     }
     const channelId = convRes.channel.id;
 
-    // 4. Post the message
+    // 7. Post the message
     const postRes = await ctx.integrations.slack_grid.apiRequest(
       {
         method: "POST",
@@ -208,6 +289,18 @@ export default api({
         error: `Failed to post message: ${postRes.error}`,
       };
     }
+
+    // 8. Audit log — every send is recorded
+    await ctx.integrations.apps_db.execute(
+      `INSERT INTO cliptracker_v2_audit_log (action, entity_type, entity_id, actor, details)
+       VALUES ('anchor_slack_sent', 'viewer', $1, $2, $3)`,
+      [
+        viewerId,
+        callerEmail,
+        JSON.stringify({ channelId, recipients: recipientNames, summitDay: summitDay.toISOString().slice(0, 10), clipsDone, pathTotal }),
+      ],
+      { label: "Log anchor Slack send" }
+    );
 
     return { success: true, channelId, recipientNames, error: null };
   },
